@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Register Teacher</title>
+</head>
+<body>
+    <h1>Register New Teacher</h1>
+    <form method="POST">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Save Teacher</button>
+    </form>
+    <p><a href="{% url 'teacher_list' %}">View all teachers</a></p>
+</body>
+</html>
