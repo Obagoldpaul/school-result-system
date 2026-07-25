@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Class Subjects</title>
+</head>
+<body>
+    <h1>Class - Subject Assignments</h1>
+    <p><a href="{% url 'assign_subject_to_class' %}">+ New Assignment</a></p>
+    <table border="1" cellpadding="8">
+        <tr>
+            <th>Class</th>
+            <th>Subject</th>
+        </tr>
+        {% for cs in class_subjects %}
+        <tr>
+            <td>{{ cs.school_class }}</td>
+            <td>{{ cs.subject }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+</body>
+</html>

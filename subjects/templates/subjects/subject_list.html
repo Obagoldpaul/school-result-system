@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Subjects</title>
+</head>
+<body>
+    <h1>All Subjects</h1>
+    <p><a href="{% url 'add_subject' %}">+ Add New Subject</a></p>
+    <p><a href="{% url 'assign_subject_to_class' %}">Assign Subject to Class</a></p>
+    <table border="1" cellpadding="8">
+        <tr>
+            <th>Name</th>
+            <th>Code</th>
+        </tr>
+        {% for subject in subjects %}
+        <tr>
+            <td>{{ subject.name }}</td>
+            <td>{{ subject.code|default:"-" }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+</body>
+</html>
