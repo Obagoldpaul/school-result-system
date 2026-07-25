@@ -1,7 +1,7 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from .forms import StudentRegistrationForm
-from .models import Student, SchoolClass
+from .models import Student, SchoolClass, Department
 
 
 @login_required
@@ -27,4 +27,24 @@ def student_list(request):
         'students': students,
         'classes': classes,
         'selected_class': int(class_id) if class_id else None,
+    })
+
+
+@login_required
+def edit_student(request, student_id):
+    student = get_object_or_404(Student, id=student_id)
+    if request.method == 'POST':
+        student.school_class_id = request.POST.get('school_class')
+        student.department_id = request.POST.get('department') or None
+        student.guardian_name = request.POST.get('guardian_name', '')
+        student.guardian_phone = request.POST.get('guardian_phone', '')
+        student.save()
+        return redirect('student_list')
+
+    classes = SchoolClass.objects.all()
+    departments = Department.objects.all()
+    return render(request, 'students/edit_student.html', {
+        'student': student,
+        'classes': classes,
+        'departments': departments,
     })
