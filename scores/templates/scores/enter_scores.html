@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Enter Scores</title>
+</head>
+<body>
+    <h1>Enter Scores: {{ allocation.subject }} - {{ allocation.school_class }} ({{ allocation.term }})</h1>
+    <form method="POST">
+        {% csrf_token %}
+        <table border="1" cellpadding="8">
+            <tr>
+                <th>Admission No.</th>
+                <th>Name</th>
+                <th>CA (max 40)</th>
+                <th>Exam (max 60)</th>
+            </tr>
+            {% for student, score in student_score_pairs %}
+            <tr>
+                <td>{{ student.admission_number }}</td>
+                <td>{{ student.user.get_full_name }}</td>
+                <td>
+                    <input type="number" step="0.01" min="0" max="40"
+                           name="ca_{{ student.id }}"
+                           value="{{ score.ca_score|default:'' }}">
+                </td>
+                <td>
+                    <input type="number" step="0.01" min="0" max="60"
+                           name="exam_{{ student.id }}"
+                           value="{{ score.exam_score|default:'' }}">
+                </td>
+            </tr>
+            {% endfor %}
+        </table>
+        <br>
+        <button type="submit">Save All Scores</button>
+    </form>
+    <p><a href="{% url 'select_allocation' %}">Back to subject list</a></p>
+</body>
+</html>
