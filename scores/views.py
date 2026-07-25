@@ -3,6 +3,10 @@ from django.contrib.auth.decorators import login_required
 from allocations.models import SubjectAllocation
 from students.models import Student
 from .models import Score
+from .models import get_report_card_rows
+from django.http import HttpResponse
+from xhtml2pdf import pisa
+from django.template.loader import get_template
 
 
 @login_required
@@ -110,11 +114,11 @@ def edit_report_extra(request, student_id, term_id):
 def report_card(request, student_id, term_id):
     student = get_object_or_404(Student, id=student_id)
     term = get_object_or_404(Term, id=term_id)
-    scores = Score.objects.filter(student=student, term=term)
+    rows = get_report_card_rows(student, term)
     extra = ReportCardExtra.objects.filter(student=student, term=term).first()
 
-    total = sum(s.total_score for s in scores)
-    average = round(total / scores.count(), 2) if scores.count() else 0
+    total = sum(row['total_score'] for row in rows)
+    average = round(total / len(rows), 2) if rows else 0
 
     class_results = get_class_results(student.school_class, term)
     position = next((r['position'] for r in class_results if r['student'].id == student.id), '-')
@@ -122,9 +126,43 @@ def report_card(request, student_id, term_id):
     return render(request, 'scores/report_card.html', {
         'student': student,
         'term': term,
-        'scores': scores,
+        'rows': rows,
         'extra': extra,
         'total': total,
         'average': average,
         'position': position,
     })
+
+
+
+@login_required
+def report_card_pdf(request, student_id, term_id):
+    student = get_object_or_404(Student, id=student_id)
+    term = get_object_or_404(Term, id=term_id)
+    rows = get_report_card_rows(student, term)
+    extra = ReportCardExtra.objects.filter(student=student, term=term).first()
+
+    total = sum(row['total_score'] for row in rows)
+    average = round(total / len(rows), 2) if rows else 0
+
+    class_results = get_class_results(student.school_class, term)
+    position = next((r['position'] for r in class_results if r['student'].id == student.id), '-')
+
+    template = get_template('scores/report_card_pdf.html')
+    html = template.render({
+        'student': student,
+        'term': term,
+        'rows': rows,
+        'extra': extra,
+        'total': total,
+        'average': average,
+        'position': position,
+    })
+
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="{student.admission_number}_report_card.pdf"'
+
+    pisa_status = pisa.CreatePDF(html, dest=response)
+    if pisa_status.err:
+        return HttpResponse('We had some errors generating the PDF <pre>' + html + '</pre>')
+    return response

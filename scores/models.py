@@ -99,3 +99,66 @@ class ReportCardExtra(models.Model):
 
     def __str__(self):
         return f"{self.student} - {self.term} extras"
+
+
+def get_report_card_rows(student, term):
+    """
+    Returns subject rows for a report card, combining parent/sub-subjects
+    into a single averaged row where applicable.
+    """
+    all_scores = Score.objects.filter(student=student, term=term).select_related('subject', 'subject__parent')
+
+    standalone_rows = []
+    parent_groups = {}  # parent_subject -> list of scores
+
+    for score in all_scores:
+        subject = score.subject
+        if subject.parent:
+            parent_groups.setdefault(subject.parent, []).append(score)
+        else:
+            standalone_rows.append({
+                'subject_name': subject.name,
+                'code': subject.code,
+                'ca_score': score.ca_score,
+                'exam_score': score.exam_score,
+                'total_score': score.total_score,
+                'grade': score.grade,
+            })
+
+    combined_rows = []
+    for parent_subject, child_scores in parent_groups.items():
+        count = len(child_scores)
+        avg_ca = sum(s.ca_score for s in child_scores) / count
+        avg_exam = sum(s.exam_score for s in child_scores) / count
+        avg_total = avg_ca + avg_exam
+        combined_rows.append({
+            'subject_name': parent_subject.name,
+            'code': parent_subject.code,
+            'ca_score': round(avg_ca, 2),
+            'exam_score': round(avg_exam, 2),
+            'total_score': round(avg_total, 2),
+            'grade': _grade_from_total(avg_total),
+        })
+
+    return standalone_rows + combined_rows
+
+
+def _grade_from_total(total):
+    if total >= 75:
+        return 'A1'
+    elif total >= 70:
+        return 'B2'
+    elif total >= 65:
+        return 'B3'
+    elif total >= 60:
+        return 'C4'
+    elif total >= 55:
+        return 'C5'
+    elif total >= 50:
+        return 'C6'
+    elif total >= 45:
+        return 'D7'
+    elif total >= 40:
+        return 'E8'
+    else:
+        return 'F9'
