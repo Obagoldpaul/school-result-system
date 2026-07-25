@@ -6,6 +6,17 @@
 <body>
     <h1>All Students</h1>
     <p><a href="{% url 'register_student' %}">+ Register New Student</a></p>
+
+    <form method="GET">
+        <label>Filter by Class:</label>
+        <select name="class" onchange="this.form.submit()">
+            <option value="">-- All Classes --</option>
+            {% for c in classes %}
+            <option value="{{ c.id }}" {% if c.id == selected_class %}selected{% endif %}>{{ c.name }}</option>
+            {% endfor %}
+        </select>
+    </form>
+
     <table border="1" cellpadding="8">
         <tr>
             <th>Admission No.</th>
