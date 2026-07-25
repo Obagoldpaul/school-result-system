@@ -81,3 +81,21 @@ def get_class_results(school_class, term):
         result['position'] = index
 
     return results
+
+
+class ReportCardExtra(models.Model):
+    """Holds the non-score parts of a report card: remarks and attendance."""
+    student = models.ForeignKey('students.Student', on_delete=models.CASCADE)
+    term = models.ForeignKey('academics.Term', on_delete=models.CASCADE)
+
+    days_present = models.PositiveIntegerField(null=True, blank=True)
+    days_school_opened = models.PositiveIntegerField(null=True, blank=True)
+
+    teacher_remark = models.TextField(blank=True)
+    principal_remark = models.TextField(blank=True)
+
+    class Meta:
+        unique_together = ('student', 'term')
+
+    def __str__(self):
+        return f"{self.student} - {self.term} extras"

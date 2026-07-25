@@ -81,3 +81,50 @@ def class_results(request):
         'selected_class': selected_class,
         'selected_term': selected_term,
     })
+
+
+from .forms import ReportCardExtraForm
+from .models import ReportCardExtra
+
+
+@login_required
+def edit_report_extra(request, student_id, term_id):
+    student = get_object_or_404(Student, id=student_id)
+    term = get_object_or_404(Term, id=term_id)
+    extra, created = ReportCardExtra.objects.get_or_create(student=student, term=term)
+
+    if request.method == 'POST':
+        form = ReportCardExtraForm(request.POST, instance=extra)
+        if form.is_valid():
+            form.save()
+            return redirect('report_card', student_id=student.id, term_id=term.id)
+    else:
+        form = ReportCardExtraForm(instance=extra)
+
+    return render(request, 'scores/edit_report_extra.html', {
+        'form': form, 'student': student, 'term': term
+    })
+
+
+@login_required
+def report_card(request, student_id, term_id):
+    student = get_object_or_404(Student, id=student_id)
+    term = get_object_or_404(Term, id=term_id)
+    scores = Score.objects.filter(student=student, term=term)
+    extra = ReportCardExtra.objects.filter(student=student, term=term).first()
+
+    total = sum(s.total_score for s in scores)
+    average = round(total / scores.count(), 2) if scores.count() else 0
+
+    class_results = get_class_results(student.school_class, term)
+    position = next((r['position'] for r in class_results if r['student'].id == student.id), '-')
+
+    return render(request, 'scores/report_card.html', {
+        'student': student,
+        'term': term,
+        'scores': scores,
+        'extra': extra,
+        'total': total,
+        'average': average,
+        'position': position,
+    })

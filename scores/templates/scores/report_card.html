@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Report Card</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 700px; margin: auto; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { border: 1px solid #333; padding: 6px; text-align: left; }
+        .header { text-align: center; }
+        .summary { margin-top: 15px; }
+        .remarks { margin-top: 15px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>School Result Management System</h1>
+        <h2>{{ term }}</h2>
+    </div>
+
+    <p><strong>Name:</strong> {{ student.user.get_full_name }}</p>
+    <p><strong>Admission No:</strong> {{ student.admission_number }}</p>
+    <p><strong>Class:</strong> {{ student.school_class }}</p>
+    {% if student.department %}<p><strong>Department:</strong> {{ student.department }}</p>{% endif %}
+
+    <table>
+        <tr>
+            <th>Subject</th>
+            <th>CA (40)</th>
+            <th>Exam (60)</th>
+            <th>Total (100)</th>
+            <th>Grade</th>
+        </tr>
+        {% for score in scores %}
+        <tr>
+            <td>{{ score.subject }}</td>
+            <td>{{ score.ca_score }}</td>
+            <td>{{ score.exam_score }}</td>
+            <td>{{ score.total_score }}</td>
+            <td>{{ score.grade }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    <div class="summary">
+        <p><strong>Total Score:</strong> {{ total }}</p>
+        <p><strong>Average:</strong> {{ average }}</p>
+        <p><strong>Position in Class:</strong> {{ position }}</p>
+        {% if extra %}
+        <p><strong>Attendance:</strong> {{ extra.days_present|default:"-" }} / {{ extra.days_school_opened|default:"-" }} days</p>
+        {% endif %}
+    </div>
+
+    <div class="remarks">
+        <p><strong>Teacher's Remark:</strong> {{ extra.teacher_remark|default:"-" }}</p>
+        <p><strong>Principal's Remark:</strong> {{ extra.principal_remark|default:"-" }}</p>
+    </div>
+
+    <p><strong>Grading Key:</strong> A1 (75-100) | B2 (70-74) | B3 (65-69) | C4 (60-64) | C5 (55-59) | C6 (50-54) | D7 (45-49) | E8 (40-44) | F9 (0-39)</p>
+
+    <p><a href="{% url 'edit_report_extra' student.id term.id %}">Edit Remarks/Attendance</a></p>
+</body>
+</html>
