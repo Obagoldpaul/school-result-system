@@ -14,7 +14,11 @@ from .models import ReportCardExtra
 class ReportCardExtraForm(forms.ModelForm):
     class Meta:
         model = ReportCardExtra
-        fields = ['days_present', 'days_school_opened', 'teacher_remark', 'principal_remark']
+        fields = [
+            'days_present', 'days_school_opened',
+            'teacher_remark', 'principal_remark',
+            'responsibility', 'leadership', 'hardworking', 'neatness',
+        ]
 
     def clean(self):
         cleaned_data = super().clean()

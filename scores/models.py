@@ -83,8 +83,19 @@ def get_class_results(school_class, term):
     return results
 
 
+
+
 class ReportCardExtra(models.Model):
     """Holds the non-score parts of a report card: remarks and attendance."""
+
+    class HabitRating(models.TextChoices):
+        A = 'A', 'A'
+        B = 'B', 'B'
+        C = 'C', 'C'
+        D = 'D', 'D'
+        E = 'E', 'E'
+        F = 'F', 'F'
+
     student = models.ForeignKey('students.Student', on_delete=models.CASCADE)
     term = models.ForeignKey('academics.Term', on_delete=models.CASCADE)
 
@@ -94,12 +105,16 @@ class ReportCardExtra(models.Model):
     teacher_remark = models.TextField(blank=True)
     principal_remark = models.TextField(blank=True)
 
+    responsibility = models.CharField(max_length=1, choices=HabitRating.choices, blank=True)
+    leadership = models.CharField(max_length=1, choices=HabitRating.choices, blank=True)
+    hardworking = models.CharField(max_length=1, choices=HabitRating.choices, blank=True)
+    neatness = models.CharField(max_length=1, choices=HabitRating.choices, blank=True)
+
     class Meta:
         unique_together = ('student', 'term')
 
     def __str__(self):
         return f"{self.student} - {self.term} extras"
-
 
 def get_report_card_rows(student, term):
     """
