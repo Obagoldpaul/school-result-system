@@ -51,3 +51,33 @@ def enter_scores(request, allocation_id):
         'allocation': allocation,
         'student_score_pairs': student_score_pairs,
     })
+
+
+from students.models import SchoolClass
+from academics.models import Term
+from .models import get_class_results
+
+
+@login_required
+def class_results(request):
+    classes = SchoolClass.objects.all()
+    terms = Term.objects.all()
+    results = None
+    selected_class = None
+    selected_term = None
+
+    class_id = request.GET.get('class')
+    term_id = request.GET.get('term')
+
+    if class_id and term_id:
+        selected_class = get_object_or_404(SchoolClass, id=class_id)
+        selected_term = get_object_or_404(Term, id=term_id)
+        results = get_class_results(selected_class, selected_term)
+
+    return render(request, 'scores/class_results.html', {
+        'classes': classes,
+        'terms': terms,
+        'results': results,
+        'selected_class': selected_class,
+        'selected_term': selected_term,
+    })

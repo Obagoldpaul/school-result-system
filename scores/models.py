@@ -50,4 +50,34 @@ class Score(models.Model):
             return 'F9'
 
     def __str__(self):
-        return f"{self.student} - {self.subject} - {self.term}: {self.total_score}"
+        return f"{self.student} - {self.subject} - {self.term}: {self.total_score} ({self.grade})"
+
+
+def get_class_results(school_class, term):
+    """
+    Returns a list of dicts, one per student, with total score,
+    average, and position — sorted by total score descending.
+    """
+    from students.models import Student
+
+    students = Student.objects.filter(school_class=school_class, is_active=True)
+    results = []
+
+    for student in students:
+        scores = Score.objects.filter(student=student, term=term)
+        if not scores.exists():
+            continue
+        total = sum(s.total_score for s in scores)
+        average = total / scores.count()
+        results.append({
+            'student': student,
+            'scores': scores,
+            'total': total,
+            'average': round(average, 2),
+        })
+
+    results.sort(key=lambda r: r['total'], reverse=True)
+    for index, result in enumerate(results, start=1):
+        result['position'] = index
+
+    return results
