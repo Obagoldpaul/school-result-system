@@ -1,38 +1,80 @@
+{% load static %}
 <!DOCTYPE html>
 <html>
 <head>
     <title>Report Card</title>
     <style>
-        body { font-family: Arial, sans-serif; max-width: 700px; margin: auto; }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th, td { border: 1px solid #333; padding: 6px; text-align: left; }
-        .header { text-align: center; }
-        .summary { margin-top: 15px; }
-        .remarks { margin-top: 15px; }
+        body { font-family: Arial, sans-serif; font-size: 12px; }
+        table { width: 100%; border-collapse: collapse; }
+        td, th { border: 1px solid #333; padding: 5px; font-size: 11px; }
+        .no-border td { border: none; padding: 2px; }
+        .school-header { text-align: center; }
+        .school-header h1 { color: #1a5c1a; font-size: 18px; margin: 4px 0; }
+        .school-header p { font-size: 10px; margin: 2px 0; }
+        .report-title { background-color: #1a5c1a; color: white; text-align: center; padding: 5px; font-weight: bold; }
+        .term-banner { background-color: #d4f0d4; text-align: center; padding: 4px; font-weight: bold; border: 1px solid #333; }
     </style>
 </head>
 <body>
-    <div class="header">
-        <h1>School Result Management System</h1>
-        <h2>{{ term }}</h2>
+
+    <table class="no-border">
+        <tr>
+            <td style="width:50%; vertical-align: top;">
+                <table>
+                    <tr><td><strong>TO:</strong> Mr./Mrs. {{ student.guardian_name|default:"________________" }}</td></tr>
+                </table>
+                <br>
+                <table>
+                    <tr><td>
+                        <strong>GRADING SCALE</strong><br>
+                        A1 75-100 | B2 70-74 | B3 65-69<br>
+                        C4 60-64 | C5 55-59 | C6 50-54<br>
+                        D7 45-49 | E8 40-44 | F9 0-39
+                    </td></tr>
+                </table>
+            </td>
+            <td style="width:50%; vertical-align: top;">
+                <table>
+                    <tr><td><strong>Student's Name:</strong><br>{{ student.user.get_full_name }}</td></tr>
+                </table>
+                <br>
+                <table>
+                    <tr><td>
+                        <strong>Session:</strong> {{ term.session }}<br>
+                        <strong>Class:</strong> {{ student.school_class }}
+                    </td></tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+
+    <br>
+    <div class="term-banner">{{ term.get_name_display|default:term }}</div>
+    <br>
+
+    <div class="school-header">
+        <img src="{% static 'images/logo.png' %}" height="60"><br>
+        <h1>GREAT GOSHENLAND BLOSSOM SCHOOL</h1>
+        <p>5, Onasanya Close | Gbarinmole | Ofada | Ogun State | Nigeria</p>
+        <p>Tel: 08039471352, 08034465764 | Email: greatgoshenlandcollege@gmail.com</p>
     </div>
 
-    <p><strong>Name:</strong> {{ student.user.get_full_name }}</p>
-    <p><strong>Admission No:</strong> {{ student.admission_number }}</p>
-    <p><strong>Class:</strong> {{ student.school_class }}</p>
-    {% if student.department %}<p><strong>Department:</strong> {{ student.department }}</p>{% endif %}
+    <div class="report-title">{{ term.session }} ACADEMIC PERFORMANCE REPORT</div>
+    <br>
 
     <table>
         <tr>
-            <th>Subject</th>
-            <th>CA (40)</th>
-            <th>Exam (60)</th>
-            <th>Total (100)</th>
-            <th>Grade</th>
+            <th style="width:30%;">Course</th>
+            <th style="width:10%;">Code</th>
+            <th style="width:15%;">C.A (40)</th>
+            <th style="width:15%;">Exam (60)</th>
+            <th style="width:15%;">Total (100)</th>
+            <th style="width:15%;">Grade</th>
         </tr>
         {% for row in rows %}
         <tr>
             <td>{{ row.subject_name }}</td>
+            <td>{{ row.code|default:"-" }}</td>
             <td>{{ row.ca_score }}</td>
             <td>{{ row.exam_score }}</td>
             <td>{{ row.total_score }}</td>
@@ -41,22 +83,42 @@
         {% endfor %}
     </table>
 
-    <div class="summary">
-        <p><strong>Total Score:</strong> {{ total }}</p>
-        <p><strong>Average:</strong> {{ average }}</p>
-        <p><strong>Position in Class:</strong> {{ position }}</p>
-        {% if extra %}
-        <p><strong>Attendance:</strong> {{ extra.days_present|default:"-" }} / {{ extra.days_school_opened|default:"-" }} days</p>
-        {% endif %}
-    </div>
+    <br>
 
-    <div class="remarks">
-        <p><strong>Teacher's Remark:</strong> {{ extra.teacher_remark|default:"-" }}</p>
-        <p><strong>Principal's Remark:</strong> {{ extra.principal_remark|default:"-" }}</p>
-    </div>
+    <table>
+        <tr><td style="width:70%;"><strong>OVERALL PERFORMANCE</strong></td><td>{{ total }}</td></tr>
+        <tr><td><strong>PERCENTAGE</strong></td><td>{{ percentage }}%</td></tr>
+        <tr><td><strong>MARKS OBTAINABLE</strong></td><td>{{ marks_obtainable }}</td></tr>
+        <tr><td><strong>POSITION IN CLASS</strong></td><td>{{ position }}</td></tr>
+    </table>
 
-    <p><strong>Grading Key:</strong> A1 (75-100) | B2 (70-74) | B3 (65-69) | C4 (60-64) | C5 (55-59) | C6 (50-54) | D7 (45-49) | E8 (40-44) | F9 (0-39)</p>
+    <br>
 
-    <p><a href="{% url 'edit_report_extra' student.id term.id %}">Edit Remarks/Attendance</a></p>
+    <table>
+        <tr>
+            <th style="width:25%;">Social Habits</th>
+            <th>A</th><th>B</th><th>C</th><th>D</th><th>E</th><th>F</th>
+        </tr>
+        <tr><td>Responsibility</td><td colspan="6">{{ extra.responsibility|default:"-" }}</td></tr>
+        <tr><td>Leadership</td><td colspan="6">{{ extra.leadership|default:"-" }}</td></tr>
+        <tr><td>Hardworking</td><td colspan="6">{{ extra.hardworking|default:"-" }}</td></tr>
+        <tr><td>Neatness</td><td colspan="6">{{ extra.neatness|default:"-" }}</td></tr>
+    </table>
+
+    <br>
+
+    <p><strong>Attendance:</strong> {{ extra.days_present|default:"-" }} / {{ extra.days_school_opened|default:"-" }} days</p>
+
+    <table>
+        <tr>
+            <td style="width:50%; vertical-align: top;">
+                <strong>Class Teacher's Comment:</strong><br>{{ extra.teacher_remark|default:"-" }}
+            </td>
+            <td style="width:50%; vertical-align: top;">
+                <strong>Principal's Comment:</strong><br>{{ extra.principal_remark|default:"-" }}
+            </td>
+        </tr>
+    </table>
+
 </body>
 </html>

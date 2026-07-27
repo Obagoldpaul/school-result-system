@@ -1,31 +1,67 @@
+{% load static %}
 <!DOCTYPE html>
 <html>
 <head>
     <title>Report Card</title>
     <style>
-        body { font-family: Arial, sans-serif; max-width: 700px; margin: auto; }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th, td { border: 1px solid #333; padding: 6px; text-align: left; }
-        .header { text-align: center; }
-        .summary { margin-top: 15px; }
-        .remarks { margin-top: 15px; }
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: auto; padding: 15px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { border: 1px solid #333; padding: 6px; text-align: left; font-size: 13px; }
+        .top-row { display: flex; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
+        .box { border: 1px solid #333; padding: 8px; flex: 1; }
+        .school-header { text-align: center; margin: 15px 0; }
+        .school-header img { height: 70px; }
+        .school-header h1 { margin: 5px 0; color: #1a5c1a; font-size: 22px; }
+        .school-header p { margin: 2px 0; font-size: 12px; color: #333; }
+        .report-title { background: #1a5c1a; color: white; text-align: center; padding: 6px; font-weight: bold; margin: 10px 0; }
+        .term-banner { background: #d4f0d4; text-align: center; padding: 5px; font-weight: bold; border: 1px solid #333; }
+        .grading-box { font-size: 11px; }
+        .summary-table td { font-weight: bold; }
+        .habits-table th, .habits-table td { text-align: center; }
+        .signature-box { display: flex; margin-top: 15px; }
+        .signature-box .box { min-height: 50px; }
     </style>
 </head>
 <body>
-    <div class="header">
-        <h1>School Result Management System</h1>
-        <h2>{{ term }}</h2>
+
+    <div class="top-row">
+        <div class="box">
+            <strong>TO:</strong> Mr./Mrs. {{ student.guardian_name|default:"________________" }}
+        </div>
+        <div class="box">
+            <strong>Student's Name:</strong><br>{{ student.user.get_full_name }}
+        </div>
     </div>
 
-    <p><strong>Name:</strong> {{ student.user.get_full_name }}</p>
-    <p><strong>Admission No:</strong> {{ student.admission_number }}</p>
-    <p><strong>Class:</strong> {{ student.school_class }}</p>
-    {% if student.department %}<p><strong>Department:</strong> {{ student.department }}</p>{% endif %}
+    <div class="top-row">
+        <div class="box grading-box">
+            <strong>GRADING SCALE</strong><br>
+            A1 75-100 | B2 70-74 | B3 65-69<br>
+            C4 60-64 | C5 55-59 | C6 50-54<br>
+            D7 45-49 | E8 40-44 | F9 0-39
+        </div>
+        <div class="box">
+            <strong>Session:</strong> {{ term.session }}<br>
+            <strong>Class:</strong> {{ student.school_class }}
+        </div>
+    </div>
+
+    <div class="term-banner">{{ term.get_name_display|default:term }}</div>
+
+    <div class="school-header">
+        <img src="{% static 'images/logo.png' %}" alt="School Logo">
+        <h1>GREAT GOSHENLAND BLOSSOM SCHOOL</h1>
+        <p>5, Onasanya Close | Gbarinmole | Ofada | Ogun State | Nigeria</p>
+        <p>Tel: 08039471352, 08034465764 | Email: greatgoshenlandcollege@gmail.com</p>
+    </div>
+
+    <div class="report-title">{{ term.session }} ACADEMIC PERFORMANCE REPORT</div>
 
     <table>
         <tr>
-            <th>Subject</th>
-            <th>CA (40)</th>
+            <th>Course</th>
+            <th>Code</th>
+            <th>C.A (40)</th>
             <th>Exam (60)</th>
             <th>Total (100)</th>
             <th>Grade</th>
@@ -33,31 +69,81 @@
         {% for row in rows %}
         <tr>
             <td>{{ row.subject_name }}</td>
+            <td>{{ row.code|default:"-" }}</td>
             <td>{{ row.ca_score }}</td>
             <td>{{ row.exam_score }}</td>
             <td>{{ row.total_score }}</td>
             <td>{{ row.grade }}</td>
         </tr>
         {% endfor %}
+        <tr class="summary-table">
+            <td colspan="4">OVERALL PERFORMANCE</td>
+            <td>{{ total }}</td>
+            <td></td>
+        </tr>
+        <tr class="summary-table">
+            <td colspan="4">PERCENTAGE</td>
+            <td>{{ percentage }}%</td>
+            <td></td>
+        </tr>
+        <tr class="summary-table">
+            <td colspan="4">MARKS OBTAINABLE</td>
+            <td>{{ marks_obtainable }}</td>
+            <td></td>
+        </tr>
+        <tr class="summary-table">
+            <td colspan="4">POSITION IN CLASS</td>
+            <td>{{ position }}</td>
+            <td></td>
+        </tr>
     </table>
 
-    <div class="summary">
-        <p><strong>Total Score:</strong> {{ total }}</p>
-        <p><strong>Average:</strong> {{ average }}</p>
-        <p><strong>Position in Class:</strong> {{ position }}</p>
-        {% if extra %}
-        <p><strong>Attendance:</strong> {{ extra.days_present|default:"-" }} / {{ extra.days_school_opened|default:"-" }} days</p>
-        {% endif %}
+    <br>
+
+    <table class="habits-table">
+        <tr>
+            <th>Social Habits</th>
+            <th>A</th>
+            <th>B</th>
+            <th>C</th>
+            <th>D</th>
+            <th>E</th>
+            <th>F</th>
+        </tr>
+        <tr>
+            <td>Responsibility</td>
+            <td colspan="6">{{ extra.responsibility|default:"-" }}</td>
+        </tr>
+        <tr>
+            <td>Leadership</td>
+            <td colspan="6">{{ extra.leadership|default:"-" }}</td>
+        </tr>
+        <tr>
+            <td>Hardworking</td>
+            <td colspan="6">{{ extra.hardworking|default:"-" }}</td>
+        </tr>
+        <tr>
+            <td>Neatness</td>
+            <td colspan="6">{{ extra.neatness|default:"-" }}</td>
+        </tr>
+    </table>
+
+    <br>
+
+    <p><strong>Attendance:</strong> {{ extra.days_present|default:"-" }} / {{ extra.days_school_opened|default:"-" }} days</p>
+
+    <div class="signature-box">
+        <div class="box">
+            <strong>Class Teacher's Comment:</strong><br>{{ extra.teacher_remark|default:"-" }}
+        </div>
+        <div class="box">
+            <strong>Principal's Comment:</strong><br>{{ extra.principal_remark|default:"-" }}
+        </div>
     </div>
 
-    <div class="remarks">
-        <p><strong>Teacher's Remark:</strong> {{ extra.teacher_remark|default:"-" }}</p>
-        <p><strong>Principal's Remark:</strong> {{ extra.principal_remark|default:"-" }}</p>
-    </div>
-
-    <p><strong>Grading Key:</strong> A1 (75-100) | B2 (70-74) | B3 (65-69) | C4 (60-64) | C5 (55-59) | C6 (50-54) | D7 (45-49) | E8 (40-44) | F9 (0-39)</p>
-
+    <br>
     <p><a href="{% url 'report_card_pdf' student.id term.id %}">Download as PDF</a></p>
     <p><a href="{% url 'edit_report_extra' student.id term.id %}">Edit Remarks/Attendance</a></p>
+
 </body>
 </html>

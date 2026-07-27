@@ -118,7 +118,10 @@ def report_card(request, student_id, term_id):
     extra = ReportCardExtra.objects.filter(student=student, term=term).first()
 
     total = sum(row['total_score'] for row in rows)
-    average = round(total / len(rows), 2) if rows else 0
+    subject_count = len(rows)
+    average = round(total / subject_count, 2) if subject_count else 0
+    marks_obtainable = subject_count * 100
+    percentage = round((total / marks_obtainable) * 100, 1) if marks_obtainable else 0
 
     class_results = get_class_results(student.school_class, term)
     position = next((r['position'] for r in class_results if r['student'].id == student.id), '-')
@@ -131,6 +134,8 @@ def report_card(request, student_id, term_id):
         'total': total,
         'average': average,
         'position': position,
+        'marks_obtainable': marks_obtainable,
+        'percentage': percentage,
     })
 
 
@@ -143,7 +148,10 @@ def report_card_pdf(request, student_id, term_id):
     extra = ReportCardExtra.objects.filter(student=student, term=term).first()
 
     total = sum(row['total_score'] for row in rows)
-    average = round(total / len(rows), 2) if rows else 0
+    subject_count = len(rows)
+    average = round(total / subject_count, 2) if subject_count else 0
+    marks_obtainable = subject_count * 100
+    percentage = round((total / marks_obtainable) * 100, 1) if marks_obtainable else 0
 
     class_results = get_class_results(student.school_class, term)
     position = next((r['position'] for r in class_results if r['student'].id == student.id), '-')
@@ -157,6 +165,8 @@ def report_card_pdf(request, student_id, term_id):
         'total': total,
         'average': average,
         'position': position,
+        'marks_obtainable': marks_obtainable,
+        'percentage': percentage,
     })
 
     response = HttpResponse(content_type='application/pdf')
