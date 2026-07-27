@@ -7,7 +7,19 @@ from .models import get_report_card_rows
 from django.http import HttpResponse
 from xhtml2pdf import pisa
 from django.template.loader import get_template
+import os
+from django.conf import settings
 
+
+def link_callback(uri, rel):
+    """Convert HTML URIs to absolute system paths so xhtml2pdf can find images/CSS."""
+    if uri.startswith(settings.STATIC_URL):
+        path = os.path.join(settings.STATICFILES_DIRS[0], uri.replace(settings.STATIC_URL, ""))
+    else:
+        return uri
+    if not os.path.isfile(path):
+        raise Exception(f'Static file not found: {path}')
+    return path
 
 @login_required
 def select_allocation(request):
@@ -172,7 +184,7 @@ def report_card_pdf(request, student_id, term_id):
     response = HttpResponse(content_type='application/pdf')
     response['Content-Disposition'] = f'attachment; filename="{student.admission_number}_report_card.pdf"'
 
-    pisa_status = pisa.CreatePDF(html, dest=response)
+    pisa_status = pisa.CreatePDF(html, dest=response, link_callback=link_callback)
     if pisa_status.err:
         return HttpResponse('We had some errors generating the PDF <pre>' + html + '</pre>')
     return response
