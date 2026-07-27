@@ -64,20 +64,26 @@
 
     <table>
         <tr>
-            <th style="width:30%;">Course</th>
-            <th style="width:10%;">Code</th>
-            <th style="width:15%;">C.A (40)</th>
-            <th style="width:15%;">Exam (60)</th>
-            <th style="width:15%;">Total (100)</th>
-            <th style="width:15%;">Grade</th>
+            <th>Course</th>
+            <th>Code</th>
+            <th>C.A (40)</th>
+            <th>Exam (60)</th>
+            {% for t in relevant_terms %}
+            <th>{{ t.get_name_display }} Total</th>
+            {% endfor %}
+            <th>Average</th>
+            <th>Grade</th>
         </tr>
-        {% for row in rows %}
+        {% for row in cumulative_rows %}
         <tr>
             <td>{{ row.subject_name }}</td>
             <td>{{ row.code|default:"-" }}</td>
             <td>{{ row.ca_score }}</td>
             <td>{{ row.exam_score }}</td>
-            <td>{{ row.total_score }}</td>
+            {% for score in row.term_scores %}
+            <td>{{ score|default:"-" }}</td>
+            {% endfor %}
+            <td>{{ row.average }}</td>
             <td>{{ row.grade }}</td>
         </tr>
         {% endfor %}
@@ -86,8 +92,9 @@
     <br>
 
     <table>
-        <tr><td style="width:70%;"><strong>OVERALL PERFORMANCE</strong></td><td>{{ total }}</td></tr>
-        <tr><td><strong>PERCENTAGE</strong></td><td>{{ percentage }}%</td></tr>
+        <tr><td style="width:70%;"><strong>OVERALL PERFORMANCE (This Term)</strong></td><td>{{ total }}</td></tr>
+        <tr><td><strong>THIS TERM PERCENTAGE</strong></td><td>{{ percentage }}%</td></tr>
+        <tr><td><strong>OVERALL CUMULATIVE PERCENTAGE</strong></td><td>{{ overall_percentage }}%</td></tr>
         <tr><td><strong>MARKS OBTAINABLE</strong></td><td>{{ marks_obtainable }}</td></tr>
         <tr><td><strong>POSITION IN CLASS</strong></td><td>{{ position }}</td></tr>
     </table>

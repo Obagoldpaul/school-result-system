@@ -85,6 +85,7 @@ def get_class_results(school_class, term):
 
 
 
+
 class ReportCardExtra(models.Model):
     """Holds the non-score parts of a report card: remarks and attendance."""
 
@@ -177,3 +178,58 @@ def _grade_from_total(total):
         return 'E8'
     else:
         return 'F9'
+
+
+def get_term_order(term):
+    order_map = {'FIRST': 1, 'SECOND': 2, 'THIRD': 3}
+    return order_map.get(term.name, 0)
+
+
+def get_cumulative_report_rows(student, term):
+    """
+    Returns per-subject rows showing CA/Exam for the current term,
+    Total scores across all terms up to and including the given term
+    (within the same session), and a cumulative average.
+    """
+    from academics.models import Term
+
+    current_order = get_term_order(term)
+    terms_in_session = Term.objects.filter(session=term.session)
+    relevant_terms = sorted(
+        [t for t in terms_in_session if get_term_order(t) <= current_order],
+        key=get_term_order
+    )
+
+    subject_totals = {}
+    subject_code = {}
+    current_term_detail = {}
+
+    for t in relevant_terms:
+        term_rows = get_report_card_rows(student, t)
+        for row in term_rows:
+            key = row['subject_name']
+            subject_code[key] = row['code']
+            subject_totals.setdefault(key, {})[t.id] = row['total_score']
+            if t.id == term.id:
+                current_term_detail[key] = {
+                    'ca_score': row['ca_score'],
+                    'exam_score': row['exam_score'],
+                }
+
+    rows = []
+    for subject_name, term_scores in subject_totals.items():
+        term_values = [term_scores.get(t.id) for t in relevant_terms]
+        available_values = [v for v in term_values if v is not None]
+        cumulative_average = round(sum(available_values) / len(available_values), 2) if available_values else 0
+        detail = current_term_detail.get(subject_name, {})
+        rows.append({
+            'subject_name': subject_name,
+            'code': subject_code[subject_name],
+            'ca_score': detail.get('ca_score', '-'),
+            'exam_score': detail.get('exam_score', '-'),
+            'term_scores': term_values,
+            'average': cumulative_average,
+            'grade': _grade_from_total(cumulative_average),
+        })
+
+    return rows, relevant_terms

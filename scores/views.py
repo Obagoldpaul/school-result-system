@@ -9,6 +9,7 @@ from xhtml2pdf import pisa
 from django.template.loader import get_template
 import os
 from django.conf import settings
+from .models import get_cumulative_report_rows
 
 
 def link_callback(uri, rel):
@@ -126,14 +127,20 @@ def edit_report_extra(request, student_id, term_id):
 def report_card(request, student_id, term_id):
     student = get_object_or_404(Student, id=student_id)
     term = get_object_or_404(Term, id=term_id)
-    rows = get_report_card_rows(student, term)
     extra = ReportCardExtra.objects.filter(student=student, term=term).first()
 
-    total = sum(row['total_score'] for row in rows)
-    subject_count = len(rows)
-    average = round(total / subject_count, 2) if subject_count else 0
+    cumulative_rows, relevant_terms = get_cumulative_report_rows(student, term)
+
+    current_term_total = sum(
+        row['ca_score'] + row['exam_score']
+        for row in cumulative_rows if row['ca_score'] != '-'
+    )
+    subject_count = len(cumulative_rows)
     marks_obtainable = subject_count * 100
-    percentage = round((total / marks_obtainable) * 100, 1) if marks_obtainable else 0
+    percentage = round((current_term_total / marks_obtainable) * 100, 1) if marks_obtainable else 0
+    overall_percentage = round(
+        sum(r['average'] for r in cumulative_rows) / len(cumulative_rows), 1
+    ) if cumulative_rows else 0
 
     class_results = get_class_results(student.school_class, term)
     position = next((r['position'] for r in class_results if r['student'].id == student.id), '-')
@@ -141,29 +148,35 @@ def report_card(request, student_id, term_id):
     return render(request, 'scores/report_card.html', {
         'student': student,
         'term': term,
-        'rows': rows,
+        'cumulative_rows': cumulative_rows,
+        'relevant_terms': relevant_terms,
         'extra': extra,
-        'total': total,
-        'average': average,
-        'position': position,
+        'total': current_term_total,
         'marks_obtainable': marks_obtainable,
         'percentage': percentage,
+        'overall_percentage': overall_percentage,
+        'position': position,
     })
-
 
 
 @login_required
 def report_card_pdf(request, student_id, term_id):
     student = get_object_or_404(Student, id=student_id)
     term = get_object_or_404(Term, id=term_id)
-    rows = get_report_card_rows(student, term)
     extra = ReportCardExtra.objects.filter(student=student, term=term).first()
 
-    total = sum(row['total_score'] for row in rows)
-    subject_count = len(rows)
-    average = round(total / subject_count, 2) if subject_count else 0
+    cumulative_rows, relevant_terms = get_cumulative_report_rows(student, term)
+
+    current_term_total = sum(
+        row['ca_score'] + row['exam_score']
+        for row in cumulative_rows if row['ca_score'] != '-'
+    )
+    subject_count = len(cumulative_rows)
     marks_obtainable = subject_count * 100
-    percentage = round((total / marks_obtainable) * 100, 1) if marks_obtainable else 0
+    percentage = round((current_term_total / marks_obtainable) * 100, 1) if marks_obtainable else 0
+    overall_percentage = round(
+        sum(r['average'] for r in cumulative_rows) / len(cumulative_rows), 1
+    ) if cumulative_rows else 0
 
     class_results = get_class_results(student.school_class, term)
     position = next((r['position'] for r in class_results if r['student'].id == student.id), '-')
@@ -172,13 +185,14 @@ def report_card_pdf(request, student_id, term_id):
     html = template.render({
         'student': student,
         'term': term,
-        'rows': rows,
+        'cumulative_rows': cumulative_rows,
+        'relevant_terms': relevant_terms,
         'extra': extra,
-        'total': total,
-        'average': average,
-        'position': position,
+        'total': current_term_total,
         'marks_obtainable': marks_obtainable,
         'percentage': percentage,
+        'overall_percentage': overall_percentage,
+        'position': position,
     })
 
     response = HttpResponse(content_type='application/pdf')
