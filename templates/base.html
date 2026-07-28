@@ -1,0 +1,37 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{% block title %}School Management System{% endblock %}</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; margin: 0; background: #f4f6f4; }
+        nav { background: #1a5c1a; padding: 10px 20px; display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
+        nav img { height: 36px; }
+        nav a { color: white; text-decoration: none; font-size: 14px; }
+        nav a:hover { text-decoration: underline; }
+        nav .brand { font-weight: bold; font-size: 16px; margin-right: 20px; }
+        .content { max-width: 1000px; margin: 20px auto; padding: 0 20px; }
+        table { border-collapse: collapse; width: 100%; }
+        th, td { border: 1px solid #ccc; padding: 6px 10px; text-align: left; }
+    </style>
+</head>
+<body>
+    <nav>
+        <img src="{% static 'images/logo.png' %}" alt="Logo">
+        <span class="brand">GGBS - SRMS</span>
+        <a href="{% url 'dashboard_home' %}">Dashboard</a>
+        <a href="{% url 'student_list' %}">Students</a>
+        <a href="{% url 'teacher_list' %}">Teachers</a>
+        <a href="{% url 'subject_list' %}">Subjects</a>
+        <a href="{% url 'allocation_list' %}">Allocations</a>
+        <a href="{% url 'select_allocation' %}">Enter Scores</a>
+        <a href="{% url 'class_results' %}">Results</a>
+        <a href="/admin/">Admin</a>
+    </nav>
+    <div class="content">
+        {% block content %}
+        {% endblock %}
+    </div>
+</body>
+</html>

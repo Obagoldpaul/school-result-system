@@ -1,44 +1,45 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Dashboard</title>
-    <style>
-        body { font-family: Arial, sans-serif; max-width: 900px; margin: auto; padding: 20px; }
-        .stats { display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 25px; }
-        .stat-box { border: 1px solid #333; padding: 15px 20px; text-align: center; flex: 1; min-width: 120px; }
-        .stat-box .number { font-size: 28px; font-weight: bold; color: #1a5c1a; }
-        .links { display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 25px; }
-        .links a { border: 1px solid #1a5c1a; color: #1a5c1a; padding: 8px 14px; text-decoration: none; }
-        .links a:hover { background: #1a5c1a; color: white; }
-    </style>
-</head>
-<body>
-    <h1>Welcome, {{ request.user.get_full_name|default:request.user.username }}</h1>
-    <p><strong>Current Term:</strong> {{ current_term|default:"Not set" }}</p>
+{% extends 'base.html' %}
+{% load static %}
 
-    <div class="stats">
-        <div class="stat-box"><div class="number">{{ student_count }}</div>Students</div>
-        <div class="stat-box"><div class="number">{{ teacher_count }}</div>Teachers</div>
-        <div class="stat-box"><div class="number">{{ subject_count }}</div>Subjects</div>
-        <div class="stat-box"><div class="number">{{ class_count }}</div>Classes</div>
-        <div class="stat-box"><div class="number">{{ allocation_count }}</div>Allocations</div>
-    </div>
+{% block title %}Dashboard{% endblock %}
 
-    <div class="links">
-        <a href="{% url 'student_list' %}">Students</a>
-        <a href="{% url 'register_student' %}">+ Register Student</a>
-        <a href="{% url 'teacher_list' %}">Teachers</a>
-        <a href="{% url 'register_teacher' %}">+ Register Teacher</a>
-        <a href="{% url 'subject_list' %}">Subjects</a>
-        <a href="{% url 'allocation_list' %}">Subject Allocations</a>
-        <a href="{% url 'select_allocation' %}">Enter Scores</a>
-        <a href="{% url 'class_results' %}">Class Results</a>
-        <a href="/admin/">Admin Panel</a>
-    </div>
+{% block content %}
+<style>
+    .stats { display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 25px; }
+    .stat-box { background: white; border-left: 5px solid #1a5c1a; padding: 15px 20px; text-align: center; flex: 1; min-width: 120px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    .stat-box .number { font-size: 28px; font-weight: bold; color: #1a5c1a; }
+    .section { background: white; padding: 15px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    .section h3 { margin-top: 0; color: #1a5c1a; }
+    .quick-links a {
+        display: inline-block; border: 1px solid #1a5c1a; color: #1a5c1a;
+        padding: 8px 14px; text-decoration: none; margin: 4px 4px 0 0; border-radius: 4px;
+    }
+    .quick-links a:hover { background: #1a5c1a; color: white; }
+</style>
 
-    {% if my_allocations %}
-    <h2>My Teaching Assignments</h2>
-    <table border="1" cellpadding="8">
+<h1>Welcome, {{ request.user.get_full_name|default:request.user.username }}</h1>
+<p><strong>Current Term:</strong> {{ current_term|default:"Not set" }}</p>
+
+<div class="stats">
+    <div class="stat-box"><div class="number">{{ student_count }}</div>Students</div>
+    <div class="stat-box"><div class="number">{{ teacher_count }}</div>Teachers</div>
+    <div class="stat-box"><div class="number">{{ subject_count }}</div>Subjects</div>
+    <div class="stat-box"><div class="number">{{ class_count }}</div>Classes</div>
+    <div class="stat-box"><div class="number">{{ allocation_count }}</div>Allocations</div>
+</div>
+
+<div class="section quick-links">
+    <h3>Quick Actions</h3>
+    <a href="{% url 'register_student' %}">+ Register Student</a>
+    <a href="{% url 'register_teacher' %}">+ Register Teacher</a>
+    <a href="{% url 'select_allocation' %}">Enter Scores</a>
+    <a href="{% url 'class_results' %}">View Class Results</a>
+</div>
+
+{% if my_allocations %}
+<div class="section">
+    <h3>My Teaching Assignments</h3>
+    <table>
         <tr><th>Subject</th><th>Class</th><th>Term</th><th>Action</th></tr>
         {% for a in my_allocations %}
         <tr>
@@ -49,6 +50,6 @@
         </tr>
         {% endfor %}
     </table>
-    {% endif %}
-</body>
-</html>
+</div>
+{% endif %}
+{% endblock %}
