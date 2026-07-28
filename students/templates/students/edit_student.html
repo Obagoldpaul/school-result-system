@@ -1,50 +1,46 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Edit Student</title>
-</head>
-<body>
-    <h1>Edit Student: {{ student.user.get_full_name }}</h1>
-    <form method="POST">
-        {% csrf_token %}
+{% extends 'base.html' %}
+{% block title %}Edit Student{% endblock %}
+{% block content %}
+<h1>Edit Student: {{ student.user.get_full_name }}</h1>
+<form method="POST">
+    {% csrf_token %}
 
-        <label>Class:</label>
-        <select name="school_class">
-            {% for c in classes %}
-            <option value="{{ c.id }}" {% if c.id == student.school_class_id %}selected{% endif %}>{{ c.name }}</option>
-            {% endfor %}
-        </select>
-        <br><br>
-
-        <label>Department:</label>
-        <select name="department">
-            <option value="">-- None --</option>
-            {% for d in departments %}
-            <option value="{{ d.id }}" {% if d.id == student.department_id %}selected{% endif %}>{{ d.name }}</option>
-            {% endfor %}
-        </select>
-        <br><br>
-
-        <label>Guardian Name:</label>
-        <input type="text" name="guardian_name" value="{{ student.guardian_name }}">
-        <br><br>
-
-        <label>Guardian Phone:</label>
-        <input type="text" name="guardian_phone" value="{{ student.guardian_phone }}">
-        <br><br>
-
-        <label>Elective Subjects:</label><br>
-        {% for subject in electives %}
-        <label>
-            <input type="checkbox" name="electives" value="{{ subject.id }}"
-                {% if subject in student.elective_subjects.all %}checked{% endif %}>
-            {{ subject.name }}
-        </label><br>
+    <label>Class:</label>
+    <select name="school_class">
+        {% for c in classes %}
+        <option value="{{ c.id }}" {% if c.id == student.school_class_id %}selected{% endif %}>{{ c.name }}</option>
         {% endfor %}
-        <br>
+    </select>
+    <br><br>
 
-        <button type="submit">Save Changes</button>
-    </form>
-    <p><a href="{% url 'student_list' %}">Back to student list</a></p>
-</body>
-</html>
+    <label>Department:</label>
+    <select name="department">
+        <option value="">-- None --</option>
+        {% for d in departments %}
+        <option value="{{ d.id }}" {% if d.id == student.department_id %}selected{% endif %}>{{ d.name }}</option>
+        {% endfor %}
+    </select>
+    <br><br>
+
+    <label>Guardian Name:</label>
+    <input type="text" name="guardian_name" value="{{ student.guardian_name }}">
+    <br><br>
+
+    <label>Guardian Phone:</label>
+    <input type="text" name="guardian_phone" value="{{ student.guardian_phone }}">
+    <br><br>
+
+    <label>Elective Subjects:</label><br>
+    {% for subject in electives %}
+    <label>
+        <input type="checkbox" name="electives" value="{{ subject.id }}"
+            {% if subject in student.elective_subjects.all %}checked{% endif %}>
+        {{ subject.name }}
+    </label><br>
+    {% endfor %}
+    <br>
+
+    <button type="submit">Save Changes</button>
+</form>
+<p><a href="{% url 'student_list' %}">Back to student list</a></p>
+{% endblock %}

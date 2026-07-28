@@ -1,42 +1,38 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Students</title>
-</head>
-<body>
-    <h1>All Students</h1>
-    <p><a href="{% url 'register_student' %}">+ Register New Student</a></p>
+{% extends 'base.html' %}
+{% block title %}Students{% endblock %}
+{% block content %}
+<h1>All Students</h1>
+<p><a href="{% url 'register_student' %}">+ Register New Student</a></p>
 
-    <form method="GET">
-        <label>Filter by Class:</label>
-        <select name="class" onchange="this.form.submit()">
-            <option value="">-- All Classes --</option>
-            {% for c in classes %}
-            <option value="{{ c.id }}" {% if c.id == selected_class %}selected{% endif %}>{{ c.name }}</option>
-            {% endfor %}
-        </select>
-    </form>
-
-    <table border="1" cellpadding="8">
-        <tr>
-            <th>Admission No.</th>
-            <th>Name</th>
-            <th>Class</th>
-            <th>Department</th>
-            <th>Action</th>
-        </tr>
-        {% for student in students %}
-        <tr>
-            <td>{{ student.admission_number }}</td>
-            <td>{{ student.user.get_full_name }}</td>
-            <td>{{ student.school_class }}</td>
-            <td>{{ student.department|default:"-" }}</td>
-            <td>
-                <a href="{% url 'edit_student' student.id %}">Edit</a> |
-                <a href="{% url 'select_report_term' student.id %}">Report Card</a>
-            </td>
-        </tr>
+<form method="GET">
+    <label>Filter by Class:</label>
+    <select name="class" onchange="this.form.submit()">
+        <option value="">-- All Classes --</option>
+        {% for c in classes %}
+        <option value="{{ c.id }}" {% if c.id == selected_class %}selected{% endif %}>{{ c.name }}</option>
         {% endfor %}
-    </table>
-</body>
-</html>
+    </select>
+</form>
+
+<table>
+    <tr>
+        <th>Admission No.</th>
+        <th>Name</th>
+        <th>Class</th>
+        <th>Department</th>
+        <th>Action</th>
+    </tr>
+    {% for student in students %}
+    <tr>
+        <td>{{ student.admission_number }}</td>
+        <td>{{ student.user.get_full_name }}</td>
+        <td>{{ student.school_class }}</td>
+        <td>{{ student.department|default:"-" }}</td>
+        <td>
+            <a href="{% url 'edit_student' student.id %}">Edit</a> |
+            <a href="{% url 'select_report_term' student.id %}">Report Card</a>
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+{% endblock %}

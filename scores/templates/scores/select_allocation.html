@@ -1,25 +1,21 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Select Class/Subject</title>
-</head>
-<body>
-    <h1>Select Class & Subject to Enter Scores</h1>
-    <table border="1" cellpadding="8">
-        <tr>
-            <th>Subject</th>
-            <th>Class</th>
-            <th>Term</th>
-            <th>Action</th>
-        </tr>
-        {% for a in allocations %}
-        <tr>
-            <td>{{ a.subject }}</td>
-            <td>{{ a.school_class }}</td>
-            <td>{{ a.term }}</td>
-            <td><a href="{% url 'enter_scores' a.id %}">Enter Scores</a></td>
-        </tr>
-        {% endfor %}
-    </table>
-</body>
-</html>
+{% extends 'base.html' %}
+{% block title %}Select Class/Subject{% endblock %}
+{% block content %}
+<h1>Select Class & Subject to Enter Scores</h1>
+<table>
+    <tr>
+        <th>Subject</th>
+        <th>Class</th>
+        <th>Term</th>
+        <th>Action</th>
+    </tr>
+    {% for a in allocations %}
+    <tr>
+        <td>{{ a.subject }}</td>
+        <td>{{ a.school_class }}</td>
+        <td>{{ a.term }}</td>
+        <td><a href="{% url 'enter_scores' a.id %}">Enter Scores</a></td>
+    </tr>
+    {% endfor %}
+</table>
+{% endblock %}

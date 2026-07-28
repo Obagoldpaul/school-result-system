@@ -1,15 +1,11 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Edit Remarks & Attendance</title>
-</head>
-<body>
-    <h1>Remarks & Attendance: {{ student.user.get_full_name }} ({{ term }})</h1>
-    <form method="POST">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit">Save</button>
-    </form>
-    <p><a href="{% url 'report_card' student.id term.id %}">Back to report card</a></p>
-</body>
-</html>
+{% extends 'base.html' %}
+{% block title %}Edit Remarks{% endblock %}
+{% block content %}
+<h1>Remarks & Attendance: {{ student.user.get_full_name }} ({{ term }})</h1>
+<form method="POST">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Save</button>
+</form>
+<p><a href="{% url 'report_card' student.id term.id %}">Back to report card</a></p>
+{% endblock %}

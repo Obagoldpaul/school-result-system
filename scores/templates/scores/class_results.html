@@ -1,51 +1,47 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Class Results</title>
-</head>
-<body>
-    <h1>Class Results</h1>
+{% extends 'base.html' %}
+{% block title %}Class Results{% endblock %}
+{% block content %}
+<h1>Class Results</h1>
 
-    <form method="GET">
-        <label>Class:</label>
-        <select name="class">
-            <option value="">-- Select --</option>
-            {% for c in classes %}
-            <option value="{{ c.id }}" {% if selected_class and c.id == selected_class.id %}selected{% endif %}>{{ c.name }}</option>
-            {% endfor %}
-        </select>
-
-        <label>Term:</label>
-        <select name="term">
-            <option value="">-- Select --</option>
-            {% for t in terms %}
-            <option value="{{ t.id }}" {% if selected_term and t.id == selected_term.id %}selected{% endif %}>{{ t }}</option>
-            {% endfor %}
-        </select>
-
-        <button type="submit">View Results</button>
-    </form>
-
-    {% if results %}
-    <h2>{{ selected_class }} - {{ selected_term }}</h2>
-    <table border="1" cellpadding="8">
-        <tr>
-            <th>Position</th>
-            <th>Name</th>
-            <th>Total</th>
-            <th>Average</th>
-        </tr>
-        {% for r in results %}
-        <tr>
-            <td>{{ r.position }}</td>
-            <td>{{ r.student.user.get_full_name }}</td>
-            <td>{{ r.total }}</td>
-            <td>{{ r.average }}</td>
-        </tr>
+<form method="GET">
+    <label>Class:</label>
+    <select name="class">
+        <option value="">-- Select --</option>
+        {% for c in classes %}
+        <option value="{{ c.id }}" {% if selected_class and c.id == selected_class.id %}selected{% endif %}>{{ c.name }}</option>
         {% endfor %}
-    </table>
-    {% elif selected_class %}
-    <p>No scores recorded yet for this class/term.</p>
-    {% endif %}
-</body>
-</html>
+    </select>
+
+    <label>Term:</label>
+    <select name="term">
+        <option value="">-- Select --</option>
+        {% for t in terms %}
+        <option value="{{ t.id }}" {% if selected_term and t.id == selected_term.id %}selected{% endif %}>{{ t }}</option>
+        {% endfor %}
+    </select>
+
+    <button type="submit">View Results</button>
+</form>
+
+{% if results %}
+<h2>{{ selected_class }} - {{ selected_term }}</h2>
+<table>
+    <tr>
+        <th>Position</th>
+        <th>Name</th>
+        <th>Total</th>
+        <th>Average</th>
+    </tr>
+    {% for r in results %}
+    <tr>
+        <td>{{ r.position }}</td>
+        <td>{{ r.student.user.get_full_name }}</td>
+        <td>{{ r.total }}</td>
+        <td>{{ r.average }}</td>
+    </tr>
+    {% endfor %}
+</table>
+{% elif selected_class %}
+<p>No scores recorded yet for this class/term.</p>
+{% endif %}
+{% endblock %}

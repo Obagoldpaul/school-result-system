@@ -1,15 +1,11 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Assign Subject to Class</title>
-</head>
-<body>
-    <h1>Assign Subject to Class</h1>
-    <form method="POST">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit">Save Assignment</button>
-    </form>
-    <p><a href="{% url 'class_subject_list' %}">View all assignments</a></p>
-</body>
-</html>
+{% extends 'base.html' %}
+{% block title %}Assign Subject to Class{% endblock %}
+{% block content %}
+<h1>Assign Subject to Class</h1>
+<form method="POST">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Save Assignment</button>
+</form>
+<p><a href="{% url 'class_subject_list' %}">View all assignments</a></p>
+{% endblock %}

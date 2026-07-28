@@ -1,26 +1,22 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Subject Allocations</title>
-</head>
-<body>
-    <h1>Subject Allocations</h1>
-    <p><a href="{% url 'add_allocation' %}">+ New Allocation</a></p>
-    <table border="1" cellpadding="8">
-        <tr>
-            <th>Teacher</th>
-            <th>Subject</th>
-            <th>Class</th>
-            <th>Term</th>
-        </tr>
-        {% for a in allocations %}
-        <tr>
-            <td>{{ a.teacher }}</td>
-            <td>{{ a.subject }}</td>
-            <td>{{ a.school_class }}</td>
-            <td>{{ a.term }}</td>
-        </tr>
-        {% endfor %}
-    </table>
-</body>
-</html>
+{% extends 'base.html' %}
+{% block title %}Subject Allocations{% endblock %}
+{% block content %}
+<h1>Subject Allocations</h1>
+<p><a href="{% url 'add_allocation' %}">+ New Allocation</a></p>
+<table>
+    <tr>
+        <th>Teacher</th>
+        <th>Subject</th>
+        <th>Class</th>
+        <th>Term</th>
+    </tr>
+    {% for a in allocations %}
+    <tr>
+        <td>{{ a.teacher }}</td>
+        <td>{{ a.subject }}</td>
+        <td>{{ a.school_class }}</td>
+        <td>{{ a.term }}</td>
+    </tr>
+    {% endfor %}
+</table>
+{% endblock %}

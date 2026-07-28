@@ -1,15 +1,11 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Add Subject</title>
-</head>
-<body>
-    <h1>Add New Subject</h1>
-    <form method="POST">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit">Save Subject</button>
-    </form>
-    <p><a href="{% url 'subject_list' %}">View all subjects</a></p>
-</body>
-</html>
+{% extends 'base.html' %}
+{% block title %}Add Subject{% endblock %}
+{% block content %}
+<h1>Add New Subject</h1>
+<form method="POST">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Save Subject</button>
+</form>
+<p><a href="{% url 'subject_list' %}">View all subjects</a></p>
+{% endblock %}
