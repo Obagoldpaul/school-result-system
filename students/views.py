@@ -39,12 +39,17 @@ def edit_student(request, student_id):
         student.guardian_name = request.POST.get('guardian_name', '')
         student.guardian_phone = request.POST.get('guardian_phone', '')
         student.save()
+        elective_ids = request.POST.getlist('electives')
+        student.elective_subjects.set(elective_ids)
         return redirect('student_list')
 
+    from subjects.models import Subject
     classes = SchoolClass.objects.all()
     departments = Department.objects.all()
+    electives = Subject.objects.filter(is_elective=True)
     return render(request, 'students/edit_student.html', {
         'student': student,
         'classes': classes,
         'departments': departments,
+        'electives': electives,
     })

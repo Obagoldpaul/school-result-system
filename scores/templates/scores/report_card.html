@@ -4,22 +4,33 @@
 <head>
     <title>Report Card</title>
     <style>
-        body { font-family: Arial, sans-serif; max-width: 800px; margin: auto; padding: 15px; }
+        @page {
+            size: A4;
+            margin: 1.2cm;
+        }
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: auto; padding: 15px; font-size: 12px; }
         table { width: 100%; border-collapse: collapse; }
-        th, td { border: 1px solid #333; padding: 6px; text-align: left; font-size: 13px; }
-        .top-row { display: flex; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
-        .box { border: 1px solid #333; padding: 8px; flex: 1; }
-        .school-header { text-align: center; margin: 15px 0; }
-        .school-header img { height: 70px; }
-        .school-header h1 { margin: 5px 0; color: #1a5c1a; font-size: 22px; }
-        .school-header p { margin: 2px 0; font-size: 12px; color: #333; }
-        .report-title { background: #1a5c1a; color: white; text-align: center; padding: 6px; font-weight: bold; margin: 10px 0; }
-        .term-banner { background: #d4f0d4; text-align: center; padding: 5px; font-weight: bold; border: 1px solid #333; }
-        .grading-box { font-size: 11px; }
-        .summary-table td { font-weight: bold; }
-        .habits-table th, .habits-table td { text-align: center; }
-        .signature-box { display: flex; margin-top: 15px; }
-        .signature-box .box { min-height: 50px; }
+        th, td { border: 1px solid #333; padding: 4px 6px; text-align: left; font-size: 11px; }
+        .top-row { display: flex; justify-content: space-between; gap: 10px; margin-bottom: 8px; }
+        .box { border: 1px solid #333; padding: 6px; flex: 1; }
+        .school-header { text-align: center; margin: 8px 0; }
+        .school-header img { height: 55px; }
+        .school-header h1 { margin: 3px 0; color: #1a5c1a; font-size: 18px; }
+        .school-header p { margin: 1px 0; font-size: 10px; color: #333; }
+        .report-title { background: #1a5c1a; color: white; text-align: center; padding: 4px; font-weight: bold; margin: 8px 0; font-size: 12px; }
+        .term-banner { background: #d4f0d4; text-align: center; padding: 4px; font-weight: bold; border: 1px solid #333; font-size: 11px; }
+        .grading-box { font-size: 10px; }
+        .summary-table td { font-weight: bold; padding: 3px 6px; }
+        .habits-table th, .habits-table td { text-align: center; padding: 3px; }
+        .signature-box { display: flex; margin-top: 8px; }
+        .signature-box .box { min-height: 40px; }
+        .bottom-row { display: flex; gap: 10px; margin-top: 8px; align-items: flex-start; }
+        .bottom-row > div { flex: 1; }
+        .no-print { margin-top: 10px; }
+        @media print {
+            .no-print { display: none; }
+            body { padding: 0; }
+        }
     </style>
 </head>
 <body>
@@ -58,17 +69,21 @@
     <div class="report-title">{{ term.session }} ACADEMIC PERFORMANCE REPORT</div>
 
     <table>
+        <thead>
         <tr>
-            <th>Course</th>
-            <th>Code</th>
-            <th>C.A (40)</th>
-            <th>Exam (60)</th>
+            <th style="width:18%;">Course</th>
+            <th style="width:7%;">Code</th>
+            <th style="width:8%;">C.A (40)</th>
+            <th style="width:8%;">Exam (60)</th>
             {% for t in relevant_terms %}
-            <th>{{ t.get_name_display }} Total</th>
+            <th style="width:10%;">{{ t.get_name_display }} Total</th>
             {% endfor %}
-            <th>Average</th>
-            <th>Grade</th>
+            <th style="width:8%;">Average</th>
+            <th style="width:7%;">Grade</th>
+            <th style="width:12%;">Remark</th>
         </tr>
+        </thead>
+        <tbody>
         {% for row in cumulative_rows %}
         <tr>
             <td>{{ row.subject_name }}</td>
@@ -80,68 +95,37 @@
             {% endfor %}
             <td>{{ row.average }}</td>
             <td>{{ row.grade }}</td>
+            <td>{{ row.remark }}</td>
         </tr>
         {% endfor %}
+        </tbody>
     </table>
 
-    <br>
+    <div class="bottom-row">
+        <div>
+            <table>
+                <tr class="summary-table"><td>OVERALL PERFORMANCE (This Term)</td><td>{{ total }}</td></tr>
+                <tr class="summary-table"><td>THIS TERM %</td><td>{{ percentage }}%</td></tr>
+                <tr class="summary-table"><td>CUMULATIVE %</td><td>{{ overall_percentage }}%</td></tr>
+                <tr class="summary-table"><td>MARKS OBTAINABLE</td><td>{{ marks_obtainable }}</td></tr>
+                <tr class="summary-table"><td>POSITION IN CLASS</td><td>{{ position }}</td></tr>
+            </table>
+        </div>
+        <div>
+            <table class="habits-table">
+                <tr>
+                    <th>Social Habits</th>
+                    <th>A</th><th>B</th><th>C</th><th>D</th><th>E</th><th>F</th>
+                </tr>
+                <tr><td>Responsibility</td><td colspan="6">{{ extra.responsibility|default:"-" }}</td></tr>
+                <tr><td>Leadership</td><td colspan="6">{{ extra.leadership|default:"-" }}</td></tr>
+                <tr><td>Hardworking</td><td colspan="6">{{ extra.hardworking|default:"-" }}</td></tr>
+                <tr><td>Neatness</td><td colspan="6">{{ extra.neatness|default:"-" }}</td></tr>
+            </table>
+        </div>
+    </div>
 
-    <table>
-        <tr class="summary-table">
-            <td>OVERALL PERFORMANCE (This Term)</td>
-            <td>{{ total }}</td>
-        </tr>
-        <tr class="summary-table">
-            <td>THIS TERM PERCENTAGE</td>
-            <td>{{ percentage }}%</td>
-        </tr>
-        <tr class="summary-table">
-            <td>OVERALL CUMULATIVE PERCENTAGE</td>
-            <td>{{ overall_percentage }}%</td>
-        </tr>
-        <tr class="summary-table">
-            <td>MARKS OBTAINABLE</td>
-            <td>{{ marks_obtainable }}</td>
-        </tr>
-        <tr class="summary-table">
-            <td>POSITION IN CLASS</td>
-            <td>{{ position }}</td>
-        </tr>
-    </table>
-
-    <br>
-
-    <table class="habits-table">
-        <tr>
-            <th>Social Habits</th>
-            <th>A</th>
-            <th>B</th>
-            <th>C</th>
-            <th>D</th>
-            <th>E</th>
-            <th>F</th>
-        </tr>
-        <tr>
-            <td>Responsibility</td>
-            <td colspan="6">{{ extra.responsibility|default:"-" }}</td>
-        </tr>
-        <tr>
-            <td>Leadership</td>
-            <td colspan="6">{{ extra.leadership|default:"-" }}</td>
-        </tr>
-        <tr>
-            <td>Hardworking</td>
-            <td colspan="6">{{ extra.hardworking|default:"-" }}</td>
-        </tr>
-        <tr>
-            <td>Neatness</td>
-            <td colspan="6">{{ extra.neatness|default:"-" }}</td>
-        </tr>
-    </table>
-
-    <br>
-
-    <p><strong>Attendance:</strong> {{ extra.days_present|default:"-" }} / {{ extra.days_school_opened|default:"-" }} days</p>
+    <p style="margin: 8px 0;"><strong>Attendance:</strong> {{ extra.days_present|default:"-" }} / {{ extra.days_school_opened|default:"-" }} days</p>
 
     <div class="signature-box">
         <div class="box">
@@ -152,9 +136,10 @@
         </div>
     </div>
 
-    <br>
-    <p><a href="{% url 'report_card_pdf' student.id term.id %}">Download as PDF</a></p>
-    <p><a href="{% url 'edit_report_extra' student.id term.id %}">Edit Remarks/Attendance</a></p>
+    <div class="no-print">
+        <p><a href="{% url 'report_card_pdf' student.id term.id %}">Download as PDF</a></p>
+        <p><a href="{% url 'edit_report_extra' student.id term.id %}">Edit Remarks/Attendance</a></p>
+    </div>
 
 </body>
 </html>

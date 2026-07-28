@@ -33,6 +33,16 @@
         <input type="text" name="guardian_phone" value="{{ student.guardian_phone }}">
         <br><br>
 
+        <label>Elective Subjects:</label><br>
+        {% for subject in electives %}
+        <label>
+            <input type="checkbox" name="electives" value="{{ subject.id }}"
+                {% if subject in student.elective_subjects.all %}checked{% endif %}>
+            {{ subject.name }}
+        </label><br>
+        {% endfor %}
+        <br>
+
         <button type="submit">Save Changes</button>
     </form>
     <p><a href="{% url 'student_list' %}">Back to student list</a></p>

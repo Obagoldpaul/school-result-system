@@ -31,7 +31,10 @@
             <td>{{ student.user.get_full_name }}</td>
             <td>{{ student.school_class }}</td>
             <td>{{ student.department|default:"-" }}</td>
-            <td><a href="{% url 'edit_student' student.id %}">Edit</a></td>
+            <td>
+                <a href="{% url 'edit_student' student.id %}">Edit</a> |
+                <a href="{% url 'select_report_term' student.id %}">Report Card</a>
+            </td>
         </tr>
         {% endfor %}
     </table>

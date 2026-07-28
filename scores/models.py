@@ -179,6 +179,19 @@ def _grade_from_total(total):
     else:
         return 'F9'
 
+def _remark_from_grade(grade):
+    remarks = {
+        'A1': 'Excellent',
+        'B2': 'Very Good',
+        'B3': 'Very Good',
+        'C4': 'Good',
+        'C5': 'Good',
+        'C6': 'Credit',
+        'D7': 'Fair',
+        'E8': 'Pass',
+        'F9': 'Fail',
+    }
+    return remarks.get(grade, '-')
 
 def get_term_order(term):
     order_map = {'FIRST': 1, 'SECOND': 2, 'THIRD': 3}
@@ -230,6 +243,7 @@ def get_cumulative_report_rows(student, term):
             'term_scores': term_values,
             'average': cumulative_average,
             'grade': _grade_from_total(cumulative_average),
+            'remark': _remark_from_grade(_grade_from_total(cumulative_average)),
         })
 
     return rows, relevant_terms

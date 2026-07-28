@@ -19,6 +19,18 @@ class TeacherRegistrationForm(forms.ModelForm):
             'is_class_teacher', 'assigned_class',
         ]
 
+    def clean_username(self):
+        username = self.cleaned_data['username']
+        if User.objects.filter(username=username).exists():
+            raise forms.ValidationError("This username is already taken. Please choose another.")
+        return username
+
+    def clean_staff_id(self):
+        staff_id = self.cleaned_data['staff_id']
+        if Teacher.objects.filter(staff_id=staff_id).exists():
+            raise forms.ValidationError("This staff ID is already in use.")
+        return staff_id
+
     def save(self, commit=True):
         user = User(
             username=self.cleaned_data['username'],

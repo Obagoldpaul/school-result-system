@@ -5,7 +5,7 @@ from students.models import Student
 from .models import Score
 from .models import get_report_card_rows
 from django.http import HttpResponse
-from xhtml2pdf import pisa
+from weasyprint import HTML
 from django.template.loader import get_template
 import os
 from django.conf import settings
@@ -39,11 +39,14 @@ def enter_scores(request, allocation_id):
     allocation = get_object_or_404(SubjectAllocation, id=allocation_id)
     students = Student.objects.filter(school_class=allocation.school_class, is_active=True)
 
+    if allocation.subject.is_elective:
+        students = students.filter(elective_subjects=allocation.subject)
+
     if request.method == 'POST':
         for student in students:
-            ca = request.POST.get(f'ca_{student.id}')
-            exam = request.POST.get(f'exam_{student.id}')
-            if ca is not None and exam is not None:
+            ca = request.POST.get(f'ca_{student.id}', '').strip()
+            exam = request.POST.get(f'exam_{student.id}', '').strip()
+            if ca or exam:
                 Score.objects.update_or_create(
                     student=student,
                     subject=allocation.subject,
@@ -56,7 +59,6 @@ def enter_scores(request, allocation_id):
                 )
         return redirect('select_allocation')
 
-    # Pre-fill existing scores if any
     existing_scores = {
         s.student_id: s for s in Score.objects.filter(
             subject=allocation.subject, term=allocation.term, student__in=students
@@ -158,7 +160,6 @@ def report_card(request, student_id, term_id):
         'position': position,
     })
 
-
 @login_required
 def report_card_pdf(request, student_id, term_id):
     student = get_object_or_404(Student, id=student_id)
@@ -181,8 +182,8 @@ def report_card_pdf(request, student_id, term_id):
     class_results = get_class_results(student.school_class, term)
     position = next((r['position'] for r in class_results if r['student'].id == student.id), '-')
 
-    template = get_template('scores/report_card_pdf.html')
-    html = template.render({
+    template = get_template('scores/report_card.html')
+    html_string = template.render({
         'student': student,
         'term': term,
         'cumulative_rows': cumulative_rows,
@@ -193,12 +194,20 @@ def report_card_pdf(request, student_id, term_id):
         'percentage': percentage,
         'overall_percentage': overall_percentage,
         'position': position,
-    })
+    }, request=request)
 
     response = HttpResponse(content_type='application/pdf')
     response['Content-Disposition'] = f'attachment; filename="{student.admission_number}_report_card.pdf"'
 
-    pisa_status = pisa.CreatePDF(html, dest=response, link_callback=link_callback)
-    if pisa_status.err:
-        return HttpResponse('We had some errors generating the PDF <pre>' + html + '</pre>')
+    HTML(string=html_string, base_url=request.build_absolute_uri('/')).write_pdf(response)
     return response
+
+
+@login_required
+def select_report_term(request, student_id):
+    student = get_object_or_404(Student, id=student_id)
+    terms = Term.objects.all().order_by('session', 'name')
+    return render(request, 'scores/select_report_term.html', {
+        'student': student,
+        'terms': terms,
+    })

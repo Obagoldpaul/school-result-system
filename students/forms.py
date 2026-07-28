@@ -2,6 +2,10 @@ from django import forms
 from django.contrib.auth import get_user_model
 from .models import Student, SchoolClass, Department
 
+from django import forms
+from django.contrib.auth import get_user_model
+from .models import Student, SchoolClass, Department
+
 User = get_user_model()
 
 
@@ -18,6 +22,18 @@ class StudentRegistrationForm(forms.ModelForm):
             'school_class', 'department', 'admission_number',
             'date_of_birth', 'gender', 'guardian_name', 'guardian_phone',
         ]
+
+    def clean_username(self):
+        username = self.cleaned_data['username']
+        if User.objects.filter(username=username).exists():
+            raise forms.ValidationError("This username is already taken. Please choose another.")
+        return username
+
+    def clean_admission_number(self):
+        admission_number = self.cleaned_data['admission_number']
+        if Student.objects.filter(admission_number=admission_number).exists():
+            raise forms.ValidationError("This admission number is already in use.")
+        return admission_number
 
     def save(self, commit=True):
         user = User(

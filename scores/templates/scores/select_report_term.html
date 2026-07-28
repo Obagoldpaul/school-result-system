@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Select Term</title>
+</head>
+<body>
+    <h1>View Report Card: {{ student.user.get_full_name }}</h1>
+    <ul>
+        {% for term in terms %}
+        <li><a href="{% url 'report_card' student.id term.id %}">{{ term }}</a></li>
+        {% endfor %}
+    </ul>
+</body>
+</html>
