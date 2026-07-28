@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'academics',
     'allocations',
     'scores',
+    'dashboard',
 ]
 
 MIDDLEWARE = [
