@@ -20,6 +20,13 @@
 <h1>Welcome, {{ request.user.get_full_name|default:request.user.username }}</h1>
 <p><strong>Current Term:</strong> {{ current_term|default:"Not set" }}</p>
 
+{% if my_student_id %}
+<div class="section">
+    <h3>My Results</h3>
+    <a href="{% url 'select_report_term' my_student_id %}" style="border:1px solid #1a5c1a; color:#1a5c1a; padding:8px 14px; text-decoration:none; border-radius:4px; display:inline-block;">View My Report Card</a>
+</div>
+{% endif %}
+
 <div class="stats">
     <div class="stat-box"><div class="number">{{ student_count }}</div>Students</div>
     <div class="stat-box"><div class="number">{{ teacher_count }}</div>Teachers</div>

@@ -23,4 +23,8 @@ def home(request):
     if teacher_profile:
         context['my_allocations'] = SubjectAllocation.objects.filter(teacher=teacher_profile)
 
+    student_profile = getattr(request.user, 'student_profile', None)
+    if student_profile:
+        context['my_student_id'] = student_profile.id
+
     return render(request, 'dashboard/home.html', context)

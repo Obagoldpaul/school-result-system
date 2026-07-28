@@ -138,7 +138,9 @@
 
     <div class="no-print">
         <p><a href="{% url 'report_card_pdf' student.id term.id %}">Download as PDF</a></p>
+        {% if not request.user.student_profile %}
         <p><a href="{% url 'edit_report_extra' student.id term.id %}">Edit Remarks/Attendance</a></p>
+        {% endif %}
     </div>
 
 </body>

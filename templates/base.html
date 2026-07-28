@@ -27,7 +27,12 @@
         <a href="{% url 'allocation_list' %}">Allocations</a>
         <a href="{% url 'select_allocation' %}">Enter Scores</a>
         <a href="{% url 'class_results' %}">Results</a>
-        <a href="/admin/">Admin</a>
+        <form method="POST" action="{% url 'logout' %}" style="margin-left: auto; display: inline;">
+            {% csrf_token %}
+            <button type="submit" style="background: none; border: none; color: white; cursor: pointer; font-size: 14px; padding: 0;">
+                Logout ({{ request.user.username }})
+            </button>
+        </form>
     </nav>
     <div class="content">
         {% block content %}

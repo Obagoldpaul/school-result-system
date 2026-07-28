@@ -19,6 +19,7 @@ class Term(models.Model):
     session = models.ForeignKey(AcademicSession, on_delete=models.CASCADE, related_name='terms')
     name = models.CharField(max_length=10, choices=TermName.choices)
     is_current = models.BooleanField(default=False)
+    is_published = models.BooleanField(default=False, help_text="Check this when results are ready for students to view.")
     start_date = models.DateField(null=True, blank=True)
     end_date = models.DateField(null=True, blank=True)
 

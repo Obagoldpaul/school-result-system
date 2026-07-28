@@ -2,8 +2,9 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from .forms import TeacherRegistrationForm
 from .models import Teacher
+from accounts.decorators import staff_required
 
-
+@staff_required
 @login_required
 def register_teacher(request):
     if request.method == 'POST':
@@ -15,7 +16,7 @@ def register_teacher(request):
         form = TeacherRegistrationForm()
     return render(request, 'teachers/register_teacher.html', {'form': form})
 
-
+@staff_required
 @login_required
 def teacher_list(request):
     teachers = Teacher.objects.filter(is_active=True)

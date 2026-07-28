@@ -10,6 +10,7 @@ from django.template.loader import get_template
 import os
 from django.conf import settings
 from .models import get_cumulative_report_rows
+from accounts.decorators import staff_required
 
 
 def link_callback(uri, rel):
@@ -22,6 +23,7 @@ def link_callback(uri, rel):
         raise Exception(f'Static file not found: {path}')
     return path
 
+@staff_required
 @login_required
 def select_allocation(request):
     """Step 1: teacher picks which class/subject/term they want to enter scores for."""
@@ -33,10 +35,17 @@ def select_allocation(request):
     return render(request, 'scores/select_allocation.html', {'allocations': allocations})
 
 
+@staff_required
 @login_required
 def enter_scores(request, allocation_id):
     """Step 2: show all students in that class, let teacher enter CA + Exam for each."""
     allocation = get_object_or_404(SubjectAllocation, id=allocation_id)
+
+    teacher_profile = getattr(request.user, 'teacher_profile', None)
+    if teacher_profile and allocation.teacher_id != teacher_profile.id and not request.user.is_superuser:
+        from django.core.exceptions import PermissionDenied
+        raise PermissionDenied("You are not assigned to teach this subject/class.")
+
     students = Student.objects.filter(school_class=allocation.school_class, is_active=True)
 
     if allocation.subject.is_elective:
@@ -76,7 +85,7 @@ from students.models import SchoolClass
 from academics.models import Term
 from .models import get_class_results
 
-
+@staff_required
 @login_required
 def class_results(request):
     classes = SchoolClass.objects.all()
@@ -105,7 +114,7 @@ def class_results(request):
 from .forms import ReportCardExtraForm
 from .models import ReportCardExtra
 
-
+@staff_required
 @login_required
 def edit_report_extra(request, student_id, term_id):
     student = get_object_or_404(Student, id=student_id)
@@ -129,6 +138,16 @@ def edit_report_extra(request, student_id, term_id):
 def report_card(request, student_id, term_id):
     student = get_object_or_404(Student, id=student_id)
     term = get_object_or_404(Term, id=term_id)
+
+    student_profile = getattr(request.user, 'student_profile', None)
+    if student_profile:
+        if student_profile.id != student.id:
+            from django.core.exceptions import PermissionDenied
+            raise PermissionDenied("You can only view your own report card.")
+        if not term.is_published:
+            from django.core.exceptions import PermissionDenied
+            raise PermissionDenied("This term's results have not been published yet.")
+
     extra = ReportCardExtra.objects.filter(student=student, term=term).first()
 
     cumulative_rows, relevant_terms = get_cumulative_report_rows(student, term)
@@ -164,6 +183,16 @@ def report_card(request, student_id, term_id):
 def report_card_pdf(request, student_id, term_id):
     student = get_object_or_404(Student, id=student_id)
     term = get_object_or_404(Term, id=term_id)
+
+    student_profile = getattr(request.user, 'student_profile', None)
+    if student_profile:
+        if student_profile.id != student.id:
+            from django.core.exceptions import PermissionDenied
+            raise PermissionDenied("You can only view your own report card.")
+        if not term.is_published:
+            from django.core.exceptions import PermissionDenied
+            raise PermissionDenied("This term's results have not been published yet.")
+
     extra = ReportCardExtra.objects.filter(student=student, term=term).first()
 
     cumulative_rows, relevant_terms = get_cumulative_report_rows(student, term)
@@ -202,10 +231,15 @@ def report_card_pdf(request, student_id, term_id):
     HTML(string=html_string, base_url=request.build_absolute_uri('/')).write_pdf(response)
     return response
 
-
 @login_required
 def select_report_term(request, student_id):
     student = get_object_or_404(Student, id=student_id)
+
+    student_profile = getattr(request.user, 'student_profile', None)
+    if student_profile and student_profile.id != student.id:
+        from django.core.exceptions import PermissionDenied
+        raise PermissionDenied("You can only view your own report cards.")
+
     terms = Term.objects.all().order_by('session', 'name')
     return render(request, 'scores/select_report_term.html', {
         'student': student,

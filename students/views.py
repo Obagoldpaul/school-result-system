@@ -2,8 +2,9 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from .forms import StudentRegistrationForm
 from .models import Student, SchoolClass, Department
+from accounts.decorators import staff_required
 
-
+@staff_required
 @login_required
 def register_student(request):
     if request.method == 'POST':
@@ -29,7 +30,7 @@ def student_list(request):
         'selected_class': int(class_id) if class_id else None,
     })
 
-
+@staff_required
 @login_required
 def edit_student(request, student_id):
     student = get_object_or_404(Student, id=student_id)
