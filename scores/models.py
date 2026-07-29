@@ -247,3 +247,11 @@ def get_cumulative_report_rows(student, term):
         })
 
     return rows, relevant_terms
+
+def is_class_term_fully_published(school_class, term):
+    """True only if every SubjectAllocation for this class/term has reached PUBLISHED status."""
+    from allocations.models import SubjectAllocation
+    allocations = SubjectAllocation.objects.filter(school_class=school_class, term=term)
+    if not allocations.exists():
+        return False
+    return not allocations.exclude(status=SubjectAllocation.Status.PUBLISHED).exists()

@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+{% block title %}Review Scores{% endblock %}
+{% block content %}
+<h1>Review: {{ allocation.subject }} - {{ allocation.school_class }} ({{ allocation.term }})</h1>
+<p><strong>Status:</strong> {{ allocation.get_status_display }}</p>
+<form method="POST">
+    {% csrf_token %}
+    <label>Class Teacher's Comment:</label><br>
+    <textarea name="comment" rows="4" cols="50">{{ allocation.class_teacher_comment }}</textarea><br><br>
+    <button type="submit">Mark as Reviewed</button>
+</form>
+<p><a href="{% url 'select_allocation' %}">Back to list</a></p>
+{% endblock %}

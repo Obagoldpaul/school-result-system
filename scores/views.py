@@ -12,6 +12,7 @@ from django.conf import settings
 from .models import get_cumulative_report_rows
 from accounts.decorators import staff_required
 from academics.models import SchoolSettings
+from .models import is_class_term_fully_published
 
 
 def link_callback(uri, rel):
@@ -32,14 +33,44 @@ def select_allocation(request):
     if teacher:
         allocations = SubjectAllocation.objects.filter(teacher=teacher)
     else:
-        allocations = SubjectAllocation.objects.all()  # admin can see all
-    return render(request, 'scores/select_allocation.html', {'allocations': allocations})
+        allocations = SubjectAllocation.objects.all()
+
+    class_id = request.GET.get('class')
+    term_id = request.GET.get('term')
+    subject_id = request.GET.get('subject')
+    status = request.GET.get('status')
+
+    if class_id:
+        allocations = allocations.filter(school_class_id=class_id)
+    if term_id:
+        allocations = allocations.filter(term_id=term_id)
+    if subject_id:
+        allocations = allocations.filter(subject_id=subject_id)
+    if status:
+        allocations = allocations.filter(status=status)
+
+    from students.models import SchoolClass
+    from academics.models import Term
+    from subjects.models import Subject
+
+    context = {
+        'allocations': allocations.select_related('teacher', 'subject', 'school_class', 'term'),
+        'classes': SchoolClass.objects.all(),
+        'terms': Term.objects.all(),
+        'subjects': Subject.objects.all(),
+        'status_choices': SubjectAllocation.Status.choices,
+        'selected_class': class_id,
+        'selected_term': term_id,
+        'selected_subject': subject_id,
+        'selected_status': status,
+        'current_query': request.GET.urlencode(),
+    }
+    return render(request, 'scores/select_allocation.html', context)
 
 
 @staff_required
 @login_required
 def enter_scores(request, allocation_id):
-    """Step 2: show all students in that class, let teacher enter CA + Exam for each."""
     allocation = get_object_or_404(SubjectAllocation, id=allocation_id)
 
     teacher_profile = getattr(request.user, 'teacher_profile', None)
@@ -47,12 +78,17 @@ def enter_scores(request, allocation_id):
         from django.core.exceptions import PermissionDenied
         raise PermissionDenied("You are not assigned to teach this subject/class.")
 
+    can_edit = allocation.status == SubjectAllocation.Status.DRAFT or request.user.is_superuser
+
     students = Student.objects.filter(school_class=allocation.school_class, is_active=True)
 
     if allocation.subject.is_elective:
         students = students.filter(elective_subjects=allocation.subject)
 
     if request.method == 'POST':
+        if not can_edit:
+            from django.core.exceptions import PermissionDenied
+            raise PermissionDenied("Scores can only be edited while status is Draft.")
         for student in students:
             ca = request.POST.get(f'ca_{student.id}', '').strip()
             exam = request.POST.get(f'exam_{student.id}', '').strip()
@@ -79,6 +115,7 @@ def enter_scores(request, allocation_id):
     return render(request, 'scores/enter_scores.html', {
         'allocation': allocation,
         'student_score_pairs': student_score_pairs,
+        'can_edit': can_edit,
     })
 
 
@@ -145,9 +182,9 @@ def report_card(request, student_id, term_id):
         if student_profile.id != student.id:
             from django.core.exceptions import PermissionDenied
             raise PermissionDenied("You can only view your own report card.")
-        if not term.is_published:
+        if not is_class_term_fully_published(student.school_class, term):
             from django.core.exceptions import PermissionDenied
-            raise PermissionDenied("This term's results have not been published yet.")
+            raise PermissionDenied("This term's results have not been fully published yet.")
 
     extra = ReportCardExtra.objects.filter(student=student, term=term).first()
     school_settings = SchoolSettings.objects.first()
@@ -192,9 +229,9 @@ def report_card_pdf(request, student_id, term_id):
         if student_profile.id != student.id:
             from django.core.exceptions import PermissionDenied
             raise PermissionDenied("You can only view your own report card.")
-        if not term.is_published:
+        if not is_class_term_fully_published(student.school_class, term):
             from django.core.exceptions import PermissionDenied
-            raise PermissionDenied("This term's results have not been published yet.")
+            raise PermissionDenied("This term's results have not been fully published yet.")
 
     extra = ReportCardExtra.objects.filter(student=student, term=term).first()
     school_settings = SchoolSettings.objects.first()
@@ -250,3 +287,81 @@ def select_report_term(request, student_id):
         'student': student,
         'terms': terms,
     })
+
+
+from allocations.models import SubjectAllocation as Allocation
+
+
+@staff_required
+@login_required
+def submit_allocation(request, allocation_id):
+    """Teacher submits their scores for review."""
+    allocation = get_object_or_404(Allocation, id=allocation_id)
+    teacher_profile = getattr(request.user, 'teacher_profile', None)
+    if teacher_profile and allocation.teacher_id != teacher_profile.id and not request.user.is_superuser:
+        from django.core.exceptions import PermissionDenied
+        raise PermissionDenied("Only the assigned teacher can submit these scores.")
+
+    if allocation.status == Allocation.Status.DRAFT:
+        allocation.status = Allocation.Status.SUBMITTED
+        allocation.save()
+
+    from django.urls import reverse
+    url = reverse('select_allocation')
+    query = request.GET.urlencode()
+    if query:
+        url += f'?{query}'
+    return redirect(url)
+
+
+@staff_required
+@login_required
+def review_allocation(request, allocation_id):
+    """Class teacher reviews and adds a comment, moving status to Reviewed."""
+    allocation = get_object_or_404(Allocation, id=allocation_id)
+
+    if request.method == 'POST':
+        allocation.class_teacher_comment = request.POST.get('comment', '')
+        if allocation.status == Allocation.Status.SUBMITTED:
+            allocation.status = Allocation.Status.REVIEWED
+        allocation.save()
+        from django.urls import reverse
+    url = reverse('select_allocation')
+    query = request.GET.urlencode()
+    if query:
+        url += f'?{query}'
+    return redirect(url)
+
+    return render(request, 'scores/review_allocation.html', {'allocation': allocation})
+
+
+@staff_required
+@login_required
+def approve_allocation(request, allocation_id):
+    """Principal approves reviewed results."""
+    allocation = get_object_or_404(Allocation, id=allocation_id)
+    if allocation.status == Allocation.Status.REVIEWED:
+        allocation.status = Allocation.Status.APPROVED
+        allocation.save()
+    from django.urls import reverse
+    url = reverse('select_allocation')
+    query = request.GET.urlencode()
+    if query:
+        url += f'?{query}'
+    return redirect(url)
+
+
+@staff_required
+@login_required
+def publish_allocation(request, allocation_id):
+    """Principal/Admin publishes approved results, making them visible to students."""
+    allocation = get_object_or_404(Allocation, id=allocation_id)
+    if allocation.status == Allocation.Status.APPROVED:
+        allocation.status = Allocation.Status.PUBLISHED
+        allocation.save()
+    from django.urls import reverse
+    url = reverse('select_allocation')
+    query = request.GET.urlencode()
+    if query:
+        url += f'?{query}'
+    return redirect(url)
