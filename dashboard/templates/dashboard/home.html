@@ -15,10 +15,23 @@
         padding: 8px 14px; text-decoration: none; margin: 4px 4px 0 0; border-radius: 4px;
     }
     .quick-links a:hover { background: #1a5c1a; color: white; }
+    .alert-section { border-left: 5px solid #d9822b; }
+    .alert-section h3 { color: #d9822b; }
+    .badge { background: #d9822b; color: white; border-radius: 10px; padding: 2px 8px; font-size: 12px; margin-left: 6px; }
 </style>
 
 <h1>Welcome, {{ request.user.get_full_name|default:request.user.username }}</h1>
 <p><strong>Current Term:</strong> {{ current_term|default:"Not set" }}</p>
+
+{% if not my_student_id %}
+<div class="stats">
+    <div class="stat-box"><div class="number">{{ student_count }}</div>Students</div>
+    <div class="stat-box"><div class="number">{{ teacher_count }}</div>Teachers</div>
+    <div class="stat-box"><div class="number">{{ subject_count }}</div>Subjects</div>
+    <div class="stat-box"><div class="number">{{ class_count }}</div>Classes</div>
+    <div class="stat-box"><div class="number">{{ allocation_count }}</div>Allocations</div>
+</div>
+{% endif %}
 
 {% if my_student_id %}
 <div class="section">
@@ -27,36 +40,82 @@
 </div>
 {% endif %}
 
-<div class="stats">
-    <div class="stat-box"><div class="number">{{ student_count }}</div>Students</div>
-    <div class="stat-box"><div class="number">{{ teacher_count }}</div>Teachers</div>
-    <div class="stat-box"><div class="number">{{ subject_count }}</div>Subjects</div>
-    <div class="stat-box"><div class="number">{{ class_count }}</div>Classes</div>
-    <div class="stat-box"><div class="number">{{ allocation_count }}</div>Allocations</div>
-</div>
-
-<div class="section quick-links">
-    <h3>Quick Actions</h3>
-    <a href="{% url 'register_student' %}">+ Register Student</a>
-    <a href="{% url 'register_teacher' %}">+ Register Teacher</a>
-    <a href="{% url 'select_allocation' %}">Enter Scores</a>
-    <a href="{% url 'class_results' %}">View Class Results</a>
-</div>
-
 {% if my_allocations %}
-<div class="section">
-    <h3>My Teaching Assignments</h3>
+<div class="section {% if my_draft_count > 0 %}alert-section{% endif %}">
+    <h3>My Teaching Assignments {% if my_draft_count > 0 %}<span class="badge">{{ my_draft_count }} awaiting submission</span>{% endif %}</h3>
     <table>
-        <tr><th>Subject</th><th>Class</th><th>Term</th><th>Action</th></tr>
+        <tr><th>Subject</th><th>Class</th><th>Term</th><th>Status</th><th>Action</th></tr>
         {% for a in my_allocations %}
         <tr>
             <td>{{ a.subject }}</td>
             <td>{{ a.school_class }}</td>
             <td>{{ a.term }}</td>
+            <td>{{ a.get_status_display }}</td>
             <td><a href="{% url 'enter_scores' a.id %}">Enter Scores</a></td>
         </tr>
         {% endfor %}
     </table>
+</div>
+{% endif %}
+
+{% if pending_review %}
+<div class="section alert-section">
+    <h3>Awaiting Your Review <span class="badge">{{ pending_review|length }}</span></h3>
+    <table>
+        <tr><th>Subject</th><th>Class</th><th>Term</th><th>Action</th></tr>
+        {% for a in pending_review %}
+        <tr>
+            <td>{{ a.subject }}</td>
+            <td>{{ a.school_class }}</td>
+            <td>{{ a.term }}</td>
+            <td><a href="{% url 'review_allocation' a.id %}">Review</a></td>
+        </tr>
+        {% endfor %}
+    </table>
+</div>
+{% endif %}
+
+{% if pending_approval %}
+<div class="section alert-section">
+    <h3>Awaiting Your Approval <span class="badge">{{ pending_approval|length }}</span></h3>
+    <table>
+        <tr><th>Subject</th><th>Class</th><th>Term</th><th>Action</th></tr>
+        {% for a in pending_approval %}
+        <tr>
+            <td>{{ a.subject }}</td>
+            <td>{{ a.school_class }}</td>
+            <td>{{ a.term }}</td>
+            <td><a href="{% url 'approve_allocation' a.id %}" onclick="return confirm('Approve these results?')">Approve</a></td>
+        </tr>
+        {% endfor %}
+    </table>
+</div>
+{% endif %}
+
+{% if pending_publish %}
+<div class="section alert-section">
+    <h3>Approved, Ready to Publish <span class="badge">{{ pending_publish|length }}</span></h3>
+    <table>
+        <tr><th>Subject</th><th>Class</th><th>Term</th><th>Action</th></tr>
+        {% for a in pending_publish %}
+        <tr>
+            <td>{{ a.subject }}</td>
+            <td>{{ a.school_class }}</td>
+            <td>{{ a.term }}</td>
+            <td><a href="{% url 'publish_allocation' a.id %}" onclick="return confirm('Publish these results? Students will be able to see them.')">Publish</a></td>
+        </tr>
+        {% endfor %}
+    </table>
+</div>
+{% endif %}
+
+{% if not my_student_id %}
+<div class="section quick-links">
+    <h3>Quick Actions</h3>
+    <a href="{% url 'register_student' %}">+ Register Student</a>
+    <a href="{% url 'register_teacher' %}">+ Register Teacher</a>
+    <a href="{% url 'select_allocation' %}">All Allocations</a>
+    <a href="{% url 'class_results' %}">View Class Results</a>
 </div>
 {% endif %}
 {% endblock %}
