@@ -58,6 +58,26 @@
 </div>
 {% endif %}
 
+{% if my_class_students %}
+<div class="section">
+    <h3>My Class Students ({{ my_class_students|length }})</h3>
+    <table>
+        <tr><th>Admission No.</th><th>Name</th><th>Action</th></tr>
+        {% for s in my_class_students %}
+        <tr>
+            <td>{{ s.admission_number }}</td>
+            <td>{{ s.user.get_full_name }}</td>
+            <td>
+                {% if my_class_term %}
+                <a href="{% url 'edit_report_extra' s.id my_class_term.id %}">Remarks/Attendance</a>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+</div>
+{% endif %}
+
 {% if pending_review %}
 <div class="section alert-section">
     <h3>Awaiting Your Review <span class="badge">{{ pending_review|length }}</span></h3>
@@ -112,8 +132,10 @@
 {% if not my_student_id %}
 <div class="section quick-links">
     <h3>Quick Actions</h3>
+    {% if is_admin_or_principal %}
     <a href="{% url 'register_student' %}">+ Register Student</a>
     <a href="{% url 'register_teacher' %}">+ Register Teacher</a>
+    {% endif %}
     <a href="{% url 'select_allocation' %}">All Allocations</a>
     <a href="{% url 'class_results' %}">View Class Results</a>
 </div>

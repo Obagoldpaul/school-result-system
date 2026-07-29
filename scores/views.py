@@ -178,6 +178,8 @@ def report_card(request, student_id, term_id):
     term = get_object_or_404(Term, id=term_id)
 
     student_profile = getattr(request.user, 'student_profile', None)
+    teacher_profile = getattr(request.user, 'teacher_profile', None)
+
     if student_profile:
         if student_profile.id != student.id:
             from django.core.exceptions import PermissionDenied
@@ -185,6 +187,10 @@ def report_card(request, student_id, term_id):
         if not is_class_term_fully_published(student.school_class, term):
             from django.core.exceptions import PermissionDenied
             raise PermissionDenied("This term's results have not been fully published yet.")
+    elif teacher_profile and not request.user.is_superuser and request.user.role not in ['ADMIN', 'PRINCIPAL']:
+        if not (teacher_profile.is_class_teacher and teacher_profile.assigned_class_id == student.school_class_id):
+            from django.core.exceptions import PermissionDenied
+            raise PermissionDenied("Only the class teacher, principal, or admin can view this report card.")
 
     extra = ReportCardExtra.objects.filter(student=student, term=term).first()
     school_settings = SchoolSettings.objects.first()
@@ -225,6 +231,8 @@ def report_card_pdf(request, student_id, term_id):
     term = get_object_or_404(Term, id=term_id)
 
     student_profile = getattr(request.user, 'student_profile', None)
+    teacher_profile = getattr(request.user, 'teacher_profile', None)
+
     if student_profile:
         if student_profile.id != student.id:
             from django.core.exceptions import PermissionDenied
@@ -232,7 +240,11 @@ def report_card_pdf(request, student_id, term_id):
         if not is_class_term_fully_published(student.school_class, term):
             from django.core.exceptions import PermissionDenied
             raise PermissionDenied("This term's results have not been fully published yet.")
-
+    elif teacher_profile and not request.user.is_superuser and request.user.role not in ['ADMIN', 'PRINCIPAL']:
+        if not (teacher_profile.is_class_teacher and teacher_profile.assigned_class_id == student.school_class_id):
+            from django.core.exceptions import PermissionDenied
+            raise PermissionDenied("Only the class teacher, principal, or admin can view this report card.")
+            
     extra = ReportCardExtra.objects.filter(student=student, term=term).first()
     school_settings = SchoolSettings.objects.first()
 
