@@ -28,3 +28,12 @@ class Term(models.Model):
 
     def __str__(self):
         return f"{self.get_name_display()} - {self.session}"
+
+
+class SchoolSettings(models.Model):
+    """Singleton-style settings for the whole school (only one row should exist)."""
+    principal_name = models.CharField(max_length=100, blank=True)
+    principal_signature = models.ImageField(upload_to='signatures/', blank=True, null=True)
+
+    def __str__(self):
+        return "School Settings"

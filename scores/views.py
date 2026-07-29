@@ -11,6 +11,7 @@ import os
 from django.conf import settings
 from .models import get_cumulative_report_rows
 from accounts.decorators import staff_required
+from academics.models import SchoolSettings
 
 
 def link_callback(uri, rel):
@@ -149,6 +150,7 @@ def report_card(request, student_id, term_id):
             raise PermissionDenied("This term's results have not been published yet.")
 
     extra = ReportCardExtra.objects.filter(student=student, term=term).first()
+    school_settings = SchoolSettings.objects.first()
 
     cumulative_rows, relevant_terms = get_cumulative_report_rows(student, term)
 
@@ -172,6 +174,7 @@ def report_card(request, student_id, term_id):
         'cumulative_rows': cumulative_rows,
         'relevant_terms': relevant_terms,
         'extra': extra,
+        'school_settings': school_settings,
         'total': current_term_total,
         'marks_obtainable': marks_obtainable,
         'percentage': percentage,
@@ -194,6 +197,7 @@ def report_card_pdf(request, student_id, term_id):
             raise PermissionDenied("This term's results have not been published yet.")
 
     extra = ReportCardExtra.objects.filter(student=student, term=term).first()
+    school_settings = SchoolSettings.objects.first()
 
     cumulative_rows, relevant_terms = get_cumulative_report_rows(student, term)
 
@@ -218,6 +222,7 @@ def report_card_pdf(request, student_id, term_id):
         'cumulative_rows': cumulative_rows,
         'relevant_terms': relevant_terms,
         'extra': extra,
+        'school_settings': school_settings,
         'total': current_term_total,
         'marks_obtainable': marks_obtainable,
         'percentage': percentage,
