@@ -11,8 +11,9 @@ User = get_user_model()
 
 class StudentRegistrationForm(forms.ModelForm):
     username = forms.CharField(max_length=150)
-    first_name = forms.CharField(max_length=150)
-    last_name = forms.CharField(max_length=150)
+    first_name = forms.CharField(max_length=150, label="First Name")
+    other_name = forms.CharField(max_length=150, required=False, label="Other Name")
+    last_name = forms.CharField(max_length=150, label="Surname")
     email = forms.EmailField(required=False)
     password = forms.CharField(widget=forms.PasswordInput)
 
@@ -40,6 +41,7 @@ class StudentRegistrationForm(forms.ModelForm):
             username=self.cleaned_data['username'],
             first_name=self.cleaned_data['first_name'],
             last_name=self.cleaned_data['last_name'],
+            other_name=self.cleaned_data.get('other_name', ''),
             email=self.cleaned_data.get('email', ''),
             role=User.Role.STUDENT,
         )
