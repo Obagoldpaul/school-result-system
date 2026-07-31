@@ -9,6 +9,15 @@
             margin: 1.2cm;
         }
         body { font-family: Arial, sans-serif; max-width: 800px; margin: auto; padding: 15px; font-size: 12px; }
+        .watermark {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 400px;
+            opacity: 0.08;
+            z-index: -1;
+        }
         table { width: 100%; border-collapse: collapse; }
         th, td { border: 1px solid #333; padding: 4px 6px; text-align: left; font-size: 11px; }
         .top-row { display: flex; justify-content: space-between; gap: 10px; margin-bottom: 8px; }
@@ -35,6 +44,7 @@
 </head>
 <body>
 
+    <img src="{% static 'images/logo.png' %}" class="watermark" alt="">
     <div class="top-row">
         <div class="box">
             <strong>TO:</strong> Mr./Mrs. {{ student.guardian_name|default:"________________" }}
@@ -113,15 +123,52 @@
         </div>
         <div>
             <table class="habits-table">
-                <tr>
-                    <th>Social Habits</th>
-                    <th>A</th><th>B</th><th>C</th><th>D</th><th>E</th><th>F</th>
-                </tr>
-                <tr><td>Responsibility</td><td colspan="6">{{ extra.responsibility|default:"-" }}</td></tr>
-                <tr><td>Leadership</td><td colspan="6">{{ extra.leadership|default:"-" }}</td></tr>
-                <tr><td>Hardworking</td><td colspan="6">{{ extra.hardworking|default:"-" }}</td></tr>
-                <tr><td>Neatness</td><td colspan="6">{{ extra.neatness|default:"-" }}</td></tr>
-            </table>
+        <tr>
+            <th>Social Habits</th>
+            <th>A</th>
+            <th>B</th>
+            <th>C</th>
+            <th>D</th>
+            <th>E</th>
+            <th>F</th>
+        </tr>
+        <tr>
+            <td>Responsibility</td>
+            <td>{% if extra.responsibility == 'A' %}&#10003;{% endif %}</td>
+            <td>{% if extra.responsibility == 'B' %}&#10003;{% endif %}</td>
+            <td>{% if extra.responsibility == 'C' %}&#10003;{% endif %}</td>
+            <td>{% if extra.responsibility == 'D' %}&#10003;{% endif %}</td>
+            <td>{% if extra.responsibility == 'E' %}&#10003;{% endif %}</td>
+            <td>{% if extra.responsibility == 'F' %}&#10003;{% endif %}</td>
+        </tr>
+        <tr>
+            <td>Leadership</td>
+            <td>{% if extra.leadership == 'A' %}&#10003;{% endif %}</td>
+            <td>{% if extra.leadership == 'B' %}&#10003;{% endif %}</td>
+            <td>{% if extra.leadership == 'C' %}&#10003;{% endif %}</td>
+            <td>{% if extra.leadership == 'D' %}&#10003;{% endif %}</td>
+            <td>{% if extra.leadership == 'E' %}&#10003;{% endif %}</td>
+            <td>{% if extra.leadership == 'F' %}&#10003;{% endif %}</td>
+        </tr>
+        <tr>
+            <td>Hardworking</td>
+            <td>{% if extra.hardworking == 'A' %}&#10003;{% endif %}</td>
+            <td>{% if extra.hardworking == 'B' %}&#10003;{% endif %}</td>
+            <td>{% if extra.hardworking == 'C' %}&#10003;{% endif %}</td>
+            <td>{% if extra.hardworking == 'D' %}&#10003;{% endif %}</td>
+            <td>{% if extra.hardworking == 'E' %}&#10003;{% endif %}</td>
+            <td>{% if extra.hardworking == 'F' %}&#10003;{% endif %}</td>
+        </tr>
+        <tr>
+            <td>Neatness</td>
+            <td>{% if extra.neatness == 'A' %}&#10003;{% endif %}</td>
+            <td>{% if extra.neatness == 'B' %}&#10003;{% endif %}</td>
+            <td>{% if extra.neatness == 'C' %}&#10003;{% endif %}</td>
+            <td>{% if extra.neatness == 'D' %}&#10003;{% endif %}</td>
+            <td>{% if extra.neatness == 'E' %}&#10003;{% endif %}</td>
+            <td>{% if extra.neatness == 'F' %}&#10003;{% endif %}</td>
+        </tr>
+    </table>
         </div>
     </div>
 
