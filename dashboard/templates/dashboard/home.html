@@ -5,44 +5,62 @@
 {% block title %}Dashboard{% endblock %}
 
 {% block content %}
-<style>
-    .stats { display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 25px; }
-    .stat-box { background: white; border-left: 5px solid #1a5c1a; padding: 15px 20px; text-align: center; flex: 1; min-width: 120px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-    .stat-box .number { font-size: 28px; font-weight: bold; color: #1a5c1a; }
-    .section { background: white; padding: 15px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-    .section h3 { margin-top: 0; color: #1a5c1a; }
-    .quick-links a {
-        display: inline-block; border: 1px solid #1a5c1a; color: #1a5c1a;
-        padding: 8px 14px; text-decoration: none; margin: 4px 4px 0 0; border-radius: 4px;
-    }
-    .quick-links a:hover { background: #1a5c1a; color: white; }
-    .alert-section { border-left: 5px solid #d9822b; }
-    .alert-section h3 { color: #d9822b; }
-    .badge { background: #d9822b; color: white; border-radius: 10px; padding: 2px 8px; font-size: 12px; margin-left: 6px; }
-</style>
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
 
-<h1>Welcome, {{ request.user.get_full_name|default:request.user.username }}</h1>
-<p><strong>Current Term:</strong> {{ current_term|default:"Not set" }}</p>
+<div class="greeting-block">
+    <h1>{{ greeting }}, {{ request.user.get_full_name|default:request.user.username }}</h1>
+    <p class="term-info">
+        <strong>Current Session:</strong> {{ current_term.session|default:"Not set" }} &nbsp;|&nbsp;
+        <strong>Current Term:</strong> {{ current_term.get_name_display|default:"Not set" }}
+    </p>
+</div>
 
-{% if not my_student_id %}
-<div class="stats">
-    <div class="stat-box"><div class="number">{{ student_count }}</div>Students</div>
-    <div class="stat-box"><div class="number">{{ teacher_count }}</div>Teachers</div>
-    <div class="stat-box"><div class="number">{{ subject_count }}</div>Subjects</div>
-    <div class="stat-box"><div class="number">{{ class_count }}</div>Classes</div>
-    <div class="stat-box"><div class="number">{{ allocation_count }}</div>Allocations</div>
+{% if is_admin_or_principal %}
+<div class="stat-grid">
+    <div class="stat-card"><div class="stat-number">{{ student_count }}</div><div class="stat-label">Students</div></div>
+    <div class="stat-card"><div class="stat-number">{{ teacher_count }}</div><div class="stat-label">Teachers</div></div>
+    <div class="stat-card"><div class="stat-number">{{ subject_count }}</div><div class="stat-label">Subjects</div></div>
+    <div class="stat-card"><div class="stat-number">{{ class_count }}</div><div class="stat-label">Classes</div></div>
+</div>
+
+<div class="workflow-grid">
+    <div class="workflow-card">
+        <div class="count">{{ pending_submission_count }}</div>
+        <div class="label">Pending Teacher Submissions</div>
+    </div>
+    <div class="workflow-card">
+        <div class="count">{{ pending_review|length }}</div>
+        <div class="label">Pending Class Teacher Reviews</div>
+    </div>
+    <div class="workflow-card">
+        <div class="count">{{ pending_approval|length }}</div>
+        <div class="label">Pending Principal Approval</div>
+    </div>
+    <div class="workflow-card published">
+        <div class="count">{{ published_count }}</div>
+        <div class="label">Published Results</div>
+    </div>
+</div>
+
+<div class="section-card">
+    <h3>Quick Actions</h3>
+    <div class="quick-actions">
+        <a href="{% url 'register_student' %}">+ Register Student</a>
+        <a href="{% url 'register_teacher' %}">+ Register Teacher</a>
+        <a href="{% url 'add_allocation' %}">+ Allocate Subjects</a>
+        <a href="{% url 'students_owing' %}">View Billing</a>
+    </div>
 </div>
 {% endif %}
 
 {% if my_student_id %}
-<div class="section">
+<div class="section-card">
     <h3>My Results</h3>
     <a href="{% url 'select_report_term' my_student_id %}" style="border:1px solid #1a5c1a; color:#1a5c1a; padding:8px 14px; text-decoration:none; border-radius:4px; display:inline-block;">View My Report Card</a>
 </div>
 
 {% if my_fee_amount is not None %}
-<div class="section">
-    {% load humanize %}
+<div class="section-card">
     <h3>My Fees ({{ my_fee_term }})</h3>
     <p><strong>Amount Due:</strong> ₦{{ my_fee_amount|intcomma }}</p>
     <p><strong>Total Paid:</strong> ₦{{ my_total_paid|intcomma }}</p>
@@ -52,8 +70,8 @@
 {% endif %}
 
 {% if my_allocations %}
-<div class="section {% if my_draft_count > 0 %}alert-section{% endif %}">
-    <h3>My Teaching Assignments {% if my_draft_count > 0 %}<span class="badge">{{ my_draft_count }} awaiting submission</span>{% endif %}</h3>
+<div class="section-card">
+    <h3>My Teaching Assignments {% if my_draft_count > 0 %}<span style="background:#d9822b;color:#fff;border-radius:10px;padding:2px 8px;font-size:12px;margin-left:6px;">{{ my_draft_count }} awaiting submission</span>{% endif %}</h3>
     <table>
         <tr><th>Subject</th><th>Class</th><th>Term</th><th>Status</th><th>Action</th></tr>
         {% for a in my_allocations %}
@@ -70,7 +88,7 @@
 {% endif %}
 
 {% if my_class_students %}
-<div class="section">
+<div class="section-card">
     <h3>My Class Students ({{ my_class_students|length }})</h3>
     <table>
         <tr><th>Admission No.</th><th>Name</th><th>Action</th></tr>
@@ -78,20 +96,16 @@
         <tr>
             <td>{{ s.admission_number }}</td>
             <td>{{ s.user.get_full_name }}</td>
-            <td>
-                {% if my_class_term %}
-                <a href="{% url 'edit_report_extra' s.id my_class_term.id %}">Remarks/Attendance</a>
-                {% endif %}
-            </td>
+            <td>{% if my_class_term %}<a href="{% url 'edit_report_extra' s.id my_class_term.id %}">Remarks/Attendance</a>{% endif %}</td>
         </tr>
         {% endfor %}
     </table>
 </div>
 {% endif %}
 
-{% if pending_review %}
-<div class="section alert-section">
-    <h3>Awaiting Your Review <span class="badge">{{ pending_review|length }}</span></h3>
+{% if pending_review and not is_admin_or_principal %}
+<div class="section-card">
+    <h3>Awaiting Your Review</h3>
     <table>
         <tr><th>Subject</th><th>Class</th><th>Term</th><th>Action</th></tr>
         {% for a in pending_review %}
@@ -103,52 +117,6 @@
         </tr>
         {% endfor %}
     </table>
-</div>
-{% endif %}
-
-{% if pending_approval %}
-<div class="section alert-section">
-    <h3>Awaiting Your Approval <span class="badge">{{ pending_approval|length }}</span></h3>
-    <table>
-        <tr><th>Subject</th><th>Class</th><th>Term</th><th>Action</th></tr>
-        {% for a in pending_approval %}
-        <tr>
-            <td>{{ a.subject }}</td>
-            <td>{{ a.school_class }}</td>
-            <td>{{ a.term }}</td>
-            <td><a href="{% url 'approve_allocation' a.id %}" onclick="return confirm('Approve these results?')">Approve</a></td>
-        </tr>
-        {% endfor %}
-    </table>
-</div>
-{% endif %}
-
-{% if pending_publish %}
-<div class="section alert-section">
-    <h3>Approved, Ready to Publish <span class="badge">{{ pending_publish|length }}</span></h3>
-    <table>
-        <tr><th>Subject</th><th>Class</th><th>Term</th><th>Action</th></tr>
-        {% for a in pending_publish %}
-        <tr>
-            <td>{{ a.subject }}</td>
-            <td>{{ a.school_class }}</td>
-            <td>{{ a.term }}</td>
-            <td><a href="{% url 'publish_allocation' a.id %}" onclick="return confirm('Publish these results? Students will be able to see them.')">Publish</a></td>
-        </tr>
-        {% endfor %}
-    </table>
-</div>
-{% endif %}
-
-{% if not my_student_id %}
-<div class="section quick-links">
-    <h3>Quick Actions</h3>
-    {% if is_admin_or_principal %}
-    <a href="{% url 'register_student' %}">+ Register Student</a>
-    <a href="{% url 'register_teacher' %}">+ Register Teacher</a>
-    {% endif %}
-    <a href="{% url 'select_allocation' %}">All Allocations</a>
-    <a href="{% url 'class_results' %}">View Class Results</a>
 </div>
 {% endif %}
 {% endblock %}

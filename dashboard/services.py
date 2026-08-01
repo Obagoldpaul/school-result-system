@@ -10,6 +10,17 @@ from accounts.utils import (
     is_management_user,
 )
 
+import datetime
+
+
+def get_greeting():
+    hour = datetime.datetime.now().hour
+    if hour < 12:
+        return "Good Morning"
+    elif hour < 17:
+        return "Good Afternoon"
+    else:
+        return "Good Evening"
 
 def build_dashboard(user):
     """
@@ -17,6 +28,7 @@ def build_dashboard(user):
     """
 
     context = {
+        "greeting": get_greeting(),
         "student_count": Student.objects.filter(is_active=True).count(),
         "teacher_count": Teacher.objects.filter(is_active=True).count(),
         "subject_count": Subject.objects.filter(is_active=True).count(),
@@ -59,6 +71,14 @@ def build_dashboard(user):
 
         context.update({
 
+            "pending_submission_count": SubjectAllocation.objects.filter(
+                status=SubjectAllocation.Status.DRAFT
+            ).count(),
+
+            "pending_review": SubjectAllocation.objects.filter(
+                status=SubjectAllocation.Status.SUBMITTED
+            ),
+
             "pending_approval": SubjectAllocation.objects.filter(
                 status=SubjectAllocation.Status.REVIEWED
             ),
@@ -66,6 +86,10 @@ def build_dashboard(user):
             "pending_publish": SubjectAllocation.objects.filter(
                 status=SubjectAllocation.Status.APPROVED
             ),
+
+            "published_count": SubjectAllocation.objects.filter(
+                status=SubjectAllocation.Status.PUBLISHED
+            ).count(),
 
         })
 
