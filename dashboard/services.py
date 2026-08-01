@@ -49,15 +49,28 @@ def build_dashboard(user):
             "my_draft_count": allocations.filter(
                 status=SubjectAllocation.Status.DRAFT
             ).count(),
+            "my_submitted_count": allocations.filter(
+                status=SubjectAllocation.Status.SUBMITTED
+            ).count(),
+            "my_approved_count": allocations.filter(
+                status=SubjectAllocation.Status.APPROVED
+            ).count(),
         })
 
         if teacher.is_class_teacher and teacher.assigned_class:
 
+            class_allocations = SubjectAllocation.objects.filter(
+                school_class=teacher.assigned_class
+            )
+
             context.update({
-                "pending_review": SubjectAllocation.objects.filter(
-                    school_class=teacher.assigned_class,
+                "pending_review": class_allocations.filter(
                     status=SubjectAllocation.Status.SUBMITTED,
                 ),
+
+                "completed_review_count": class_allocations.exclude(
+                    status__in=[SubjectAllocation.Status.DRAFT, SubjectAllocation.Status.SUBMITTED]
+                ).count(),
 
                 "my_class_students": Student.objects.filter(
                     school_class=teacher.assigned_class,
@@ -66,6 +79,17 @@ def build_dashboard(user):
 
                 "my_class_term": context["current_term"],
             })
+
+            if context["current_term"]:
+                from scores.models import ReportCardExtra
+                pending_remarks = 0
+                for s in context["my_class_students"]:
+                    extra = ReportCardExtra.objects.filter(
+                        student=s, term=context["current_term"]
+                    ).first()
+                    if not extra or not extra.teacher_remark:
+                        pending_remarks += 1
+                context["pending_remarks_count"] = pending_remarks
 
     if context["is_admin_or_principal"]:
 
@@ -97,6 +121,11 @@ def build_dashboard(user):
 
         context["my_student_id"] = student.id
 
+        from subjects.models import ClassSubject
+        registered_count = ClassSubject.objects.filter(school_class=student.school_class).count()
+        elective_count = student.elective_subjects.count()
+        context["subjects_registered"] = registered_count + elective_count
+
         current_term = context["current_term"]
         if current_term:
             from billing.models import get_cumulative_balance
@@ -105,5 +134,10 @@ def build_dashboard(user):
             context["my_total_paid"] = total_paid
             context["my_balance"] = balance
             context["my_fee_term"] = current_term
+
+            from scores.models import is_class_term_fully_published
+            context["latest_result_published"] = is_class_term_fully_published(
+                student.school_class, current_term
+            )
 
     return context
