@@ -67,3 +67,59 @@ def mark_attendance(request, class_id):
         'student_rows': student_rows,
         'is_weekend': is_weekend,
     })
+
+    from django.db.models import Count, Q
+import datetime
+
+
+@staff_required
+@login_required
+def class_attendance_summary(request):
+    from students.models import SchoolClass
+
+    class_id = request.GET.get('class')
+    start_str = request.GET.get('start')
+    end_str = request.GET.get('end')
+
+    teacher = get_teacher(request.user)
+    if is_management(request.user):
+        classes = SchoolClass.objects.all()
+    elif teacher and teacher.is_class_teacher and teacher.assigned_class:
+        classes = SchoolClass.objects.filter(id=teacher.assigned_class_id)
+    else:
+        raise PermissionDenied("Only class teachers, principals, or admins can view this report.")
+
+    rows = []
+    selected_class = None
+    start_date = datetime.date.fromisoformat(start_str) if start_str else None
+    end_date = datetime.date.fromisoformat(end_str) if end_str else None
+
+    if class_id:
+        selected_class = get_object_or_404(SchoolClass, id=class_id)
+        if not is_management(request.user) and selected_class.id != teacher.assigned_class_id:
+            raise PermissionDenied("You can only view attendance for your own class.")
+
+        students = Student.objects.filter(school_class=selected_class, is_active=True)
+        for student in students:
+            records = AttendanceRecord.objects.filter(student=student)
+            if start_date:
+                records = records.filter(date__gte=start_date)
+            if end_date:
+                records = records.filter(date__lte=end_date)
+            days_marked = records.count()
+            days_present = records.filter(is_present=True).count()
+            percentage = round((days_present / days_marked) * 100, 1) if days_marked else None
+            rows.append({
+                'student': student,
+                'days_marked': days_marked,
+                'days_present': days_present,
+                'percentage': percentage,
+            })
+
+    return render(request, 'attendance/class_summary.html', {
+        'classes': classes,
+        'selected_class': selected_class,
+        'start_date': start_date,
+        'end_date': end_date,
+        'rows': rows,
+    })

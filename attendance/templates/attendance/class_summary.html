@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+{% block title %}Attendance Summary{% endblock %}
+{% block content %}
+<h1>Class Attendance Summary</h1>
+
+<form method="GET" style="margin-bottom: 15px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+    <select name="class">
+        <option value="">-- Select Class --</option>
+        {% for c in classes %}
+        <option value="{{ c.id }}" {% if selected_class and c.id == selected_class.id %}selected{% endif %}>{{ c.name }}</option>
+        {% endfor %}
+    </select>
+    <label>From:</label>
+    <input type="date" name="start" value="{{ start_date|date:'Y-m-d' }}">
+    <label>To:</label>
+    <input type="date" name="end" value="{{ end_date|date:'Y-m-d' }}">
+    <button type="submit">View Summary</button>
+</form>
+
+{% if selected_class %}
+<h2>{{ selected_class }}</h2>
+<table>
+    <tr>
+        <th>Admission No.</th>
+        <th>Name</th>
+        <th>Days Marked</th>
+        <th>Days Present</th>
+        <th>Attendance %</th>
+    </tr>
+    {% for row in rows %}
+    <tr>
+        <td>{{ row.student.admission_number }}</td>
+        <td>{{ row.student.user.get_full_name }}</td>
+        <td>{{ row.days_marked }}</td>
+        <td>{{ row.days_present }}</td>
+        <td>
+            {% if row.percentage is not None %}
+            <span style="color: {% if row.percentage < 75 %}#b83232{% else %}#1a5c1a{% endif %}; font-weight: 600;">{{ row.percentage }}%</span>
+            {% else %}
+            -
+            {% endif %}
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+{% endif %}
+{% endblock %}
