@@ -1,0 +1,91 @@
+from django.core.exceptions import PermissionDenied
+from accounts.utils import get_teacher, get_student, is_management_user
+from allocations.models import SubjectAllocation
+from .models import (
+    get_cumulative_report_rows,
+    get_class_results,
+    is_class_term_fully_published,
+)
+
+
+def build_report_card_context(student, term):
+    """Computes everything needed to render a report card for one student/term."""
+    from academics.models import SchoolSettings
+
+    cumulative_rows, relevant_terms = get_cumulative_report_rows(student, term)
+
+    current_term_total = sum(
+        row['ca_score'] + row['exam_score']
+        for row in cumulative_rows if row['ca_score'] != '-'
+    )
+    subject_count = len(cumulative_rows)
+    marks_obtainable = subject_count * 100
+    percentage = round((current_term_total / marks_obtainable) * 100, 1) if marks_obtainable else 0
+    overall_percentage = round(
+        sum(r['average'] for r in cumulative_rows) / len(cumulative_rows), 1
+    ) if cumulative_rows else 0
+
+    class_results = get_class_results(student.school_class, term)
+    position = next((r['position'] for r in class_results if r['student'].id == student.id), '-')
+
+    return {
+        'cumulative_rows': cumulative_rows,
+        'relevant_terms': relevant_terms,
+        'total': current_term_total,
+        'marks_obtainable': marks_obtainable,
+        'percentage': percentage,
+        'overall_percentage': overall_percentage,
+        'position': position,
+        'school_settings': SchoolSettings.objects.first(),
+    }
+
+
+def check_report_card_access(user, student, term):
+    """Raises PermissionDenied if the user shouldn't see this student's report card."""
+    student_profile = get_student(user)
+    teacher_profile = get_teacher(user)
+
+    if student_profile:
+        if student_profile.id != student.id:
+            raise PermissionDenied("You can only view your own report card.")
+        if not is_class_term_fully_published(student.school_class, term):
+            raise PermissionDenied("This term's results have not been fully published yet.")
+    elif teacher_profile and not user.is_superuser and not is_management_user(user):
+        if not (teacher_profile.is_class_teacher and teacher_profile.assigned_class_id == student.school_class_id):
+            raise PermissionDenied("Only the class teacher, principal, or admin can view this report card.")
+
+
+def check_allocation_ownership(user, allocation):
+    """Raises PermissionDenied if this user isn't the teacher assigned to this allocation."""
+    teacher_profile = get_teacher(user)
+    if teacher_profile and allocation.teacher_id != teacher_profile.id and not user.is_superuser:
+        raise PermissionDenied("You are not assigned to teach this subject/class.")
+
+
+def can_edit_allocation(user, allocation):
+    return allocation.status == SubjectAllocation.Status.DRAFT or user.is_superuser
+
+
+def submit_allocation_for_review(allocation):
+    if allocation.status == SubjectAllocation.Status.DRAFT:
+        allocation.status = SubjectAllocation.Status.SUBMITTED
+        allocation.save()
+
+
+def mark_allocation_reviewed(allocation, comment):
+    allocation.class_teacher_comment = comment
+    if allocation.status == SubjectAllocation.Status.SUBMITTED:
+        allocation.status = SubjectAllocation.Status.REVIEWED
+    allocation.save()
+
+
+def approve_allocation_results(allocation):
+    if allocation.status == SubjectAllocation.Status.REVIEWED:
+        allocation.status = SubjectAllocation.Status.APPROVED
+        allocation.save()
+
+
+def publish_allocation_results(allocation):
+    if allocation.status == SubjectAllocation.Status.APPROVED:
+        allocation.status = SubjectAllocation.Status.PUBLISHED
+        allocation.save()

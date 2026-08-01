@@ -1,35 +1,23 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
-from allocations.models import SubjectAllocation
-from students.models import Student
-from .models import Score
-from .models import get_report_card_rows
 from django.http import HttpResponse
-from weasyprint import HTML
 from django.template.loader import get_template
-import os
-from django.conf import settings
-from .models import get_cumulative_report_rows
+from weasyprint import HTML
+
 from accounts.decorators import staff_required
-from academics.models import SchoolSettings
-from .models import is_class_term_fully_published
+from accounts.utils import get_teacher, get_student, get_current_term
+from allocations.models import SubjectAllocation
+from students.models import Student, SchoolClass
+from academics.models import Term
+from .models import Score, ReportCardExtra, get_class_results
+from .forms import ReportCardExtraForm
+from . import services
 
-
-def link_callback(uri, rel):
-    """Convert HTML URIs to absolute system paths so xhtml2pdf can find images/CSS."""
-    if uri.startswith(settings.STATIC_URL):
-        path = os.path.join(settings.STATICFILES_DIRS[0], uri.replace(settings.STATIC_URL, ""))
-    else:
-        return uri
-    if not os.path.isfile(path):
-        raise Exception(f'Static file not found: {path}')
-    return path
 
 @staff_required
 @login_required
 def select_allocation(request):
-    """Step 1: teacher picks which class/subject/term they want to enter scores for."""
-    teacher = getattr(request.user, 'teacher_profile', None)
+    teacher = get_teacher(request.user)
     if teacher:
         allocations = SubjectAllocation.objects.filter(teacher=teacher)
     else:
@@ -49,8 +37,6 @@ def select_allocation(request):
     if status:
         allocations = allocations.filter(status=status)
 
-    from students.models import SchoolClass
-    from academics.models import Term
     from subjects.models import Subject
 
     context = {
@@ -72,16 +58,10 @@ def select_allocation(request):
 @login_required
 def enter_scores(request, allocation_id):
     allocation = get_object_or_404(SubjectAllocation, id=allocation_id)
-
-    teacher_profile = getattr(request.user, 'teacher_profile', None)
-    if teacher_profile and allocation.teacher_id != teacher_profile.id and not request.user.is_superuser:
-        from django.core.exceptions import PermissionDenied
-        raise PermissionDenied("You are not assigned to teach this subject/class.")
-
-    can_edit = allocation.status == SubjectAllocation.Status.DRAFT or request.user.is_superuser
+    services.check_allocation_ownership(request.user, allocation)
+    can_edit = services.can_edit_allocation(request.user, allocation)
 
     students = Student.objects.filter(school_class=allocation.school_class, is_active=True)
-
     if allocation.subject.is_elective:
         students = students.filter(elective_subjects=allocation.subject)
 
@@ -119,9 +99,51 @@ def enter_scores(request, allocation_id):
     })
 
 
-from students.models import SchoolClass
-from academics.models import Term
-from .models import get_class_results
+def _redirect_with_query(request):
+    from django.urls import reverse
+    url = reverse('select_allocation')
+    query = request.GET.urlencode()
+    if query:
+        url += f'?{query}'
+    return redirect(url)
+
+
+@staff_required
+@login_required
+def submit_allocation(request, allocation_id):
+    allocation = get_object_or_404(SubjectAllocation, id=allocation_id)
+    services.check_allocation_ownership(request.user, allocation)
+    services.submit_allocation_for_review(allocation)
+    return _redirect_with_query(request)
+
+
+@staff_required
+@login_required
+def review_allocation(request, allocation_id):
+    allocation = get_object_or_404(SubjectAllocation, id=allocation_id)
+
+    if request.method == 'POST':
+        services.mark_allocation_reviewed(allocation, request.POST.get('comment', ''))
+        return _redirect_with_query(request)
+
+    return render(request, 'scores/review_allocation.html', {'allocation': allocation})
+
+
+@staff_required
+@login_required
+def approve_allocation(request, allocation_id):
+    allocation = get_object_or_404(SubjectAllocation, id=allocation_id)
+    services.approve_allocation_results(allocation)
+    return _redirect_with_query(request)
+
+
+@staff_required
+@login_required
+def publish_allocation(request, allocation_id):
+    allocation = get_object_or_404(SubjectAllocation, id=allocation_id)
+    services.publish_allocation_results(allocation)
+    return _redirect_with_query(request)
+
 
 @staff_required
 @login_required
@@ -149,9 +171,6 @@ def class_results(request):
     })
 
 
-from .forms import ReportCardExtraForm
-from .models import ReportCardExtra
-
 @staff_required
 @login_required
 def edit_report_extra(request, student_id, term_id):
@@ -176,120 +195,39 @@ def edit_report_extra(request, student_id, term_id):
 def report_card(request, student_id, term_id):
     student = get_object_or_404(Student, id=student_id)
     term = get_object_or_404(Term, id=term_id)
-
-    student_profile = getattr(request.user, 'student_profile', None)
-    teacher_profile = getattr(request.user, 'teacher_profile', None)
-
-    if student_profile:
-        if student_profile.id != student.id:
-            from django.core.exceptions import PermissionDenied
-            raise PermissionDenied("You can only view your own report card.")
-        if not is_class_term_fully_published(student.school_class, term):
-            from django.core.exceptions import PermissionDenied
-            raise PermissionDenied("This term's results have not been fully published yet.")
-    elif teacher_profile and not request.user.is_superuser and request.user.role not in ['ADMIN', 'PRINCIPAL']:
-        if not (teacher_profile.is_class_teacher and teacher_profile.assigned_class_id == student.school_class_id):
-            from django.core.exceptions import PermissionDenied
-            raise PermissionDenied("Only the class teacher, principal, or admin can view this report card.")
+    services.check_report_card_access(request.user, student, term)
 
     extra = ReportCardExtra.objects.filter(student=student, term=term).first()
-    school_settings = SchoolSettings.objects.first()
+    context = services.build_report_card_context(student, term)
+    context.update({'student': student, 'term': term, 'extra': extra})
 
-    cumulative_rows, relevant_terms = get_cumulative_report_rows(student, term)
+    return render(request, 'scores/report_card.html', context)
 
-    current_term_total = sum(
-        row['ca_score'] + row['exam_score']
-        for row in cumulative_rows if row['ca_score'] != '-'
-    )
-    subject_count = len(cumulative_rows)
-    marks_obtainable = subject_count * 100
-    percentage = round((current_term_total / marks_obtainable) * 100, 1) if marks_obtainable else 0
-    overall_percentage = round(
-        sum(r['average'] for r in cumulative_rows) / len(cumulative_rows), 1
-    ) if cumulative_rows else 0
-
-    class_results = get_class_results(student.school_class, term)
-    position = next((r['position'] for r in class_results if r['student'].id == student.id), '-')
-
-    return render(request, 'scores/report_card.html', {
-        'student': student,
-        'term': term,
-        'cumulative_rows': cumulative_rows,
-        'relevant_terms': relevant_terms,
-        'extra': extra,
-        'school_settings': school_settings,
-        'total': current_term_total,
-        'marks_obtainable': marks_obtainable,
-        'percentage': percentage,
-        'overall_percentage': overall_percentage,
-        'position': position,
-    })
 
 @login_required
 def report_card_pdf(request, student_id, term_id):
     student = get_object_or_404(Student, id=student_id)
     term = get_object_or_404(Term, id=term_id)
+    services.check_report_card_access(request.user, student, term)
 
-    student_profile = getattr(request.user, 'student_profile', None)
-    teacher_profile = getattr(request.user, 'teacher_profile', None)
-
-    if student_profile:
-        if student_profile.id != student.id:
-            from django.core.exceptions import PermissionDenied
-            raise PermissionDenied("You can only view your own report card.")
-        if not is_class_term_fully_published(student.school_class, term):
-            from django.core.exceptions import PermissionDenied
-            raise PermissionDenied("This term's results have not been fully published yet.")
-    elif teacher_profile and not request.user.is_superuser and request.user.role not in ['ADMIN', 'PRINCIPAL']:
-        if not (teacher_profile.is_class_teacher and teacher_profile.assigned_class_id == student.school_class_id):
-            from django.core.exceptions import PermissionDenied
-            raise PermissionDenied("Only the class teacher, principal, or admin can view this report card.")
-            
     extra = ReportCardExtra.objects.filter(student=student, term=term).first()
-    school_settings = SchoolSettings.objects.first()
-
-    cumulative_rows, relevant_terms = get_cumulative_report_rows(student, term)
-
-    current_term_total = sum(
-        row['ca_score'] + row['exam_score']
-        for row in cumulative_rows if row['ca_score'] != '-'
-    )
-    subject_count = len(cumulative_rows)
-    marks_obtainable = subject_count * 100
-    percentage = round((current_term_total / marks_obtainable) * 100, 1) if marks_obtainable else 0
-    overall_percentage = round(
-        sum(r['average'] for r in cumulative_rows) / len(cumulative_rows), 1
-    ) if cumulative_rows else 0
-
-    class_results = get_class_results(student.school_class, term)
-    position = next((r['position'] for r in class_results if r['student'].id == student.id), '-')
+    context = services.build_report_card_context(student, term)
+    context.update({'student': student, 'term': term, 'extra': extra})
 
     template = get_template('scores/report_card.html')
-    html_string = template.render({
-        'student': student,
-        'term': term,
-        'cumulative_rows': cumulative_rows,
-        'relevant_terms': relevant_terms,
-        'extra': extra,
-        'school_settings': school_settings,
-        'total': current_term_total,
-        'marks_obtainable': marks_obtainable,
-        'percentage': percentage,
-        'overall_percentage': overall_percentage,
-        'position': position,
-    }, request=request)
+    html_string = template.render(context, request=request)
 
     response = HttpResponse(content_type='application/pdf')
     response['Content-Disposition'] = f'attachment; filename="{student.admission_number}_report_card.pdf"'
-
     HTML(string=html_string, base_url=request.build_absolute_uri('/')).write_pdf(response)
     return response
+
 
 @login_required
 def select_report_term(request, student_id):
     student = get_object_or_404(Student, id=student_id)
 
-    student_profile = getattr(request.user, 'student_profile', None)
+    student_profile = get_student(request.user)
     if student_profile and student_profile.id != student.id:
         from django.core.exceptions import PermissionDenied
         raise PermissionDenied("You can only view your own report cards.")
@@ -299,81 +237,3 @@ def select_report_term(request, student_id):
         'student': student,
         'terms': terms,
     })
-
-
-from allocations.models import SubjectAllocation as Allocation
-
-
-@staff_required
-@login_required
-def submit_allocation(request, allocation_id):
-    """Teacher submits their scores for review."""
-    allocation = get_object_or_404(Allocation, id=allocation_id)
-    teacher_profile = getattr(request.user, 'teacher_profile', None)
-    if teacher_profile and allocation.teacher_id != teacher_profile.id and not request.user.is_superuser:
-        from django.core.exceptions import PermissionDenied
-        raise PermissionDenied("Only the assigned teacher can submit these scores.")
-
-    if allocation.status == Allocation.Status.DRAFT:
-        allocation.status = Allocation.Status.SUBMITTED
-        allocation.save()
-
-    from django.urls import reverse
-    url = reverse('select_allocation')
-    query = request.GET.urlencode()
-    if query:
-        url += f'?{query}'
-    return redirect(url)
-
-
-@staff_required
-@login_required
-def review_allocation(request, allocation_id):
-    """Class teacher reviews and adds a comment, moving status to Reviewed."""
-    allocation = get_object_or_404(Allocation, id=allocation_id)
-
-    if request.method == 'POST':
-        allocation.class_teacher_comment = request.POST.get('comment', '')
-        if allocation.status == Allocation.Status.SUBMITTED:
-            allocation.status = Allocation.Status.REVIEWED
-        allocation.save()
-        from django.urls import reverse
-    url = reverse('select_allocation')
-    query = request.GET.urlencode()
-    if query:
-        url += f'?{query}'
-    return redirect(url)
-
-    return render(request, 'scores/review_allocation.html', {'allocation': allocation})
-
-
-@staff_required
-@login_required
-def approve_allocation(request, allocation_id):
-    """Principal approves reviewed results."""
-    allocation = get_object_or_404(Allocation, id=allocation_id)
-    if allocation.status == Allocation.Status.REVIEWED:
-        allocation.status = Allocation.Status.APPROVED
-        allocation.save()
-    from django.urls import reverse
-    url = reverse('select_allocation')
-    query = request.GET.urlencode()
-    if query:
-        url += f'?{query}'
-    return redirect(url)
-
-
-@staff_required
-@login_required
-def publish_allocation(request, allocation_id):
-    """Principal/Admin publishes approved results, making them visible to students."""
-    allocation = get_object_or_404(Allocation, id=allocation_id)
-    if allocation.status == Allocation.Status.APPROVED:
-        allocation.status = Allocation.Status.PUBLISHED
-        allocation.save()
-    from django.urls import reverse
-    url = reverse('select_allocation')
-    query = request.GET.urlencode()
-    if query:
-        url += f'?{query}'
-    return redirect(url)
