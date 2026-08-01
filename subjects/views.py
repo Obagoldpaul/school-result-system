@@ -14,7 +14,10 @@ def add_subject(request):
             return redirect('subject_list')
     else:
         form = SubjectForm()
-    return render(request, 'subjects/add_subject.html', {'form': form})
+    return render(request, 'subjects/add_subject.html', {
+        'form': form,
+        'subject_list_url': '/subjects/',
+    })
 
 @staff_required
 @login_required

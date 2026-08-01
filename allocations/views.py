@@ -14,8 +14,10 @@ def add_allocation(request):
             return redirect('allocation_list')
     else:
         form = SubjectAllocationForm()
-    return render(request, 'allocations/add_allocation.html', {'form': form})
-
+    return render(request, 'allocations/add_allocation.html', {
+        'form': form,
+        'allocation_list_url': '/allocations/',
+    })
 @staff_required
 @login_required
 def allocation_list(request):

@@ -1,11 +1,5 @@
 {% extends 'base.html' %}
 {% block title %}Add Subject{% endblock %}
 {% block content %}
-<h1>Add New Subject</h1>
-<form method="POST">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">Save Subject</button>
-</form>
-<p><a href="{% url 'subject_list' %}">View all subjects</a></p>
+{% include 'partials/simple_form.html' with page_title="Add New Subject" submit_label="Save Subject" back_url=subject_list_url back_label="View all subjects" %}
 {% endblock %}

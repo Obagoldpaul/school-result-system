@@ -1,0 +1,9 @@
+<h1>{{ page_title }}</h1>
+<form method="POST">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">{{ submit_label|default:"Save" }}</button>
+</form>
+{% if back_url %}
+<p><a href="{{ back_url }}">{{ back_label|default:"Back" }}</a></p>
+{% endif %}

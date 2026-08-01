@@ -1,11 +1,5 @@
 {% extends 'base.html' %}
 {% block title %}Assign Teacher to Subject{% endblock %}
 {% block content %}
-<h1>Assign Teacher to Subject/Class</h1>
-<form method="POST">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">Save Allocation</button>
-</form>
-<p><a href="{% url 'allocation_list' %}">View all allocations</a></p>
+{% include 'partials/simple_form.html' with page_title="Assign Teacher to Subject/Class" submit_label="Save Allocation" back_url=allocation_list_url back_label="View all allocations" %}
 {% endblock %}

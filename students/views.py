@@ -14,8 +14,10 @@ def register_student(request):
             return redirect('student_list')
     else:
         form = StudentRegistrationForm()
-    return render(request, 'students/register_student.html', {'form': form})
-
+    return render(request, 'students/register_student.html', {
+        'form': form,
+        'student_list_url': '/students/',
+    })
 
 @login_required
 def student_list(request):

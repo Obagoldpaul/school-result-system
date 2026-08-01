@@ -14,7 +14,10 @@ def register_teacher(request):
             return redirect('teacher_list')
     else:
         form = TeacherRegistrationForm()
-    return render(request, 'teachers/register_teacher.html', {'form': form})
+    return render(request, 'teachers/register_teacher.html', {
+        'form': form,
+        'teacher_list_url': '/teachers/',
+    })
 
 @staff_required
 @login_required

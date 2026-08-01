@@ -1,11 +1,5 @@
 {% extends 'base.html' %}
 {% block title %}Register Teacher{% endblock %}
 {% block content %}
-<h1>Register New Teacher</h1>
-<form method="POST">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">Save Teacher</button>
-</form>
-<p><a href="{% url 'teacher_list' %}">View all teachers</a></p>
+{% include 'partials/simple_form.html' with page_title="Register New Teacher" submit_label="Save Teacher" back_url=teacher_list_url back_label="View all teachers" %}
 {% endblock %}
