@@ -1,0 +1,131 @@
+.app-layout {
+    display: flex;
+    min-height: 100vh;
+}
+
+.sidebar {
+    width: 240px;
+    background: linear-gradient(180deg, #1a5c1a, #0d3d0d);
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    padding: 20px 0;
+    flex-shrink: 0;
+}
+
+.sidebar .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 20px 20px 20px;
+    border-bottom: 1px solid rgba(255,255,255,0.15);
+    margin-bottom: 15px;
+}
+
+.sidebar .brand img { height: 36px; border-radius: 4px; }
+.sidebar .brand span { font-weight: 700; font-size: 16px; letter-spacing: 0.3px; }
+
+.sidebar nav {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex: 1;
+    padding: 0 12px;
+}
+
+.sidebar nav a {
+    color: rgba(255,255,255,0.85);
+    text-decoration: none;
+    padding: 10px 14px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    transition: background 0.15s, color 0.15s;
+}
+
+.sidebar nav a:hover {
+    background: rgba(255,255,255,0.1);
+    color: #fff;
+}
+
+.sidebar nav a.active {
+    background: rgba(255,255,255,0.18);
+    color: #fff;
+}
+
+.sidebar .logout-form {
+    padding: 12px;
+    border-top: 1px solid rgba(255,255,255,0.15);
+    margin-top: 10px;
+}
+
+.sidebar .logout-form button {
+    background: none;
+    border: none;
+    color: rgba(255,255,255,0.85);
+    cursor: pointer;
+    font-size: 14px;
+    font-family: inherit;
+    padding: 8px 14px;
+    width: 100%;
+    text-align: left;
+    border-radius: 6px;
+}
+
+.sidebar .logout-form button:hover {
+    background: rgba(255,255,255,0.1);
+    color: #fff;
+}
+
+.main-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.main-area .content {
+    max-width: 1050px;
+    margin: 28px auto;
+    padding: 0 24px;
+    flex: 1;
+    width: 100%;
+}
+
+.topbar {
+    background: #fff;
+    border-bottom: 1px solid #e0e4e0;
+    padding: 12px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+}
+
+.topbar .search-box input {
+    padding: 8px 14px;
+    border: 1px solid #d5dad5;
+    border-radius: 20px;
+    font-family: inherit;
+    font-size: 13px;
+    width: 260px;
+}
+
+.topbar .topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+}
+
+.topbar .notif-icon {
+    font-size: 18px;
+    color: #444;
+    text-decoration: none;
+    position: relative;
+}
+
+.topbar .user-chip {
+    font-size: 13px;
+    font-weight: 600;
+    color: #16401c;
+}

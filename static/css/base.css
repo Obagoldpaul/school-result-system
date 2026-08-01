@@ -12,13 +12,6 @@ body {
     flex-direction: column;
 }
 
-.content {
-    max-width: 1050px;
-    margin: 28px auto;
-    padding: 0 24px;
-    flex: 1;
-    width: 100%;
-}
 
 h1 {
     font-weight: 700;
@@ -50,59 +43,3 @@ footer {
     background: #fff;
 }
 
-/* ==========================
-   Navigation
-========================== */
-
-nav {
-    background: linear-gradient(135deg, #1a5c1a, #0d3d0d);
-    padding: 12px 24px;
-    display: flex;
-    align-items: center;
-    gap: 22px;
-    flex-wrap: wrap;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-}
-
-nav img {
-    height: 38px;
-    border-radius: 4px;
-}
-
-nav .brand {
-    font-weight: 700;
-    font-size: 17px;
-    color: #fff;
-    margin-right: 10px;
-    letter-spacing: 0.3px;
-}
-
-nav a {
-    color: rgba(255,255,255,0.9);
-    text-decoration: none;
-    font-size: 14px;
-    font-weight: 500;
-    padding: 6px 4px;
-    border-bottom: 2px solid transparent;
-    transition: border-color 0.15s, color 0.15s;
-}
-
-nav a:hover {
-    color: #fff;
-    border-bottom-color: #fff;
-}
-
-nav form button {
-    background: none;
-    border: none;
-    cursor: pointer;
-    color: rgba(255,255,255,0.9);
-    font-size: 14px;
-    font-weight: 500;
-    font-family: inherit;
-    padding: 6px 4px;
-}
-
-nav form button:hover {
-    color: #fff;
-}
