@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+{% block title %}Mark Attendance{% endblock %}
+{% block content %}
+<h1>Select Class to Mark Attendance</h1>
+<table>
+    <tr><th>Class</th><th>Action</th></tr>
+    {% for c in classes %}
+    <tr>
+        <td>{{ c.name }}</td>
+        <td><a href="{% url 'mark_attendance' c.id %}">Mark Attendance</a></td>
+    </tr>
+    {% endfor %}
+</table>
+{% endblock %}

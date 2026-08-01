@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     'scores',
     'dashboard',
     'billing',
+    'attendance',
 ]
 
 MIDDLEWARE = [

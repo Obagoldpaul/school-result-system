@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+{% block title %}Mark Attendance{% endblock %}
+{% block content %}
+<h1>Mark Attendance: {{ school_class }}</h1>
+
+<form method="GET" style="margin-bottom: 15px;">
+    <label>Date:</label>
+    <input type="date" name="date" value="{{ selected_date|date:'Y-m-d' }}" onchange="this.form.submit()">
+</form>
+
+{% if is_weekend %}
+<p style="color: #b83232; font-weight: 600;">Attendance cannot be marked for weekends. Please select a weekday.</p>
+{% else %}
+<form method="POST">
+    {% csrf_token %}
+    <input type="hidden" name="date" value="{{ selected_date|date:'Y-m-d' }}">
+    <table>
+        <tr><th>Admission No.</th><th>Name</th><th>Present</th></tr>
+        {% for student, is_present in student_rows %}
+        <tr>
+            <td>{{ student.admission_number }}</td>
+            <td>{{ student.user.get_full_name }}</td>
+            <td><input type="checkbox" name="present_{{ student.id }}" {% if is_present %}checked{% endif %}></td>
+        </tr>
+        {% endfor %}
+    </table>
+    <br>
+    <button type="submit">Save Attendance</button>
+</form>
+{% endif %}
+       
+<p><a href="{% url 'select_class_for_attendance' %}">Back to class list</a></p>
+{% endblock %}
