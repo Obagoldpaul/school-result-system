@@ -113,7 +113,7 @@ def _redirect_with_query(request):
 def submit_allocation(request, allocation_id):
     allocation = get_object_or_404(SubjectAllocation, id=allocation_id)
     services.check_allocation_ownership(request.user, allocation)
-    services.submit_allocation_for_review(allocation)
+    services.submit_allocation_for_review(allocation, user=request.user)
     return _redirect_with_query(request)
 
 
@@ -123,7 +123,7 @@ def review_allocation(request, allocation_id):
     allocation = get_object_or_404(SubjectAllocation, id=allocation_id)
 
     if request.method == 'POST':
-        services.mark_allocation_reviewed(allocation, request.POST.get('comment', ''))
+        services.mark_allocation_reviewed(allocation, request.POST.get('comment', ''), user=request.user)
         return _redirect_with_query(request)
 
     return render(request, 'scores/review_allocation.html', {'allocation': allocation})
@@ -133,7 +133,7 @@ def review_allocation(request, allocation_id):
 @login_required
 def approve_allocation(request, allocation_id):
     allocation = get_object_or_404(SubjectAllocation, id=allocation_id)
-    services.approve_allocation_results(allocation)
+    services.approve_allocation_results(allocation, user=request.user)
     return _redirect_with_query(request)
 
 
@@ -141,7 +141,7 @@ def approve_allocation(request, allocation_id):
 @login_required
 def publish_allocation(request, allocation_id):
     allocation = get_object_or_404(SubjectAllocation, id=allocation_id)
-    services.publish_allocation_results(allocation)
+    services.publish_allocation_results(allocation, user=request.user)
     return _redirect_with_query(request)
 
 

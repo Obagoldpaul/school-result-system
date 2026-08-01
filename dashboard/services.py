@@ -117,6 +117,9 @@ def build_dashboard(user):
 
         })
 
+        from activitylog.models import ActivityLog
+        context["recent_activities"] = ActivityLog.objects.select_related('user')[:10]
+
     if student:
 
         context["my_student_id"] = student.id

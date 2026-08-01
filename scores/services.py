@@ -59,26 +59,34 @@ def can_edit_allocation(user, allocation):
     return _can_edit_allocation(user, allocation) or user.is_superuser
 
 
-def submit_allocation_for_review(allocation):
+def submit_allocation_for_review(allocation, user=None):
     if allocation.status == SubjectAllocation.Status.DRAFT:
         allocation.status = SubjectAllocation.Status.SUBMITTED
         allocation.save()
+        from activitylog.models import log_activity
+        log_activity(user, f"{allocation.teacher} submitted {allocation.subject} - {allocation.school_class}")
 
 
-def mark_allocation_reviewed(allocation, comment):
+def mark_allocation_reviewed(allocation, comment, user=None):
     allocation.class_teacher_comment = comment
     if allocation.status == SubjectAllocation.Status.SUBMITTED:
         allocation.status = SubjectAllocation.Status.REVIEWED
+        from activitylog.models import log_activity
+        log_activity(user, f"{user} reviewed {allocation.subject} - {allocation.school_class}")
     allocation.save()
 
 
-def approve_allocation_results(allocation):
+def approve_allocation_results(allocation, user=None):
     if allocation.status == SubjectAllocation.Status.REVIEWED:
         allocation.status = SubjectAllocation.Status.APPROVED
         allocation.save()
+        from activitylog.models import log_activity
+        log_activity(user, f"{user} approved {allocation.subject} - {allocation.school_class}")
 
 
-def publish_allocation_results(allocation):
+def publish_allocation_results(allocation, user=None):
     if allocation.status == SubjectAllocation.Status.APPROVED:
         allocation.status = SubjectAllocation.Status.PUBLISHED
         allocation.save()
+        from activitylog.models import log_activity
+        log_activity(user, f"{user} published {allocation.subject} - {allocation.school_class}")

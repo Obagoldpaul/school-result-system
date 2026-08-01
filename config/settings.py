@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     'dashboard',
     'billing',
     'attendance',
+    'activitylog',
 ]
 
 MIDDLEWARE = [

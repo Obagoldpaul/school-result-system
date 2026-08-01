@@ -85,6 +85,23 @@
     </table>
 </div>
 {% endif %}
+
+{% if recent_activities %}
+<div class="section-card">
+    <h3>Latest Activities</h3>
+    <ul style="list-style:none; padding:0; margin:0;">
+        {% for activity in recent_activities %}
+        <li style="padding:8px 0; border-bottom:1px solid #eee; font-size:13px;">
+            {{ activity.description }}
+            <span style="color:#999; float:right;">{{ activity.created_at|timesince }} ago</span>
+        </li>
+        {% endfor %}
+    </ul>
+</div>
+{% endif %}
+{% endif %}
+
+{% if my_student_id %}
 {% endif %}
 
 {% if my_student_id %}
