@@ -2,9 +2,9 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from .forms import StudentRegistrationForm
 from .models import Student, SchoolClass, Department
-from accounts.decorators import staff_required
+from accounts.decorators import staff_required, management_required
 
-@staff_required
+@management_required
 @login_required
 def register_student(request):
     if request.method == 'POST':

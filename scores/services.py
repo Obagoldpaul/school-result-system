@@ -1,15 +1,10 @@
 from django.core.exceptions import PermissionDenied
-from accounts.utils import get_teacher, get_student, is_management_user
+from accounts.permissions import can_view_report, can_edit_allocation as _can_edit_allocation
 from allocations.models import SubjectAllocation
-from .models import (
-    get_cumulative_report_rows,
-    get_class_results,
-    is_class_term_fully_published,
-)
+from .models import get_cumulative_report_rows, get_class_results
 
 
 def build_report_card_context(student, term):
-    """Computes everything needed to render a report card for one student/term."""
     from academics.models import SchoolSettings
 
     cumulative_rows, relevant_terms = get_cumulative_report_rows(student, term)
@@ -41,29 +36,27 @@ def build_report_card_context(student, term):
 
 
 def check_report_card_access(user, student, term):
-    """Raises PermissionDenied if the user shouldn't see this student's report card."""
-    student_profile = get_student(user)
-    teacher_profile = get_teacher(user)
+    from .models import is_class_term_fully_published
+    if not can_view_report(user, student):
+        raise PermissionDenied("You do not have permission to view this report card.")
 
-    if student_profile:
-        if student_profile.id != student.id:
-            raise PermissionDenied("You can only view your own report card.")
-        if not is_class_term_fully_published(student.school_class, term):
-            raise PermissionDenied("This term's results have not been fully published yet.")
-    elif teacher_profile and not user.is_superuser and not is_management_user(user):
-        if not (teacher_profile.is_class_teacher and teacher_profile.assigned_class_id == student.school_class_id):
-            raise PermissionDenied("Only the class teacher, principal, or admin can view this report card.")
+    from accounts.permissions import is_student
+    if is_student(user) and not is_class_term_fully_published(student.school_class, term):
+        raise PermissionDenied("This term's results have not been fully published yet.")
 
 
 def check_allocation_ownership(user, allocation):
-    """Raises PermissionDenied if this user isn't the teacher assigned to this allocation."""
-    teacher_profile = get_teacher(user)
-    if teacher_profile and allocation.teacher_id != teacher_profile.id and not user.is_superuser:
+    if not _can_edit_allocation(user, allocation) and allocation.status != SubjectAllocation.Status.DRAFT:
+        # allow view access even if not editable; real edit-lock happens in can_edit_allocation below
+        pass
+    from accounts.permissions import is_management
+    teacher = getattr(user, "teacher_profile", None)
+    if teacher and allocation.teacher_id != teacher.id and not is_management(user):
         raise PermissionDenied("You are not assigned to teach this subject/class.")
 
 
 def can_edit_allocation(user, allocation):
-    return allocation.status == SubjectAllocation.Status.DRAFT or user.is_superuser
+    return _can_edit_allocation(user, allocation) or user.is_superuser
 
 
 def submit_allocation_for_review(allocation):
