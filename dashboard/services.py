@@ -73,4 +73,13 @@ def build_dashboard(user):
 
         context["my_student_id"] = student.id
 
+        current_term = context["current_term"]
+        if current_term:
+            from billing.models import get_cumulative_balance
+            fee_amount, total_paid, balance = get_cumulative_balance(student, current_term)
+            context["my_fee_amount"] = fee_amount
+            context["my_total_paid"] = total_paid
+            context["my_balance"] = balance
+            context["my_fee_term"] = current_term
+
     return context

@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load humanize %}
 
 {% block title %}Dashboard{% endblock %}
 
@@ -38,6 +39,16 @@
     <h3>My Results</h3>
     <a href="{% url 'select_report_term' my_student_id %}" style="border:1px solid #1a5c1a; color:#1a5c1a; padding:8px 14px; text-decoration:none; border-radius:4px; display:inline-block;">View My Report Card</a>
 </div>
+
+{% if my_fee_amount is not None %}
+<div class="section">
+    {% load humanize %}
+    <h3>My Fees ({{ my_fee_term }})</h3>
+    <p><strong>Amount Due:</strong> ₦{{ my_fee_amount|intcomma }}</p>
+    <p><strong>Total Paid:</strong> ₦{{ my_total_paid|intcomma }}</p>
+    <p><strong>Balance:</strong> <span style="color: {% if my_balance > 0 %}#b83232{% else %}#1a5c1a{% endif %}; font-weight: 600;">₦{{ my_balance|intcomma }}</span></p>
+</div>
+{% endif %}
 {% endif %}
 
 {% if my_allocations %}

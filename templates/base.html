@@ -84,11 +84,13 @@
         <a href="{% url 'allocation_list' %}">Allocations</a>
         <a href="{% url 'select_allocation' %}">Enter Scores</a>
         <a href="{% url 'class_results' %}">Results</a>
+        <a href="{% url 'students_owing' %}">Billing</a>
         <a href="/admin/">Admin</a>
 
     {% elif is_principal %}
 
         <a href="{% url 'class_results' %}">Results</a>
+        <a href="{% url 'students_owing' %}">Billing</a>
 
     {% elif is_class_teacher %}
 
