@@ -1,0 +1,42 @@
+/* Forms */
+
+input[type="text"],
+input[type="number"],
+input[type="password"],
+input[type="email"],
+input[type="date"],
+select,
+textarea {
+    padding: 8px 10px;
+    border: 1px solid #cccccc;
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 14px;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+    outline: none;
+    border-color: #1a5c1a;
+    box-shadow: 0 0 0 3px rgba(26, 92, 26, 0.12);
+}
+
+button,
+input[type="submit"] {
+    background: #1a5c1a;
+    color: #ffffff;
+    border: none;
+    padding: 10px 18px;
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+button:hover,
+input[type="submit"]:hover {
+    background: #0d3d0d;
+}

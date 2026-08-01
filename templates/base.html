@@ -5,6 +5,10 @@
     <title>{% block title %}School Management System{% endblock %}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="{% static 'css/base.css' %}">
+    <link rel="stylesheet" href="{% static 'css/tables.css' %}">
+    <link rel="stylesheet" href="{% static 'css/forms.css' %}">
     <style>
         * { box-sizing: border-box; }
         body {
@@ -50,44 +54,9 @@
         h1 { font-weight: 700; color: #16401c; margin-bottom: 8px; }
         h2, h3 { font-weight: 600; color: #16401c; }
 
-        table {
-            border-collapse: collapse;
-            width: 100%;
-            background: #fff;
-            box-shadow: 0 1px 4px rgba(0,0,0,0.08);
-        }
-        th, td { border: 1px solid #e0e4e0; padding: 9px 12px; text-align: left; font-size: 14px; }
-        th { background: #eef3ee; font-weight: 600; color: #16401c; }
-        tr:hover td { background: #f7faf7; }
+       
 
-        input[type=text], input[type=number], input[type=password],
-        input[type=email], input[type=date], select, textarea {
-            padding: 8px 10px;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-            font-family: inherit;
-            font-size: 14px;
-        }
-        input:focus, select:focus, textarea:focus {
-            outline: none;
-            border-color: #1a5c1a;
-            box-shadow: 0 0 0 3px rgba(26,92,26,0.12);
-        }
-
-        button, input[type=submit] {
-            background: #1a5c1a;
-            color: #fff;
-            border: none;
-            padding: 10px 18px;
-            border-radius: 6px;
-            font-family: inherit;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background 0.15s;
-        }
-        button:hover, input[type=submit]:hover { background: #0d3d0d; }
-
+        
         a { color: #1a5c1a; }
         a:hover { color: #0d3d0d; }
 
@@ -103,10 +72,12 @@
 </head>
 <body>
     <nav>
-        <img src="{% static 'images/logo.png' %}" alt="Logo">
-        <span class="brand">GGBS · SRMS</span>
-        <a href="{% url 'dashboard_home' %}">Dashboard</a>
-        {% if not request.user.student_profile %}
+    <img src="{% static 'images/logo.png' %}" alt="Logo">
+    <span class="brand">GGBS · SRMS</span>
+
+    <a href="{% url 'dashboard_home' %}">Dashboard</a>
+
+    {% if is_admin %}
         <a href="{% url 'student_list' %}">Students</a>
         <a href="{% url 'teacher_list' %}">Teachers</a>
         <a href="{% url 'subject_list' %}">Subjects</a>
@@ -114,14 +85,41 @@
         <a href="{% url 'select_allocation' %}">Enter Scores</a>
         <a href="{% url 'class_results' %}">Results</a>
         <a href="/admin/">Admin</a>
+
+    {% elif is_principal %}
+
+        <a href="{% url 'class_results' %}">Results</a>
+
+    {% elif is_class_teacher %}
+
+        <a href="{% url 'select_allocation' %}">Enter Scores</a>
+        <a href="{% url 'class_results' %}">My Class</a>
+
+    {% elif is_teacher %}
+
+        <a href="{% url 'select_allocation' %}">Enter Scores</a>
+
+    {% elif is_student %}
+
+        {% if request.user.student_profile %}
+            <a href="{% url 'select_report_term' request.user.student_profile.id %}">
+                My Report Card
+            </a>
         {% endif %}
-        {% if request.user.is_authenticated %}
-        <form method="POST" action="{% url 'logout' %}" style="margin-left: auto; display: inline;">
-            {% csrf_token %}
-            <button type="submit">Logout ({{ request.user.username }})</button>
-        </form>
-        {% endif %}
-    </nav>
+
+    {% endif %}
+
+    {% if request.user.is_authenticated %}
+    <form method="POST"
+          action="{% url 'logout' %}"
+          style="margin-left:auto; display:inline;">
+        {% csrf_token %}
+        <button type="submit">
+            Logout ({{ request.user.username }})
+        </button>
+    </form>
+    {% endif %}
+</nav>
     <div class="content">
         {% block content %}
         {% endblock %}

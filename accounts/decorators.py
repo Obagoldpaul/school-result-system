@@ -1,17 +1,76 @@
-from django.contrib.auth.decorators import user_passes_test
+from functools import wraps
+
 from django.core.exceptions import PermissionDenied
+
+from .permissions import (
+    is_staff_member,
+    is_teacher,
+    is_class_teacher,
+    is_management,
+    is_admin,
+    is_principal,
+    is_student,
+)
 
 
 def staff_required(view_func):
-    """Only allow Admin, Principal, Teacher, or Class Teacher roles. Blocks students."""
-    def check(user):
-        if not user.is_authenticated:
-            return False
-        if user.is_superuser:
-            return True
-        if user.role == user.Role.STUDENT:
-            raise PermissionDenied("Students are not permitted to access this page.")
-        return True
+    @wraps(view_func)
+    def wrapper(request, *args, **kwargs):
+        if not is_staff_member(request.user):
+            raise PermissionDenied("You do not have permission to access this page.")
+        return view_func(request, *args, **kwargs)
+    return wrapper
 
-    decorated = user_passes_test(check, login_url='/admin/login/')
-    return decorated(view_func)
+
+def teacher_required(view_func):
+    @wraps(view_func)
+    def wrapper(request, *args, **kwargs):
+        if not is_teacher(request.user):
+            raise PermissionDenied("Only teachers can access this page.")
+        return view_func(request, *args, **kwargs)
+    return wrapper
+
+
+def class_teacher_required(view_func):
+    @wraps(view_func)
+    def wrapper(request, *args, **kwargs):
+        if not is_class_teacher(request.user):
+            raise PermissionDenied("Only class teachers can access this page.")
+        return view_func(request, *args, **kwargs)
+    return wrapper
+
+
+def management_required(view_func):
+    @wraps(view_func)
+    def wrapper(request, *args, **kwargs):
+        if not is_management(request.user):
+            raise PermissionDenied("Only school management can access this page.")
+        return view_func(request, *args, **kwargs)
+    return wrapper
+
+
+def admin_required(view_func):
+    @wraps(view_func)
+    def wrapper(request, *args, **kwargs):
+        if not is_admin(request.user):
+            raise PermissionDenied("Only administrators can access this page.")
+        return view_func(request, *args, **kwargs)
+    return wrapper
+
+
+def principal_required(view_func):
+    @wraps(view_func)
+    def wrapper(request, *args, **kwargs):
+        if not is_principal(request.user):
+            raise PermissionDenied("Only the principal can access this page.")
+        return view_func(request, *args, **kwargs)
+    return wrapper
+
+
+def student_required(view_func):
+    @wraps(view_func)
+    def wrapper(request, *args, **kwargs):
+        if not is_student(request.user):
+            raise PermissionDenied("Only students can access this page.")
+        return view_func(request, *args, **kwargs)
+    return wrapper
