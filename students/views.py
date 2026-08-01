@@ -32,11 +32,16 @@ def student_list(request):
         'selected_class': int(class_id) if class_id else None,
     })
 
-@staff_required
+@management_required
 @login_required
 def edit_student(request, student_id):
     student = get_object_or_404(Student, id=student_id)
     if request.method == 'POST':
+        student.user.first_name = request.POST.get('first_name', '')
+        student.user.other_name = request.POST.get('other_name', '')
+        student.user.last_name = request.POST.get('last_name', '')
+        student.user.save()
+
         student.school_class_id = request.POST.get('school_class')
         student.department_id = request.POST.get('department') or None
         student.guardian_name = request.POST.get('guardian_name', '')

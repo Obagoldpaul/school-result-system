@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+{% block title %}Edit Teacher{% endblock %}
+{% block content %}
+<h1>Edit Teacher: {{ teacher.user.get_full_name }}</h1>
+<form method="POST">
+    {% csrf_token %}
+
+    <label>Qualification:</label>
+    <input type="text" name="qualification" value="{{ teacher.qualification }}">
+    <br><br>
+
+    <label>Phone Number:</label>
+    <input type="text" name="phone_number" value="{{ teacher.phone_number }}">
+    <br><br>
+
+    <label>
+        <input type="checkbox" name="is_class_teacher" {% if teacher.is_class_teacher %}checked{% endif %}>
+        Is Class Teacher
+    </label>
+    <br><br>
+
+    <label>Assigned Class:</label>
+    <select name="assigned_class">
+        <option value="">-- None --</option>
+        {% for c in classes %}
+        <option value="{{ c.id }}" {% if c.id == teacher.assigned_class_id %}selected{% endif %}>{{ c.name }}</option>
+        {% endfor %}
+    </select>
+    <br><br>
+
+    <button type="submit">Save Changes</button>
+</form>
+<p><a href="{% url 'teacher_list' %}">Back to teacher list</a></p>
+{% endblock %}
