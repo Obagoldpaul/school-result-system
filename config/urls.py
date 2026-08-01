@@ -14,6 +14,7 @@ urlpatterns = [
     path('subjects/', include('subjects.urls')),
     path('allocations/', include('allocations.urls')),
     path('scores/', include('scores.urls')),
+    path('billing/', include('billing.urls')),
 ]
 
 from django.views.static import serve

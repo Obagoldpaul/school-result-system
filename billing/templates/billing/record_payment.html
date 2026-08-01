@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block title %}Record Payment{% endblock %}
+{% block content %}
+<h1>Record Payment: {{ student.user.get_full_name }} ({{ term }})</h1>
+<p><strong>Fee Amount:</strong> {% if fee_amount %}₦{{ fee_amount|intcomma }}{% else %}Not set for this class/term{% endif %}</p>
+<p><strong>Total Paid So Far:</strong> ₦{{ total_paid|intcomma }}</p>
+<p><strong>Balance:</strong> {% if balance is not None %}₦{{ balance|intcomma }}{% else %}-{% endif %}</p>
+<form method="POST">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Record Payment</button>
+</form>
+<p><a href="{% url 'students_owing' %}">Back to Students Owing</a></p>
+{% endblock %}

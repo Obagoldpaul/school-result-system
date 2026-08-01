@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block title %}Fee Structures{% endblock %}
+{% block content %}
+<h1>Fee Structures</h1>
+<p><a href="{% url 'add_fee_structure' %}">+ Add Fee Structure</a></p>
+<table>
+    <tr><th>Class</th><th>Department</th><th>Term</th><th>Amount</th></tr>
+    {% for fee in fees %}
+    <tr>
+        <td>{{ fee.school_class }}</td>
+        <td>{{ fee.department|default:"-" }}</td>
+        <td>{{ fee.term }}</td>
+        <td>₦{{ fee.amount|intcomma }}</td>
+    </tr>
+    {% endfor %}
+</table>
+{% endblock %}

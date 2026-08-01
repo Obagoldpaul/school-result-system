@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block title %}Students Owing{% endblock %}
+{% block content %}
+<h1>Students Owing</h1>
+<form method="GET" style="margin-bottom: 15px; display: flex; gap: 10px;">
+    <select name="class">
+        <option value="">-- All Classes --</option>
+        {% for c in classes %}
+        <option value="{{ c.id }}" {% if selected_class == c.id|stringformat:"s" %}selected{% endif %}>{{ c.name }}</option>
+        {% endfor %}
+    </select>
+    <select name="term">
+        {% for t in terms %}
+        <option value="{{ t.id }}" {% if selected_term == t.id|stringformat:"s" %}selected{% endif %}>{{ t }}</option>
+        {% endfor %}
+    </select>
+    <button type="submit">Filter</button>
+</form>
+
+{% if term %}
+<p>Showing balances for: <strong>{{ term }}</strong></p>
+<table>
+    <tr><th>Admission No.</th><th>Name</th><th>Class</th><th>Fee</th><th>Paid</th><th>Balance</th><th>Action</th></tr>
+    {% for row in rows %}
+    <tr>
+        <td>{{ row.student.admission_number }}</td>
+        <td>{{ row.student.user.get_full_name }}</td>
+        <td>{{ row.student.school_class }}</td>
+        <td>₦{{ row.fee_amount|intcomma }}</td>
+        <td>₦{{ row.total_paid|intcomma }}</td>
+        <td style="color: #b83232; font-weight: 600;">₦{{ row.balance|intcomma }}</td>
+        <td><a href="{% url 'record_payment' row.student.id term.id %}">Record Payment</a></td>
+    </tr>
+    {% endfor %}
+</table>
+{% if not rows %}<p>No students owing for this selection.</p>{% endif %}
+{% endif %}
+{% endblock %}
