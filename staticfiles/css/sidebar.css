@@ -231,3 +231,41 @@
     padding: 8px 16px 2px 16px;
 }
 .notif-dropdown .notif-footer a { font-size: 12px; font-weight: 600; }
+
+.sidebar nav details {
+    margin: 2px 0;
+}
+
+.sidebar nav details summary {
+    color: rgba(255,255,255,0.85);
+    font-size: 14px;
+    font-weight: 500;
+    padding: 10px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    list-style: none;
+}
+
+.sidebar nav details summary::-webkit-details-marker {
+    display: none;
+}
+
+.sidebar nav details summary:hover {
+    background: rgba(255,255,255,0.1);
+    color: #fff;
+}
+
+.sidebar nav details summary::before {
+    content: "▸ ";
+    font-size: 10px;
+}
+
+.sidebar nav details[open] summary::before {
+    content: "▾ ";
+}
+
+.sidebar nav details .nav-sub-links {
+    padding-left: 14px;
+    display: flex;
+    flex-direction: column;
+}

@@ -122,10 +122,14 @@
 
 {% if my_fee_amount is not None %}
 <div class="section-card">
-    <h3>My Fees ({{ my_fee_term }})</h3>
-    <p><strong>Amount Due:</strong> ₦{{ my_fee_amount|intcomma }}</p>
-    <p><strong>Total Paid:</strong> ₦{{ my_total_paid|intcomma }}</p>
-    <p><strong>Balance:</strong> <span style="color: {% if my_balance > 0 %}#b83232{% else %}#1a5c1a{% endif %}; font-weight: 600;">₦{{ my_balance|intcomma }}</span></p>
+    <details>
+        <summary style="cursor:pointer; font-weight:600; color:#16401c; font-size:16px;">My Fees ({{ my_fee_term }}) — click to view</summary>
+        <div style="margin-top:12px;">
+            <p><strong>Amount Due:</strong> ₦{{ my_fee_amount|intcomma }}</p>
+            <p><strong>Total Paid:</strong> ₦{{ my_total_paid|intcomma }}</p>
+            <p><strong>Balance:</strong> <span style="color: {% if my_balance > 0 %}#b83232{% else %}#1a5c1a{% endif %}; font-weight: 600;">₦{{ my_balance|intcomma }}</span></p>
+        </div>
+    </details>
 </div>
 {% endif %}
 {% endif %}

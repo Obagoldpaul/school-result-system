@@ -43,36 +43,48 @@
                 <a href="{% url 'dashboard_home' %}">Dashboard</a>
 
                 {% if is_admin %}
+                    <a href="{% url 'class_results' %}">Results</a>
+                    <a href="{% url 'select_allocation' %}">Enter Scores</a>
                     <a href="{% url 'student_list' %}">Students</a>
+                    <a href="{% url 'promote_class' %}">Promote Class</a>
                     <a href="{% url 'teacher_list' %}">Teachers</a>
                     <a href="{% url 'subject_list' %}">Subjects</a>
                     <a href="{% url 'allocation_list' %}">Allocations</a>
-                    <a href="{% url 'select_allocation' %}">Enter Scores</a>
-                    <a href="{% url 'class_results' %}">Results</a>
                     <a href="{% url 'students_owing' %}">Billing</a>
-                    <div class="nav-section-label">Attendance</div>
-                    <a href="{% url 'select_class_for_attendance' %}">Mark Attendance</a>
-                    <a href="{% url 'class_attendance_summary' %}">View Summary</a>
+                    <details>
+    <summary>Attendance</summary>
+    <div class="nav-sub-links">
+        <a href="{% url 'select_class_for_attendance' %}">Mark Attendance</a>
+        <a href="{% url 'class_attendance_summary' %}">View Summary</a>
+    </div>
+</details>
                     <a href="{% url 'announcement_list' %}">Announcements</a>
-                    <a href="{% url 'promote_class' %}">Promote Class</a>
                     <a href="/admin/">Admin</a>
 
                 {% elif is_principal %}
 
                     <a href="{% url 'class_results' %}">Results</a>
                     <a href="{% url 'students_owing' %}">Billing</a>
-                    <div class="nav-section-label">Attendance</div>
-                    <a href="{% url 'select_class_for_attendance' %}">Mark Attendance</a>
-                    <a href="{% url 'class_attendance_summary' %}">View Summary</a>
+                    <details>
+    <summary>Attendance</summary>
+    <div class="nav-sub-links">
+        <a href="{% url 'select_class_for_attendance' %}">Mark Attendance</a>
+        <a href="{% url 'class_attendance_summary' %}">View Summary</a>
+    </div>
+</details>
                     <a href="{% url 'announcement_list' %}">Announcements</a>
 
                 {% elif is_class_teacher %}
 
-                    <a href="{% url 'select_allocation' %}">Enter Scores</a>
                     <a href="{% url 'class_results' %}">My Class</a>
-                    <div class="nav-section-label">Attendance</div>
-                    <a href="{% url 'select_class_for_attendance' %}">Mark Attendance</a>
-                    <a href="{% url 'class_attendance_summary' %}">View Summary</a>
+                    <a href="{% url 'select_allocation' %}">Enter Scores</a>
+                    <details>
+    <summary>Attendance</summary>
+    <div class="nav-sub-links">
+        <a href="{% url 'select_class_for_attendance' %}">Mark Attendance</a>
+        <a href="{% url 'class_attendance_summary' %}">View Summary</a>
+    </div>
+</details>
 
                 {% elif is_teacher %}
 
