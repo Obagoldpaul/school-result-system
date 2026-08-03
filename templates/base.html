@@ -70,7 +70,7 @@
                     <div class="nav-section-label">Attendance</div>
                     <a href="{% url 'select_class_for_attendance' %}">Mark Attendance</a>
                     <a href="{% url 'class_attendance_summary' %}">View Summary</a>
-                    
+
                 {% elif is_teacher %}
 
                     <a href="{% url 'select_allocation' %}">Enter Scores</a>
@@ -100,7 +100,20 @@
                     <input type="text" placeholder="Search... (coming soon)" disabled>
                 </form>
                 <div class="topbar-right">
-                    <span class="notif-icon" title="Announcements (coming soon)">🔔</span>
+                    <div class="notif-wrapper" tabindex="0">
+                        <span class="notif-icon" style="cursor:pointer;">🔔{% if nav_announcement_count %}<span class="notif-badge">{{ nav_announcement_count }}</span>{% endif %}</span>
+                        <div class="notif-dropdown">
+                            {% for a in nav_announcements %}
+                            <a href="{% url 'announcement_list' %}" class="notif-item">
+                                <strong>{{ a.title }}</strong>
+                                <span>{{ a.created_at|timesince }} ago</span>
+                            </a>
+                            {% empty %}
+                            <div class="notif-empty">No announcements yet.</div>
+                            {% endfor %}
+                            <div class="notif-footer"><a href="{% url 'announcement_list' %}">View all</a></div>
+                        </div>
+                    </div>
                     <span class="user-chip">{{ request.user.get_full_name|default:request.user.username }}</span>
                 </div>
             </div>

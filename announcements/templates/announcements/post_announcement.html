@@ -1,0 +1,5 @@
+{% extends 'base.html' %}
+{% block title %}Post Announcement{% endblock %}
+{% block content %}
+{% include 'partials/simple_form.html' with page_title="Post Announcement" submit_label="Post" back_url=announcement_list_url back_label="View all announcements" %}
+{% endblock %}

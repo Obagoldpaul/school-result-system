@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% block title %}Announcements{% endblock %}
+{% block content %}
+<h1>Announcements</h1>
+{% if is_admin or is_principal %}
+<p><a href="{% url 'post_announcement' %}">+ Post Announcement</a></p>
+{% endif %}
+
+{% for a in announcements %}
+<div class="section-card">
+    <h3>{{ a.title }}</h3>
+    <p>{{ a.body|linebreaks }}</p>
+    <p style="color:#999; font-size:12px;">
+        Posted by {{ a.created_by }} — {{ a.created_at|timesince }} ago —
+        <strong>{{ a.get_audience_display }}</strong>
+    </p>
+</div>
+{% empty %}
+<p>No announcements yet.</p>
+{% endfor %}
+{% endblock %}

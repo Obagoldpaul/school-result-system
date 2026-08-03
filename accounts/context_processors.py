@@ -22,3 +22,15 @@ def user_roles(request):
         "is_class_teacher": is_class_teacher(user),
         "is_student": is_student(user),
     }
+
+
+def announcements_preview(request):
+    if not request.user.is_authenticated:
+        return {}
+
+    from announcements.models import get_announcements_for_user
+    recent = list(get_announcements_for_user(request.user, limit=5))
+    return {
+        'nav_announcements': recent,
+        'nav_announcement_count': len(recent),
+    }

@@ -170,3 +170,64 @@
 .sidebar .logout-form button:hover {
     background: rgba(255,255,255,0.22);
 }
+
+.notif-wrapper {
+    position: relative;
+}
+
+.notif-badge {
+    position: absolute;
+    top: -6px;
+    right: -8px;
+    background: #b83232;
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    border-radius: 10px;
+    padding: 1px 5px;
+    min-width: 16px;
+    text-align: center;
+}
+
+.notif-dropdown {
+    display: none;
+    position: absolute;
+    top: 28px;
+    right: 0;
+    width: 300px;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+    z-index: 100;
+    padding: 10px 0;
+}
+
+.notif-wrapper:hover .notif-dropdown,
+.notif-wrapper:focus-within .notif-dropdown {
+    display: block;
+}
+
+.notif-dropdown .notif-item {
+    padding: 10px 16px;
+    border-bottom: 1px solid #eee;
+    display: block;
+    text-decoration: none;
+    color: #222;
+}
+
+.notif-dropdown .notif-item:last-child { border-bottom: none; }
+.notif-dropdown .notif-item strong { display: block; font-size: 13px; color: #16401c; }
+.notif-dropdown .notif-item span { font-size: 11px; color: #999; }
+
+.notif-dropdown .notif-empty {
+    padding: 14px 16px;
+    font-size: 13px;
+    color: #999;
+    text-align: center;
+}
+
+.notif-dropdown .notif-footer {
+    text-align: center;
+    padding: 8px 16px 2px 16px;
+}
+.notif-dropdown .notif-footer a { font-size: 12px; font-weight: 600; }
