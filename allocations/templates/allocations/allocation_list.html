@@ -2,21 +2,36 @@
 {% block title %}Subject Allocations{% endblock %}
 {% block content %}
 <h1>Subject Allocations</h1>
-<p><a href="{% url 'add_allocation' %}">+ New Allocation</a></p>
-<table>
-    <tr>
-        <th>Teacher</th>
-        <th>Subject</th>
-        <th>Class</th>
-        <th>Term</th>
-    </tr>
-    {% for a in allocations %}
-    <tr>
-        <td>{{ a.teacher }}</td>
-        <td>{{ a.subject }}</td>
-        <td>{{ a.school_class }}</td>
-        <td>{{ a.term }}</td>
-    </tr>
-    {% endfor %}
-</table>
+
+<form method="GET" style="margin-bottom: 15px; display: flex; gap: 10px; align-items: center;">
+    <label>Term:</label>
+    <select name="term" onchange="this.form.submit()">
+        {% for t in terms %}
+        <option value="{{ t.id }}" {% if selected_term and t.id == selected_term.id %}selected{% endif %}>{{ t }}</option>
+        {% endfor %}
+    </select>
+    <a href="{% url 'add_allocation' %}">+ New Allocation</a>
+</form>
+
+{% if selected_term %}
+<p style="color:#999; font-size:13px;">Showing allocations for: <strong>{{ selected_term }}</strong></p>
+{% endif %}
+
+{% for group in grouped %}
+<div class="section-card">
+    <h3>{{ group.school_class }}</h3>
+    <table>
+        <tr><th>Subject</th><th>Teacher</th><th>Status</th></tr>
+        {% for a in group.allocations %}
+        <tr>
+            <td>{{ a.subject }}</td>
+            <td>{{ a.teacher }}</td>
+            <td>{{ a.get_status_display }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+</div>
+{% empty %}
+<p>No allocations found for this term.</p>
+{% endfor %}
 {% endblock %}

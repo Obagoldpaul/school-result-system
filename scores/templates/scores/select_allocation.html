@@ -12,7 +12,6 @@
     </select>
 
     <select name="term">
-        <option value="">-- All Terms --</option>
         {% for t in terms %}
         <option value="{{ t.id }}" {% if selected_term == t.id|stringformat:"s" %}selected{% endif %}>{{ t }}</option>
         {% endfor %}
@@ -36,35 +35,40 @@
     <a href="{% url 'select_allocation' %}">Clear</a>
 </form>
 
-<table>
-    <tr>
-        <th>Subject</th>
-        <th>Class</th>
-        <th>Term</th>
-        <th>Status</th>
-        <th>Action</th>
-    </tr>
-    {% for a in allocations %}
-    <tr>
-        <td>{{ a.subject }}</td>
-        <td>{{ a.school_class }}</td>
-        <td>{{ a.term }}</td>
-        <td>{{ a.get_status_display }}</td>
-        <td>
-            <a href="{% url 'enter_scores' a.id %}">Enter/View Scores</a>
-            {% if a.status == 'DRAFT' %}
-            | <a href="{% url 'submit_allocation' a.id %}?{{ current_query }}" onclick="return confirm('Submit these scores for review? You will not be able to edit them afterward.')">Submit for Review</a>
-            {% elif a.status == 'SUBMITTED' %}
-            | <a href="{% url 'review_allocation' a.id %}?{{ current_query }}">Review</a>
-            {% elif a.status == 'REVIEWED' %}
-            | <a href="{% url 'approve_allocation' a.id %}?{{ current_query }}" onclick="return confirm('Approve these results?')">Approve</a>
-            {% elif a.status == 'APPROVED' %}
-            | <a href="{% url 'publish_allocation' a.id %}?{{ current_query }}" onclick="return confirm('Publish these results? Students will be able to see them.')">Publish</a>
-            {% elif a.status == 'PUBLISHED' %}
-            <span style="color: #1a5c1a; font-weight: 600;">✓ Published</span>
-            {% endif %}
-        </td>
-    </tr>
-    {% endfor %}
-</table>
+{% for group in grouped %}
+<div class="section-card">
+    <h3>{{ group.school_class }}</h3>
+    <table>
+        <tr>
+            <th>Subject</th>
+            <th>Term</th>
+            <th>Status</th>
+            <th>Action</th>
+        </tr>
+        {% for a in group.allocations %}
+        <tr>
+            <td>{{ a.subject }}</td>
+            <td>{{ a.term }}</td>
+            <td>{{ a.get_status_display }}</td>
+            <td>
+                <a href="{% url 'enter_scores' a.id %}">Enter/View Scores</a>
+                {% if a.status == 'DRAFT' %}
+                | <a href="{% url 'submit_allocation' a.id %}?{{ current_query }}" onclick="return confirm('Submit these scores for review? You will not be able to edit them afterward.')">Submit for Review</a>
+                {% elif a.status == 'SUBMITTED' %}
+                | <a href="{% url 'review_allocation' a.id %}?{{ current_query }}">Review</a>
+                {% elif a.status == 'REVIEWED' %}
+                | <a href="{% url 'approve_allocation' a.id %}?{{ current_query }}" onclick="return confirm('Approve these results?')">Approve</a>
+                {% elif a.status == 'APPROVED' %}
+                | <a href="{% url 'publish_allocation' a.id %}?{{ current_query }}" onclick="return confirm('Publish these results? Students will be able to see them.')">Publish</a>
+                {% elif a.status == 'PUBLISHED' %}
+                <span style="color: #1a5c1a; font-weight: 600;">✓ Published</span>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+</div>
+{% empty %}
+<p>No allocations found for this selection.</p>
+{% endfor %}
 {% endblock %}

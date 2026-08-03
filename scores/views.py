@@ -28,6 +28,12 @@ def select_allocation(request):
     subject_id = request.GET.get('subject')
     status = request.GET.get('status')
 
+    if term_id:
+        selected_term_obj = Term.objects.filter(id=term_id).first()
+    else:
+        selected_term_obj = get_current_term()
+        term_id = str(selected_term_obj.id) if selected_term_obj else None
+
     if class_id:
         allocations = allocations.filter(school_class_id=class_id)
     if term_id:
@@ -39,8 +45,16 @@ def select_allocation(request):
 
     from subjects.models import Subject
 
+    allocations = allocations.select_related('teacher', 'subject', 'school_class', 'term')
+
+    grouped = []
+    for c in SchoolClass.objects.all():
+        class_allocations = [a for a in allocations if a.school_class_id == c.id]
+        if class_allocations:
+            grouped.append({'school_class': c, 'allocations': class_allocations})
+
     context = {
-        'allocations': allocations.select_related('teacher', 'subject', 'school_class', 'term'),
+        'grouped': grouped,
         'classes': SchoolClass.objects.all(),
         'terms': Term.objects.all(),
         'subjects': Subject.objects.all(),
