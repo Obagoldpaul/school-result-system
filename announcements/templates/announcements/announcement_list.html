@@ -9,11 +9,20 @@
 {% for a in announcements %}
 <div class="section-card">
     <h3>{{ a.title }}</h3>
+    {% if a.image %}
+    <img src="{{ a.image.url }}" alt="{{ a.title }}" style="max-width:100%; border-radius:8px; margin-bottom:10px;">
+    {% endif %}
     <p>{{ a.body|linebreaks }}</p>
     <p style="color:#999; font-size:12px;">
         Posted by {{ a.created_by }} — {{ a.created_at|timesince }} ago —
         <strong>{{ a.get_audience_display }}</strong>
     </p>
+    {% if is_admin or is_principal %}
+    <form method="POST" action="{% url 'delete_announcement' a.id %}" onsubmit="return confirm('Delete this announcement?');" style="display:inline;">
+        {% csrf_token %}
+        <button type="submit" style="background:#b83232; color:#fff; border:none; padding:6px 12px; border-radius:4px; cursor:pointer; font-size:12px;">Delete</button>
+    </form>
+    {% endif %}
 </div>
 {% empty %}
 <p>No announcements yet.</p>

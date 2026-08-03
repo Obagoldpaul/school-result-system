@@ -53,6 +53,7 @@
                     <div class="nav-section-label">Attendance</div>
                     <a href="{% url 'select_class_for_attendance' %}">Mark Attendance</a>
                     <a href="{% url 'class_attendance_summary' %}">View Summary</a>
+                    <a href="{% url 'announcement_list' %}">Announcements</a>
                     <a href="/admin/">Admin</a>
 
                 {% elif is_principal %}
@@ -62,6 +63,7 @@
                     <div class="nav-section-label">Attendance</div>
                     <a href="{% url 'select_class_for_attendance' %}">Mark Attendance</a>
                     <a href="{% url 'class_attendance_summary' %}">View Summary</a>
+                    <a href="{% url 'announcement_list' %}">Announcements</a>
 
                 {% elif is_class_teacher %}
 

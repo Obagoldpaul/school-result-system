@@ -9,6 +9,7 @@ class Announcement(models.Model):
 
     title = models.CharField(max_length=200)
     body = models.TextField()
+    image = models.ImageField(upload_to='announcements/', blank=True, null=True)
     audience = models.CharField(max_length=20, choices=Audience.choices, default=Audience.ALL)
     created_by = models.ForeignKey('accounts.User', on_delete=models.SET_NULL, null=True)
     created_at = models.DateTimeField(auto_now_add=True)

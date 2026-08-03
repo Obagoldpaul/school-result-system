@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from accounts.decorators import management_required
 from .forms import AnnouncementForm
@@ -9,7 +9,7 @@ from .models import Announcement, get_announcements_for_user
 @login_required
 def post_announcement(request):
     if request.method == 'POST':
-        form = AnnouncementForm(request.POST)
+        form = AnnouncementForm(request.POST, request.FILES)
         if form.is_valid():
             announcement = form.save(commit=False)
             announcement.created_by = request.user
@@ -29,3 +29,12 @@ def announcement_list(request):
     return render(request, 'announcements/announcement_list.html', {
         'announcements': announcements,
     })
+
+
+@management_required
+@login_required
+def delete_announcement(request, announcement_id):
+    announcement = get_object_or_404(Announcement, id=announcement_id)
+    if request.method == 'POST':
+        announcement.delete()
+    return redirect('announcement_list')
