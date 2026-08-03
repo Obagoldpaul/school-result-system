@@ -20,6 +20,10 @@
 
 {% if term %}
 <p>Showing balances for: <strong>{{ term }}</strong></p>
+
+{% if selected_class and term %}
+<p><a href="{% url 'class_bill_pdf' selected_class term.id %}">Print All Bills for This Class</a></p>
+{% endif %}
 <table>
     <tr><th>Admission No.</th><th>Name</th><th>Class</th><th>Fee</th><th>Paid</th><th>Balance</th><th>Action</th></tr>
     {% for row in rows %}
@@ -30,7 +34,10 @@
         <td>₦{{ row.fee_amount|intcomma }}</td>
         <td>₦{{ row.total_paid|intcomma }}</td>
         <td style="color: #b83232; font-weight: 600;">₦{{ row.balance|intcomma }}</td>
-        <td><a href="{% url 'record_payment' row.student.id term.id %}">Record Payment</a></td>
+        <td>
+    <a href="{% url 'record_payment' row.student.id term.id %}">Record Payment</a> |
+    <a href="{% url 'student_bill_pdf' row.student.id term.id %}">Print Bill</a>
+</td>
     </tr>
     {% endfor %}
 </table>

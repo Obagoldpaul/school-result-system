@@ -1,0 +1,53 @@
+{% load static humanize %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Class Bills</title>
+    <style>
+        @page { size: A4; margin: 1.5cm; }
+        body { font-family: Arial, sans-serif; font-size: 12px; }
+        .header { text-align: center; margin-bottom: 15px; }
+        .header img { height: 55px; }
+        .header h1 { color: #1a5c1a; font-size: 16px; margin: 4px 0; }
+        .header p { font-size: 10px; margin: 1px 0; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        thead { display: table-header-group; }
+        td, th { border: 1px solid #333; padding: 6px 8px; text-align: left; }
+        th { background: #eef3ee; }
+        .balance { font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <img src="{% static 'images/logo.png' %}">
+        <h1>GREAT GOSHENLAND BLOSSOM SCHOOL</h1>
+        <p>5, Onasanya Close | Gbarinmole | Ofada | Ogun State | Nigeria</p>
+        <p>Tel: 08039471352, 08034465764</p>
+    </div>
+
+    <h2 style="text-align:center;">CLASS FEE SUMMARY — {{ school_class }} ({{ term }})</h2>
+
+    <table>
+        <thead>
+        <tr>
+            <th>Admission No.</th>
+            <th>Name</th>
+            <th>Total Fees</th>
+            <th>Paid</th>
+            <th>Balance</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for bill in bills %}
+        <tr>
+            <td>{{ bill.student.admission_number }}</td>
+            <td>{{ bill.student.user.get_full_name }}</td>
+            <td>₦{{ bill.fee_amount|default:0|intcomma }}</td>
+            <td>₦{{ bill.total_paid|intcomma }}</td>
+            <td class="balance">₦{{ bill.balance|default:0|intcomma }}</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>

@@ -1,10 +1,13 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
+from django.template.loader import get_template
+from django.http import HttpResponse
+from weasyprint import HTML
 from accounts.decorators import management_required
 from students.models import Student, SchoolClass
-from academics.models import Term
-from .forms import FeeStructureForm, PaymentForm
-from .models import FeeStructure, Payment, get_cumulative_balance
+from academics.models import Term, SchoolSettings
+from .forms import FeeStructureForm, PaymentForm, OpeningBalanceForm
+from .models import FeeStructure, Payment, OpeningBalance, get_cumulative_balance
 
 
 @management_required
@@ -47,8 +50,6 @@ def record_payment(request, student_id, term_id):
             return redirect('students_owing')
     else:
         form = PaymentForm()
-
-    from .models import FeeStructure, Payment, get_cumulative_balance
 
     fee_amount, total_paid, balance = get_cumulative_balance(student, term)
 
@@ -95,8 +96,6 @@ def students_owing(request):
         'term': term,
     })
 
-    from .models import OpeningBalance
-from .forms import OpeningBalanceForm
 
 @management_required
 @login_required
@@ -112,3 +111,58 @@ def add_opening_balance(request):
         'form': form,
         'students_owing_url': '/billing/owing/',
     })
+
+
+def _bill_context_for_student(student, term):
+    fee_amount, total_paid, balance = get_cumulative_balance(student, term)
+    return {
+        'student': student,
+        'term': term,
+        'fee_amount': fee_amount,
+        'total_paid': total_paid,
+        'balance': balance,
+        'school_settings': SchoolSettings.objects.first(),
+    }
+
+
+@management_required
+@login_required
+def student_bill(request, student_id, term_id):
+    student = get_object_or_404(Student, id=student_id)
+    term = get_object_or_404(Term, id=term_id)
+    context = _bill_context_for_student(student, term)
+    return render(request, 'billing/bill.html', context)
+
+
+@management_required
+@login_required
+def student_bill_pdf(request, student_id, term_id):
+    student = get_object_or_404(Student, id=student_id)
+    term = get_object_or_404(Term, id=term_id)
+    context = _bill_context_for_student(student, term)
+
+    template = get_template('billing/bill.html')
+    html_string = template.render(context, request=request)
+
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="{student.admission_number}_bill.pdf"'
+    HTML(string=html_string, base_url=request.build_absolute_uri('/')).write_pdf(response)
+    return response
+
+
+@management_required
+@login_required
+def class_bill_pdf(request, class_id, term_id):
+    school_class = get_object_or_404(SchoolClass, id=class_id)
+    term = get_object_or_404(Term, id=term_id)
+    students = Student.objects.filter(school_class=school_class, is_active=True)
+
+    bills = [_bill_context_for_student(s, term) for s in students]
+
+    template = get_template('billing/class_bills.html')
+    html_string = template.render({'bills': bills, 'school_class': school_class, 'term': term}, request=request)
+
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="{school_class}_bills.pdf"'
+    HTML(string=html_string, base_url=request.build_absolute_uri('/')).write_pdf(response)
+    return response
