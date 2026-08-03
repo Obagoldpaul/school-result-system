@@ -61,3 +61,22 @@ def edit_student(request, student_id):
         'departments': departments,
         'electives': electives,
     })
+
+@management_required
+@login_required
+def promote_class(request):
+    classes = SchoolClass.objects.all()
+
+    if request.method == 'POST':
+        from_class_id = request.POST.get('from_class')
+        to_class_id = request.POST.get('to_class')
+        if from_class_id and to_class_id and from_class_id != to_class_id:
+            students = Student.objects.filter(school_class_id=from_class_id, is_active=True)
+            count = students.update(school_class_id=to_class_id)
+            return render(request, 'students/promote_result.html', {
+                'count': count,
+                'from_class': SchoolClass.objects.get(id=from_class_id),
+                'to_class': SchoolClass.objects.get(id=to_class_id),
+            })
+
+    return render(request, 'students/promote_class.html', {'classes': classes})

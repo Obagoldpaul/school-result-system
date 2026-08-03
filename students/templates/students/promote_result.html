@@ -1,0 +1,7 @@
+{% extends 'base.html' %}
+{% block title %}Promotion Complete{% endblock %}
+{% block content %}
+<h1>Promotion Complete</h1>
+<p><strong>{{ count }}</strong> student(s) moved from <strong>{{ from_class }}</strong> to <strong>{{ to_class }}</strong>.</p>
+<p><a href="{% url 'promote_class' %}">Promote Another Class</a> | <a href="{% url 'student_list' %}">View Students</a></p>
+{% endblock %}
