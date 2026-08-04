@@ -115,23 +115,49 @@ def get_students_for_allocation(allocation):
 def save_scores(allocation, students, post_data):
     """
     Saves scores entered for all students in an allocation.
+    Validates CA and Exam scores before saving.
     """
 
     for student in students:
+
         ca = post_data.get(f"ca_{student.id}", "").strip()
         exam = post_data.get(f"exam_{student.id}", "").strip()
 
-        if ca or exam:
-            Score.objects.update_or_create(
-                student=student,
-                subject=allocation.subject,
-                term=allocation.term,
-                defaults={
-                    "ca_score": ca or 0,
-                    "exam_score": exam or 0,
-                    "recorded_by": allocation.teacher,
-                },
+        if not ca and not exam:
+            continue
+
+        try:
+            ca_value = float(ca or 0)
+            exam_value = float(exam or 0)
+
+        except ValueError:
+            raise ValueError(
+                f"Invalid score entered for {student}"
             )
+
+        if ca_value < 0 or ca_value > 40:
+            raise ValueError(
+                f"CA score for {student} must be between 0 and 40"
+            )
+
+        if exam_value < 0 or exam_value > 60:
+            raise ValueError(
+                f"Exam score for {student} must be between 0 and 60"
+            )
+
+        score, created = Score.objects.update_or_create(
+            student=student,
+            subject=allocation.subject,
+            term=allocation.term,
+            defaults={
+                "ca_score": ca_value,
+                "exam_score": exam_value,
+                "recorded_by": allocation.teacher,
+            },
+        )
+
+        score.full_clean()
+        score.save()
 
 
 def get_student_score_pairs(allocation, students):
