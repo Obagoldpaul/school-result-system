@@ -4,6 +4,7 @@ from allocations.models import SubjectAllocation
 from .reports import get_cumulative_report_rows, get_class_results
 from students.models import Student
 from .models import Score
+from .exceptions import ScoreValidationError
 
 
 def build_report_card_context(student, term):
@@ -131,18 +132,18 @@ def save_scores(allocation, students, post_data):
             exam_value = float(exam or 0)
 
         except ValueError:
-            raise ValueError(
-                f"Invalid score entered for {student}"
+            raise ScoreValidationError(
+                f"Invalid score entered for {student}."
             )
 
         if ca_value < 0 or ca_value > 40:
-            raise ValueError(
-                f"CA score for {student} must be between 0 and 40"
+            raise ScoreValidationError(
+                f"CA score for {student} must be between 0 and 40."
             )
 
         if exam_value < 0 or exam_value > 60:
-            raise ValueError(
-                f"Exam score for {student} must be between 0 and 60"
+            raise ScoreValidationError(
+                f"Exam score for {student} must be between 0 and 60."
             )
 
         score, created = Score.objects.update_or_create(

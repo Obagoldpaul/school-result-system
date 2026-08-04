@@ -4,6 +4,8 @@ from django.http import HttpResponse
 from django.template.loader import get_template
 from weasyprint import HTML
 
+from django.contrib import messages
+from .exceptions import ScoreValidationError
 from accounts.decorators import staff_required
 from accounts.utils import get_teacher, get_student, get_current_term
 from allocations.models import SubjectAllocation
@@ -83,17 +85,27 @@ def enter_scores(request, allocation_id):
             from django.core.exceptions import PermissionDenied
             raise PermissionDenied("Scores can only be edited while status is Draft.")
 
-        services.save_scores(
-            allocation,
-            students,
-            request.POST,
-        )
-        return redirect('select_allocation')
+        try:
+            services.save_scores(
+                allocation,
+                students,
+                request.POST,
+            )
+
+            messages.success(
+                request,
+                "Scores saved successfully."
+            )
+
+            return redirect("select_allocation")
+
+        except ScoreValidationError as e:
+            messages.error(request, str(e))
 
     student_score_pairs = services.get_student_score_pairs(
-    allocation,
-    students,
-)
+        allocation,
+        students,
+    )
 
     return render(request, 'scores/enter_scores.html', {
         'allocation': allocation,
