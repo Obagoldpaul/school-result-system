@@ -5,6 +5,8 @@ from .reports import get_cumulative_report_rows, get_class_results
 from students.models import Student
 from .models import Score
 from .exceptions import ScoreValidationError
+from django.core.exceptions import PermissionDenied
+from allocations.models import SubjectAllocation
 
 
 def build_report_card_context(student, term):
@@ -179,3 +181,52 @@ def get_student_score_pairs(allocation, students):
         (student, existing_scores.get(student.id))
         for student in students
     ]
+
+
+def ensure_can_submit(user, allocation):
+    if allocation.status != SubjectAllocation.Status.DRAFT:
+        raise PermissionDenied(
+            "Only Draft results can be submitted."
+        )
+
+    check_allocation_ownership(user, allocation)
+
+def ensure_can_review(user, allocation):
+    from accounts.permissions import can_review_allocation
+
+    if not can_review_allocation(user, allocation):
+        raise PermissionDenied(
+            "You cannot review these results."
+        )
+
+    if allocation.status != SubjectAllocation.Status.SUBMITTED:
+        raise PermissionDenied(
+            "Only Submitted results can be reviewed."
+        )
+
+def ensure_can_approve(user, allocation):
+    from accounts.permissions import can_approve_scores
+
+    if not can_approve_scores(user):
+        raise PermissionDenied(
+            "You cannot approve results."
+        )
+
+    if allocation.status != SubjectAllocation.Status.REVIEWED:
+        raise PermissionDenied(
+            "Only Reviewed results can be approved."
+        )
+
+def ensure_can_publish(user, allocation):
+    from accounts.permissions import can_publish_scores
+
+    if not can_publish_scores(user):
+        raise PermissionDenied(
+            "You cannot publish results."
+        )
+
+    if allocation.status != SubjectAllocation.Status.APPROVED:
+        raise PermissionDenied(
+            "Only Approved results can be published."
+        )
+

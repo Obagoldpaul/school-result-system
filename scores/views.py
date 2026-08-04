@@ -127,8 +127,17 @@ def _redirect_with_query(request):
 @login_required
 def submit_allocation(request, allocation_id):
     allocation = get_object_or_404(SubjectAllocation, id=allocation_id)
-    services.check_allocation_ownership(request.user, allocation)
-    services.submit_allocation_for_review(allocation, user=request.user)
+
+    services.ensure_can_submit(
+        request.user,
+        allocation,
+    )
+
+    services.submit_allocation_for_review(
+        allocation,
+        user=request.user,
+    )
+
     return _redirect_with_query(request)
 
 
