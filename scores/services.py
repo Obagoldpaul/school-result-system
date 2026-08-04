@@ -1,7 +1,9 @@
 from django.core.exceptions import PermissionDenied
 from accounts.permissions import can_view_report, can_edit_allocation as _can_edit_allocation
 from allocations.models import SubjectAllocation
-from .models import get_cumulative_report_rows, get_class_results
+from .reports import get_cumulative_report_rows, get_class_results
+from students.models import Student
+from .models import Score
 
 
 def build_report_card_context(student, term):
@@ -90,3 +92,63 @@ def publish_allocation_results(allocation, user=None):
         allocation.save()
         from activitylog.models import log_activity
         log_activity(user, f"{user} published {allocation.subject} - {allocation.school_class}")
+
+
+def get_students_for_allocation(allocation):
+    """
+    Returns the students that should receive scores for a subject allocation.
+    Handles elective subjects automatically.
+    """
+    students = Student.objects.filter(
+        school_class=allocation.school_class,
+        is_active=True
+    )
+
+    if allocation.subject.is_elective:
+        students = students.filter(
+            elective_subjects=allocation.subject
+        )
+
+    return students
+
+
+def save_scores(allocation, students, post_data):
+    """
+    Saves scores entered for all students in an allocation.
+    """
+
+    for student in students:
+        ca = post_data.get(f"ca_{student.id}", "").strip()
+        exam = post_data.get(f"exam_{student.id}", "").strip()
+
+        if ca or exam:
+            Score.objects.update_or_create(
+                student=student,
+                subject=allocation.subject,
+                term=allocation.term,
+                defaults={
+                    "ca_score": ca or 0,
+                    "exam_score": exam or 0,
+                    "recorded_by": allocation.teacher,
+                },
+            )
+
+
+def get_student_score_pairs(allocation, students):
+    """
+    Returns students paired with their existing scores for an allocation.
+    """
+
+    existing_scores = {
+        score.student_id: score
+        for score in Score.objects.filter(
+            subject=allocation.subject,
+            term=allocation.term,
+            student__in=students
+        )
+    }
+
+    return [
+        (student, existing_scores.get(student.id))
+        for student in students
+    ]
