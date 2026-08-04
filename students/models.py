@@ -8,14 +8,18 @@ class Department(models.Model):
     def __str__(self):
         return self.name
 
-
 class SchoolClass(models.Model):
-    name = models.CharField(max_length=20, unique=True)
-    is_senior = models.BooleanField(default=False)
+    name = models.CharField(
+        max_length=20,
+        unique=True
+    )  # JSS1, JSS2, JSS3, SSS1...
+
+    is_senior = models.BooleanField(
+        default=False
+    )
 
     def __str__(self):
         return self.name
-
 
 class Student(models.Model):
     GENDER_CHOICES = [
@@ -32,11 +36,6 @@ class Student(models.Model):
         ("AB-", "AB-"),
         ("O+", "O+"),
         ("O-", "O-"),
-    ]
-
-    MARITAL_STATUS = [
-        ("SINGLE", "Single"),
-        ("MARRIED", "Married"),
     ]
 
     user = models.OneToOneField(
@@ -62,13 +61,13 @@ class Student(models.Model):
         unique=True
     )
 
-    # Lagos State Learner Identification Number
+    # Learner Identification Number
     lin = models.CharField(
         max_length=30,
         unique=True,
         blank=True,
         null=True,
-        verbose_name="LIN Number"
+        verbose_name="LIN"
     )
 
     passport = models.ImageField(
@@ -95,8 +94,7 @@ class Student(models.Model):
 
     local_government = models.CharField(
         max_length=100,
-        blank=True,
-        verbose_name="Local Government of Origin"
+        blank=True
     )
 
     nationality = models.CharField(
@@ -143,10 +141,6 @@ class Student(models.Model):
         blank=True
     )
 
-    guardian_address = models.TextField(
-        blank=True
-    )
-
     emergency_contact_name = models.CharField(
         max_length=100,
         blank=True
@@ -154,11 +148,6 @@ class Student(models.Model):
 
     emergency_contact_phone = models.CharField(
         max_length=20,
-        blank=True
-    )
-
-    emergency_contact_relationship = models.CharField(
-        max_length=100,
         blank=True
     )
 
@@ -174,6 +163,17 @@ class Student(models.Model):
     previous_school = models.CharField(
         max_length=200,
         blank=True
+    )
+
+    admission_status = models.CharField(
+        max_length=20,
+        choices=[
+            ("ACTIVE", "Active"),
+            ("TRANSFERRED", "Transferred"),
+            ("GRADUATED", "Graduated"),
+            ("WITHDRAWN", "Withdrawn"),
+        ],
+        default="ACTIVE",
     )
 
     is_active = models.BooleanField(

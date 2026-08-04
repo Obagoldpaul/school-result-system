@@ -7,17 +7,26 @@ from accounts.decorators import staff_required, management_required
 @management_required
 @login_required
 def register_student(request):
-    if request.method == 'POST':
-        form = StudentRegistrationForm(request.POST)
+    if request.method == "POST":
+        form = StudentRegistrationForm(
+            request.POST,
+            request.FILES,
+        )
+
         if form.is_valid():
             form.save()
-            return redirect('student_list')
+            return redirect("student_list")
+
     else:
         form = StudentRegistrationForm()
-    return render(request, 'students/register_student.html', {
-        'form': form,
-        'student_list_url': '/students/',
-    })
+
+    return render(
+        request,
+        "students/register_student.html",
+        {
+            "form": form,
+        },
+    )
 
 @login_required
 def student_list(request):

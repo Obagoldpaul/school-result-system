@@ -1,5 +1,281 @@
-{% extends 'base.html' %}
-{% block title %}Register Student{% endblock %}
+{% extends "base.html" %}
+
+{% block title %}
+Register Student
+{% endblock %}
+
 {% block content %}
-{% include 'partials/simple_form.html' with page_title="Register New Student" submit_label="Save Student" back_url=student_list_url back_label="View all students" %}
+
+<div class="container mt-4">
+
+    <h2 class="mb-4">
+        Register New Student
+    </h2>
+
+    <form method="post" enctype="multipart/form-data">
+
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+            <div class="alert alert-danger">
+                {{ form.non_field_errors }}
+            </div>
+        {% endif %}
+
+        <!-- ================= PERSONAL INFORMATION ================= -->
+
+        <div class="card mb-4">
+
+            <div class="card-header bg-primary text-white">
+                Personal Information
+            </div>
+
+            <div class="card-body">
+
+                <div class="row">
+
+                    <div class="col-md-4 mb-3">
+                        {{ form.passport.label_tag }}
+                        {{ form.passport }}
+                        {{ form.passport.errors }}
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+                        {{ form.admission_number.label_tag }}
+                        {{ form.admission_number }}
+                        {{ form.admission_number.errors }}
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+                        {{ form.learner_identity_number.label_tag }}
+                        {{ form.learner_identity_number }}
+                        {{ form.learner_identity_number.errors }}
+                    </div>
+
+                </div>
+
+                <div class="row">
+
+                    <div class="col-md-4 mb-3">
+                        {{ form.username.label_tag }}
+                        {{ form.username }}
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+                        {{ form.password.label_tag }}
+                        {{ form.password }}
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+                        {{ form.email.label_tag }}
+                        {{ form.email }}
+                    </div>
+
+                </div>
+
+                <div class="row">
+
+                    <div class="col-md-4 mb-3">
+                        {{ form.last_name.label_tag }}
+                        {{ form.last_name }}
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+                        {{ form.first_name.label_tag }}
+                        {{ form.first_name }}
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+                        {{ form.other_name.label_tag }}
+                        {{ form.other_name }}
+                    </div>
+
+                </div>
+
+                <div class="row">
+
+                    <div class="col-md-3 mb-3">
+                        {{ form.gender.label_tag }}
+                        {{ form.gender }}
+                    </div>
+
+                    <div class="col-md-3 mb-3">
+                        {{ form.date_of_birth.label_tag }}
+                        {{ form.date_of_birth }}
+                    </div>
+
+                    <div class="col-md-3 mb-3">
+                        {{ form.blood_group.label_tag }}
+                        {{ form.blood_group }}
+                    </div>
+
+                    <div class="col-md-3 mb-3">
+                        {{ form.genotype.label_tag }}
+                        {{ form.genotype }}
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- ================= ADDRESS ================= -->
+
+        <div class="card mb-4">
+
+            <div class="card-header bg-success text-white">
+                Address & Origin
+            </div>
+
+            <div class="card-body">
+
+                <div class="row">
+
+                    <div class="col-md-4 mb-3">
+                        {{ form.state_of_origin.label_tag }}
+                        {{ form.state_of_origin }}
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+                        {{ form.local_government.label_tag }}
+                        {{ form.local_government }}
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+                        {{ form.nationality.label_tag }}
+                        {{ form.nationality }}
+                    </div>
+
+                </div>
+
+                <div class="mb-3">
+                    {{ form.home_address.label_tag }}
+                    {{ form.home_address }}
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- ================= ADMISSION ================= -->
+
+        <div class="card mb-4">
+
+            <div class="card-header bg-info text-white">
+                Admission Information
+            </div>
+
+            <div class="card-body">
+
+                <div class="row">
+
+                    <div class="col-md-4 mb-3">
+                        {{ form.school_class.label_tag }}
+                        {{ form.school_class }}
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+                        {{ form.department.label_tag }}
+                        {{ form.department }}
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+                        {{ form.admission_date.label_tag }}
+                        {{ form.admission_date }}
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- ================= GUARDIAN ================= -->
+
+        <div class="card mb-4">
+
+            <div class="card-header bg-warning">
+                Guardian Information
+            </div>
+
+            <div class="card-body">
+
+                <div class="row">
+
+                    <div class="col-md-6 mb-3">
+                        {{ form.guardian_name.label_tag }}
+                        {{ form.guardian_name }}
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        {{ form.guardian_relationship.label_tag }}
+                        {{ form.guardian_relationship }}
+                    </div>
+
+                </div>
+
+                <div class="row">
+
+                    <div class="col-md-6 mb-3">
+                        {{ form.guardian_phone.label_tag }}
+                        {{ form.guardian_phone }}
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        {{ form.guardian_email.label_tag }}
+                        {{ form.guardian_email }}
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- ================= EMERGENCY ================= -->
+
+        <div class="card mb-4">
+
+            <div class="card-header bg-danger text-white">
+                Emergency Contact
+            </div>
+
+            <div class="card-body">
+
+                <div class="row">
+
+                    <div class="col-md-6 mb-3">
+                        {{ form.emergency_contact_name.label_tag }}
+                        {{ form.emergency_contact_name }}
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        {{ form.emergency_contact_phone.label_tag }}
+                        {{ form.emergency_contact_phone }}
+                    </div>
+
+                </div>
+
+                <div class="mb-3">
+                    {{ form.medical_condition.label_tag }}
+                    {{ form.medical_condition }}
+                </div>
+
+            </div>
+
+        </div>
+
+        <button class="btn btn-primary btn-lg">
+            Register Student
+        </button>
+
+        <a href="{% url 'student_list' %}" class="btn btn-secondary btn-lg">
+            Cancel
+        </a>
+
+    </form>
+
+</div>
+
 {% endblock %}
