@@ -5,10 +5,11 @@ from django.db import models
 class User(AbstractUser):
 
     class Role(models.TextChoices):
-        ADMIN = 'ADMIN', 'Admin'
-        PRINCIPAL = 'PRINCIPAL', 'Principal'
-        TEACHER = 'TEACHER', 'Teacher'
-        STUDENT = 'STUDENT', 'Student'
+        ADMIN = "ADMIN", "Admin"
+        PROPRIETORESS = "PROPRIETORESS", "Proprietoress"
+        PRINCIPAL = "PRINCIPAL", "Principal"
+        TEACHER = "TEACHER", "Teacher"
+        STUDENT = "STUDENT", "Student"
 
     role = models.CharField(
         max_length=20,

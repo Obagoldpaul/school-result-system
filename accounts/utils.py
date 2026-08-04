@@ -37,6 +37,7 @@ def is_management_user(user):
             user.role in [
                 User.Role.ADMIN,
                 User.Role.PRINCIPAL,
+                User.Role.PROPRIETORESS
             ]
         )
     )

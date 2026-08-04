@@ -146,26 +146,66 @@ def submit_allocation(request, allocation_id):
 def review_allocation(request, allocation_id):
     allocation = get_object_or_404(SubjectAllocation, id=allocation_id)
 
+    services.ensure_can_review(
+        request.user,
+        allocation,
+    )
+
     if request.method == 'POST':
-        services.mark_allocation_reviewed(allocation, request.POST.get('comment', ''), user=request.user)
+        services.mark_allocation_reviewed(
+            allocation,
+            request.POST.get('comment', ''),
+            user=request.user,
+        )
         return _redirect_with_query(request)
 
-    return render(request, 'scores/review_allocation.html', {'allocation': allocation})
-
+    return render(
+        request,
+        'scores/review_allocation.html',
+        {
+            'allocation': allocation,
+        }
+    )
 
 @staff_required
 @login_required
 def approve_allocation(request, allocation_id):
-    allocation = get_object_or_404(SubjectAllocation, id=allocation_id)
-    services.approve_allocation_results(allocation, user=request.user)
+    allocation = get_object_or_404(
+        SubjectAllocation,
+        id=allocation_id,
+    )
+
+    services.ensure_can_approve(
+        request.user,
+        allocation,
+    )
+
+    services.approve_allocation_results(
+        allocation,
+        user=request.user,
+    )
+
     return _redirect_with_query(request)
 
 
 @staff_required
 @login_required
 def publish_allocation(request, allocation_id):
-    allocation = get_object_or_404(SubjectAllocation, id=allocation_id)
-    services.publish_allocation_results(allocation, user=request.user)
+    allocation = get_object_or_404(
+        SubjectAllocation,
+        id=allocation_id,
+    )
+
+    services.ensure_can_publish(
+        request.user,
+        allocation,
+    )
+
+    services.publish_allocation_results(
+        allocation,
+        user=request.user,
+    )
+
     return _redirect_with_query(request)
 
 

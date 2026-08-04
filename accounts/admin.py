@@ -22,7 +22,8 @@ def has_permission(request):
     if not user.is_authenticated or not user.is_active:
         return False
 
-    return user.role == User.Role.ADMIN
+    # Only Django Superusers can access the admin panel.
+    return user.is_superuser
 
 
 admin.site.has_permission = has_permission

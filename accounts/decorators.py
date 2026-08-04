@@ -10,6 +10,7 @@ from .permissions import (
     is_admin,
     is_principal,
     is_student,
+    is_proprietoress,
 )
 
 
@@ -58,6 +59,16 @@ def admin_required(view_func):
     return wrapper
 
 
+def proprietoress_required(view_func):
+    @wraps(view_func)
+    def wrapper(request, *args, **kwargs):
+        if not is_proprietoress(request.user):
+            raise PermissionDenied(
+                "Only the proprietoress can access this page."
+            )
+        return view_func(request, *args, **kwargs)
+    return wrapper
+    
 def principal_required(view_func):
     @wraps(view_func)
     def wrapper(request, *args, **kwargs):

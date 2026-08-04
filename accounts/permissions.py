@@ -11,6 +11,11 @@ def is_admin(user):
         and (user.is_superuser or user.role == user.Role.ADMIN)
     )
 
+def is_proprietoress(user):
+    return (
+        user.is_authenticated
+        and user.role == user.Role.PROPRIETORESS
+    )
 
 def is_principal(user):
     return (
@@ -49,6 +54,7 @@ def is_management(user):
     return (
         is_admin(user)
         or is_principal(user)
+        or is_proprietoress(user)
     )
 
 
