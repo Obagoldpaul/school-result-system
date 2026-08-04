@@ -3,11 +3,11 @@ from django.db import models
 
 
 class User(AbstractUser):
+
     class Role(models.TextChoices):
         ADMIN = 'ADMIN', 'Admin'
         PRINCIPAL = 'PRINCIPAL', 'Principal'
         TEACHER = 'TEACHER', 'Teacher'
-        CLASS_TEACHER = 'CLASS_TEACHER', 'Class Teacher'
         STUDENT = 'STUDENT', 'Student'
 
     role = models.CharField(
@@ -15,6 +15,7 @@ class User(AbstractUser):
         choices=Role.choices,
         default=Role.TEACHER,
     )
+
     phone_number = models.CharField(max_length=20, blank=True, null=True)
     other_name = models.CharField(max_length=150, blank=True)
 

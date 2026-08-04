@@ -1,6 +1,4 @@
 from academics.models import Term
-from teachers.models import Teacher
-from students.models import Student
 
 
 def get_teacher(user):
@@ -30,11 +28,16 @@ def is_management_user(user):
     """
     True for Admins, Principals and Superusers.
     """
+    from .models import User
+
     return (
         user.is_authenticated and
         (
             user.is_superuser or
-            user.role in ["ADMIN", "PRINCIPAL"]
+            user.role in [
+                User.Role.ADMIN,
+                User.Role.PRINCIPAL,
+            ]
         )
     )
 

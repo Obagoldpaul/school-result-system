@@ -9,7 +9,8 @@ from accounts.utils import get_teacher, get_student, get_current_term
 from allocations.models import SubjectAllocation
 from students.models import Student, SchoolClass
 from academics.models import Term
-from .models import Score, ReportCardExtra, get_class_results
+from .models import Score, ReportCardExtra
+from .reports import get_class_results
 from .forms import ReportCardExtraForm
 from . import services
 
@@ -75,36 +76,24 @@ def enter_scores(request, allocation_id):
     services.check_allocation_ownership(request.user, allocation)
     can_edit = services.can_edit_allocation(request.user, allocation)
 
-    students = Student.objects.filter(school_class=allocation.school_class, is_active=True)
-    if allocation.subject.is_elective:
-        students = students.filter(elective_subjects=allocation.subject)
+    students = services.get_students_for_allocation(allocation)
 
     if request.method == 'POST':
         if not can_edit:
             from django.core.exceptions import PermissionDenied
             raise PermissionDenied("Scores can only be edited while status is Draft.")
-        for student in students:
-            ca = request.POST.get(f'ca_{student.id}', '').strip()
-            exam = request.POST.get(f'exam_{student.id}', '').strip()
-            if ca or exam:
-                Score.objects.update_or_create(
-                    student=student,
-                    subject=allocation.subject,
-                    term=allocation.term,
-                    defaults={
-                        'ca_score': ca or 0,
-                        'exam_score': exam or 0,
-                        'recorded_by': allocation.teacher,
-                    }
-                )
+
+        services.save_scores(
+            allocation,
+            students,
+            request.POST,
+        )
         return redirect('select_allocation')
 
-    existing_scores = {
-        s.student_id: s for s in Score.objects.filter(
-            subject=allocation.subject, term=allocation.term, student__in=students
-        )
-    }
-    student_score_pairs = [(student, existing_scores.get(student.id)) for student in students]
+    student_score_pairs = services.get_student_score_pairs(
+    allocation,
+    students,
+)
 
     return render(request, 'scores/enter_scores.html', {
         'allocation': allocation,

@@ -1,0 +1,29 @@
+diff --git a/billing/models.py b/billing/models.py
+index 7eaf103..6e00c02 100644
+--- a/billing/models.py
++++ b/billing/models.py
+@@ -1,5 +1,5 @@
+ from django.db import models
+-
++from academics.utils import get_term_order
+ 
+ class FeeStructure(models.Model):
+     school_class = models.ForeignKey('students.SchoolClass', on_delete=models.CASCADE)
+@@ -63,12 +63,13 @@ def get_cumulative_balance(student, up_to_term):
+     """
+     from academics.models import Term
+ 
+-    def term_order(t):
+-        order_map = {'FIRST': 1, 'SECOND': 2, 'THIRD': 3}
+-        return order_map.get(t.name, 0)
++    
+ 
+     terms_in_session = Term.objects.filter(session=up_to_term.session)
+-    relevant_terms = [t for t in terms_in_session if term_order(t) <= term_order(up_to_term)]
++    relevant_terms = [
++    t for t in terms_in_session
++    if get_term_order(t) <= get_term_order(up_to_term)
++]
+ 
+     total_fees = 0
+     for t in relevant_terms:

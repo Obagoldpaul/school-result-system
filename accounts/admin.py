@@ -18,11 +18,11 @@ admin.site.register(User, CustomUserAdmin)
 
 def has_permission(request):
     user = request.user
+
     if not user.is_authenticated or not user.is_active:
         return False
-    if user.is_superuser:
-        return True
-    return user.role in [User.Role.ADMIN, User.Role.PRINCIPAL]
+
+    return user.role == User.Role.ADMIN
 
 
 admin.site.has_permission = has_permission

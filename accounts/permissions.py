@@ -56,7 +56,6 @@ def is_staff_member(user):
     return (
         is_management(user)
         or is_teacher(user)
-        or is_class_teacher(user)
     )
 
 
@@ -67,7 +66,6 @@ def is_staff_member(user):
 def can_enter_scores(user):
     return (
         is_teacher(user)
-        or is_class_teacher(user)
         or is_management(user)
     )
 
@@ -75,7 +73,6 @@ def can_enter_scores(user):
 def can_submit_scores(user):
     return (
         is_teacher(user)
-        or is_class_teacher(user)
         or is_management(user)
     )
 
