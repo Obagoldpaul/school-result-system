@@ -45,42 +45,27 @@ def student_list(request):
     )
 
     class_id = request.GET.get("class")
-    search = request.GET.get("search")
-
 
     if class_id:
         students = students.filter(
             school_class_id=class_id
         )
 
+    search = request.GET.get("search")
 
     if search:
+
         students = students.filter(
-            models.Q(
-                user__first_name__icontains=search
-            )
-            |
-            models.Q(
-                user__last_name__icontains=search
-            )
-            |
-            models.Q(
-                admission_number__icontains=search
-            )
-            |
-            models.Q(
-                lin__icontains=search
-            )
+            user__first_name__icontains=search
+        ) | students.filter(
+            user__last_name__icontains=search
+        ) | students.filter(
+            admission_number__icontains=search
+        ) | students.filter(
+            lin__icontains=search
         )
 
-
-    students = students.order_by(
-        "-id"
-    )
-
-
-    classes = SchoolClass.objects.all()
-
+    classes = SchoolClass.objects.all().order_by("name")
 
     return render(
         request,
@@ -89,7 +74,7 @@ def student_list(request):
             "students": students,
             "classes": classes,
             "selected_class": int(class_id) if class_id else None,
-            "search": search or "",
+            "search": search,
         },
     )
 
@@ -141,3 +126,23 @@ def promote_class(request):
             })
 
     return render(request, 'students/promote_class.html', {'classes': classes})
+
+@login_required
+def student_profile(request, student_id):
+
+    student = get_object_or_404(
+        Student.objects.select_related(
+            "user",
+            "school_class",
+            "department",
+        ),
+        id=student_id,
+    )
+
+    return render(
+        request,
+        "students/student_profile.html",
+        {
+            "student": student,
+        },
+    )

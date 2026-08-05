@@ -1,0 +1,153 @@
+/* ==================================
+   GGBS SCHOOL THEME
+   Great Goshenland Blossom School
+================================== */
+
+
+/* SCHOOL COLOURS */
+
+:root {
+
+    --school-green-dark: #14532D;
+
+    --school-green: #15803D;
+
+    --school-green-light: #DCFCE7;
+
+    --school-gold: #D4A017;
+
+    --school-maroon: #800020;
+
+    --school-white: #FFFFFF;
+
+}
+
+
+
+/* GENERAL SCHOOL BUTTONS */
+
+.btn-school {
+
+    background-color: var(--school-green);
+
+    color: white;
+
+    border: none;
+
+}
+
+
+.btn-school:hover {
+
+    background-color: var(--school-green-dark);
+
+    color: white;
+
+}
+
+
+
+/* CARD HEADERS */
+
+.school-header {
+
+    background-color: var(--school-green-dark);
+
+    color: white;
+
+}
+
+
+
+/* PAGE HEADINGS */
+
+.school-title {
+
+    color: var(--school-green-dark);
+
+    font-weight: 700;
+
+}
+
+
+
+/* TABLE HEADER */
+
+.table-school {
+
+    background-color: var(--school-green-dark);
+
+    color: white;
+
+}
+
+
+
+/* LINKS */
+
+a {
+
+    color: var(--school-green);
+
+}
+
+
+a:hover {
+
+    color: var(--school-green-dark);
+
+}
+
+
+
+/* SIDEBAR SUPPORT */
+
+.sidebar {
+
+    background-color: var(--school-green-dark);
+
+}
+
+
+.sidebar a {
+
+    color: white;
+
+}
+
+
+.sidebar a:hover {
+
+    background-color: var(--school-green);
+
+}
+
+
+
+/* GOLD ACCENT */
+
+.school-accent {
+
+    border-left: 5px solid var(--school-gold);
+
+}
+
+
+
+/* MAROON ACCENT */
+
+.school-ribbon {
+
+    background-color: var(--school-maroon);
+
+    color: white;
+
+}
+
+.school-header h1,
+.school-header h2,
+.school-header h3,
+.school-header h4,
+.school-header h5 {
+    color: white;
+}
