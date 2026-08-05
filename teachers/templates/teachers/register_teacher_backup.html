@@ -1,0 +1,5 @@
+{% extends 'base.html' %}
+{% block title %}Register Teacher{% endblock %}
+{% block content %}
+{% include 'partials/simple_form.html' with page_title="Register New Teacher" submit_label="Save Teacher" back_url=teacher_list_url back_label="View all teachers" %}
+{% endblock %}

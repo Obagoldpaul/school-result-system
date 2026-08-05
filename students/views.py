@@ -3,6 +3,7 @@ from django.contrib.auth.decorators import login_required
 from .forms import StudentRegistrationForm
 from .models import Student, SchoolClass, Department
 from accounts.decorators import staff_required, management_required
+from django.db import models
 
 @management_required
 @login_required
@@ -20,26 +21,77 @@ def register_student(request):
     else:
         form = StudentRegistrationForm()
 
+    print(form)
+    print(form["lin"])
+
     return render(
         request,
         "students/register_student.html",
         {
             "form": form,
+            "student_list_url": "/students/",
         },
     )
 
 @login_required
 def student_list(request):
-    students = Student.objects.filter(is_active=True)
-    class_id = request.GET.get('class')
+
+    students = Student.objects.filter(
+        is_active=True
+    ).select_related(
+        "user",
+        "school_class",
+        "department"
+    )
+
+    class_id = request.GET.get("class")
+    search = request.GET.get("search")
+
+
     if class_id:
-        students = students.filter(school_class_id=class_id)
+        students = students.filter(
+            school_class_id=class_id
+        )
+
+
+    if search:
+        students = students.filter(
+            models.Q(
+                user__first_name__icontains=search
+            )
+            |
+            models.Q(
+                user__last_name__icontains=search
+            )
+            |
+            models.Q(
+                admission_number__icontains=search
+            )
+            |
+            models.Q(
+                lin__icontains=search
+            )
+        )
+
+
+    students = students.order_by(
+        "-id"
+    )
+
+
     classes = SchoolClass.objects.all()
-    return render(request, 'students/student_list.html', {
-        'students': students,
-        'classes': classes,
-        'selected_class': int(class_id) if class_id else None,
-    })
+
+
+    return render(
+        request,
+        "students/student_list.html",
+        {
+            "students": students,
+            "classes": classes,
+            "selected_class": int(class_id) if class_id else None,
+            "search": search or "",
+        },
+    )
 
 @management_required
 @login_required

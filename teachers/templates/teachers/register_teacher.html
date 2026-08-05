@@ -1,5 +1,341 @@
-{% extends 'base.html' %}
-{% block title %}Register Teacher{% endblock %}
+{% extends "base.html" %}
+
+{% block title %}
+Register Teacher
+{% endblock %}
+
+
 {% block content %}
-{% include 'partials/simple_form.html' with page_title="Register New Teacher" submit_label="Save Teacher" back_url=teacher_list_url back_label="View all teachers" %}
+
+<div class="container-fluid mt-4">
+
+    <div class="card shadow">
+
+        <div class="card-header bg-primary text-white">
+            <h3 class="mb-0">
+                Register New Teacher
+            </h3>
+        </div>
+
+
+        <div class="card-body">
+
+            <form method="POST" enctype="multipart/form-data">
+
+                {% csrf_token %}
+
+
+                {% if form.non_field_errors %}
+                    <div class="alert alert-danger">
+                        {{ form.non_field_errors }}
+                    </div>
+                {% endif %}
+
+
+
+                <!-- PERSONAL INFORMATION -->
+
+                <h5 class="border-bottom pb-2 mb-3">
+                    Personal Information
+                </h5>
+
+
+                <div class="row">
+
+
+                    <div class="col-md-3 mb-3">
+
+                        {{ form.passport.label_tag }}
+
+                        <div class="mb-2">
+
+                            <img id="passportPreview"
+                                 src="#"
+                                 alt="Passport Preview"
+                                 class="img-thumbnail"
+                                 style="
+                                    width:120px;
+                                    height:120px;
+                                    object-fit:cover;
+                                    display:none;
+                                 ">
+
+                        </div>
+
+
+                        {{ form.passport }}
+
+                        {{ form.passport.errors }}
+
+                    </div>
+
+
+
+                    <div class="col-md-3 mb-3">
+                        {{ form.last_name.label_tag }}
+                        {{ form.last_name }}
+                        {{ form.last_name.errors }}
+                    </div>
+
+
+
+                    <div class="col-md-3 mb-3">
+                        {{ form.first_name.label_tag }}
+                        {{ form.first_name }}
+                    </div>
+
+
+
+                    <div class="col-md-3 mb-3">
+                        {{ form.other_name.label_tag }}
+                        {{ form.other_name }}
+                    </div>
+
+
+                </div>
+
+
+
+                <div class="row">
+
+
+                    <div class="col-md-4 mb-3">
+                        {{ form.username.label_tag }}
+                        {{ form.username }}
+                        {{ form.username.errors }}
+                    </div>
+
+
+                    <div class="col-md-4 mb-3">
+                        {{ form.password.label_tag }}
+                        {{ form.password }}
+                        {{ form.password.errors }}
+                    </div>
+
+
+                    <div class="col-md-4 mb-3">
+                        {{ form.email.label_tag }}
+                        {{ form.email }}
+                    </div>
+
+
+                </div>
+
+
+
+                <div class="row">
+
+
+                    <div class="col-md-4 mb-3">
+                        {{ form.phone_number.label_tag }}
+                        {{ form.phone_number }}
+                    </div>
+
+
+                    <div class="col-md-4 mb-3">
+                        {{ form.date_of_birth.label_tag }}
+                        {{ form.date_of_birth }}
+                    </div>
+
+
+                    <div class="col-md-4 mb-3">
+                        {{ form.gender.label_tag }}
+                        {{ form.gender }}
+                    </div>
+
+
+                </div>
+
+
+
+
+                <!-- PROFESSIONAL INFORMATION -->
+
+
+                <h5 class="border-bottom pb-2 mt-4 mb-3">
+                    Professional Information
+                </h5>
+
+
+                <div class="row">
+
+
+                    <div class="col-md-4 mb-3">
+                        {{ form.staff_id.label_tag }}
+                        {{ form.staff_id }}
+                        {{ form.staff_id.errors }}
+                    </div>
+
+
+                    <div class="col-md-4 mb-3">
+                        {{ form.qualification.label_tag }}
+                        {{ form.qualification }}
+                    </div>
+
+
+                    <div class="col-md-4 mb-3">
+                        {{ form.years_of_experience.label_tag }}
+                        {{ form.years_of_experience }}
+                    </div>
+
+
+                </div>
+
+
+
+                <div class="row">
+
+
+                    <div class="col-md-6 mb-3">
+                        {{ form.certificate.label_tag }}
+                        {{ form.certificate }}
+                    </div>
+
+
+                    <div class="col-md-6 mb-3">
+                        {{ form.employment_date.label_tag }}
+                        {{ form.employment_date }}
+                    </div>
+
+
+                </div>
+
+
+
+
+                <!-- ADDRESS INFORMATION -->
+
+                <h5 class="border-bottom pb-2 mt-4 mb-3">
+                    Address Information
+                </h5>
+                
+                
+                <div class="row">
+                
+                    <div class="col-md-4 mb-3">
+                        {{ form.state_of_origin.label_tag }}
+                        {{ form.state_of_origin }}
+                        {{ form.state_of_origin.errors }}
+                    </div>
+                
+                
+                    <div class="col-md-4 mb-3">
+                        {{ form.local_government.label_tag }}
+                        {{ form.local_government }}
+                        {{ form.local_government.errors }}
+                    </div>
+                
+                </div>
+                
+                
+                <div class="mb-3">
+                
+                    {{ form.home_address.label_tag }}
+                    {{ form.home_address }}
+                    {{ form.home_address.errors }}
+                
+                </div>
+
+
+                <!-- SCHOOL RESPONSIBILITY -->
+
+
+                <h5 class="border-bottom pb-2 mt-4 mb-3">
+                    School Responsibility
+                </h5>
+
+
+
+                <div class="row">
+
+
+                    <div class="col-md-6 mb-3">
+
+                        {{ form.is_class_teacher.label_tag }}
+
+                        {{ form.is_class_teacher }}
+
+                    </div>
+
+
+
+                    <div class="col-md-6 mb-3">
+
+                        {{ form.assigned_class.label_tag }}
+
+                        {{ form.assigned_class }}
+
+                        {{ form.assigned_class.errors }}
+
+                    </div>
+
+
+                </div>
+
+
+
+                <button class="btn btn-success btn-lg">
+                    Register Teacher
+                </button>
+
+
+                <a href="{% url 'teacher_list' %}"
+                   class="btn btn-secondary btn-lg">
+
+                    Cancel
+
+                </a>
+
+
+
+            </form>
+
+
+        </div>
+
+    </div>
+
+</div>
+
+
+
+<script>
+
+const passportInput = document.getElementById(
+    "id_passport"
+);
+
+
+const preview = document.getElementById(
+    "passportPreview"
+);
+
+
+
+if (passportInput) {
+
+    passportInput.addEventListener(
+        "change",
+        function(event){
+
+            const file = event.target.files[0];
+
+
+            if(file){
+
+                preview.src = URL.createObjectURL(file);
+
+                preview.style.display = "block";
+
+            }
+
+        }
+    );
+
+}
+
+</script>
+
+
+
 {% endblock %}

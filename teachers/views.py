@@ -7,17 +7,34 @@ from accounts.decorators import staff_required, management_required
 @management_required
 @login_required
 def register_teacher(request):
-    if request.method == 'POST':
-        form = TeacherRegistrationForm(request.POST)
+
+    if request.method == "POST":
+
+        form = TeacherRegistrationForm(
+            request.POST,
+            request.FILES
+        )
+
         if form.is_valid():
+
             form.save()
-            return redirect('teacher_list')
+
+            return redirect(
+                "teacher_list"
+            )
+
     else:
+
         form = TeacherRegistrationForm()
-    return render(request, 'teachers/register_teacher.html', {
-        'form': form,
-        'teacher_list_url': '/teachers/',
-    })
+
+
+    return render(
+        request,
+        "teachers/register_teacher.html",
+        {
+            "form": form,
+        },
+    )
 
 @staff_required
 @login_required
