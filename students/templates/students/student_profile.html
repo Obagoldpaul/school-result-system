@@ -1,0 +1,195 @@
+{% extends "base.html" %}
+
+{% block title %}
+Student Profile
+{% endblock %}
+
+{% block content %}
+
+<div class="container-fluid mt-4">
+
+    <div class="card shadow">
+
+        <div class="card-header school-header d-flex justify-content-between align-items-center">
+
+            <h3 class="text-white mb-0">
+                Student Profile
+            </h3>
+
+            <a href="{% url 'student_list' %}"
+               class="btn btn-light">
+
+                ← Back
+
+            </a>
+
+        </div>
+
+        <div class="card-body">
+
+            <div class="row">
+
+                <div class="col-md-3 text-center">
+
+                    {% if student.passport %}
+
+                        <img
+                            src="{{ student.passport.url }}"
+                            class="img-thumbnail mb-3"
+                            style="
+                                width:180px;
+                                height:180px;
+                                object-fit:cover;
+                            ">
+
+                    {% else %}
+
+                        <img
+                            src="https://via.placeholder.com/180x180?text=No+Photo"
+                            class="img-thumbnail mb-3">
+
+                    {% endif %}
+
+                </div>
+
+                <div class="col-md-9">
+
+                    <h3>
+
+                        {{ student.user.get_full_name }}
+
+                    </h3>
+
+                    <hr>
+
+                    <div class="row">
+
+                        <div class="col-md-6">
+
+                            <p>
+                                <strong>Admission Number:</strong><br>
+                                {{ student.admission_number }}
+                            </p>
+
+                            <p>
+                                <strong>LIN:</strong><br>
+                                {{ student.lin }}
+                            </p>
+
+                            <p>
+                                <strong>Gender:</strong><br>
+                                {{ student.gender }}
+                            </p>
+
+                            <p>
+                                <strong>Date of Birth:</strong><br>
+                                {{ student.date_of_birth }}
+                            </p>
+
+                        </div>
+
+                        <div class="col-md-6">
+
+                            <p>
+                                <strong>Class:</strong><br>
+                                {{ student.school_class }}
+                            </p>
+
+                            <p>
+                                <strong>Department:</strong><br>
+                                {{ student.department|default:"-" }}
+                            </p>
+
+                            <p>
+                                <strong>Admission Date:</strong><br>
+                                {{ student.admission_date }}
+                            </p>
+
+                            <p>
+                                <strong>Status:</strong><br>
+
+                                <span class="badge bg-success">
+
+                                    {{ student.admission_status }}
+
+                                </span>
+
+                            </p>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <hr>
+
+            <div class="row">
+
+                <div class="col-md-6">
+
+                    <h5>
+                        Guardian Information
+                    </h5>
+
+                    <p><strong>Name:</strong> {{ student.guardian_name }}</p>
+
+                    <p><strong>Relationship:</strong> {{ student.guardian_relationship }}</p>
+
+                    <p><strong>Phone:</strong> {{ student.guardian_phone }}</p>
+
+                    <p><strong>Email:</strong> {{ student.guardian_email }}</p>
+
+                </div>
+
+                <div class="col-md-6">
+
+                    <h5>
+                        Medical Information
+                    </h5>
+
+                    <p><strong>Blood Group:</strong> {{ student.blood_group }}</p>
+
+                    <p><strong>Genotype:</strong> {{ student.genotype }}</p>
+
+                    <p><strong>Medical Condition:</strong></p>
+
+                    <div class="border rounded p-3 bg-light">
+
+                        {{ student.medical_condition|default:"None" }}
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <hr>
+
+            <div class="text-end">
+
+                <a href="{% url 'edit_student' student.id %}"
+                   class="btn btn-warning">
+
+                    ✏ Edit Student
+
+                </a>
+
+                <a href="{% url 'select_report_term' student.id %}"
+                   class="btn btn-success">
+
+                    📄 Report Card
+
+                </a>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}
