@@ -1,0 +1,347 @@
+{% extends "base.html" %}
+
+{% block title %}
+Teacher Profile
+{% endblock %}
+
+{% block content %}
+
+<div class="container-fluid mt-4">
+
+    <div class="card shadow">
+
+        <div class="card-header school-header d-flex justify-content-between align-items-center">
+
+            <h3 class="text-white mb-0">
+                Teacher Profile
+            </h3>
+
+            <a href="{% url 'teacher_list' %}"
+               class="btn btn-light">
+
+                ← Back
+
+            </a>
+
+        </div>
+
+        <div class="card-body">
+
+            <!-- Summary Cards -->
+
+            <div class="row mb-4">
+
+                <div class="col-md-3">
+
+                    <div class="card border-success shadow-sm">
+
+                        <div class="card-body text-center">
+
+                            <h6 class="text-success">
+                                Staff ID
+                            </h6>
+
+                            <h5>
+                                {{ teacher.staff_id }}
+                            </h5>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div class="col-md-3">
+
+                    <div class="card border-primary shadow-sm">
+
+                        <div class="card-body text-center">
+
+                            <h6 class="text-primary">
+                                Qualification
+                            </h6>
+
+                            <h5>
+
+                                {{ teacher.qualification|default:"-" }}
+
+                            </h5>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div class="col-md-3">
+
+                    <div class="card border-warning shadow-sm">
+
+                        <div class="card-body text-center">
+
+                            <h6 class="text-warning">
+                                Experience
+                            </h6>
+
+                            <h5>
+
+                                {{ teacher.years_of_experience|default:"0" }}
+
+                            </h5>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div class="col-md-3">
+
+                    <div class="card border-info shadow-sm">
+
+                        <div class="card-body text-center">
+
+                            <h6 class="text-info">
+                                Assigned Class
+                            </h6>
+
+                            <h5>
+
+                                {{ teacher.assigned_class|default:"-" }}
+
+                            </h5>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- Main Information -->
+
+            <div class="row">
+
+                <div class="col-md-3 text-center">
+
+                    {% if teacher.passport %}
+
+                        <img
+                            src="{{ teacher.passport.url }}"
+                            class="img-thumbnail shadow"
+                            style="
+                                width:200px;
+                                height:200px;
+                                object-fit:cover;
+                            ">
+
+                    {% else %}
+
+                        <img
+                            src="https://via.placeholder.com/200"
+                            class="img-thumbnail">
+
+                    {% endif %}
+
+                </div>
+
+                <div class="col-md-9">
+
+                    <h2 class="text-success">
+
+                        {{ teacher.user.get_full_name }}
+
+                    </h2>
+
+                    <p class="text-muted">
+
+                        Teacher Profile Record
+
+                    </p>
+
+                    <hr>
+
+                    <div class="row">
+
+                        <div class="col-md-6">
+
+                            <p>
+
+                                <strong>Staff ID</strong><br>
+
+                                {{ teacher.staff_id }}
+
+                            </p>
+
+                            <p>
+
+                                <strong>Phone Number</strong><br>
+
+                                {{ teacher.phone_number }}
+
+                            </p>
+
+                            <p>
+
+                                <strong>Gender</strong><br>
+
+                                {{ teacher.gender }}
+
+                            </p>
+
+                            <p>
+
+                                <strong>Date of Birth</strong><br>
+
+                                {{ teacher.date_of_birth }}
+
+                            </p>
+
+                        </div>
+
+                        <div class="col-md-6">
+
+                            <p>
+
+                                <strong>Qualification</strong><br>
+
+                                {{ teacher.qualification }}
+
+                            </p>
+
+                            <p>
+
+                                <strong>Employment Date</strong><br>
+
+                                {{ teacher.employment_date }}
+
+                            </p>
+
+                            <p>
+
+                                <strong>Years of Experience</strong><br>
+
+                                {{ teacher.years_of_experience }}
+
+                            </p>
+
+                            <p>
+
+                                <strong>Assigned Class</strong><br>
+
+                                {{ teacher.assigned_class|default:"-" }}
+
+                            </p>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <hr>
+
+            <div class="row">
+
+                <div class="col-md-6">
+
+                    <h5 class="text-success">
+
+                        Address Information
+
+                    </h5>
+
+                    <p>
+
+                        <strong>State:</strong>
+
+                        {{ teacher.state_of_origin }}
+
+                    </p>
+
+                    <p>
+
+                        <strong>Local Government:</strong>
+
+                        {{ teacher.local_government }}
+
+                    </p>
+
+                    <p>
+
+                        <strong>Address:</strong>
+
+                        {{ teacher.home_address }}
+
+                    </p>
+
+                </div>
+
+                <div class="col-md-6">
+
+                    <h5 class="text-success">
+
+                        School Responsibility
+
+                    </h5>
+
+                    <p>
+
+                        <strong>Class Teacher:</strong>
+
+                        {% if teacher.is_class_teacher %}
+
+                            <span class="badge bg-success">
+
+                                Yes
+
+                            </span>
+
+                        {% else %}
+
+                            <span class="badge bg-secondary">
+
+                                No
+
+                            </span>
+
+                        {% endif %}
+
+                    </p>
+
+                </div>
+
+            </div>
+
+            <hr>
+
+            <div class="text-end">
+
+                <a href="{% url 'edit_teacher' teacher.id %}"
+                   class="btn btn-warning">
+
+                    ✏ Edit Teacher
+
+                </a>
+
+                <button
+                    onclick="window.print()"
+                    class="btn btn-primary">
+
+                    🖨 Print Profile
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

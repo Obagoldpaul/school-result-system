@@ -3,6 +3,7 @@ from django.contrib.auth.decorators import login_required
 from .forms import TeacherRegistrationForm
 from .models import Teacher
 from accounts.decorators import staff_required, management_required
+from django.shortcuts import get_object_or_404
 
 @management_required
 @login_required
@@ -65,3 +66,20 @@ def edit_teacher(request, teacher_id):
         'teacher': teacher,
         'classes': classes,
     })
+    
+@staff_required
+@login_required
+def teacher_profile(request, teacher_id):
+
+    teacher = get_object_or_404(
+        Teacher,
+        id=teacher_id
+    )
+
+    return render(
+        request,
+        "teachers/teacher_profile.html",
+        {
+            "teacher": teacher,
+        },
+    )
