@@ -6,9 +6,9 @@ Student Management
 
 {% block content %}
 
-<div class="container-fluid mt-4">
+<div class="container-fluid px-4 mt-4">
 
-    <div class="card shadow">
+    <div class="card shadow-lg border-0">
 
         <div class="card-header school-header d-flex justify-content-between align-items-center">
 
@@ -23,7 +23,7 @@ Student Management
 
         </div>
 
-        <div class="card-body">
+        <div class="card-body p-4">
 
             <form method="GET" class="row g-3 mb-4">
 
@@ -92,7 +92,7 @@ Student Management
 
             <div class="table-responsive">
 
-                <table class="table table-hover align-middle">
+                <table class="table table-hover table-bordered align-middle">
 
                     <thead class="table-success">
 
@@ -100,11 +100,9 @@ Student Management
 
                             <th>Photo</th>
 
-                            <th>Admission No.</th>
+                            <th>Student</th>
 
                             <th>LIN</th>
-
-                            <th>Student Name</th>
 
                             <th>Class</th>
 
@@ -112,7 +110,7 @@ Student Management
 
                             <th>Status</th>
 
-                            <th>Actions</th>
+                            <th class="text-center">Actions</th>
 
                         </tr>
 
@@ -121,138 +119,170 @@ Student Management
                     <tbody>
 
                         {% for student in students %}
-
+                        
                         <tr>
-
-                            <td>
-
+                        
+                            <!-- Photo -->
+                            <td class="text-center">
+                        
                                 {% if student.passport %}
-
-                                <img
-                                    src="{{ student.passport.url }}"
-                                    style="width:50px;height:50px;border-radius:50%;object-fit:cover;">
-
+                        
+                                    <img src="{{ student.passport.url }}"
+                                         class="rounded-circle border"
+                                         style="
+                                            width:55px;
+                                            height:55px;
+                                            object-fit:cover;
+                                         ">
+                        
                                 {% else %}
-
-                                <span class="text-muted">
-                                    No Photo
-                                </span>
-
+                        
+                                    <img src="https://via.placeholder.com/55"
+                                         class="rounded-circle border">
+                        
                                 {% endif %}
-
+                        
                             </td>
-
+                        
+                        
+                            <!-- Student -->
                             <td>
-
-                                {{ student.admission_number }}
-
+                        
+                                <strong>
+                        
+                                    {{ student.user.get_full_name }}
+                        
+                                </strong>
+                        
+                                <br>
+                        
+                                <small class="text-muted">
+                        
+                                    {{ student.admission_number }}
+                        
+                                </small>
+                        
                             </td>
-
+                        
+                        
+                            <!-- LIN -->
                             <td>
-
+                        
                                 {{ student.lin|default:"-" }}
-
+                        
                             </td>
-
+                        
+                        
+                            <!-- Class -->
                             <td>
-
-                                {{ student.user.get_full_name }}
-
+                        
+                                <span class="badge bg-primary">
+                        
+                                    {{ student.school_class }}
+                        
+                                </span>
+                        
                             </td>
-
+                        
+                        
+                            <!-- Department -->
                             <td>
-
-                                {{ student.school_class }}
-
-                            </td>
-
-                            <td>
-
+                        
                                 {{ student.department|default:"-" }}
-                            
+                        
                             </td>
-                            
+                        
+                        
+                            <!-- Status -->
                             <td>
-                            
+                        
                                 {% if student.admission_status == "ACTIVE" %}
-                            
+                        
                                     <span class="badge bg-success">
                                         Active
                                     </span>
-                            
+                        
                                 {% elif student.admission_status == "PENDING" %}
-                            
+                        
                                     <span class="badge bg-warning text-dark">
                                         Pending
                                     </span>
-                            
+                        
                                 {% elif student.admission_status == "GRADUATED" %}
-                            
+                        
                                     <span class="badge bg-primary">
                                         Graduated
                                     </span>
-                            
+                        
                                 {% elif student.admission_status == "SUSPENDED" %}
-                            
+                        
                                     <span class="badge bg-danger">
                                         Suspended
                                     </span>
-                            
+                        
                                 {% else %}
-                            
+                        
                                     <span class="badge bg-secondary">
+                        
                                         {{ student.admission_status }}
+                        
                                     </span>
-                            
+                        
                                 {% endif %}
-                            
+                        
                             </td>
-                            
-                            <td>
-                            
-                                <a
-                                    href="{% url 'student_profile' student.id %}"
-                                    class="btn btn-primary btn-sm">
-
-                                    👁 View
-
-                                </a>
-                                
-                                <a
-                                    href="{% url 'edit_student' student.id %}"
-                                    class="btn btn-warning btn-sm">
-                            
-                                    ✏ Edit
-                            
-                                </a>
-                            
-                                <a
-                                    href="{% url 'select_report_term' student.id %}"
-                                    class="btn btn-success btn-sm">
-                            
-                                    📄 Report
-                            
-                                </a>
-                            
+                        
+                        
+                            <!-- Actions -->
+                            <td class="text-center">
+                        
+                                <div class="btn-group btn-group-sm" role="group">
+                        
+                                    <a href="{% url 'student_profile' student.id %}"
+                                       class="btn btn-outline-primary"
+                                       title="View">
+                        
+                                        👁
+                        
+                                    </a>
+                        
+                                    <a href="{% url 'edit_student' student.id %}"
+                                       class="btn btn-outline-warning"
+                                       title="Edit">
+                        
+                                        ✏
+                        
+                                    </a>
+                        
+                                    <a href="{% url 'select_report_term' student.id %}"
+                                       class="btn btn-outline-success"
+                                       title="Report Card">
+                        
+                                        📄
+                        
+                                    </a>
+                        
+                                </div>
+                        
                             </td>
-
+                        
                         </tr>
-
+                        
                         {% empty %}
-
+                        
                         <tr>
-
-                            <td colspan="7" class="text-center text-muted">
-
+                        
+                            <td colspan="7" class="text-center text-muted py-5">
+                        
                                 No students found.
-
+                        
                             </td>
-
+                        
                         </tr>
-
+                        
                         {% endfor %}
-
-                    </tbody>
+                        
+                        </tbody>
 
                 </table>
 

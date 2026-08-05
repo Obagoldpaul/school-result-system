@@ -1,26 +1,281 @@
-{% extends 'base.html' %}
-{% block title %}Teachers{% endblock %}
+{% extends "base.html" %}
+
+{% block title %}
+Teacher Management
+{% endblock %}
+
 {% block content %}
-<h1>All Teachers</h1>
-<p><a href="{% url 'register_teacher' %}">+ Register New Teacher</a></p>
-<table>
-    <tr>
-    <th>Staff ID</th>
-    <th>Name</th>
-    <th>Qualification</th>
-    <th>Class Teacher?</th>
-    <th>Assigned Class</th>
-    <th>Action</th>
-</tr>
-    {% for teacher in teachers %}
-    <tr>
-        <td>{{ teacher.staff_id }}</td>
-        <td>{{ teacher.user.get_full_name }}</td>
-        <td>{{ teacher.qualification|default:"-" }}</td>
-        <td>{{ teacher.is_class_teacher|yesno:"Yes,No" }}</td>
-        <td>{{ teacher.assigned_class|default:"-" }}</td>
-        <td><a href="{% url 'edit_teacher' teacher.id %}">Edit</a></td>
-    </tr>
-    {% endfor %}
-</table>
+
+<div class="container-fluid px-4 mt-4">
+
+    <div class="card shadow-lg border-0">
+
+        <div class="card-header school-header d-flex justify-content-between align-items-center">
+
+            <h3 class="text-white mb-0">
+                Teacher Management
+            </h3>
+
+            <a href="{% url 'register_teacher' %}"
+               class="btn btn-light">
+
+                + Register Teacher
+
+            </a>
+
+        </div>
+
+        <div class="card-body p-4">
+
+            <form method="GET" class="row g-3 mb-4">
+
+                <div class="col-md-4">
+
+                    <input
+                        type="text"
+                        name="search"
+                        value="{{ search }}"
+                        class="form-control"
+                        placeholder="Search by name or Staff ID">
+
+                </div>
+
+                <div class="col-md-3">
+
+                    <select
+                        name="class"
+                        class="form-select"
+                        onchange="this.form.submit()">
+
+                        <option value="">
+                            All Classes
+                        </option>
+
+                        {% for c in classes %}
+
+                        <option
+                            value="{{ c.id }}"
+                            {% if c.id == selected_class %}selected{% endif %}>
+
+                            {{ c.name }}
+
+                        </option>
+
+                        {% endfor %}
+
+                    </select>
+
+                </div>
+
+                <div class="col-md-2">
+
+                    <button class="btn btn-success w-100">
+
+                        Search
+
+                    </button>
+
+                </div>
+
+                <div class="col-md-2">
+
+                    <a href="{% url 'teacher_list' %}"
+                       class="btn btn-secondary w-100">
+
+                        Reset
+
+                    </a>
+
+                </div>
+
+            </form>
+
+            <div class="table-responsive">
+
+                <table class="table table-hover table-bordered align-middle">
+
+                    <thead class="table-success">
+
+                        <tr>
+
+                            <th>Photo</th>
+
+                            <th>Staff ID</th>
+
+                            <th>Teacher</th>
+
+                            <th>Phone</th>
+
+                            <th>Qualification</th>
+
+                            <th>Class Teacher</th>
+
+                            <th>Assigned Class</th>
+
+                            <th class="text-center">
+                                Actions
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                        {% for teacher in teachers %}
+
+                        <tr>
+
+                            <td style="width:70px;">
+
+                                {% if teacher.passport %}
+
+                                    <img
+                                        src="{{ teacher.passport.url }}"
+                                        class="rounded-circle border"
+                                        style="
+                                            width:50px;
+                                            height:50px;
+                                            object-fit:cover;
+                                        ">
+
+                                {% else %}
+
+                                    <img
+                                        src="https://via.placeholder.com/50"
+                                        class="rounded-circle">
+
+                                {% endif %}
+
+                            </td>
+
+                            <td>
+
+                                <strong>
+
+                                    {{ teacher.staff_id }}
+
+                                </strong>
+
+                            </td>
+
+                            <td>
+
+                                <strong>
+
+                                    {{ teacher.user.get_full_name }}
+
+                                </strong>
+
+                                <br>
+
+                                <small class="text-muted">
+
+                                    {{ teacher.user.username }}
+
+                                </small>
+
+                            </td>
+
+                            <td>
+
+                                {{ teacher.phone_number|default:"-" }}
+
+                            </td>
+
+                            <td>
+
+                                {{ teacher.qualification|default:"-" }}
+
+                            </td>
+
+                            <td>
+
+                                {% if teacher.is_class_teacher %}
+
+                                    <span class="badge bg-success">
+
+                                        Yes
+
+                                    </span>
+
+                                {% else %}
+
+                                    <span class="badge bg-secondary">
+
+                                        No
+
+                                    </span>
+
+                                {% endif %}
+
+                            </td>
+
+                            <td>
+
+                                {{ teacher.assigned_class|default:"-" }}
+
+                            </td>
+
+                            <td class="text-center">
+
+                                <div class="btn-group" role="group">
+
+                                    <a href="#"
+                                       class="btn btn-outline-primary btn-sm"
+                                       title="View">
+
+                                        👁
+
+                                    </a>
+
+                                    <a href="{% url 'edit_teacher' teacher.id %}"
+                                       class="btn btn-outline-warning btn-sm"
+                                       title="Edit">
+
+                                        ✏
+
+                                    </a>
+
+                                    <a href="#"
+                                       class="btn btn-outline-success btn-sm"
+                                       title="Print">
+
+                                        🖨
+
+                                    </a>
+
+                                </div>
+
+                            </td>
+
+                        </tr>
+
+                        {% empty %}
+
+                        <tr>
+
+                            <td colspan="8"
+                                class="text-center text-muted">
+
+                                No teachers found.
+
+                            </td>
+
+                        </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
 {% endblock %}
