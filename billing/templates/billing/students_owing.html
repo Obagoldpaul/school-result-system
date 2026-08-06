@@ -36,7 +36,8 @@
         <td style="color: #b83232; font-weight: 600;">₦{{ row.balance|intcomma }}</td>
         <td>
     <a href="{% url 'record_payment' row.student.id term.id %}">Record Payment</a> |
-    <a href="{% url 'student_bill_pdf' row.student.id term.id %}">Print Bill</a>
+    <a href="{% url 'student_bill_pdf' row.student.id term.id %}">Print Bill</a>  |
+    <a href="{% url 'student_payment_history' row.student.id %}"> Payment History</a>
 </td>
     </tr>
     {% endfor %}

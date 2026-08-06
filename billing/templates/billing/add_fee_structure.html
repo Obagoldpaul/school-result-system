@@ -1,5 +1,11 @@
 {% extends 'base.html' %}
-{% block title %}Add Fee Structure{% endblock %}
+
+{% block title %}
+Add Fee Structure
+{% endblock %}
+
 {% block content %}
-{% include 'partials/simple_form.html' with page_title="Add Fee Structure" submit_label="Save Fee" back_url=fee_structure_list_url back_label="View all fees" %}
+
+{% include 'partials/simple_form.html' with page_title=page_title submit_label="Save Fee" back_url=fee_structure_list_url back_label="View all fees" %}
+
 {% endblock %}

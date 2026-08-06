@@ -1,0 +1,280 @@
+{% load humanize %}
+
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<title>
+Payment Receipt
+</title>
+
+
+<style>
+
+    @page {
+        size: A4;
+        margin: 20mm;
+    }
+    
+    
+    body {
+        font-family: Arial, sans-serif;
+        font-size: 14px;
+    }
+    
+    
+    .receipt {
+    
+        width: 100%;
+    
+        border: 2px solid #1a5c1a;
+    
+        padding: 25px;
+    
+        box-sizing: border-box;
+    
+    }
+    
+    
+    .header {
+    
+        text-align: center;
+    
+    }
+    
+    
+    .header img {
+    
+        height: 80px;
+    
+    }
+    
+    
+    h2 {
+    
+        color: #1a5c1a;
+    
+        margin-bottom: 5px;
+    
+    }
+    
+    
+    table {
+    
+        width: 100%;
+    
+        margin-top: 25px;
+    
+        border-collapse: collapse;
+    
+    }
+    
+    
+    td {
+    
+        padding: 10px;
+    
+        border-bottom: 1px solid #ddd;
+    
+    }
+    
+    
+    .amount {
+    
+        font-size: 20px;
+    
+        font-weight: bold;
+    
+        color: #1a5c1a;
+    
+    }
+    
+    
+    .footer {
+    
+        margin-top: 50px;
+    
+    }
+    
+    
+    </style>
+
+</head>
+
+
+<body>
+
+
+<div class="receipt">
+
+
+<div class="header">
+
+{% if school_settings.logo %}
+
+<img src="{{ school_settings.logo.path }}">
+
+{% endif %}
+
+
+<h2>
+{{ school_settings.school_name }}
+</h2>
+
+
+<h3>
+PAYMENT RECEIPT
+</h3>
+
+
+</div>
+
+
+
+<table>
+
+
+<tr>
+<td>
+Receipt Number
+</td>
+
+<td>
+<strong>
+{{ payment.receipt_number }}
+</strong>
+</td>
+</tr>
+
+
+
+<tr>
+<td>
+Date
+</td>
+
+<td>
+{{ payment.date_paid }}
+</td>
+</tr>
+
+
+
+<tr>
+<td>
+Student
+</td>
+
+<td>
+{{ payment.student.user.get_full_name }}
+</td>
+</tr>
+
+
+
+<tr>
+<td>
+Admission Number
+</td>
+
+<td>
+{{ payment.student.admission_number }}
+</td>
+</tr>
+
+
+
+<tr>
+<td>
+Class
+</td>
+
+<td>
+{{ payment.student.school_class }}
+</td>
+</tr>
+
+
+
+<tr>
+<td>
+Term
+</td>
+
+<td>
+{{ payment.term }}
+</td>
+</tr>
+
+
+
+<tr>
+<td>
+Amount Paid
+</td>
+
+<td class="amount">
+₦{{ payment.amount|intcomma }}
+</td>
+</tr>
+
+
+
+<tr>
+<td>
+Payment Method
+</td>
+
+<td>
+{{ payment.get_payment_method_display }}
+</td>
+</tr>
+
+
+
+<tr>
+<td>
+Reference
+</td>
+
+<td>
+{{ payment.reference|default:"-" }}
+</td>
+</tr>
+
+
+</table>
+
+
+
+<div class="footer">
+
+<p>
+Recorded by:
+{{ payment.recorded_by }}
+</p>
+
+
+<br>
+
+
+<p>
+__________________________
+</p>
+
+<p>
+Authorized Signature
+</p>
+
+
+</div>
+
+
+
+</div>
+
+
+</body>
+
+</html>

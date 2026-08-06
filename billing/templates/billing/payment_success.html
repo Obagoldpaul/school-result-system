@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+
+{% block title %}
+Payment Successful
+{% endblock %}
+
+
+{% block content %}
+
+<div class="container mt-5">
+
+<div class="card shadow">
+
+<div class="card-body text-center">
+
+
+<h2 class="text-success">
+✅ Payment Recorded Successfully
+</h2>
+
+
+<hr>
+
+
+<h5>
+Student:
+{{ payment.student.user.get_full_name }}
+</h5>
+
+
+<p>
+Amount Paid:
+<strong>
+₦{{ payment.amount }}
+</strong>
+</p>
+
+
+<p>
+Receipt Number:
+<strong>
+{{ payment.receipt_number }}
+</strong>
+</p>
+
+
+<div class="mt-4">
+
+
+<a href="{% url 'payment_receipt_pdf' payment.id %}"
+class="btn btn-success">
+
+🧾 Print Receipt
+
+</a>
+
+
+<a href="{% url 'students_owing' %}"
+class="btn btn-outline-secondary">
+
+Back to Students Owing
+
+</a>
+
+
+</div>
+
+
+</div>
+
+</div>
+
+</div>
+
+{% endblock %}

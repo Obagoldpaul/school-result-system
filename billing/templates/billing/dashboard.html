@@ -1,0 +1,205 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}
+Billing Dashboard
+{% endblock %}
+
+{% block content %}
+
+<div class="container-fluid mt-4">
+
+    <div class="card shadow mb-4">
+
+        <div class="card-header school-header">
+
+            <h3 class="text-white mb-0">
+                💰 Billing Management
+            </h3>
+
+        </div>
+
+        <div class="card-body">
+
+            <p class="text-muted">
+
+                Manage school fees, payments, bills and outstanding balances.
+
+            </p>
+
+        </div>
+
+    </div>
+
+    <div class="row g-4">
+
+        <div class="col-md-3">
+
+            <div class="card border-success shadow-sm">
+
+                <div class="card-body text-center">
+
+                    <h6>Total Students</h6>
+
+                    <h2 class="text-success">
+
+                        {{ total_students }}
+
+                    </h2>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="col-md-3">
+
+            <div class="card border-primary shadow-sm">
+
+                <div class="card-body text-center">
+
+                    <h6>Fee Structures</h6>
+
+                    <h2 class="text-primary">
+
+                        {{ total_fee_structures }}
+
+                    </h2>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="col-md-3">
+
+            <div class="card border-warning shadow-sm">
+
+                <div class="card-body text-center">
+
+                    <h6>Total Collected</h6>
+
+                    <h5 class="text-warning">
+
+                        ₦{{ total_collected|intcomma }}
+
+                    </h5>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="col-md-3">
+
+            <div class="card border-danger shadow-sm">
+
+                <div class="card-body text-center">
+
+                    <h6>Outstanding</h6>
+
+                    <h5 class="text-danger">
+
+                        ₦{{ outstanding|intcomma }}
+
+                    </h5>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="card shadow mt-4">
+
+        <div class="card-header">
+    
+            <h5 class="mb-0">
+                Quick Actions
+            </h5>
+    
+        </div>
+    
+        <div class="card-body">
+    
+            <div class="row g-3">
+    
+                <div class="col-md-3">
+    
+                    <a href="{% url 'add_fee_structure' %}"
+                       class="btn btn-success w-100">
+    
+                        ➕ Add Fee Structure
+    
+                    </a>
+    
+                </div>
+    
+                <div class="col-md-3">
+    
+                    <a href="{% url 'fee_structure_list' %}"
+                       class="btn btn-outline-success w-100">
+    
+                        📋 Fee Structures
+    
+                    </a>
+    
+                </div>
+    
+                <div class="col-md-3">
+    
+                    <a href="{% url 'add_opening_balance' %}"
+                       class="btn btn-outline-primary w-100">
+    
+                        💰 Add Opening Balance
+    
+                    </a>
+    
+                </div>
+    
+                <div class="col-md-3">
+    
+                    <a href="{% url 'opening_balance_list' %}"
+                       class="btn btn-outline-primary w-100">
+    
+                        📄 Opening Balances
+    
+                    </a>
+    
+                </div>
+    
+                <div class="col-md-3">
+    
+                    <a href="{% url 'students_owing' %}"
+                       class="btn btn-outline-danger w-100">
+    
+                        👨‍🎓 Students Owing
+    
+                    </a>
+    
+                </div>
+    
+                <div class="col-md-3">
+    
+                    <a href="{% url 'payment_list' %}"
+                       class="btn btn-outline-info w-100">
+    
+                        💳 Payment History
+    
+                    </a>
+    
+                </div>
+    
+            </div>
+    
+        </div>
+    
+    </div>
+</div>
+
+{% endblock %}

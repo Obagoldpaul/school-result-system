@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+
+{% block title %}
+Payment History
+{% endblock %}
+
+{% block content %}
+
+<div class="container mt-4">
+
+<h2>
+Payment History - {{ student.user.get_full_name }}
+</h2>
+
+<table class="table table-bordered">
+
+<tr>
+    <th>Date</th>
+    <th>Amount</th>
+    <th>Term</th>
+    <th>Method</th>
+    <th>Reference</th>
+    <th>Action</th>
+</tr>
+
+
+{% for payment in payments %}
+
+<tr>
+
+<td>
+{{ payment.date_paid }}
+</td>
+
+<td>
+₦{{ payment.amount }}
+</td>
+
+<td>
+{{ payment.term }}
+</td>
+
+<td>
+{{ payment.payment_method|default:"-" }}
+</td>
+
+<td>
+{{ payment.reference|default:"-" }}
+</td>
+
+<td>
+<a href="{% url 'payment_receipt_pdf' payment.id %}">
+    🧾 Print Receipt
+</a>
+</td>
+
+</tr>
+
+{% empty %}
+
+<tr>
+<td colspan="6">
+No payments recorded.
+</td>
+</tr>
+
+{% endfor %}
+
+
+</table>
+
+</div>
+
+{% endblock %}

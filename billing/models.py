@@ -1,5 +1,6 @@
 from django.db import models
 from academics.utils import get_term_order
+import datetime
 
 class FeeStructure(models.Model):
     school_class = models.ForeignKey('students.SchoolClass', on_delete=models.CASCADE)
@@ -20,15 +21,79 @@ class FeeStructure(models.Model):
 
 
 class Payment(models.Model):
-    student = models.ForeignKey('students.Student', on_delete=models.CASCADE, related_name='payments')
-    term = models.ForeignKey('academics.Term', on_delete=models.CASCADE)
-    amount = models.DecimalField(max_digits=10, decimal_places=2)
-    date_paid = models.DateField(auto_now_add=True)
-    recorded_by = models.ForeignKey('accounts.User', on_delete=models.SET_NULL, null=True)
-    note = models.CharField(max_length=200, blank=True, help_text="e.g. bank transfer, cash, cheque number")
+
+    PAYMENT_METHODS = [
+        ("Cash", "Cash"),
+        ("Bank Transfer", "Bank Transfer"),
+        ("POS", "POS"),
+        ("Cheque", "Cheque"),
+        ("Online", "Online"),
+    ]
+
+    student = models.ForeignKey(
+        'students.Student',
+        on_delete=models.CASCADE,
+        related_name='payments'
+    )
+
+    term = models.ForeignKey(
+        'academics.Term',
+        on_delete=models.CASCADE
+    )
+
+    amount = models.DecimalField(
+        max_digits=10,
+        decimal_places=2
+    )
+
+    payment_method = models.CharField(
+        max_length=20,
+        choices=PAYMENT_METHODS,
+        default="Cash",
+    )
+
+    receipt_number = models.CharField(
+        max_length=30,
+        unique=True,
+        blank=True,
+    )
+
+    reference = models.CharField(
+        max_length=100,
+        blank=True,
+        help_text="Bank transaction ID, POS reference, cheque number, etc."
+    )
+
+    date_paid = models.DateField(
+        auto_now_add=True
+    )
+
+    recorded_by = models.ForeignKey(
+        'accounts.User',
+        on_delete=models.SET_NULL,
+        null=True
+    )
+
+    note = models.CharField(
+        max_length=200,
+        blank=True,
+        help_text="Additional payment note"
+    )
 
     def __str__(self):
-        return f"{self.student} paid {self.amount} for {self.term}"
+        return f"{self.student} paid ₦{self.amount}"
+
+    def save(self, *args, **kwargs):
+
+        super().save(*args, **kwargs)
+
+        if not self.receipt_number:
+
+            self.receipt_number = (
+                f"REC-{self.date_paid.strftime('%Y%m%d')}-{self.id:05d}"
+            )
+
+            super().save(update_fields=["receipt_number"])
 
 class OpeningBalance(models.Model):
     """One-time arrears a student owed BEFORE this system was used, entered manually during setup."""

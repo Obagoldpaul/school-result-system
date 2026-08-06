@@ -14,6 +14,14 @@ class FeeStructureForm(forms.ModelForm):
 
 
 class PaymentForm(forms.ModelForm):
+
     class Meta:
+
         model = Payment
-        fields = ['amount', 'note']
+
+        fields = [
+            "amount",
+            "payment_method",
+            "reference",
+            "note",
+        ]

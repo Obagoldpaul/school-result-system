@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}
+Opening Balances
+{% endblock %}
+
+{% block content %}
+
+<div class="container-fluid mt-4">
+
+    <div class="card shadow">
+
+        <div class="card-header school-header d-flex justify-content-between align-items-center">
+
+            <h3 class="text-white mb-0">
+                Opening Balance Management
+            </h3>
+
+            <a href="{% url 'add_opening_balance' %}"
+               class="btn btn-light">
+
+                + Add Opening Balance
+
+            </a>
+
+        </div>
+
+        <div class="card-body">
+
+            <form method="GET" class="row mb-4">
+
+                <div class="col-md-4">
+
+                    <input
+                        type="text"
+                        name="search"
+                        value="{{ search }}"
+                        class="form-control"
+                        placeholder="Search student">
+
+                </div>
+
+                <div class="col-md-2">
+
+                    <button class="btn btn-success w-100">
+
+                        Search
+
+                    </button>
+
+                </div>
+
+                <div class="col-md-2">
+
+                    <a href="{% url 'opening_balance_list' %}"
+                       class="btn btn-secondary w-100">
+
+                        Reset
+
+                    </a>
+
+                </div>
+
+            </form>
+
+            <div class="table-responsive">
+
+                <table class="table table-hover table-bordered align-middle">
+
+                    <thead class="table-success">
+
+                        <tr>
+
+                            <th>Admission No.</th>
+
+                            <th>Student</th>
+
+                            <th>Amount</th>
+
+                            <th>Note</th>
+
+                            <th class="text-center">
+
+                                Actions
+
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                        {% for balance in balances %}
+
+                        <tr>
+
+                            <td>
+
+                                {{ balance.student.admission_number }}
+
+                            </td>
+
+                            <td>
+
+                                {{ balance.student.user.get_full_name }}
+
+                            </td>
+
+                            <td class="fw-bold text-danger">
+
+                                ₦{{ balance.amount|intcomma }}
+
+                            </td>
+
+                            <td>
+
+                                {{ balance.note|default:"-" }}
+
+                            </td>
+
+                            <td class="text-center">
+
+                                <div class="btn-group">
+
+                                    <a href="{% url 'edit_opening_balance' balance.id %}"
+                                       class="btn btn-outline-warning btn-sm">
+
+                                        ✏
+
+                                    </a>
+
+                                    <a href="{% url 'delete_opening_balance' balance.id %}"
+                                    onclick="return confirm('Delete this opening balance?')"
+                                       class="btn btn-outline-danger btn-sm">
+
+                                        🗑
+
+                                    </a>
+
+                                </div>
+
+                            </td>
+
+                        </tr>
+
+                        {% empty %}
+
+                        <tr>
+
+                            <td colspan="5"
+                                class="text-center text-muted">
+
+                                No opening balances found.
+
+                            </td>
+
+                        </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}
