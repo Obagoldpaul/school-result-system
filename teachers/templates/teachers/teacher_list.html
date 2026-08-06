@@ -18,50 +18,92 @@ Teacher Management
 
             <a href="{% url 'register_teacher' %}"
                class="btn btn-light">
-
                 + Register Teacher
-
             </a>
 
         </div>
 
-        <div class="card-body p-4">
+        <div class="card-body">
+
+            <!-- Statistics -->
+
+            <div class="row mb-4">
+
+                <div class="col-md-3">
+                    <div class="card border-success shadow-sm">
+                        <div class="card-body text-center">
+                            <h6 class="text-success">Total Teachers</h6>
+                            <h3>{{ total_teachers }}</h3>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-3">
+                    <div class="card border-primary shadow-sm">
+                        <div class="card-body text-center">
+                            <h6 class="text-primary">Class Teachers</h6>
+                            <h3>{{ class_teacher_count }}</h3>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-3">
+                    <div class="card border-warning shadow-sm">
+                        <div class="card-body text-center">
+                            <h6 class="text-warning">Assigned Classes</h6>
+                            <h3>{{ assigned_count }}</h3>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-3">
+                    <div class="card border-danger shadow-sm">
+                        <div class="card-body text-center">
+                            <h6 class="text-danger">Inactive</h6>
+                            <h3>{{ inactive_count }}</h3>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Search -->
 
             <form method="GET" class="row g-3 mb-4">
 
-                <div class="col-md-4">
+                <div class="col-md-5">
 
                     <input
                         type="text"
                         name="search"
                         value="{{ search }}"
                         class="form-control"
-                        placeholder="Search by name or Staff ID">
+                        placeholder="Search by name, Staff ID or phone">
 
                 </div>
 
                 <div class="col-md-3">
 
                     <select
-                        name="class"
-                        class="form-select"
-                        onchange="this.form.submit()">
+                        name="filter"
+                        class="form-select">
 
-                        <option value="">
-                            All Classes
+                        <option value="">All Teachers</option>
+
+                        <option value="class"
+                            {% if filter == "class" %}selected{% endif %}>
+                            Class Teachers
                         </option>
 
-                        {% for c in classes %}
-
-                        <option
-                            value="{{ c.id }}"
-                            {% if c.id == selected_class %}selected{% endif %}>
-
-                            {{ c.name }}
-
+                        <option value="assigned"
+                            {% if filter == "assigned" %}selected{% endif %}>
+                            Assigned Classes
                         </option>
 
-                        {% endfor %}
+                        <option value="inactive"
+                            {% if filter == "inactive" %}selected{% endif %}>
+                            Inactive Teachers
+                        </option>
 
                     </select>
 
@@ -70,9 +112,7 @@ Teacher Management
                 <div class="col-md-2">
 
                     <button class="btn btn-success w-100">
-
                         Search
-
                     </button>
 
                 </div>
@@ -81,14 +121,14 @@ Teacher Management
 
                     <a href="{% url 'teacher_list' %}"
                        class="btn btn-secondary w-100">
-
                         Reset
-
                     </a>
 
                 </div>
 
             </form>
+
+            <!-- Table -->
 
             <div class="table-responsive">
 
@@ -104,13 +144,11 @@ Teacher Management
 
                             <th>Teacher</th>
 
-                            <th>Phone</th>
-
                             <th>Qualification</th>
 
-                            <th>Class Teacher</th>
-
                             <th>Assigned Class</th>
+
+                            <th>Status</th>
 
                             <th class="text-center">
                                 Actions
@@ -126,24 +164,19 @@ Teacher Management
 
                         <tr>
 
-                            <td style="width:70px;">
+                            <td>
 
                                 {% if teacher.passport %}
 
-                                    <img
-                                        src="{{ teacher.passport.url }}"
-                                        class="rounded-circle border"
-                                        style="
-                                            width:50px;
-                                            height:50px;
-                                            object-fit:cover;
-                                        ">
+                                    <img src="{{ teacher.passport.url }}"
+                                         class="rounded-circle border"
+                                         style="width:50px;height:50px;object-fit:cover;">
 
                                 {% else %}
 
-                                    <img
-                                        src="https://via.placeholder.com/50"
-                                        class="rounded-circle">
+                                    <span class="text-muted">
+                                        No Photo
+                                    </span>
 
                                 {% endif %}
 
@@ -151,11 +184,7 @@ Teacher Management
 
                             <td>
 
-                                <strong>
-
-                                    {{ teacher.staff_id }}
-
-                                </strong>
+                                {{ teacher.staff_id }}
 
                             </td>
 
@@ -171,15 +200,9 @@ Teacher Management
 
                                 <small class="text-muted">
 
-                                    {{ teacher.user.username }}
+                                    {{ teacher.phone_number }}
 
                                 </small>
-
-                            </td>
-
-                            <td>
-
-                                {{ teacher.phone_number|default:"-" }}
 
                             </td>
 
@@ -191,59 +214,72 @@ Teacher Management
 
                             <td>
 
-                                {% if teacher.is_class_teacher %}
+                                {{ teacher.assigned_class|default:"-" }}
+
+                            </td>
+
+                            <td>
+
+                                {% if teacher.is_active %}
 
                                     <span class="badge bg-success">
-
-                                        Yes
-
+                                        Active
                                     </span>
 
                                 {% else %}
 
-                                    <span class="badge bg-secondary">
-
-                                        No
-
+                                    <span class="badge bg-danger">
+                                        Inactive
                                     </span>
 
                                 {% endif %}
 
                             </td>
 
-                            <td>
-
-                                {{ teacher.assigned_class|default:"-" }}
-
-                            </td>
-
                             <td class="text-center">
 
-                                <div class="btn-group" role="group">
+                                <div class="btn-group">
 
                                     <a href="{% url 'teacher_profile' teacher.id %}"
-                                        class="btn btn-outline-primary btn-sm"
-                                        title="View">
-                                     👁
-
+                                       class="btn btn-outline-primary btn-sm"
+                                       title="View">
+                                
+                                        👁
+                                
                                     </a>
-                                    
+                                
                                     <a href="{% url 'edit_teacher' teacher.id %}"
                                        class="btn btn-outline-warning btn-sm"
                                        title="Edit">
-
+                                
                                         ✏
-
+                                
                                     </a>
-
-                                    <a href="#"
-                                       class="btn btn-outline-success btn-sm"
-                                       title="Print">
-
-                                        🖨
-
-                                    </a>
-
+                                
+                                    {% if teacher.is_active %}
+                                
+                                        <a href="{% url 'deactivate_teacher' teacher.id %}"
+                                           class="btn btn-outline-danger btn-sm"
+                                           onclick="return confirm('Deactivate this teacher?')"
+                                           title="Deactivate">
+                                
+                                            🚫
+                                
+                                        </a>
+                                
+                                    {% else %}
+                                
+                                        <a href="{% url 'activate_teacher' teacher.id %}"
+                                           class="btn btn-outline-success btn-sm"
+                                           onclick="return confirm('Activate this teacher?')"
+                                           title="Activate">
+                                
+                                            ✔
+                                
+                                        </a>
+                                
+                                    {% endif %}
+                                
                                 </div>
 
                             </td>
@@ -254,7 +290,7 @@ Teacher Management
 
                         <tr>
 
-                            <td colspan="8"
+                            <td colspan="7"
                                 class="text-center text-muted">
 
                                 No teachers found.

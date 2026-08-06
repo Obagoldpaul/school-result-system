@@ -1,9 +1,11 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
+from django.db.models import Q
+
+from students.models import SchoolClass
 from .forms import TeacherRegistrationForm
 from .models import Teacher
 from accounts.decorators import staff_required, management_required
-from django.shortcuts import get_object_or_404
 
 @management_required
 @login_required
@@ -37,14 +39,75 @@ def register_teacher(request):
         },
     )
 
+
+
+
 @staff_required
 @login_required
 def teacher_list(request):
-    teachers = Teacher.objects.filter(is_active=True)
-    return render(request, 'teachers/teacher_list.html', {'teachers': teachers})
 
-from django.shortcuts import get_object_or_404
-from students.models import SchoolClass
+    teachers = Teacher.objects.all()
+
+    search = request.GET.get("search")
+    filter_type = request.GET.get("filter")
+
+    if search:
+        teachers = teachers.filter(
+            Q(user__first_name__icontains=search) |
+            Q(user__last_name__icontains=search) |
+            Q(user__username__icontains=search) |
+            Q(staff_id__icontains=search) |
+            Q(phone_number__icontains=search)
+        )
+
+    if filter_type == "class":
+        teachers = teachers.filter(
+            is_class_teacher=True
+        )
+
+    elif filter_type == "assigned":
+        teachers = teachers.exclude(
+            assigned_class__isnull=True
+        )
+
+    elif filter_type == "inactive":
+        teachers = teachers.filter(
+            is_active=False
+        )
+
+    context = {
+
+        "teachers": teachers,
+
+        "search": search or "",
+
+        "filter": filter_type or "",
+
+        "total_teachers": Teacher.objects.count(),
+
+        "class_teacher_count":
+            Teacher.objects.filter(
+                is_class_teacher=True
+            ).count(),
+
+        "assigned_count":
+            Teacher.objects.exclude(
+                assigned_class__isnull=True
+            ).count(),
+
+        "inactive_count":
+            Teacher.objects.filter(
+                is_active=False
+            ).count(),
+    }
+
+    return render(
+        request,
+        "teachers/teacher_list.html",
+        context
+    )
+
+
 
 
 @management_required
@@ -79,6 +142,52 @@ def teacher_profile(request, teacher_id):
     return render(
         request,
         "teachers/teacher_profile.html",
+        {
+            "teacher": teacher,
+        },
+    )
+    
+@management_required
+@login_required
+def deactivate_teacher(request, teacher_id):
+
+    teacher = get_object_or_404(
+        Teacher,
+        id=teacher_id
+    )
+
+    teacher.is_active = False
+    teacher.save()
+
+    return redirect("teacher_list")
+
+
+@management_required
+@login_required
+def activate_teacher(request, teacher_id):
+
+    teacher = get_object_or_404(
+        Teacher,
+        id=teacher_id
+    )
+
+    teacher.is_active = True
+    teacher.save()
+
+    return redirect("teacher_list")
+
+@staff_required
+@login_required
+def print_teacher_profile(request, teacher_id):
+
+    teacher = get_object_or_404(
+        Teacher,
+        id=teacher_id
+    )
+
+    return render(
+        request,
+        "teachers/print_teacher_profile.html",
         {
             "teacher": teacher,
         },

@@ -7,49 +7,196 @@
 {% block content %}
 <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
 
-<div class="greeting-block">
-    <h1>{{ greeting }}, {{ request.user.get_full_name|default:request.user.username }}</h1>
-    <p class="term-info">
-        <strong>Current Session:</strong> {{ current_term.session|default:"Not set" }} &nbsp;|&nbsp;
-        <strong>Current Term:</strong> {{ current_term.get_name_display|default:"Not set" }}
-    </p>
+<div class="card shadow border-0 mb-4">
+
+    <div class="card-body school-header text-white d-flex justify-content-between align-items-center">
+
+        <div>
+
+            <h2 class="mb-2">
+                {{ greeting }}, {{ request.user.get_full_name|default:request.user.username }}
+            </h2>
+
+            <p class="mb-1">
+                Welcome to <strong>Great Goshenland Blossom School</strong>
+            </p>
+
+            <small>
+
+                Session:
+                {{ current_term.session|default:"Not Set" }}
+
+                |
+
+                Term:
+                {{ current_term.get_name_display|default:"Not Set" }}
+
+            </small>
+
+        </div>
+
+        <div>
+
+            <img src="{% static 'images/logo.png' %}"
+                 style="height:90px;">
+
+        </div>
+
+    </div>
+
 </div>
 
 {% if is_admin_or_principal %}
 <div class="stat-grid">
-    <div class="stat-card"><div class="stat-number">{{ student_count }}</div><div class="stat-label">Students</div></div>
-    <div class="stat-card"><div class="stat-number">{{ teacher_count }}</div><div class="stat-label">Teachers</div></div>
-    <div class="stat-card"><div class="stat-number">{{ subject_count }}</div><div class="stat-label">Subjects</div></div>
-    <div class="stat-card"><div class="stat-number">{{ class_count }}</div><div class="stat-label">Classes</div></div>
+
+    <div class="stat-card text-center">
+        <div class="display-5 mb-2">👨‍🎓</div>
+        <h2 class="fw-bold">{{ student_count }}</h2>
+        <p class="text-muted mb-0">Students</p>
+    </div>
+
+    <div class="stat-card text-center">
+        <div class="display-5 mb-2">👩‍🏫</div>
+        <h2 class="fw-bold">{{ teacher_count }}</h2>
+        <p class="text-muted mb-0">Teachers</p>
+    </div>
+
+    <div class="stat-card text-center">
+        <div class="display-5 mb-2">📚</div>
+        <h2 class="fw-bold">{{ subject_count }}</h2>
+        <p class="text-muted mb-0">Subjects</p>
+    </div>
+
+    <div class="stat-card text-center">
+        <div class="display-5 mb-2">🏫</div>
+        <h2 class="fw-bold">{{ class_count }}</h2>
+        <p class="text-muted mb-0">Classes</p>
+    </div>
+
 </div>
 
 <div class="workflow-grid">
+
     <div class="workflow-card">
-        <div class="count">{{ pending_submission_count }}</div>
-        <div class="label">Pending Teacher Submissions</div>
+
+        <div class="display-6 mb-2">📝</div>
+
+        <div class="count">
+            {{ pending_submission_count }}
+        </div>
+
+        <div class="label">
+            Pending Teacher Submissions
+        </div>
+
     </div>
+
     <div class="workflow-card">
-        <div class="count">{{ pending_review|length }}</div>
-        <div class="label">Pending Class Teacher Reviews</div>
+
+        <div class="display-6 mb-2">👨‍🏫</div>
+
+        <div class="count">
+            {{ pending_review|length }}
+        </div>
+
+        <div class="label">
+            Pending Class Teacher Reviews
+        </div>
+
     </div>
+
     <div class="workflow-card">
-        <div class="count">{{ pending_approval|length }}</div>
-        <div class="label">Pending Principal Approval</div>
+
+        <div class="display-6 mb-2">✅</div>
+
+        <div class="count">
+            {{ pending_approval|length }}
+        </div>
+
+        <div class="label">
+            Pending Principal Approval
+        </div>
+
     </div>
+
     <div class="workflow-card published">
-        <div class="count">{{ published_count }}</div>
-        <div class="label">Published Results</div>
+
+        <div class="display-6 mb-2">🎉</div>
+
+        <div class="count">
+            {{ published_count }}
+        </div>
+
+        <div class="label">
+            Published Results
+        </div>
+
     </div>
+
 </div>
 
 <div class="section-card">
-    <h3>Quick Actions</h3>
-    <div class="quick-actions">
-        <a href="{% url 'register_student' %}">+ Register Student</a>
-        <a href="{% url 'register_teacher' %}">+ Register Teacher</a>
-        <a href="{% url 'add_allocation' %}">+ Allocate Subjects</a>
-        <a href="{% url 'students_owing' %}">View Billing</a>
+
+    <h3 class="mb-4">
+        Quick Actions
+    </h3>
+
+    <div class="row g-3">
+
+        <div class="col-md-3">
+
+            <a href="{% url 'register_student' %}"
+               class="btn btn-success w-100 py-3">
+
+                👨‍🎓<br>
+
+                Register Student
+
+            </a>
+
+        </div>
+
+        <div class="col-md-3">
+
+            <a href="{% url 'register_teacher' %}"
+               class="btn btn-success w-100 py-3">
+
+                👩‍🏫<br>
+
+                Register Teacher
+
+            </a>
+
+        </div>
+
+        <div class="col-md-3">
+
+            <a href="{% url 'add_allocation' %}"
+               class="btn btn-success w-100 py-3">
+
+                📚<br>
+
+                Allocate Subjects
+
+            </a>
+
+        </div>
+
+        <div class="col-md-3">
+
+            <a href="{% url 'students_owing' %}"
+               class="btn btn-success w-100 py-3">
+
+                💰<br>
+
+                Billing
+
+            </a>
+
+        </div>
+
     </div>
+
 </div>
 
 {% if pending_approval %}

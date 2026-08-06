@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+    <title>Teacher Profile</title>
+
+    <style>
+
+        body{
+            font-family:Arial,sans-serif;
+            margin:40px;
+        }
+
+        h2{
+            text-align:center;
+            margin-bottom:5px;
+        }
+
+        h4{
+            text-align:center;
+            margin-top:0;
+            color:green;
+        }
+
+        table{
+            width:100%;
+            border-collapse:collapse;
+            margin-top:30px;
+        }
+
+        td{
+            border:1px solid #ccc;
+            padding:10px;
+        }
+
+        .label{
+            font-weight:bold;
+            width:30%;
+            background:#f4f4f4;
+        }
+
+        .photo{
+            text-align:center;
+            margin-top:20px;
+        }
+
+        img{
+            width:140px;
+            height:160px;
+            object-fit:cover;
+            border:1px solid #ccc;
+        }
+
+    </style>
+
+</head>
+
+<body onload="window.print()">
+
+<h2>Great Goshenland Blossom School</h2>
+
+<h4>Teacher Profile</h4>
+
+<div class="photo">
+
+    {% if teacher.passport %}
+
+        <img src="{{ teacher.passport.url }}">
+
+    {% endif %}
+
+</div>
+
+<table>
+
+<tr>
+
+    <td class="label">
+        Staff ID
+    </td>
+
+    <td>
+        {{ teacher.staff_id }}
+    </td>
+
+</tr>
+
+<tr>
+
+    <td class="label">
+        Full Name
+    </td>
+
+    <td>
+        {{ teacher.user.get_full_name }}
+    </td>
+
+</tr>
+
+<tr>
+
+    <td class="label">
+        Phone Number
+    </td>
+
+    <td>
+        {{ teacher.phone_number }}
+    </td>
+
+</tr>
+
+<tr>
+
+    <td class="label">
+        Qualification
+    </td>
+
+    <td>
+        {{ teacher.qualification }}
+    </td>
+
+</tr>
+
+<tr>
+
+    <td class="label">
+        Years of Experience
+    </td>
+
+    <td>
+        {{ teacher.years_of_experience }}
+    </td>
+
+</tr>
+
+<tr>
+
+    <td class="label">
+        Employment Date
+    </td>
+
+    <td>
+        {{ teacher.employment_date }}
+    </td>
+
+</tr>
+
+<tr>
+
+    <td class="label">
+        Class Teacher
+    </td>
+
+    <td>
+        {{ teacher.is_class_teacher|yesno:"Yes,No" }}
+    </td>
+
+</tr>
+
+<tr>
+
+    <td class="label">
+        Assigned Class
+    </td>
+
+    <td>
+        {{ teacher.assigned_class|default:"-" }}
+    </td>
+
+</tr>
+
+</table>
+
+</body>
+
+</html>
