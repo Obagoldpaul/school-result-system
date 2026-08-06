@@ -32,11 +32,22 @@ def billing_dashboard(request):
     total_opening_balances = OpeningBalance.objects.count()
 
     total_payments = Payment.objects.count()
+    
+    recent_payments = Payment.objects.select_related(
+        "student",
+        "student__user",
+        "term",
+        "recorded_by"
+    ).order_by(
+    "-date_paid"
+    )[:5]
 
     total_collected = Payment.objects.aggregate(
         total=Sum("amount")
     )["total"] or 0
 
+    expected_revenue = 0
+    collection_rate = 0
     students_owing = 0
     outstanding = 0
 
@@ -58,6 +69,14 @@ def billing_dashboard(request):
                 students_owing += 1
 
                 outstanding += balance
+                
+                expected_revenue = total_collected + outstanding
+
+                if expected_revenue > 0:
+
+                    collection_rate = (
+                        total_collected / expected_revenue
+                    ) * 100
 
     context = {
 
@@ -76,6 +95,12 @@ def billing_dashboard(request):
         "students_owing": students_owing,
 
         "outstanding": outstanding,
+        
+        "expected_revenue": expected_revenue,
+
+        "collection_rate": round(collection_rate, 2),
+        
+        "recent_payments": recent_payments,
 
     }
 
