@@ -1,0 +1,90 @@
+<div class="bottom-row">
+
+    <!-- Performance Summary -->
+    <div>
+        <table>
+            <tr class="summary-table">
+                <td>OVERALL PERFORMANCE (This Term)</td>
+                <td>{{ total }}</td>
+            </tr>
+
+            <tr class="summary-table">
+                <td>THIS TERM %</td>
+                <td>{{ percentage }}%</td>
+            </tr>
+
+            <tr class="summary-table">
+                <td>CUMULATIVE %</td>
+                <td>{{ overall_percentage }}%</td>
+            </tr>
+
+            <tr class="summary-table">
+                <td>MARKS OBTAINABLE</td>
+                <td>{{ marks_obtainable }}</td>
+            </tr>
+
+            {% if not request.user.student_profile %}
+            <tr class="summary-table">
+                <td>POSITION IN CLASS</td>
+                <td>{{ position }}</td>
+            </tr>
+            {% endif %}
+        </table>
+    </div>
+
+    <!-- Social Habits -->
+    <div>
+        <table class="habits-table">
+            <tr>
+                <th>Social Habits</th>
+                <th>A</th>
+                <th>B</th>
+                <th>C</th>
+                <th>D</th>
+                <th>E</th>
+                <th>F</th>
+            </tr>
+
+            <tr>
+                <td>Responsibility</td>
+                <td>{% if extra.responsibility == 'A' %}&#10003;{% endif %}</td>
+                <td>{% if extra.responsibility == 'B' %}&#10003;{% endif %}</td>
+                <td>{% if extra.responsibility == 'C' %}&#10003;{% endif %}</td>
+                <td>{% if extra.responsibility == 'D' %}&#10003;{% endif %}</td>
+                <td>{% if extra.responsibility == 'E' %}&#10003;{% endif %}</td>
+                <td>{% if extra.responsibility == 'F' %}&#10003;{% endif %}</td>
+            </tr>
+
+            <tr>
+                <td>Leadership</td>
+                <td>{% if extra.leadership == 'A' %}&#10003;{% endif %}</td>
+                <td>{% if extra.leadership == 'B' %}&#10003;{% endif %}</td>
+                <td>{% if extra.leadership == 'C' %}&#10003;{% endif %}</td>
+                <td>{% if extra.leadership == 'D' %}&#10003;{% endif %}</td>
+                <td>{% if extra.leadership == 'E' %}&#10003;{% endif %}</td>
+                <td>{% if extra.leadership == 'F' %}&#10003;{% endif %}</td>
+            </tr>
+
+            <tr>
+                <td>Hardworking</td>
+                <td>{% if extra.hardworking == 'A' %}&#10003;{% endif %}</td>
+                <td>{% if extra.hardworking == 'B' %}&#10003;{% endif %}</td>
+                <td>{% if extra.hardworking == 'C' %}&#10003;{% endif %}</td>
+                <td>{% if extra.hardworking == 'D' %}&#10003;{% endif %}</td>
+                <td>{% if extra.hardworking == 'E' %}&#10003;{% endif %}</td>
+                <td>{% if extra.hardworking == 'F' %}&#10003;{% endif %}</td>
+            </tr>
+
+            <tr>
+                <td>Neatness</td>
+                <td>{% if extra.neatness == 'A' %}&#10003;{% endif %}</td>
+                <td>{% if extra.neatness == 'B' %}&#10003;{% endif %}</td>
+                <td>{% if extra.neatness == 'C' %}&#10003;{% endif %}</td>
+                <td>{% if extra.neatness == 'D' %}&#10003;{% endif %}</td>
+                <td>{% if extra.neatness == 'E' %}&#10003;{% endif %}</td>
+                <td>{% if extra.neatness == 'F' %}&#10003;{% endif %}</td>
+            </tr>
+        </table>
+    </div>
+
+</div>

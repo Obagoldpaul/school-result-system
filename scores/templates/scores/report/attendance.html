@@ -1,0 +1,51 @@
+<table style="margin-top:8px; width:100%;">
+
+    <tr>
+
+        <td><strong>Days School Opened</strong></td>
+
+        <td>{{ days_school_opened|default:"-" }}</td>
+
+        <td><strong>Days Present</strong></td>
+
+        <td>{{ days_present|default:"-" }}</td>
+
+    </tr>
+
+    <tr>
+
+        <td><strong>Days Absent</strong></td>
+
+        <td>
+
+            {% if days_school_opened and days_present %}
+
+            {{ days_absent }}
+
+            {% else %}
+
+            -
+
+            {% endif %}
+
+        </td>
+
+        <td><strong>Attendance %</strong></td>
+
+        <td>
+
+            {% if days_school_opened %}
+
+            {% widthratio days_present days_school_opened 100 %}%
+
+            {% else %}
+
+            -
+
+            {% endif %}
+
+        </td>
+
+    </tr>
+
+</table>

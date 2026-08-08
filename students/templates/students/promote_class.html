@@ -1,27 +1,99 @@
 {% extends 'base.html' %}
-{% block title %}Promote Class{% endblock %}
+
+{% block title %}
+Promote Class
+{% endblock %}
+
 {% block content %}
+
 <h1>Promote a Class</h1>
+
 <p>This moves every active student from one class to another.</p>
+
+
 <form method="POST">
+
     {% csrf_token %}
+
+
+    <label>Action:</label>
+
+    <select name="action" class="form-select">
+
+        <option value="promote">
+            Promote
+        </option>
+
+        <option value="graduate">
+            Graduate
+        </option>
+
+    </select>
+
+
+    <br><br>
+
+
     <label>From Class:</label>
-    <select name="from_class" required>
-        <option value="">-- Select --</option>
+
+    <select name="from_class" class="form-select" required>
+
+        <option value="">
+            -- Select Class --
+        </option>
+
         {% for c in classes %}
-        <option value="{{ c.id }}">{{ c.name }}</option>
+
+        <option value="{{ c.id }}">
+            {{ c.name }}
+        </option>
+
         {% endfor %}
+
     </select>
+
+
     <br><br>
-    <label>To Class:</label>
-    <select name="to_class" required>
-        <option value="">-- Select --</option>
+
+
+    <label>To Class (Promotion only):</label>
+
+    <select name="to_class" class="form-select">
+
+        <option value="">
+            -- Select Class --
+        </option>
+
         {% for c in classes %}
-        <option value="{{ c.id }}">{{ c.name }}</option>
+
+        <option value="{{ c.id }}">
+            {{ c.name }}
+        </option>
+
         {% endfor %}
+
     </select>
+
+
     <br><br>
-    <button type="submit" onclick="return confirm('This will move every active student from the selected class to the target class. Continue?')">Promote Class</button>
+
+
+    <button type="submit"
+            onclick="return confirm('Continue with this action?')">
+
+        Continue
+
+    </button>
+
+
 </form>
-<p><a href="{% url 'student_list' %}">Back to student list</a></p>
+
+
+<p>
+    <a href="{% url 'student_list' %}">
+        Back to student list
+    </a>
+</p>
+
+
 {% endblock %}

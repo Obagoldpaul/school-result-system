@@ -50,6 +50,8 @@ INSTALLED_APPS = [
     'attendance',
     'activitylog',
     'announcements',
+    'maintenance',
+    'core',
 ]
 
 MIDDLEWARE = [
@@ -70,13 +72,16 @@ TEMPLATES = [
         'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
-            'context_processors': [
-    'django.template.context_processors.request',
-    'django.contrib.auth.context_processors.auth',
-    'django.contrib.messages.context_processors.messages',
-    'accounts.context_processors.user_roles',
-    'accounts.context_processors.announcements_preview',
-],
+        'context_processors': [
+            'django.template.context_processors.request',
+            'django.contrib.auth.context_processors.auth',
+            'django.contrib.messages.context_processors.messages',
+            
+            'accounts.context_processors.user_roles',
+            'accounts.context_processors.announcements_preview',
+            
+            'core.context_processors.school_settings',
+        ],
         },
     },
 ]

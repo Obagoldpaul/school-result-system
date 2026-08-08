@@ -1,10 +1,88 @@
 {% extends 'base.html' %}
-{% block title %}Login{% endblock %}
+
+{% load static %}
+
+{% block title %}
+Login
+{% endblock %}
+
+
 {% block content %}
-<h1>Login</h1>
-<form method="POST">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">Log In</button>
-</form>
+
+<div class="container mt-5">
+
+    <div class="row justify-content-center">
+
+        <div class="col-md-5">
+
+            <div class="card shadow">
+
+                <div class="card-header school-header text-center">
+
+                    {% if school_settings.school_logo %}
+
+                    <img src="{{ school_settings.school_logo.url }}"
+                         alt="School Logo"
+                         style="height:80px;">
+
+                    {% endif %}
+
+
+                    <h3 class="mt-2">
+                        {{ school_settings.school_name|default:"School Management System" }}
+                    </h3>
+
+                </div>
+
+
+                <div class="card-body">
+
+
+                    <h5 class="text-center mb-4">
+                        Login
+                    </h5>
+
+
+                    <form method="POST">
+
+                        {% csrf_token %}
+
+
+                        {{ form.as_p }}
+
+
+                        <button type="submit"
+                                class="btn btn-success w-100">
+
+                            Log In
+
+                        </button>
+
+
+                    </form>
+
+
+                </div>
+
+
+                <div class="card-footer text-center text-muted">
+
+                    <small>
+                        Powered by Paul Media
+                        <br>
+                        © 2026 Paul Media. All Rights Reserved.
+                    </small>
+
+                </div>
+
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
 {% endblock %}

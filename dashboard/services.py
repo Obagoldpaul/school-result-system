@@ -2,6 +2,10 @@ from students.models import Student, SchoolClass
 from teachers.models import Teacher
 from subjects.models import Subject
 from allocations.models import SubjectAllocation
+from accounts.permissions import can_manage_billing
+
+from billing.models import Payment, get_cumulative_balance
+from django.db.models import Sum
 
 from accounts.utils import (
     get_teacher,
@@ -35,12 +39,90 @@ def build_dashboard(user):
         "class_count": SchoolClass.objects.count(),
         "allocation_count": SubjectAllocation.objects.count(),
         "current_term": get_current_term(),
-        "is_admin_or_principal": is_management_user(user),
+        "is_management": is_management_user(user),
+        "can_manage_billing": can_manage_billing(user),
     }
 
     teacher = get_teacher(user)
     student = get_student(user)
 
+        # ----------------------------
+        # Bursar Dashboard
+        # ----------------------------
+
+    if can_manage_billing(user):
+
+        billing_term = context["current_term"]
+
+        billing_context = {
+            "billing_total_collected": 0,
+            "billing_students_owing": 0,
+            "billing_outstanding": 0,
+            "billing_expected_revenue": 0,
+            "billing_collection_rate": 0,
+            "billing_recent_payments": [],
+        }
+
+        if billing_term:
+
+            students = Student.objects.filter(
+                is_active=True
+            )
+
+            total_collected = Payment.objects.filter(
+                term=billing_term
+            ).aggregate(
+                total=Sum("amount")
+            )["total"] or 0
+
+            students_owing = 0
+            outstanding = 0
+
+            for s in students:
+
+                fee_amount, total_paid, balance = get_cumulative_balance(
+                    s,
+                    billing_term
+                )
+
+                if balance > 0:
+                    students_owing += 1
+                    outstanding += balance
+
+            expected_revenue = total_collected + outstanding
+
+            collection_rate = 0
+
+            if expected_revenue > 0:
+                collection_rate = (
+                    total_collected / expected_revenue
+                ) * 100
+
+            recent_payments = Payment.objects.select_related(
+                "student",
+                "student__user",
+                "term",
+            ).filter(
+                term=billing_term
+            ).order_by(
+                "-date_paid",
+                "-id"
+            )[:5]
+
+            billing_context.update({
+                "billing_total_collected": total_collected,
+                "billing_students_owing": students_owing,
+                "billing_outstanding": outstanding,
+                "billing_expected_revenue": expected_revenue,
+                "billing_collection_rate": round(
+                    collection_rate,
+                    2
+                ),
+                "billing_recent_payments": recent_payments,
+            })
+
+        context.update(billing_context)
+    
     if teacher:
         allocations = SubjectAllocation.objects.filter(teacher=teacher)
 
@@ -91,7 +173,7 @@ def build_dashboard(user):
                         pending_remarks += 1
                 context["pending_remarks_count"] = pending_remarks
 
-    if context["is_admin_or_principal"]:
+    if context["is_management"]:
 
         context.update({
 
@@ -131,7 +213,7 @@ def build_dashboard(user):
 
         current_term = context["current_term"]
         if current_term:
-            from billing.models import get_cumulative_balance
+            
             fee_amount, total_paid, balance = get_cumulative_balance(student, current_term)
             context["my_fee_amount"] = fee_amount
             context["my_total_paid"] = total_paid

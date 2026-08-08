@@ -5,7 +5,13 @@
 {% block title %}Dashboard{% endblock %}
 
 {% block content %}
+
 <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+
+
+<!-- =========================================================
+     SCHOOL HEADER
+========================================================= -->
 
 <div class="card shadow border-0 mb-4">
 
@@ -18,7 +24,7 @@
             </h2>
 
             <p class="mb-1">
-                Welcome to <strong>Great Goshenland Blossom School</strong>
+                Welcome to <strong>{{ school_settings.school_name }}</strong>
             </p>
 
             <small>
@@ -35,10 +41,18 @@
 
         </div>
 
+
         <div>
 
-            <img src="{% static 'images/logo.png' %}"
-                 style="height:90px;">
+            {% if school_settings.school_logo %}
+
+            <img
+                src="{{ school_settings.school_logo.url }}"
+                style="height:90px;"
+                alt="School Logo"
+            >
+
+            {% endif %}
 
         </div>
 
@@ -46,40 +60,370 @@
 
 </div>
 
-{% if is_admin_or_principal %}
-<div class="stat-grid">
 
-    <div class="stat-card text-center">
-        <div class="display-5 mb-2">👨‍🎓</div>
-        <h2 class="fw-bold">{{ student_count }}</h2>
-        <p class="text-muted mb-0">Students</p>
-    </div>
+<!-- =========================================================
+     BURSAR DASHBOARD
+     Visible to Bursar only
+========================================================= -->
 
-    <div class="stat-card text-center">
-        <div class="display-5 mb-2">👩‍🏫</div>
-        <h2 class="fw-bold">{{ teacher_count }}</h2>
-        <p class="text-muted mb-0">Teachers</p>
-    </div>
+{% if can_manage_billing and not is_management %}
 
-    <div class="stat-card text-center">
-        <div class="display-5 mb-2">📚</div>
-        <h2 class="fw-bold">{{ subject_count }}</h2>
-        <p class="text-muted mb-0">Subjects</p>
-    </div>
+<div class="section-card bursar-dashboard">
 
-    <div class="stat-card text-center">
-        <div class="display-5 mb-2">🏫</div>
-        <h2 class="fw-bold">{{ class_count }}</h2>
-        <p class="text-muted mb-0">Classes</p>
+    <h3 class="bursar-title">
+
+        💰 Billing Overview
+
+        <span>
+            — {{ current_term }}
+        </span>
+
+    </h3>
+
+
+    <div class="billing-stat-grid">
+
+
+        <!-- Total Collected -->
+
+        <div class="billing-stat-card">
+
+            <div class="billing-icon">
+                💵
+            </div>
+
+            <div class="billing-value">
+                ₦{{ billing_total_collected|intcomma }}
+            </div>
+
+            <div class="billing-label">
+                Total Collected
+            </div>
+
+        </div>
+
+
+        <!-- Outstanding -->
+
+        <div class="billing-stat-card">
+
+            <div class="billing-icon">
+                ⚠️
+            </div>
+
+            <div class="billing-value">
+                ₦{{ billing_outstanding|intcomma }}
+            </div>
+
+            <div class="billing-label">
+                Outstanding
+            </div>
+
+        </div>
+
+
+        <!-- Students Owing -->
+
+        <div class="billing-stat-card">
+
+            <div class="billing-icon">
+                👨‍🎓
+            </div>
+
+            <div class="billing-value">
+                {{ billing_students_owing }}
+            </div>
+
+            <div class="billing-label">
+                Students Owing
+            </div>
+
+        </div>
+
+
+        <!-- Collection Rate -->
+
+        <div class="billing-stat-card">
+
+            <div class="billing-icon">
+                📊
+            </div>
+
+            <div class="billing-value">
+                {{ billing_collection_rate }}%
+            </div>
+
+            <div class="billing-label">
+                Collection Rate
+            </div>
+
+        </div>
+
+
     </div>
 
 </div>
 
+
+<!-- =========================================================
+     QUICK BILLING ACTIONS
+========================================================= -->
+
+<div class="section-card">
+
+    <h3 class="mb-4">
+        Quick Billing Actions
+    </h3>
+
+
+    <div class="row g-3">
+
+
+        <div class="col-md-3">
+
+            <a
+                href="{% url 'billing_dashboard' %}"
+                class="btn btn-success w-100 py-3"
+            >
+
+                💰<br>
+
+                Billing Dashboard
+
+            </a>
+
+        </div>
+
+
+        <div class="col-md-3">
+
+            <a
+                href="{% url 'students_owing' %}"
+                class="btn btn-warning w-100 py-3"
+            >
+
+                ⚠️<br>
+
+                Students Owing
+
+            </a>
+
+        </div>
+
+
+        <div class="col-md-3">
+
+            <a
+                href="{% url 'fee_structure_list' %}"
+                class="btn btn-success w-100 py-3"
+            >
+
+                📋<br>
+
+                Fee Structures
+
+            </a>
+
+        </div>
+
+
+        <div class="col-md-3">
+
+            <a
+                href="{% url 'payment_list' %}"
+                class="btn btn-success w-100 py-3"
+            >
+
+                🧾<br>
+
+                Payment Records
+
+            </a>
+
+        </div>
+
+
+    </div>
+
+</div>
+
+
+<!-- =========================================================
+     RECENT PAYMENTS
+========================================================= -->
+
+{% if billing_recent_payments %}
+
+<div class="section-card">
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+
+        <h3 class="mb-0">
+            Recent Payments
+        </h3>
+
+
+        <a href="{% url 'payment_list' %}">
+            View All
+        </a>
+
+    </div>
+
+
+    <div class="table-responsive">
+
+        <table>
+
+            <tr>
+
+                <th>
+                    Student
+                </th>
+
+                <th>
+                    Amount
+                </th>
+
+                <th>
+                    Term
+                </th>
+
+                <th>
+                    Date
+                </th>
+
+            </tr>
+
+
+            {% for payment in billing_recent_payments %}
+
+            <tr>
+
+                <td>
+                    {{ payment.student.user.get_full_name }}
+                </td>
+
+                <td>
+                    ₦{{ payment.amount|intcomma }}
+                </td>
+
+                <td>
+                    {{ payment.term }}
+                </td>
+
+                <td>
+                    {{ payment.date_paid }}
+                </td>
+
+            </tr>
+
+            {% endfor %}
+
+
+        </table>
+
+    </div>
+
+</div>
+
+{% endif %}
+
+{% endif %}
+
+
+<!-- =========================================================
+     MANAGEMENT DASHBOARD
+========================================================= -->
+
+{% if is_management %}
+
+
+<!-- Management Statistics -->
+
+<div class="stat-grid">
+
+
+    <div class="stat-card text-center">
+
+        <div class="display-5 mb-2">
+            👨‍🎓
+        </div>
+
+        <h2 class="fw-bold">
+            {{ student_count }}
+        </h2>
+
+        <p class="text-muted mb-0">
+            Students
+        </p>
+
+    </div>
+
+
+    <div class="stat-card text-center">
+
+        <div class="display-5 mb-2">
+            👩‍🏫
+        </div>
+
+        <h2 class="fw-bold">
+            {{ teacher_count }}
+        </h2>
+
+        <p class="text-muted mb-0">
+            Teachers
+        </p>
+
+    </div>
+
+
+    <div class="stat-card text-center">
+
+        <div class="display-5 mb-2">
+            📚
+        </div>
+
+        <h2 class="fw-bold">
+            {{ subject_count }}
+        </h2>
+
+        <p class="text-muted mb-0">
+            Subjects
+        </p>
+
+    </div>
+
+
+    <div class="stat-card text-center">
+
+        <div class="display-5 mb-2">
+            🏫
+        </div>
+
+        <h2 class="fw-bold">
+            {{ class_count }}
+        </h2>
+
+        <p class="text-muted mb-0">
+            Classes
+        </p>
+
+    </div>
+
+
+</div>
+
+
+<!-- Management Workflow -->
+
 <div class="workflow-grid">
+
 
     <div class="workflow-card">
 
-        <div class="display-6 mb-2">📝</div>
+        <div class="display-6 mb-2">
+            📝
+        </div>
 
         <div class="count">
             {{ pending_submission_count }}
@@ -91,9 +435,12 @@
 
     </div>
 
+
     <div class="workflow-card">
 
-        <div class="display-6 mb-2">👨‍🏫</div>
+        <div class="display-6 mb-2">
+            👨‍🏫
+        </div>
 
         <div class="count">
             {{ pending_review|length }}
@@ -105,9 +452,12 @@
 
     </div>
 
+
     <div class="workflow-card">
 
-        <div class="display-6 mb-2">✅</div>
+        <div class="display-6 mb-2">
+            ✅
+        </div>
 
         <div class="count">
             {{ pending_approval|length }}
@@ -119,9 +469,12 @@
 
     </div>
 
+
     <div class="workflow-card published">
 
-        <div class="display-6 mb-2">🎉</div>
+        <div class="display-6 mb-2">
+            🎉
+        </div>
 
         <div class="count">
             {{ published_count }}
@@ -133,7 +486,11 @@
 
     </div>
 
+
 </div>
+
+
+<!-- Management Quick Actions -->
 
 <div class="section-card">
 
@@ -141,12 +498,16 @@
         Quick Actions
     </h3>
 
+
     <div class="row g-3">
+
 
         <div class="col-md-3">
 
-            <a href="{% url 'register_student' %}"
-               class="btn btn-success w-100 py-3">
+            <a
+                href="{% url 'register_student' %}"
+                class="btn btn-success w-100 py-3"
+            >
 
                 👨‍🎓<br>
 
@@ -156,10 +517,13 @@
 
         </div>
 
+
         <div class="col-md-3">
 
-            <a href="{% url 'register_teacher' %}"
-               class="btn btn-success w-100 py-3">
+            <a
+                href="{% url 'register_teacher' %}"
+                class="btn btn-success w-100 py-3"
+            >
 
                 👩‍🏫<br>
 
@@ -169,10 +533,13 @@
 
         </div>
 
+
         <div class="col-md-3">
 
-            <a href="{% url 'add_allocation' %}"
-               class="btn btn-success w-100 py-3">
+            <a
+                href="{% url 'add_allocation' %}"
+                class="btn btn-success w-100 py-3"
+            >
 
                 📚<br>
 
@@ -182,10 +549,13 @@
 
         </div>
 
+
         <div class="col-md-3">
 
-            <a href="{% url 'students_owing' %}"
-               class="btn btn-success w-100 py-3">
+            <a
+                href="{% url 'students_owing' %}"
+                class="btn btn-success w-100 py-3"
+            >
 
                 💰<br>
 
@@ -195,163 +565,725 @@
 
         </div>
 
+
     </div>
 
 </div>
+
+
+<!-- Pending Approval -->
 
 {% if pending_approval %}
+
 <div class="section-card">
-    <h3>Awaiting Your Approval <span style="background:#d9822b;color:#fff;border-radius:10px;padding:2px 8px;font-size:12px;">{{ pending_approval|length }}</span></h3>
+
+    <h3>
+
+        Awaiting Your Approval
+
+        <span
+            style="
+                background:#d9822b;
+                color:#fff;
+                border-radius:10px;
+                padding:2px 8px;
+                font-size:12px;
+            "
+        >
+            {{ pending_approval|length }}
+        </span>
+
+    </h3>
+
+
     <table>
-        <tr><th>Subject</th><th>Class</th><th>Term</th><th>Action</th></tr>
-        {% for a in pending_approval %}
+
         <tr>
-            <td>{{ a.subject }}</td>
-            <td>{{ a.school_class }}</td>
-            <td>{{ a.term }}</td>
-            <td><a href="{% url 'approve_allocation' a.id %}" onclick="return confirm('Approve these results?')">Approve</a></td>
+
+            <th>
+                Subject
+            </th>
+
+            <th>
+                Class
+            </th>
+
+            <th>
+                Term
+            </th>
+
+            <th>
+                Action
+            </th>
+
         </tr>
+
+
+        {% for a in pending_approval %}
+
+        <tr>
+
+            <td>
+                {{ a.subject }}
+            </td>
+
+            <td>
+                {{ a.school_class }}
+            </td>
+
+            <td>
+                {{ a.term }}
+            </td>
+
+            <td>
+
+                <a
+                    href="{% url 'approve_allocation' a.id %}"
+                    onclick="return confirm('Approve these results?')"
+                >
+                    Approve
+                </a>
+
+            </td>
+
+        </tr>
+
         {% endfor %}
+
     </table>
+
 </div>
+
 {% endif %}
+
+
+<!-- Approved / Ready to Publish -->
 
 {% if pending_publish %}
+
 <div class="section-card">
-    <h3>Approved, Ready to Publish <span style="background:#d9822b;color:#fff;border-radius:10px;padding:2px 8px;font-size:12px;">{{ pending_publish|length }}</span></h3>
+
+    <h3>
+
+        Approved, Ready to Publish
+
+        <span
+            style="
+                background:#d9822b;
+                color:#fff;
+                border-radius:10px;
+                padding:2px 8px;
+                font-size:12px;
+            "
+        >
+            {{ pending_publish|length }}
+        </span>
+
+    </h3>
+
+
     <table>
-        <tr><th>Subject</th><th>Class</th><th>Term</th><th>Action</th></tr>
-        {% for a in pending_publish %}
+
         <tr>
-            <td>{{ a.subject }}</td>
-            <td>{{ a.school_class }}</td>
-            <td>{{ a.term }}</td>
-            <td><a href="{% url 'publish_allocation' a.id %}" onclick="return confirm('Publish these results? Students will be able to see them.')">Publish</a></td>
+
+            <th>
+                Subject
+            </th>
+
+            <th>
+                Class
+            </th>
+
+            <th>
+                Term
+            </th>
+
+            <th>
+                Action
+            </th>
+
         </tr>
+
+
+        {% for a in pending_publish %}
+
+        <tr>
+
+            <td>
+                {{ a.subject }}
+            </td>
+
+            <td>
+                {{ a.school_class }}
+            </td>
+
+            <td>
+                {{ a.term }}
+            </td>
+
+            <td>
+
+                <a
+                    href="{% url 'publish_allocation' a.id %}"
+                    onclick="return confirm('Publish these results? Students will be able to see them.')"
+                >
+                    Publish
+                </a>
+
+            </td>
+
+        </tr>
+
         {% endfor %}
+
     </table>
+
 </div>
+
 {% endif %}
+
+
+<!-- Recent Activities -->
 
 {% if recent_activities %}
+
 <div class="section-card">
-    <h3>Latest Activities</h3>
-    <ul style="list-style:none; padding:0; margin:0;">
+
+    <h3>
+        Latest Activities
+    </h3>
+
+
+    <ul
+        style="
+            list-style:none;
+            padding:0;
+            margin:0;
+        "
+    >
+
         {% for activity in recent_activities %}
-        <li style="padding:8px 0; border-bottom:1px solid #eee; font-size:13px;">
+
+        <li
+            style="
+                padding:8px 0;
+                border-bottom:1px solid #eee;
+                font-size:13px;
+            "
+        >
+
             {{ activity.description }}
-            <span style="color:#999; float:right;">{{ activity.created_at|timesince }} ago</span>
+
+            <span
+                style="
+                    color:#999;
+                    float:right;
+                "
+            >
+                {{ activity.created_at|timesince }} ago
+            </span>
+
         </li>
+
         {% endfor %}
+
     </ul>
+
 </div>
-{% endif %}
+
 {% endif %}
 
-{% if my_student_id %}
 {% endif %}
 
+
+<!-- =========================================================
+     STUDENT DASHBOARD
+========================================================= -->
+
 {% if my_student_id %}
+
+
 <div class="stat-grid">
-    <div class="stat-card"><div class="stat-number">{{ subjects_registered }}</div><div class="stat-label">Subjects Registered</div></div>
+
+
     <div class="stat-card">
-        <div class="stat-number" style="font-size:16px; color: {% if latest_result_published %}#1a5c1a{% else %}#d9822b{% endif %};">
-            {% if latest_result_published %}Published{% else %}Not Yet{% endif %}
+
+        <div class="stat-number">
+            {{ subjects_registered }}
         </div>
-        <div class="stat-label">Latest Result</div>
+
+        <div class="stat-label">
+            Subjects Registered
+        </div>
+
     </div>
+
+
+    <div class="stat-card">
+
+        <div
+            class="stat-number"
+            style="
+                font-size:16px;
+                color:
+                {% if latest_result_published %}
+                    #1a5c1a
+                {% else %}
+                    #d9822b
+                {% endif %};
+            "
+        >
+
+            {% if latest_result_published %}
+                Published
+            {% else %}
+                Not Yet
+            {% endif %}
+
+        </div>
+
+        <div class="stat-label">
+            Latest Result
+        </div>
+
+    </div>
+
+
 </div>
+
+
+<!-- Student Results -->
 
 <div class="section-card">
-    <h3>My Results</h3>
-    <a href="{% url 'select_report_term' my_student_id %}" style="border:1px solid #1a5c1a; color:#1a5c1a; padding:8px 14px; text-decoration:none; border-radius:4px; display:inline-block;">View My Report Card</a>
+
+    <h3>
+        My Results
+    </h3>
+
+
+    <a
+        href="{% url 'select_report_term' my_student_id %}"
+        style="
+            border:1px solid #1a5c1a;
+            color:#1a5c1a;
+            padding:8px 14px;
+            text-decoration:none;
+            border-radius:4px;
+            display:inline-block;
+        "
+    >
+        View My Report Card
+    </a>
+
 </div>
+
+
+<!-- Student Fees -->
 
 {% if my_fee_amount is not None %}
+
 <div class="section-card">
+
     <details>
-        <summary style="cursor:pointer; font-weight:600; color:#16401c; font-size:16px;">My Fees ({{ my_fee_term }}) — click to view</summary>
+
+        <summary
+            style="
+                cursor:pointer;
+                font-weight:600;
+                color:#16401c;
+                font-size:16px;
+            "
+        >
+
+            My Fees ({{ my_fee_term }}) — click to view
+
+        </summary>
+
+
         <div style="margin-top:12px;">
-            <p><strong>Amount Due:</strong> ₦{{ my_fee_amount|intcomma }}</p>
-            <p><strong>Total Paid:</strong> ₦{{ my_total_paid|intcomma }}</p>
-            <p><strong>Balance:</strong> <span style="color: {% if my_balance > 0 %}#b83232{% else %}#1a5c1a{% endif %}; font-weight: 600;">₦{{ my_balance|intcomma }}</span></p>
+
+            <p>
+                <strong>
+                    Amount Due:
+                </strong>
+
+                ₦{{ my_fee_amount|intcomma }}
+            </p>
+
+
+            <p>
+                <strong>
+                    Total Paid:
+                </strong>
+
+                ₦{{ my_total_paid|intcomma }}
+            </p>
+
+
+            <p>
+
+                <strong>
+                    Balance:
+                </strong>
+
+                <span
+                    style="
+                        color:
+                        {% if my_balance > 0 %}
+                            #b83232
+                        {% else %}
+                            #1a5c1a
+                        {% endif %};
+
+                        font-weight:600;
+                    "
+                >
+                    ₦{{ my_balance|intcomma }}
+                </span>
+
+            </p>
+
         </div>
+
     </details>
+
 </div>
-{% endif %}
+
 {% endif %}
 
-{% if my_allocations and not is_admin_or_principal %}
-<div class="stat-grid">
-    <div class="stat-card"><div class="stat-number">{{ my_draft_count }}</div><div class="stat-label">Draft</div></div>
-    <div class="stat-card"><div class="stat-number">{{ my_submitted_count }}</div><div class="stat-label">Submitted</div></div>
-    <div class="stat-card"><div class="stat-number">{{ my_approved_count }}</div><div class="stat-label">Approved</div></div>
-</div>
 {% endif %}
+
+
+<!-- =========================================================
+     TEACHER DASHBOARD
+========================================================= -->
+
+{% if my_allocations and not is_management %}
+
+
+<div class="stat-grid">
+
+
+    <div class="stat-card">
+
+        <div class="stat-number">
+            {{ my_draft_count }}
+        </div>
+
+        <div class="stat-label">
+            Draft
+        </div>
+
+    </div>
+
+
+    <div class="stat-card">
+
+        <div class="stat-number">
+            {{ my_submitted_count }}
+        </div>
+
+        <div class="stat-label">
+            Submitted
+        </div>
+
+    </div>
+
+
+    <div class="stat-card">
+
+        <div class="stat-number">
+            {{ my_approved_count }}
+        </div>
+
+        <div class="stat-label">
+            Approved
+        </div>
+
+    </div>
+
+
+</div>
+
+{% endif %}
+
+
+<!-- Teaching Assignments -->
 
 {% if my_allocations %}
+
 <div class="section-card">
-    <h3>My Teaching Assignments {% if my_draft_count > 0 %}<span style="background:#d9822b;color:#fff;border-radius:10px;padding:2px 8px;font-size:12px;margin-left:6px;">{{ my_draft_count }} awaiting submission</span>{% endif %}</h3>
+
+    <h3>
+
+        My Teaching Assignments
+
+        {% if my_draft_count > 0 %}
+
+        <span
+            style="
+                background:#d9822b;
+                color:#fff;
+                border-radius:10px;
+                padding:2px 8px;
+                font-size:12px;
+                margin-left:6px;
+            "
+        >
+            {{ my_draft_count }} awaiting submission
+        </span>
+
+        {% endif %}
+
+    </h3>
+
+
     <table>
-        <tr><th>Subject</th><th>Class</th><th>Term</th><th>Status</th><th>Action</th></tr>
-        {% for a in my_allocations %}
+
         <tr>
-            <td>{{ a.subject }}</td>
-            <td>{{ a.school_class }}</td>
-            <td>{{ a.term }}</td>
-            <td>{{ a.get_status_display }}</td>
-            <td><a href="{% url 'enter_scores' a.id %}">Enter Scores</a></td>
+
+            <th>
+                Subject
+            </th>
+
+            <th>
+                Class
+            </th>
+
+            <th>
+                Term
+            </th>
+
+            <th>
+                Status
+            </th>
+
+            <th>
+                Action
+            </th>
+
         </tr>
+
+
+        {% for a in my_allocations %}
+
+        <tr>
+
+            <td>
+                {{ a.subject }}
+            </td>
+
+            <td>
+                {{ a.school_class }}
+            </td>
+
+            <td>
+                {{ a.term }}
+            </td>
+
+            <td>
+                {{ a.get_status_display }}
+            </td>
+
+            <td>
+
+                <a href="{% url 'enter_scores' a.id %}">
+                    Enter Scores
+                </a>
+
+            </td>
+
+        </tr>
+
         {% endfor %}
+
     </table>
+
 </div>
+
 {% endif %}
+
+
+<!-- Class Teacher Dashboard -->
 
 {% if my_class_students %}
+
+
 <div class="workflow-grid">
+
+
     <div class="workflow-card">
-        <div class="count">{{ pending_review|length }}</div>
-        <div class="label">Pending Teacher Results</div>
+
+        <div class="count">
+            {{ pending_review|length }}
+        </div>
+
+        <div class="label">
+            Pending Teacher Results
+        </div>
+
     </div>
+
+
     <div class="workflow-card published">
-        <div class="count">{{ completed_review_count }}</div>
-        <div class="label">Completed</div>
+
+        <div class="count">
+            {{ completed_review_count }}
+        </div>
+
+        <div class="label">
+            Completed
+        </div>
+
     </div>
+
+
     <div class="workflow-card">
-        <div class="count">{{ pending_remarks_count }}</div>
-        <div class="label">Pending Remarks</div>
+
+        <div class="count">
+            {{ pending_remarks_count }}
+        </div>
+
+        <div class="label">
+            Pending Remarks
+        </div>
+
     </div>
+
+
 </div>
 
+
 <div class="section-card">
-    <h3>My Class Students ({{ my_class_students|length }})</h3>
+
+    <h3>
+        My Class Students ({{ my_class_students|length }})
+    </h3>
+
+
     <table>
-        <tr><th>Admission No.</th><th>Name</th><th>Action</th></tr>
+
+        <tr>
+
+            <th>
+                Admission No.
+            </th>
+
+            <th>
+                Name
+            </th>
+
+            <th>
+                Action
+            </th>
+
+        </tr>
+
+
         {% for s in my_class_students %}
+
         <tr>
-            <td>{{ s.admission_number }}</td>
-            <td>{{ s.user.get_full_name }}</td>
-            <td>{% if my_class_term %}<a href="{% url 'edit_report_extra' s.id my_class_term.id %}">Remarks/Attendance</a>{% endif %}</td>
+
+            <td>
+                {{ s.admission_number }}
+            </td>
+
+            <td>
+                {{ s.user.get_full_name }}
+            </td>
+
+            <td>
+
+                {% if my_class_term %}
+
+                <a
+                    href="{% url 'edit_report_extra' s.id my_class_term.id %}"
+                >
+                    Remarks/Attendance
+                </a>
+
+                {% endif %}
+
+            </td>
+
         </tr>
+
         {% endfor %}
+
     </table>
+
 </div>
+
 {% endif %}
 
-{% if pending_review and not is_admin_or_principal %}
+
+<!-- Teacher Review -->
+
+{% if pending_review and not is_management %}
+
 <div class="section-card">
-    <h3>Awaiting Your Review</h3>
+
+    <h3>
+        Awaiting Your Review
+    </h3>
+
+
     <table>
-        <tr><th>Subject</th><th>Class</th><th>Term</th><th>Action</th></tr>
-        {% for a in pending_review %}
+
         <tr>
-            <td>{{ a.subject }}</td>
-            <td>{{ a.school_class }}</td>
-            <td>{{ a.term }}</td>
-            <td><a href="{% url 'review_allocation' a.id %}">Review</a></td>
+
+            <th>
+                Subject
+            </th>
+
+            <th>
+                Class
+            </th>
+
+            <th>
+                Term
+            </th>
+
+            <th>
+                Action
+            </th>
+
         </tr>
+
+
+        {% for a in pending_review %}
+
+        <tr>
+
+            <td>
+                {{ a.subject }}
+            </td>
+
+            <td>
+                {{ a.school_class }}
+            </td>
+
+            <td>
+                {{ a.term }}
+            </td>
+
+            <td>
+
+                <a href="{% url 'review_allocation' a.id %}">
+                    Review
+                </a>
+
+            </td>
+
+        </tr>
+
         {% endfor %}
+
     </table>
+
 </div>
+
 {% endif %}
+
+
 {% endblock %}

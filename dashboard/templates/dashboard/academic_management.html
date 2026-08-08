@@ -1,0 +1,470 @@
+{% extends "base.html" %}
+
+{% block title %}Academic Session & Terms{% endblock %}
+
+{% block content %}
+
+<div class="container-fluid">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1>Academic Session & Terms</h1>
+            <p class="text-muted mb-0">
+                Manage academic sessions and terms.
+            </p>
+        </div>
+
+        <a href="{% url 'dashboard_home' %}" class="btn btn-secondary">
+            Back to Dashboard
+        </a>
+    </div>
+
+
+    <!-- Current Session -->
+
+    <div class="card shadow-sm mb-4">
+
+        <div class="card-body">
+
+            <h5 class="card-title">
+                Current Academic Session
+            </h5>
+
+            {% if current_session %}
+
+            <h3 class="mb-1">
+                {{ current_session.name }}
+            </h3>
+
+            <span class="badge bg-success">
+                Current Session
+            </span>
+
+            {% else %}
+
+            <div class="alert alert-warning mb-0">
+                No academic session is currently active.
+            </div>
+
+            {% endif %}
+
+        </div>
+
+    </div>
+
+
+    <!-- Sessions -->
+
+    <div class="card shadow-sm mb-4">
+
+        <div class="card-body">
+
+            <div class="d-flex justify-content-between align-items-center mb-3">
+
+                <h5 class="card-title mb-0">
+                    Academic Sessions
+                </h5>
+
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createSessionModal">
+                    + Create Session
+                </button>
+
+            </div>
+
+            <div class="table-responsive">
+
+                <table class="table table-bordered align-middle">
+
+                    <thead>
+                        <tr>
+                            <th>Session</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                        {% for session in sessions %}
+
+                        <tr>
+
+                            <td>
+                                <strong>{{ session.name }}</strong>
+                            </td>
+
+                            <td>
+
+                                {% if session.is_current %}
+
+                                <span class="badge bg-success">
+                                    Current
+                                </span>
+
+                                {% else %}
+
+                                <span class="badge bg-secondary">
+                                    Inactive
+                                </span>
+
+                                {% endif %}
+
+                            </td>
+
+                            <td>
+
+                                {% if session.is_current %}
+
+                                <span class="text-success fw-bold">
+                                    Current
+                                </span>
+
+                                {% else %}
+
+                                <a href="{% url 'academic_management' %}?session={{ session.id }}"
+                                    class="btn btn-sm btn-outline-secondary">
+                                    Manage
+                                </a>
+
+                                {% endif %}
+
+                            </td>
+
+                        </tr>
+
+                        {% empty %}
+
+                        <tr>
+                            <td colspan="3" class="text-center">
+                                No academic sessions created yet.
+                            </td>
+                        </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- Terms -->
+
+    <div class="card shadow-sm">
+
+        <div class="card-body">
+
+            <div class="d-flex justify-content-between align-items-center mb-3">
+
+                <h5 class="card-title mb-0">
+                    Terms
+
+                    {% if selected_session %}
+                    — {{ selected_session.name }}
+                    {% endif %}
+                </h5>
+
+                {% if selected_session %}
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createTermModal">
+                    + Create Term
+                </button>
+                {% endif %}
+
+            </div>
+
+            {% if selected_session %}
+
+            <div class="table-responsive">
+
+                <table class="table table-bordered align-middle">
+
+                    <thead>
+
+                        <tr>
+                            <th>Term</th>
+                            <th>Status</th>
+                            <th>Published</th>
+                            <th>Start Date</th>
+                            <th>End Date</th>
+                            <th>Action</th>
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                        {% for term in terms %}
+
+                        <tr>
+
+                            <td>
+                                {{ term.get_name_display }}
+                            </td>
+
+                            <td>
+
+                                {% if term.is_current %}
+
+                                <span class="badge bg-success">
+                                    Current
+                                </span>
+
+                                {% else %}
+
+                                <span class="badge bg-secondary">
+                                    Inactive
+                                </span>
+
+                                {% endif %}
+
+                            </td>
+
+                            <td>
+
+                                {% if term.is_published %}
+
+                                <span class="badge bg-success">
+                                    Published
+                                </span>
+
+                                {% else %}
+
+                                <span class="badge bg-warning text-dark">
+                                    Not Published
+                                </span>
+
+                                {% endif %}
+
+                            </td>
+
+                            <td>
+                                {{ term.start_date|default:"-" }}
+                            </td>
+
+                            <td>
+                                {{ term.end_date|default:"-" }}
+                            </td>
+
+                            <td>
+
+                                {% if not term.is_current %}
+
+                                <form method="post" action="{% url 'set_current_term' term.id %}"
+                                    style="display:inline;">
+                                    {% csrf_token %}
+
+                                    <button type="submit" class="btn btn-sm btn-outline-primary">
+                                        Set Current
+                                    </button>
+                                </form>
+
+                                {% else %}
+
+                                <span class="text-success fw-bold">
+                                    Current
+                                </span>
+
+                                {% endif %}
+
+                            </td>
+
+                        </tr>
+
+                        {% empty %}
+
+                        <tr>
+                            <td colspan="6" class="text-center">
+                                No terms have been created for this session.
+                            </td>
+                        </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+            {% else %}
+
+            <div class="alert alert-info mb-0">
+                Select an academic session to manage its terms.
+            </div>
+
+            {% endif %}
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- Create Session Modal -->
+
+<div class="modal fade" id="createSessionModal" tabindex="-1" aria-labelledby="createSessionModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog">
+
+        <div class="modal-content">
+
+            <div class="modal-header">
+
+                <h5 class="modal-title" id="createSessionModalLabel">
+                    Create Academic Session
+                </h5>
+
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+
+            </div>
+
+            <form method="post" action="{% url 'create_academic_session' %}">
+
+                {% csrf_token %}
+
+                <div class="modal-body">
+
+                    <div class="mb-3">
+
+                        <label for="sessionName" class="form-label">
+                            Academic Session
+                        </label>
+
+                        <input type="text" class="form-control" id="sessionName" name="name"
+                            placeholder="e.g. 2026/2027" required>
+
+                    </div>
+
+                
+
+                </div>
+
+                <div class="modal-footer">
+
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        Cancel
+                    </button>
+
+                    <button type="submit" class="btn btn-primary">
+                        Create Session
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+</div>
+
+<!-- Create Term Modal -->
+
+<div class="modal fade" id="createTermModal" tabindex="-1" aria-labelledby="createTermModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+
+        <div class="modal-content">
+
+            <div class="modal-header">
+
+                <h5 class="modal-title" id="createTermModalLabel">
+                    Create Academic Term
+                </h5>
+
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+
+            </div>
+
+            <form method="post" action="{% url 'create_term' %}">
+
+                {% csrf_token %}
+
+                <input type="hidden" name="session_id" value="{{ selected_session.id }}">
+
+                <div class="modal-body">
+
+                    <div class="mb-3">
+
+                        <label class="form-label">
+                            Academic Session
+                        </label>
+
+                        <input type="text" class="form-control" value="{{ selected_session.name }}" readonly>
+
+                    </div>
+
+                    <div class="mb-3">
+
+                        <label for="termName" class="form-label">
+                            Term
+                        </label>
+
+                        <select class="form-select" name="name" id="termName" required>
+
+                            <option value="">
+                                Select Term
+                            </option>
+
+                            <option value="FIRST">
+                                First Term
+                            </option>
+
+                            <option value="SECOND">
+                                Second Term
+                            </option>
+
+                            <option value="THIRD">
+                                Third Term
+                            </option>
+
+                        </select>
+
+                    </div>
+
+                    <div class="mb-3">
+
+                        <label for="startDate" class="form-label">
+                            Start Date
+                        </label>
+
+                        <input type="date" class="form-control" name="start_date" id="startDate">
+
+                    </div>
+
+                    <div class="mb-3">
+
+                        <label for="endDate" class="form-label">
+                            End Date
+                        </label>
+
+                        <input type="date" class="form-control" name="end_date" id="endDate">
+
+                    </div>
+
+                </div>
+
+                <div class="modal-footer">
+
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        Cancel
+                    </button>
+
+                    <button type="submit" class="btn btn-primary">
+                        Create Term
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+</div>
+
+{% endblock %}

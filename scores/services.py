@@ -9,8 +9,10 @@ from django.core.exceptions import PermissionDenied
 from allocations.models import SubjectAllocation
 
 
+
 def build_report_card_context(student, term):
     from academics.models import SchoolSettings
+    from attendance.models import get_attendance_summary
 
     cumulative_rows, relevant_terms = get_cumulative_report_rows(student, term)
 
@@ -27,16 +29,30 @@ def build_report_card_context(student, term):
 
     class_results = get_class_results(student.school_class, term)
     position = next((r['position'] for r in class_results if r['student'].id == student.id), '-')
+    
+    days_present, days_school_opened = get_attendance_summary(
+    student,
+    term
+    )
+
+    days_absent = (
+        days_school_opened - days_present
+        if days_present is not None and days_school_opened is not None
+        else None
+    )
 
     return {
-        'cumulative_rows': cumulative_rows,
-        'relevant_terms': relevant_terms,
-        'total': current_term_total,
-        'marks_obtainable': marks_obtainable,
-        'percentage': percentage,
-        'overall_percentage': overall_percentage,
-        'position': position,
-        'school_settings': SchoolSettings.objects.first(),
+    'cumulative_rows': cumulative_rows,
+    'relevant_terms': relevant_terms,
+    'total': current_term_total,
+    'marks_obtainable': marks_obtainable,
+    'percentage': percentage,
+    'overall_percentage': overall_percentage,
+    'school_settings': SchoolSettings.load(),
+    
+    'days_present': days_present,
+    'days_school_opened': days_school_opened,
+    'days_absent': days_absent,
     }
 
 

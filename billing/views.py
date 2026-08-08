@@ -12,10 +12,11 @@ from django.db.models import Sum
 from django.db.models import Q
 from django.db import models
 from django.contrib import messages
+from accounts.decorators import billing_required
 
 
 
-@management_required
+@billing_required
 @login_required
 def billing_dashboard(request):
 
@@ -110,7 +111,7 @@ def billing_dashboard(request):
         context,
     )
 
-@management_required
+@billing_required
 @login_required
 def add_fee_structure(request):
     if request.method == 'POST':
@@ -126,7 +127,7 @@ def add_fee_structure(request):
     'page_title': 'Add Fee Structure',
     })
 
-@management_required
+@billing_required
 @login_required
 def edit_fee_structure(request, fee_id):
 
@@ -162,7 +163,7 @@ def edit_fee_structure(request, fee_id):
     'page_title': 'Edit Fee Structure',
     })
     
-@management_required
+@billing_required
 @login_required
 def delete_fee_structure(request, fee_id):
 
@@ -195,7 +196,7 @@ def delete_fee_structure(request, fee_id):
         }
     )
 
-@management_required
+@billing_required
 @login_required
 def fee_structure_list(request):
 
@@ -239,7 +240,7 @@ def fee_structure_list(request):
     )
     
 
-@management_required
+@billing_required
 @login_required
 def fee_structure_students(request, fee_id):
 
@@ -320,7 +321,7 @@ def fee_structure_students(request, fee_id):
         context,
     )
 
-@management_required
+@billing_required
 @login_required
 def record_payment(request, student_id, term_id):
     student = get_object_or_404(Student, id=student_id)
@@ -352,7 +353,7 @@ def record_payment(request, student_id, term_id):
     })
 
 
-@management_required
+@billing_required
 @login_required
 def students_owing(request):
     class_id = request.GET.get('class')
@@ -386,7 +387,7 @@ def students_owing(request):
     })
 
 
-@management_required
+@billing_required
 @login_required
 def add_opening_balance(request):
     if request.method == 'POST':
@@ -402,7 +403,7 @@ def add_opening_balance(request):
     })
 
 
-@management_required
+@billing_required
 @login_required
 def opening_balance_list(request):
 
@@ -440,11 +441,11 @@ def _bill_context_for_student(student, term):
         'fee_amount': fee_amount,
         'total_paid': total_paid,
         'balance': balance,
-        'school_settings': SchoolSettings.objects.first(),
+        'school_settings': SchoolSettings.load(),
     }
 
 
-@management_required
+@billing_required
 @login_required
 def student_bill(request, student_id, term_id):
     student = get_object_or_404(Student, id=student_id)
@@ -453,7 +454,7 @@ def student_bill(request, student_id, term_id):
     return render(request, 'billing/bill.html', context)
 
 
-@management_required
+@billing_required
 @login_required
 def student_bill_pdf(request, student_id, term_id):
     student = get_object_or_404(Student, id=student_id)
@@ -469,7 +470,7 @@ def student_bill_pdf(request, student_id, term_id):
     return response
 
 
-@management_required
+@billing_required
 @login_required
 def class_bill_pdf(request, class_id, term_id):
     school_class = get_object_or_404(SchoolClass, id=class_id)
@@ -487,7 +488,7 @@ def class_bill_pdf(request, class_id, term_id):
     return response
 
 
-@management_required
+@billing_required
 @login_required
 def edit_opening_balance(request, balance_id):
 
@@ -526,7 +527,7 @@ def edit_opening_balance(request, balance_id):
         },
     )
     
-@management_required
+@billing_required
 @login_required
 def delete_opening_balance(request, balance_id):
 
@@ -542,7 +543,7 @@ def delete_opening_balance(request, balance_id):
     )
 
 
-@management_required
+@billing_required
 @login_required
 def payment_list(request):
 
@@ -596,7 +597,7 @@ def payment_list(request):
         },
     )
     
-@management_required
+@billing_required
 @login_required
 def payment_receipt(request, payment_id):
 
@@ -607,7 +608,7 @@ def payment_receipt(request, payment_id):
 
     context = {
         "payment": payment,
-        "school_settings": SchoolSettings.objects.first(),
+        "school_settings": SchoolSettings.load(),
     }
 
     return render(
@@ -617,7 +618,7 @@ def payment_receipt(request, payment_id):
     )
     
 
-@management_required
+@billing_required
 @login_required
 def payment_receipt_pdf(request, payment_id):
 
@@ -628,7 +629,7 @@ def payment_receipt_pdf(request, payment_id):
 
     context = {
         "payment": payment,
-        "school_settings": SchoolSettings.objects.first(),
+        "school_settings": SchoolSettings.load(),
     }
 
 
@@ -659,7 +660,7 @@ def payment_receipt_pdf(request, payment_id):
 
     return response
 
-@management_required
+@billing_required
 @login_required
 def student_payment_history(request, student_id):
 
@@ -692,7 +693,7 @@ def student_payment_history(request, student_id):
         }
     )
     
-@management_required
+@billing_required
 @login_required
 def student_payment_history(request, student_id):
 

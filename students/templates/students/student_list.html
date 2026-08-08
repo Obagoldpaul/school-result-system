@@ -32,7 +32,7 @@ Student Management
                     <input
                         type="text"
                         name="search"
-                        value="{{ search }}"
+                        value="{{ search|default:'' }}"
                         class="form-control"
                         placeholder="Search by name, admission number or LIN">
 
@@ -42,27 +42,51 @@ Student Management
 
                     <select
                         name="class"
-                        class="form-select"
-                        onchange="this.form.submit()">
-
+                        class="form-select">
+                
                         <option value="">
                             All Classes
                         </option>
-
+                
                         {% for c in classes %}
-
+                
                         <option
                             value="{{ c.id }}"
                             {% if c.id == selected_class %}selected{% endif %}>
-
+                
                             {{ c.name }}
-
+                
                         </option>
-
+                
                         {% endfor %}
-
+                
                     </select>
-
+                
+                </div>
+                
+                
+                <div class="col-md-3">
+                
+                    <select
+                        name="status"
+                        class="form-select">
+                
+                        {% for value,label in status_choices %}
+                
+                        <option value="{{ value }}"
+                            {% if selected_status == value %}
+                                selected
+                            {% endif %}
+                        >
+                
+                            {{ label }}
+                
+                        </option>
+                
+                        {% endfor %}
+                
+                    </select>
+                
                 </div>
 
                 <div class="col-md-2">
@@ -91,6 +115,8 @@ Student Management
             </form>
 
             <div class="table-responsive">
+
+                
 
                 <table class="table table-hover table-bordered align-middle">
 
@@ -202,24 +228,14 @@ Student Management
                                         Active
                                     </span>
                         
-                                {% elif student.admission_status == "PENDING" %}
-                        
-                                    <span class="badge bg-warning text-dark">
-                                        Pending
-                                    </span>
-                        
+                                
                                 {% elif student.admission_status == "GRADUATED" %}
                         
                                     <span class="badge bg-primary">
                                         Graduated
                                     </span>
                         
-                                {% elif student.admission_status == "SUSPENDED" %}
-                        
-                                    <span class="badge bg-danger">
-                                        Suspended
-                                    </span>
-                        
+                                
                                 {% else %}
                         
                                     <span class="badge bg-secondary">

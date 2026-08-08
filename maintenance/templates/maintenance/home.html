@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block title %}Maintenance{% endblock %}
+
+{% block content %}
+
+<div class="container mt-4">
+
+    <h2>Maintenance Center</h2>
+
+    <hr>
+
+    <div class="card shadow-sm">
+
+        <div class="card-body">
+
+            <h4>Database Backups</h4>
+
+            <p>
+                Create, download and manage database backups.
+            </p>
+
+            <a href="{% url 'backup_list' %}"
+               class="btn btn-primary">
+
+                Open Backup Manager
+
+            </a>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

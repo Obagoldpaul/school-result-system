@@ -130,3 +130,117 @@ table tr:hover{
 .school-header small{
     opacity:.95;
 }
+
+
+
+/* =========================================
+   BURSAR / BILLING DASHBOARD
+   ========================================= */
+
+.bursar-dashboard {
+    padding: 28px;
+}
+
+.bursar-title {
+    margin-bottom: 24px;
+    color: #087f4f;
+    font-size: 28px;
+    font-weight: 700;
+}
+
+.bursar-title span {
+    color: #555;
+    font-weight: 500;
+}
+
+
+/* Billing cards */
+
+.billing-stat-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 20px;
+}
+
+
+.billing-stat-card {
+    min-width: 0;
+    background: #ffffff;
+    border-radius: 18px;
+    padding: 24px 16px;
+    text-align: center;
+
+    border-top: 5px solid #168c5b;
+
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+
+    overflow: hidden;
+}
+
+
+.billing-icon {
+    font-size: 34px;
+    line-height: 1;
+    margin-bottom: 12px;
+}
+
+
+.billing-value {
+    color: #168c5b;
+    font-size: clamp(15px, 1.5vw, 22px);
+    font-weight: 700;
+    line-height: 1.15;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 12px;
+}
+
+
+.billing-label {
+    color: #555;
+    font-size: 15px;
+}
+
+
+/* =========================================
+   TABLET
+   ========================================= */
+
+@media (max-width: 1000px) {
+
+    .billing-stat-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+}
+
+
+/* =========================================
+   MOBILE
+   ========================================= */
+
+@media (max-width: 600px) {
+
+    .bursar-dashboard {
+        padding: 20px 15px;
+    }
+
+    .bursar-title {
+        font-size: 22px;
+    }
+
+    .billing-stat-grid {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+
+    .billing-stat-card {
+        padding: 22px 15px;
+    }
+
+    .billing-value {
+        font-size: 30px;
+    }
+
+}

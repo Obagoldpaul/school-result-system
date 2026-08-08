@@ -1,37 +1,498 @@
 {% extends 'base.html' %}
+
 {% block title %}Subject Allocations{% endblock %}
+
+<style>
+    .add-button {
+        display: inline-block;
+        padding: 11px 16px;
+        background: #1a5c1a;
+        color: white;
+        text-decoration: none;
+        border-radius: 7px;
+        font-weight: 600;
+        font-size: 14px;
+    }
+
+    .add-button:hover {
+        background: #124512;
+    }
+</style>
+
 {% block content %}
-<h1>Subject Allocations</h1>
 
-<form method="GET" style="margin-bottom: 15px; display: flex; gap: 10px; align-items: center;">
-    <label>Term:</label>
-    <select name="term" onchange="this.form.submit()">
-        {% for t in terms %}
-        <option value="{{ t.id }}" {% if selected_term and t.id == selected_term.id %}selected{% endif %}>{{ t }}</option>
-        {% endfor %}
-    </select>
-    <a href="{% url 'add_allocation' %}">+ New Allocation</a>
-</form>
+<div class="page-header">
 
-{% if selected_term %}
-<p style="color:#999; font-size:13px;">Showing allocations for: <strong>{{ selected_term }}</strong></p>
-{% endif %}
+    <div>
+        <h1>Subject Allocations</h1>
+
+        <p class="page-subtitle">
+            View subject and teacher allocations for each academic term.
+        </p>
+    </div>
+
+</div>
+
+
+<!-- FILTER CARD -->
+
+<div class="section-card">
+
+    <div class="section-card-header">
+
+        <div>
+            <h2>Select Academic Term</h2>
+
+            <p class="text-muted">
+                Choose a term to view its subject allocations.
+            </p>
+        </div>
+
+    </div>
+
+
+    <form method="GET" class="allocation-filter">
+
+        <div class="filter-field">
+
+            <label for="term">
+                Academic Term
+            </label>
+
+            <select name="term" id="term" onchange="this.form.submit()">
+
+                {% for t in terms %}
+
+                <option value="{{ t.id }}" {% if selected_term and t.id == selected_term.id %} selected {% endif %}>
+                    {{ t }}
+                </option>
+
+                {% endfor %}
+
+            </select>
+
+        </div>
+
+
+        {% if selected_term %}
+
+        <div class="selected-term">
+
+            Currently viewing:
+
+            <strong>
+                {{ selected_term }}
+            </strong>
+
+        </div>
+
+        {% endif %}
+
+        {% if is_management %}
+        <a href="{% url 'add_allocation' %}" class="add-button">
+            + New Allocation
+        </a>
+        {% endif %}
+
+    </form>
+
+</div>
+
+
+<!-- ALLOCATIONS -->
 
 {% for group in grouped %}
-<div class="section-card">
-    <h3>{{ group.school_class }}</h3>
-    <table>
-        <tr><th>Subject</th><th>Teacher</th><th>Status</th></tr>
-        {% for a in group.allocations %}
-        <tr>
-            <td>{{ a.subject }}</td>
-            <td>{{ a.teacher }}</td>
-            <td>{{ a.get_status_display }}</td>
-        </tr>
-        {% endfor %}
-    </table>
+
+<div class="section-card allocation-card">
+
+    <div class="allocation-header">
+
+        <div>
+
+            <h2>
+                {{ group.school_class }}
+            </h2>
+
+            <p class="text-muted">
+                Subject and teacher assignments
+            </p>
+
+        </div>
+
+
+        <span class="allocation-count">
+
+            {{ group.allocations|length }}
+
+            allocation{{ group.allocations|length|pluralize }}
+
+        </span>
+
+    </div>
+
+
+    <div class="table-container">
+
+        <table class="allocation-table">
+
+            <thead>
+
+                <tr>
+
+                    <th>#</th>
+
+                    <th>Subject</th>
+
+                    <th>Teacher</th>
+
+                    <th>Status</th>
+
+                </tr>
+
+            </thead>
+
+
+            <tbody>
+
+                {% for a in group.allocations %}
+
+                <tr>
+
+                    <td>
+                        {{ forloop.counter }}
+                    </td>
+
+
+                    <td>
+
+                        <strong>
+                            {{ a.subject }}
+                        </strong>
+
+                    </td>
+
+
+                    <td>
+
+                        {{ a.teacher }}
+
+                    </td>
+
+
+                    <td>
+
+                        {% if a.status == 'DRAFT' %}
+
+                        <span class="status-badge draft">
+                            Draft
+                        </span>
+
+                        {% elif a.status == 'SUBMITTED' %}
+
+                        <span class="status-badge submitted">
+                            Submitted
+                        </span>
+
+                        {% elif a.status == 'REVIEWED' %}
+
+                        <span class="status-badge reviewed">
+                            Reviewed
+                        </span>
+
+                        {% elif a.status == 'APPROVED' %}
+
+                        <span class="status-badge approved">
+                            Approved
+                        </span>
+
+                        {% elif a.status == 'PUBLISHED' %}
+
+                        <span class="status-badge published">
+                            Published
+                        </span>
+
+                        {% else %}
+
+                        <span class="status-badge">
+                            {{ a.get_status_display }}
+                        </span>
+
+                        {% endif %}
+
+                    </td>
+
+                </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
 </div>
+
+
 {% empty %}
-<p>No allocations found for this term.</p>
+
+<div class="empty-state">
+
+    <div class="empty-icon">
+        📚
+    </div>
+
+    <h2>
+        No Allocations Found
+    </h2>
+
+    {% if selected_term %}
+
+    <p>
+        There are currently no subject allocations for
+        <strong>{{ selected_term }}</strong>.
+    </p>
+
+    {% else %}
+
+    <p>
+        Select an academic term to view subject allocations.
+    </p>
+
+    {% endif %}
+
+</div>
+
 {% endfor %}
+
+
+<style>
+    .page-header {
+        margin-bottom: 25px;
+    }
+
+    .page-header h1 {
+        margin-bottom: 5px;
+    }
+
+    .page-subtitle {
+        color: #777;
+        margin: 0;
+    }
+
+
+    .section-card {
+        background: #fff;
+        border-radius: 12px;
+        padding: 24px;
+        margin-bottom: 25px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, .06);
+    }
+
+
+    .section-card-header {
+        margin-bottom: 20px;
+    }
+
+
+    .section-card-header h2 {
+        margin: 0 0 5px;
+        font-size: 20px;
+    }
+
+
+    .text-muted {
+        color: #777;
+        margin: 0;
+    }
+
+
+    .allocation-filter {
+        display: flex;
+        align-items: end;
+        gap: 25px;
+        flex-wrap: wrap;
+    }
+
+
+    .filter-field {
+        display: flex;
+        flex-direction: column;
+        gap: 7px;
+        min-width: 280px;
+    }
+
+
+    .filter-field label {
+        font-weight: 600;
+    }
+
+
+    .filter-field select {
+        padding: 11px 12px;
+        border: 1px solid #ccc;
+        border-radius: 7px;
+        background: #fff;
+        font-size: 14px;
+    }
+
+
+    .selected-term {
+        padding: 11px 15px;
+        background: #f4f8f4;
+        border-radius: 7px;
+        color: #555;
+    }
+
+
+    .allocation-card {
+        padding: 0;
+        overflow: hidden;
+    }
+
+
+    .allocation-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 20px 24px;
+        border-bottom: 1px solid #eee;
+    }
+
+
+    .allocation-header h2 {
+        margin: 0 0 4px;
+        font-size: 19px;
+    }
+
+
+    .allocation-count {
+        background: #e7f4e7;
+        color: #1a5c1a;
+        padding: 7px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+
+    .table-container {
+        overflow-x: auto;
+    }
+
+
+    .allocation-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+
+    .allocation-table th {
+        background: #f5f7f5;
+        padding: 13px 15px;
+        text-align: left;
+        font-size: 13px;
+    }
+
+
+    .allocation-table td {
+        padding: 13px 15px;
+        border-top: 1px solid #eee;
+        font-size: 14px;
+    }
+
+
+    .allocation-table tbody tr:hover {
+        background: #fafafa;
+    }
+
+
+    /* STATUS BADGES */
+
+    .status-badge {
+        display: inline-block;
+        padding: 6px 11px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 600;
+        background: #eee;
+        color: #555;
+    }
+
+
+    .status-badge.draft {
+        background: #f1f1f1;
+        color: #555;
+    }
+
+
+    .status-badge.submitted {
+        background: #fff0d5;
+        color: #8a5a00;
+    }
+
+
+    .status-badge.reviewed {
+        background: #e6efff;
+        color: #2456a6;
+    }
+
+
+    .status-badge.approved {
+        background: #dff4e5;
+        color: #176b2c;
+    }
+
+
+    .status-badge.published {
+        background: #d9f2df;
+        color: #176b2c;
+    }
+
+
+    .empty-state {
+        text-align: center;
+        background: #fff;
+        border-radius: 12px;
+        padding: 60px 25px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, .06);
+    }
+
+
+    .empty-icon {
+        font-size: 45px;
+        margin-bottom: 10px;
+    }
+
+
+    .empty-state h2 {
+        margin-bottom: 8px;
+    }
+
+
+    .empty-state p {
+        color: #777;
+    }
+
+
+    @media (max-width: 700px) {
+
+        .allocation-filter {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .filter-field {
+            min-width: 100%;
+        }
+
+        .allocation-header {
+            align-items: flex-start;
+            gap: 12px;
+            flex-direction: column;
+        }
+
+    }
+</style>
+
 {% endblock %}

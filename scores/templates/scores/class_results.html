@@ -1,47 +1,647 @@
 {% extends 'base.html' %}
+
 {% block title %}Class Results{% endblock %}
+
 {% block content %}
-<h1>Class Results</h1>
 
-<form method="GET">
-    <label>Class:</label>
-    <select name="class">
-        <option value="">-- Select --</option>
-        {% for c in classes %}
-        <option value="{{ c.id }}" {% if selected_class and c.id == selected_class.id %}selected{% endif %}>{{ c.name }}</option>
-        {% endfor %}
-    </select>
+<div class="page-header">
+    <div>
+        <h1>Class Results</h1>
+        <p class="page-subtitle">
+            View and review academic performance by class and term.
+        </p>
+    </div>
+</div>
 
-    <label>Term:</label>
-    <select name="term">
-        <option value="">-- Select --</option>
-        {% for t in terms %}
-        <option value="{{ t.id }}" {% if selected_term and t.id == selected_term.id %}selected{% endif %}>{{ t }}</option>
-        {% endfor %}
-    </select>
 
-    <button type="submit">View Results</button>
-</form>
+<!-- FILTER CARD -->
+
+<div class="section-card">
+
+    <div class="section-card-header">
+        <div>
+            <h2>Select Results</h2>
+            <p class="text-muted">
+                Choose a class and academic term to view results.
+            </p>
+        </div>
+    </div>
+
+
+    <form method="GET" class="results-filter">
+
+        <div class="filter-field">
+
+            <label for="class">
+                Class
+            </label>
+
+            <select name="class" id="class">
+
+                <option value="">
+                    -- Select Class --
+                </option>
+
+                {% for c in classes %}
+
+                <option
+                    value="{{ c.id }}"
+                    {% if selected_class and c.id == selected_class.id %}
+                        selected
+                    {% endif %}
+                >
+                    {{ c.name }}
+                </option>
+
+                {% endfor %}
+
+            </select>
+
+        </div>
+
+
+        <div class="filter-field">
+
+            <label for="term">
+                Academic Term
+            </label>
+
+            <select name="term" id="term">
+
+                <option value="">
+                    -- Select Term --
+                </option>
+
+                {% for t in terms %}
+
+                <option
+                    value="{{ t.id }}"
+                    {% if selected_term and t.id == selected_term.id %}
+                        selected
+                    {% endif %}
+                >
+                    {{ t }}
+                </option>
+
+                {% endfor %}
+
+            </select>
+
+        </div>
+
+
+        <div class="filter-action">
+
+            <button type="submit" class="primary-btn">
+                View Results
+            </button>
+
+        </div>
+
+    </form>
+
+</div>
+
+
+{% if selected_class and selected_term %}
+
+<!-- RESULTS HEADER -->
+
+<div class="results-header">
+
+    <div>
+
+        <h2>
+            {{ selected_class }}
+        </h2>
+
+        <p>
+            {{ selected_term }}
+        </p>
+
+    </div>
+
+
+    {% if selected_term.is_published %}
+
+        <span class="status-badge published">
+            Published
+        </span>
+
+    {% else %}
+
+        <span class="status-badge pending">
+            Not Published
+        </span>
+
+    {% endif %}
+
+</div>
+
 
 {% if results %}
-<h2>{{ selected_class }} - {{ selected_term }}</h2>
-<table>
-    <tr>
-        <th>Position</th>
-        <th>Name</th>
-        <th>Total</th>
-        <th>Average</th>
-    </tr>
-    {% for r in results %}
-    <tr>
-        <td>{{ r.position }}</td>
-        <td>{{ r.student.user.get_full_name }}</td>
-        <td>{{ r.total }}</td>
-        <td>{{ r.average }}</td>
-    </tr>
-    {% endfor %}
-</table>
-{% elif selected_class %}
-<p>No scores recorded yet for this class/term.</p>
+
+<!-- SUMMARY -->
+
+<div class="stats-grid">
+
+    <div class="stat-card">
+
+        <div class="stat-icon">
+            👨‍🎓
+        </div>
+
+        <div class="stat-number">
+            {{ results|length }}
+        </div>
+
+        <div class="stat-label">
+            Students
+        </div>
+
+    </div>
+
+
+    <div class="stat-card">
+
+        <div class="stat-icon">
+            🏆
+        </div>
+
+        <div class="stat-number">
+            {{ results.0.total }}
+        </div>
+
+        <div class="stat-label">
+            Highest Total
+        </div>
+
+    </div>
+
+
+    <div class="stat-card">
+
+        <div class="stat-icon">
+            📊
+        </div>
+
+        <div class="stat-number">
+            {{ results.0.average }}
+        </div>
+
+        <div class="stat-label">
+            Top Average
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- RESULTS TABLE -->
+
+<div class="section-card results-card">
+
+    <div class="section-card-header">
+
+        <div>
+
+            <h2>
+                Academic Performance
+            </h2>
+
+            <p class="text-muted">
+                {{ selected_class }} — {{ selected_term }}
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <div class="table-container">
+
+        <table class="results-table">
+
+            <thead>
+
+                <tr>
+
+                    <th>Position</th>
+
+                    <th>Student</th>
+
+                    <th>Admission No.</th>
+
+                    <th>Total</th>
+
+                    <th>Average</th>
+
+                    <th>Action</th>
+
+                </tr>
+
+            </thead>
+
+
+            <tbody>
+
+                {% for r in results %}
+
+                <tr>
+
+                    <td>
+
+                        {% if r.position == 1 %}
+
+                            <span class="position first">
+                                🥇 1st
+                            </span>
+
+                        {% elif r.position == 2 %}
+
+                            <span class="position second">
+                                🥈 2nd
+                            </span>
+
+                        {% elif r.position == 3 %}
+
+                            <span class="position third">
+                                🥉 3rd
+                            </span>
+
+                        {% else %}
+
+                            <span class="position">
+                                {{ r.position }}
+                            </span>
+
+                        {% endif %}
+
+                    </td>
+
+
+                    <td>
+
+                        <strong>
+                            {{ r.student.user.get_full_name }}
+                        </strong>
+
+                    </td>
+
+
+                    <td>
+
+                        {{ r.student.admission_number|default:"-" }}
+
+                    </td>
+
+
+                    <td>
+
+                        <strong>
+                            {{ r.total }}
+                        </strong>
+
+                    </td>
+
+
+                    <td>
+
+                        <strong>
+                            {{ r.average }}
+                        </strong>
+
+                    </td>
+
+
+                    <td>
+
+                        <a
+                            href="{% url 'report_card' r.student.id selected_term.id %}"
+                            class="view-btn"
+                        >
+                            View Report
+                        </a>
+
+                    </td>
+
+                </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</div>
+
+
+{% else %}
+
+<!-- EMPTY RESULTS -->
+
+<div class="empty-state">
+
+    <div class="empty-icon">
+        📊
+    </div>
+
+    <h2>
+        No Results Available
+    </h2>
+
+    <p>
+        No scores have been recorded for
+        <strong>{{ selected_class }}</strong>
+        for
+        <strong>{{ selected_term }}</strong>.
+    </p>
+
+</div>
+
 {% endif %}
+
+{% endif %}
+
+
+<style>
+
+.page-header {
+    margin-bottom: 25px;
+}
+
+.page-header h1 {
+    margin-bottom: 5px;
+}
+
+.page-subtitle {
+    color: #777;
+    margin: 0;
+}
+
+
+.section-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 25px;
+    box-shadow: 0 2px 10px rgba(0,0,0,.06);
+}
+
+
+.section-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+
+.section-card-header h2 {
+    margin: 0 0 5px;
+    font-size: 20px;
+}
+
+
+.text-muted {
+    color: #777;
+    margin: 0;
+}
+
+
+.results-filter {
+    display: grid;
+    grid-template-columns: 1fr 1fr auto;
+    gap: 18px;
+    align-items: end;
+}
+
+
+.filter-field {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+}
+
+
+.filter-field label {
+    font-weight: 600;
+}
+
+
+.filter-field select {
+    padding: 11px 12px;
+    border: 1px solid #ccc;
+    border-radius: 7px;
+    background: #fff;
+    font-size: 14px;
+}
+
+
+.primary-btn {
+    border: none;
+    background: #1a5c1a;
+    color: white;
+    padding: 11px 20px;
+    border-radius: 7px;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+
+.primary-btn:hover {
+    opacity: .9;
+}
+
+
+.results-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 25px 0 15px;
+}
+
+
+.results-header h2 {
+    margin: 0;
+}
+
+
+.results-header p {
+    margin: 4px 0 0;
+    color: #777;
+}
+
+
+.status-badge {
+    padding: 7px 13px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+
+.status-badge.published {
+    background: #d9f2df;
+    color: #176b2c;
+}
+
+
+.status-badge.pending {
+    background: #fff0d5;
+    color: #8a5a00;
+}
+
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+    margin-bottom: 25px;
+}
+
+
+.stat-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,.06);
+    text-align: center;
+}
+
+
+.stat-icon {
+    font-size: 28px;
+    margin-bottom: 5px;
+}
+
+
+.stat-number {
+    font-size: 25px;
+    font-weight: 700;
+}
+
+
+.stat-label {
+    color: #777;
+    font-size: 13px;
+    margin-top: 3px;
+}
+
+
+.results-card {
+    padding: 0;
+    overflow: hidden;
+}
+
+
+.results-card .section-card-header {
+    padding: 22px 24px;
+    margin-bottom: 0;
+}
+
+
+.table-container {
+    overflow-x: auto;
+}
+
+
+.results-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+
+.results-table th {
+    background: #f5f7f5;
+    padding: 13px 15px;
+    text-align: left;
+    font-size: 13px;
+    white-space: nowrap;
+}
+
+
+.results-table td {
+    padding: 14px 15px;
+    border-top: 1px solid #eee;
+    font-size: 14px;
+}
+
+
+.results-table tbody tr:hover {
+    background: #fafafa;
+}
+
+
+.position {
+    font-weight: 600;
+}
+
+
+.view-btn {
+    display: inline-block;
+    padding: 7px 12px;
+    border: 1px solid #1a5c1a;
+    color: #1a5c1a;
+    border-radius: 6px;
+    text-decoration: none;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+
+.view-btn:hover {
+    background: #1a5c1a;
+    color: white;
+}
+
+
+.empty-state {
+    text-align: center;
+    background: #fff;
+    border-radius: 12px;
+    padding: 60px 25px;
+    box-shadow: 0 2px 10px rgba(0,0,0,.06);
+}
+
+
+.empty-icon {
+    font-size: 45px;
+    margin-bottom: 10px;
+}
+
+
+.empty-state h2 {
+    margin-bottom: 8px;
+}
+
+
+.empty-state p {
+    color: #777;
+}
+
+
+@media (max-width: 700px) {
+
+    .results-filter {
+        grid-template-columns: 1fr;
+    }
+
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .results-header {
+        align-items: flex-start;
+        gap: 15px;
+        flex-direction: column;
+    }
+
+}
+
+</style>
+
 {% endblock %}

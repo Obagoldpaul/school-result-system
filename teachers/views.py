@@ -116,19 +116,78 @@ def edit_teacher(request, teacher_id):
     teacher = get_object_or_404(Teacher, id=teacher_id)
 
     if request.method == 'POST':
-        teacher.qualification = request.POST.get('qualification', '')
+
+        # ==========================
+        # USER INFORMATION
+        # ==========================
+
+        teacher.user.first_name = request.POST.get('first_name', '')
+        teacher.user.other_name = request.POST.get('other_name', '')
+        teacher.user.last_name = request.POST.get('last_name', '')
+        teacher.user.email = request.POST.get('email', '')
+        teacher.user.save()
+
+        # ==========================
+        # PERSONAL INFORMATION
+        # ==========================
+
+        teacher.date_of_birth = request.POST.get('date_of_birth') or None
+        teacher.gender = request.POST.get('gender', '')
         teacher.phone_number = request.POST.get('phone_number', '')
-        teacher.is_class_teacher = request.POST.get('is_class_teacher') == 'on'
+        teacher.home_address = request.POST.get('home_address', '')
+        teacher.state_of_origin = request.POST.get('state_of_origin', '')
+        teacher.local_government = request.POST.get('local_government', '')
+
+        # ==========================
+        # PROFESSIONAL INFORMATION
+        # ==========================
+
+        teacher.staff_id = request.POST.get('staff_id', '')
+        teacher.qualification = request.POST.get('qualification', '')
+        teacher.years_of_experience = request.POST.get(
+            'years_of_experience'
+        ) or 0
+        teacher.employment_date = request.POST.get('employment_date') or None
+
+        # ==========================
+        # SCHOOL RESPONSIBILITY
+        # ==========================
+
+        teacher.is_class_teacher = (
+            request.POST.get('is_class_teacher') == 'on'
+        )
+
         assigned_class_id = request.POST.get('assigned_class')
         teacher.assigned_class_id = assigned_class_id or None
+
+        teacher.is_active = (
+            request.POST.get('is_active') == 'on'
+        )
+
+        # ==========================
+        # FILE UPLOADS
+        # ==========================
+
+        if request.FILES.get('passport'):
+            teacher.passport = request.FILES['passport']
+
+        if request.FILES.get('certificate'):
+            teacher.certificate = request.FILES['certificate']
+
         teacher.save()
+
         return redirect('teacher_list')
 
     classes = SchoolClass.objects.all()
-    return render(request, 'teachers/edit_teacher.html', {
-        'teacher': teacher,
-        'classes': classes,
-    })
+
+    return render(
+        request,
+        'teachers/edit_teacher.html',
+        {
+            'teacher': teacher,
+            'classes': classes,
+        }
+    )
     
 @staff_required
 @login_required

@@ -8,6 +8,7 @@ class User(AbstractUser):
         ADMIN = "ADMIN", "Admin"
         PROPRIETORESS = "PROPRIETORESS", "Proprietoress"
         PRINCIPAL = "PRINCIPAL", "Principal"
+        BURSAR = "BURSAR", "Bursar"
         TEACHER = "TEACHER", "Teacher"
         STUDENT = "STUDENT", "Student"
 

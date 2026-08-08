@@ -11,8 +11,10 @@ from .permissions import (
     is_principal,
     is_student,
     is_proprietoress,
+    is_bursar
 )
 
+from .permissions import can_manage_billing
 
 def staff_required(view_func):
     @wraps(view_func)
@@ -84,4 +86,18 @@ def student_required(view_func):
         if not is_student(request.user):
             raise PermissionDenied("Only students can access this page.")
         return view_func(request, *args, **kwargs)
+    return wrapper
+
+
+
+def billing_required(view_func):
+    @wraps(view_func)
+    def wrapper(request, *args, **kwargs):
+        if not can_manage_billing(request.user):
+            raise PermissionDenied(
+                "You do not have permission to access billing."
+            )
+
+        return view_func(request, *args, **kwargs)
+
     return wrapper

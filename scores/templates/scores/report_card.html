@@ -1,198 +1,31 @@
 {% load static %}
 <!DOCTYPE html>
 <html>
+
 <head>
+
     <title>Report Card</title>
-    <style>
-        @page {
-            size: A4;
-            margin: 1.2cm;
-        }
-        body { font-family: Arial, sans-serif; max-width: 800px; margin: auto; padding: 15px; font-size: 12px; }
-        .watermark {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 400px;
-            opacity: 0.08;
-            z-index: -1;
-        }
-        table { width: 100%; border-collapse: collapse; }
-        th, td { border: 1px solid #333; padding: 4px 6px; text-align: left; font-size: 11px; }
-        .top-row { display: flex; justify-content: space-between; gap: 10px; margin-bottom: 8px; }
-        .box { border: 1px solid #333; padding: 6px; flex: 1; }
-        .school-header { text-align: center; margin: 8px 0; }
-        .school-header img { height: 55px; }
-        .school-header h1 { margin: 3px 0; color: #1a5c1a; font-size: 18px; }
-        .school-header p { margin: 1px 0; font-size: 10px; color: #333; }
-        .report-title { background: #1a5c1a; color: white; text-align: center; padding: 4px; font-weight: bold; margin: 8px 0; font-size: 12px; }
-        .term-banner { background: #d4f0d4; text-align: center; padding: 4px; font-weight: bold; border: 1px solid #333; font-size: 11px; }
-        .grading-box { font-size: 10px; }
-        .summary-table td { font-weight: bold; padding: 3px 6px; }
-        .habits-table th, .habits-table td { text-align: center; padding: 3px; }
-        .signature-box { display: flex; margin-top: 8px; }
-        .signature-box .box { min-height: 40px; }
-        .bottom-row { display: flex; gap: 10px; margin-top: 8px; align-items: flex-start; }
-        .bottom-row > div { flex: 1; }
-        .no-print { margin-top: 10px; }
-        @media print {
-            .no-print { display: none; }
-            body { padding: 0; }
-        }
-    </style>
+
+    {% include "scores/report/styles.html" %}
+
 </head>
+
 <body>
 
-    <img src="{% static 'images/logo.png' %}" class="watermark" alt="">
-    <div class="top-row">
-        <div class="box">
-            <strong>TO:</strong> Mr./Mrs. {{ student.guardian_name|default:"________________" }}
-        </div>
-        <div class="box">
-            <strong>Student's Name:</strong><br>{{ student.user.get_full_name }}
-        </div>
-    </div>
+{% include "scores/report/header.html" %}
 
-    <div class="top-row">
-        <div class="box grading-box">
-            <strong>GRADING SCALE</strong><br>
-            A1 75-100 | B2 70-74 | B3 65-69<br>
-            C4 60-64 | C5 55-59 | C6 50-54<br>
-            D7 45-49 | E8 40-44 | F9 0-39
-        </div>
-        <div class="box">
-            <strong>Session:</strong> {{ term.session }}<br>
-            <strong>Class:</strong> {{ student.school_class }}
-        </div>
-    </div>
+{% include "scores/report/results_table.html" %}
 
-    <div class="term-banner">{{ term.get_name_display|default:term }}</div>
+{% include "scores/report/summary.html" %}
+    
+        
+{% include "scores/report/attendance.html" %}
+    
+{% include "scores/report/signatures.html" %}
+    
 
-    <div class="school-header">
-        <img src="{% static 'images/logo.png' %}" alt="School Logo">
-        <h1>GREAT GOSHENLAND BLOSSOM SCHOOL</h1>
-        <p>5, Onasanya Close | Gbarinmole | Ofada | Ogun State | Nigeria</p>
-        <p>Tel: 08039471352, 08034465764 | Email: greatgoshenlandcollege@gmail.com</p>
-    </div>
-
-    <div class="report-title">{{ term.session }} ACADEMIC PERFORMANCE REPORT</div>
-
-    <table>
-        <thead>
-        <tr>
-            <th style="width:18%;">Course</th>
-            <th style="width:7%;">Code</th>
-            <th style="width:8%;">C.A (40)</th>
-            <th style="width:8%;">Exam (60)</th>
-            {% for t in relevant_terms %}
-            <th style="width:10%;">{{ t.get_name_display }} Total</th>
-            {% endfor %}
-            <th style="width:8%;">Average</th>
-            <th style="width:7%;">Grade</th>
-            <th style="width:12%;">Remark</th>
-        </tr>
-        </thead>
-        <tbody>
-        {% for row in cumulative_rows %}
-        <tr>
-            <td>{{ row.subject_name }}</td>
-            <td>{{ row.code|default:"-" }}</td>
-            <td>{{ row.ca_score }}</td>
-            <td>{{ row.exam_score }}</td>
-            {% for score in row.term_scores %}
-            <td>{{ score|default:"-" }}</td>
-            {% endfor %}
-            <td>{{ row.average }}</td>
-            <td>{{ row.grade }}</td>
-            <td>{{ row.remark }}</td>
-        </tr>
-        {% endfor %}
-        </tbody>
-    </table>
-
-    <div class="bottom-row">
-        <div>
-            <table>
-                <tr class="summary-table"><td>OVERALL PERFORMANCE (This Term)</td><td>{{ total }}</td></tr>
-                <tr class="summary-table"><td>THIS TERM %</td><td>{{ percentage }}%</td></tr>
-                <tr class="summary-table"><td>CUMULATIVE %</td><td>{{ overall_percentage }}%</td></tr>
-                <tr class="summary-table"><td>MARKS OBTAINABLE</td><td>{{ marks_obtainable }}</td></tr>
-                <tr class="summary-table"><td>POSITION IN CLASS</td><td>{{ position }}</td></tr>
-            </table>
-        </div>
-        <div>
-            <table class="habits-table">
-        <tr>
-            <th>Social Habits</th>
-            <th>A</th>
-            <th>B</th>
-            <th>C</th>
-            <th>D</th>
-            <th>E</th>
-            <th>F</th>
-        </tr>
-        <tr>
-            <td>Responsibility</td>
-            <td>{% if extra.responsibility == 'A' %}&#10003;{% endif %}</td>
-            <td>{% if extra.responsibility == 'B' %}&#10003;{% endif %}</td>
-            <td>{% if extra.responsibility == 'C' %}&#10003;{% endif %}</td>
-            <td>{% if extra.responsibility == 'D' %}&#10003;{% endif %}</td>
-            <td>{% if extra.responsibility == 'E' %}&#10003;{% endif %}</td>
-            <td>{% if extra.responsibility == 'F' %}&#10003;{% endif %}</td>
-        </tr>
-        <tr>
-            <td>Leadership</td>
-            <td>{% if extra.leadership == 'A' %}&#10003;{% endif %}</td>
-            <td>{% if extra.leadership == 'B' %}&#10003;{% endif %}</td>
-            <td>{% if extra.leadership == 'C' %}&#10003;{% endif %}</td>
-            <td>{% if extra.leadership == 'D' %}&#10003;{% endif %}</td>
-            <td>{% if extra.leadership == 'E' %}&#10003;{% endif %}</td>
-            <td>{% if extra.leadership == 'F' %}&#10003;{% endif %}</td>
-        </tr>
-        <tr>
-            <td>Hardworking</td>
-            <td>{% if extra.hardworking == 'A' %}&#10003;{% endif %}</td>
-            <td>{% if extra.hardworking == 'B' %}&#10003;{% endif %}</td>
-            <td>{% if extra.hardworking == 'C' %}&#10003;{% endif %}</td>
-            <td>{% if extra.hardworking == 'D' %}&#10003;{% endif %}</td>
-            <td>{% if extra.hardworking == 'E' %}&#10003;{% endif %}</td>
-            <td>{% if extra.hardworking == 'F' %}&#10003;{% endif %}</td>
-        </tr>
-        <tr>
-            <td>Neatness</td>
-            <td>{% if extra.neatness == 'A' %}&#10003;{% endif %}</td>
-            <td>{% if extra.neatness == 'B' %}&#10003;{% endif %}</td>
-            <td>{% if extra.neatness == 'C' %}&#10003;{% endif %}</td>
-            <td>{% if extra.neatness == 'D' %}&#10003;{% endif %}</td>
-            <td>{% if extra.neatness == 'E' %}&#10003;{% endif %}</td>
-            <td>{% if extra.neatness == 'F' %}&#10003;{% endif %}</td>
-        </tr>
-    </table>
-        </div>
-    </div>
-
-    <p style="margin: 8px 0;"><strong>Attendance:</strong> {{ extra.days_present|default:"-" }} / {{ extra.days_school_opened|default:"-" }} days</p>
-
-    <div class="signature-box">
-        <div class="box">
-            <strong>Class Teacher's Comment:</strong><br>{{ extra.teacher_remark|default:"-" }}
-        </div>
-        <div class="box" style="text-align: center;">
-            {% if school_settings.principal_signature %}
-            <img src="{{ school_settings.principal_signature.url }}" alt="Principal's Signature" style="height: 40px;"><br>
-            {% endif %}
-            <strong>{{ school_settings.principal_name|default:"Principal" }}</strong><br>
-            <span style="font-size: 10px;">Principal's Signature</span>
-        </div>
-    </div>
-
-    <div class="no-print">
-        <p><a href="{% url 'report_card_pdf' student.id term.id %}">Download as PDF</a></p>
-        {% if not request.user.student_profile %}
-        <p><a href="{% url 'edit_report_extra' student.id term.id %}">Edit Remarks/Attendance</a></p>
-        {% endif %}
-    </div>
+{% include "scores/report/footer.html" %}
 
 </body>
+
 </html>

@@ -1,34 +1,266 @@
 {% extends 'base.html' %}
 {% block title %}Edit Teacher{% endblock %}
+
 {% block content %}
+
 <h1>Edit Teacher: {{ teacher.user.get_full_name }}</h1>
-<form method="POST">
+
+<form method="POST" enctype="multipart/form-data">
+
     {% csrf_token %}
 
-    <label>Qualification:</label>
-    <input type="text" name="qualification" value="{{ teacher.qualification }}">
+    <!-- ========================== -->
+    <!-- PERSONAL INFORMATION -->
+    <!-- ========================== -->
+
+    <h2>Personal Information</h2>
+
+    <label>First Name:</label>
+    <input
+        type="text"
+        name="first_name"
+        value="{{ teacher.user.first_name }}"
+    >
+    <br><br>
+
+    <label>Other Name:</label>
+    <input
+        type="text"
+        name="other_name"
+        value="{{ teacher.user.other_name }}"
+    >
+    <br><br>
+
+    <label>Surname:</label>
+    <input
+        type="text"
+        name="last_name"
+        value="{{ teacher.user.last_name }}"
+    >
+    <br><br>
+
+    <label>Email:</label>
+    <input
+        type="email"
+        name="email"
+        value="{{ teacher.user.email }}"
+    >
     <br><br>
 
     <label>Phone Number:</label>
-    <input type="text" name="phone_number" value="{{ teacher.phone_number }}">
+    <input
+        type="text"
+        name="phone_number"
+        value="{{ teacher.phone_number }}"
+    >
     <br><br>
 
+    <label>Date of Birth:</label>
+    <input
+        type="date"
+        name="date_of_birth"
+        value="{{ teacher.date_of_birth|date:'Y-m-d' }}"
+    >
+    <br><br>
+
+    <label>Gender:</label>
+    <select name="gender">
+        <option value="">-- Select Gender --</option>
+
+        <option value="MALE"
+            {% if teacher.gender == "MALE" %}selected{% endif %}>
+            Male
+        </option>
+
+        <option value="FEMALE"
+            {% if teacher.gender == "FEMALE" %}selected{% endif %}>
+            Female
+        </option>
+    </select>
+
+    <br><br>
+
+    <label>State of Origin:</label>
+    <input
+        type="text"
+        name="state_of_origin"
+        value="{{ teacher.state_of_origin }}"
+    >
+    <br><br>
+
+    <label>Local Government:</label>
+    <input
+        type="text"
+        name="local_government"
+        value="{{ teacher.local_government }}"
+    >
+    <br><br>
+
+    <label>Home Address:</label>
+    <textarea name="home_address">{{ teacher.home_address }}</textarea>
+    <br><br>
+
+
+    <!-- ========================== -->
+    <!-- PASSPORT -->
+    <!-- ========================== -->
+
+    <h2>Passport</h2>
+
+    {% if teacher.passport %}
+        <p>Current Passport:</p>
+
+        <img
+            src="{{ teacher.passport.url }}"
+            alt="Teacher Passport"
+            style="width:120px; height:140px; object-fit:cover;"
+        >
+
+        <br><br>
+    {% endif %}
+
+    <label>Change Passport:</label>
+
+    <input
+        type="file"
+        name="passport"
+        accept="image/*"
+    >
+
+    <br><br>
+
+
+    <!-- ========================== -->
+    <!-- PROFESSIONAL INFORMATION -->
+    <!-- ========================== -->
+
+    <h2>Professional Information</h2>
+
+    <label>Staff ID:</label>
+    <input
+        type="text"
+        name="staff_id"
+        value="{{ teacher.staff_id }}"
+    >
+    <br><br>
+
+    <label>Qualification:</label>
+    <input
+        type="text"
+        name="qualification"
+        value="{{ teacher.qualification }}"
+    >
+    <br><br>
+
+    <label>Years of Experience:</label>
+    <input
+        type="number"
+        name="years_of_experience"
+        min="0"
+        value="{{ teacher.years_of_experience }}"
+    >
+    <br><br>
+
+    <label>Employment Date:</label>
+    <input
+        type="date"
+        name="employment_date"
+        value="{{ teacher.employment_date|date:'Y-m-d' }}"
+    >
+    <br><br>
+
+
+    <!-- ========================== -->
+    <!-- CERTIFICATE -->
+    <!-- ========================== -->
+
+    <h2>Certificate</h2>
+
+    {% if teacher.certificate %}
+        <p>
+            Current certificate:
+            <a href="{{ teacher.certificate.url }}" target="_blank">
+                View Certificate
+            </a>
+        </p>
+    {% endif %}
+
+    <label>Change Certificate:</label>
+
+    <input
+        type="file"
+        name="certificate"
+    >
+
+    <br><br>
+
+
+    <!-- ========================== -->
+    <!-- SCHOOL RESPONSIBILITY -->
+    <!-- ========================== -->
+
+    <h2>School Responsibility</h2>
+
     <label>
-        <input type="checkbox" name="is_class_teacher" {% if teacher.is_class_teacher %}checked{% endif %}>
+        <input
+            type="checkbox"
+            name="is_class_teacher"
+            {% if teacher.is_class_teacher %}checked{% endif %}
+        >
+
         Is Class Teacher
     </label>
+
     <br><br>
 
     <label>Assigned Class:</label>
+
     <select name="assigned_class">
+
         <option value="">-- None --</option>
+
         {% for c in classes %}
-        <option value="{{ c.id }}" {% if c.id == teacher.assigned_class_id %}selected{% endif %}>{{ c.name }}</option>
+
+        <option
+            value="{{ c.id }}"
+            {% if c.id == teacher.assigned_class_id %}selected{% endif %}
+        >
+            {{ c.name }}
+        </option>
+
         {% endfor %}
+
     </select>
+
     <br><br>
 
-    <button type="submit">Save Changes</button>
+    <label>
+        <input
+            type="checkbox"
+            name="is_active"
+            {% if teacher.is_active %}checked{% endif %}
+        >
+
+        Active Teacher
+    </label>
+
+    <br><br>
+
+
+    <!-- ========================== -->
+    <!-- SAVE -->
+    <!-- ========================== -->
+
+    <button type="submit">
+        Save Changes
+    </button>
+
 </form>
-<p><a href="{% url 'teacher_list' %}">Back to teacher list</a></p>
+
+<p>
+    <a href="{% url 'teacher_list' %}">
+        Back to teacher list
+    </a>
+</p>
+
 {% endblock %}

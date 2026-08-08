@@ -5,6 +5,7 @@ from .permissions import (
     is_class_teacher,
     is_student,
     is_management,
+    can_manage_billing,
 )
 
 
@@ -21,6 +22,7 @@ def user_roles(request):
         "is_teacher": is_teacher(user),
         "is_class_teacher": is_class_teacher(user),
         "is_student": is_student(user),
+        "can_manage_billing": can_manage_billing(user),
     }
 
 
@@ -34,3 +36,4 @@ def announcements_preview(request):
         'nav_announcements': recent,
         'nav_announcement_count': len(recent),
     }
+    

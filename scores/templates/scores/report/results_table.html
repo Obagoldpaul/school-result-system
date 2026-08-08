@@ -1,0 +1,32 @@
+<table>
+    <thead>
+        <tr>
+            <th style="width:18%;">Course</th>
+            <th style="width:7%;">Code</th>
+            <th style="width:8%;">C.A (40)</th>
+            <th style="width:8%;">Exam (60)</th>
+            {% for t in relevant_terms %}
+            <th style="width:10%;">{{ t.get_name_display }} Total</th>
+            {% endfor %}
+            <th style="width:8%;">Average</th>
+            <th style="width:7%;">Grade</th>
+            <th style="width:12%;">Remark</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for row in cumulative_rows %}
+        <tr>
+            <td>{{ row.subject_name }}</td>
+            <td>{{ row.code|default:"-" }}</td>
+            <td>{{ row.ca_score }}</td>
+            <td>{{ row.exam_score }}</td>
+            {% for score in row.term_scores %}
+            <td>{{ score|default:"-" }}</td>
+            {% endfor %}
+            <td>{{ row.average }}</td>
+            <td>{{ row.grade }}</td>
+            <td>{{ row.remark }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>

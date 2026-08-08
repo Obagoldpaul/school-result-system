@@ -1,27 +1,80 @@
 {% load static humanize %}
 <!DOCTYPE html>
 <html>
+
 <head>
     <title>School Bill</title>
     <style>
-        @page { size: A4; margin: 1.5cm; }
-        body { font-family: Arial, sans-serif; font-size: 13px; }
-        .header { text-align: center; margin-bottom: 15px; }
-        .header img { height: 60px; }
-        .header h1 { color: #1a5c1a; font-size: 18px; margin: 4px 0; }
-        .header p { font-size: 11px; margin: 1px 0; }
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        td, th { border: 1px solid #333; padding: 8px; text-align: left; }
-        .balance-row td { font-weight: bold; font-size: 15px; }
+        @page {
+            size: A4;
+            margin: 1.5cm;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 13px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        .header img {
+            height: 60px;
+        }
+
+        .header h1 {
+            color: #1a5c1a;
+            font-size: 18px;
+            margin: 4px 0;
+        }
+
+        .header p {
+            font-size: 11px;
+            margin: 1px 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        td,
+        th {
+            border: 1px solid #333;
+            padding: 8px;
+            text-align: left;
+        }
+
+        .balance-row td {
+            font-weight: bold;
+            font-size: 15px;
+        }
     </style>
 </head>
+
 <body>
     <div class="header">
         {% if school_settings.principal_signature %}{% endif %}
-        <img src="{% static 'images/logo.png' %}">
-        <h1>GREAT GOSHENLAND BLOSSOM SCHOOL</h1>
-        <p>5, Onasanya Close | Gbarinmole | Ofada | Ogun State | Nigeria</p>
-        <p>Tel: 08039471352, 08034465764</p>
+        {% if school_settings.school_logo %}
+        <img src="{{ school_settings.school_logo.url }}" alt="School Logo">
+        {% endif %}
+
+        <h1>{{ school_settings.school_name }}</h1>
+
+        <p>{{ school_settings.school_address }}</p>
+
+        <p>
+            {% if school_settings.school_phone %}
+            Tel: {{ school_settings.school_phone }}
+            {% endif %}
+        </p>
+
+        {% if school_settings.school_email %}
+        <p>Email: {{ school_settings.school_email }}</p>
+        {% endif %}
     </div>
 
     <h2 style="text-align:center;">SCHOOL FEE BILL</h2>
@@ -31,11 +84,22 @@
     <p><strong>Term:</strong> {{ term }}</p>
 
     <table>
-        <tr><td>Total Fees Owed (cumulative)</td><td>₦{{ fee_amount|default:0|intcomma }}</td></tr>
-        <tr><td>Total Paid</td><td>₦{{ total_paid|intcomma }}</td></tr>
-        <tr class="balance-row"><td>Balance Due</td><td>₦{{ balance|default:0|intcomma }}</td></tr>
+        <tr>
+            <td>Total Fees Owed (cumulative)</td>
+            <td>₦{{ fee_amount|default:0|intcomma }}</td>
+        </tr>
+        <tr>
+            <td>Total Paid</td>
+            <td>₦{{ total_paid|intcomma }}</td>
+        </tr>
+        <tr class="balance-row">
+            <td>Balance Due</td>
+            <td>₦{{ balance|default:0|intcomma }}</td>
+        </tr>
     </table>
 
-    <p style="margin-top:30px; font-size:11px; color:#666;">This bill reflects cumulative fees for the current session up to and including {{ term }}.</p>
+    <p style="margin-top:30px; font-size:11px; color:#666;">This bill reflects cumulative fees for the current session
+        up to and including {{ term }}.</p>
 </body>
+
 </html>

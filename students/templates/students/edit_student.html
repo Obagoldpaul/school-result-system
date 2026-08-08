@@ -1,58 +1,728 @@
 {% extends 'base.html' %}
+
 {% block title %}Edit Student{% endblock %}
+
 {% block content %}
-<h1>Edit Student: {{ student.user.get_full_name }}</h1>
-    <form method="POST">
-        {% csrf_token %}
 
-        <label>First Name:</label>
-        <input type="text" name="first_name" value="{{ student.user.first_name }}">
-        <br><br>
+<div class="page-header">
+    <div>
+        <h1>Edit Student</h1>
+        <p>{{ student.user.get_full_name }}</p>
+    </div>
+</div>
 
-        <label>Other Name:</label>
-        <input type="text" name="other_name" value="{{ student.user.other_name }}">
-        <br><br>
+<form method="POST" enctype="multipart/form-data">
 
-        <label>Surname:</label>
-        <input type="text" name="last_name" value="{{ student.user.last_name }}">
-        <br><br>
+    {% csrf_token %}
 
-        <label>Class:</label>
-    <select name="school_class">
-        {% for c in classes %}
-        <option value="{{ c.id }}" {% if c.id == student.school_class_id %}selected{% endif %}>{{ c.name }}</option>
-        {% endfor %}
-    </select>
-    <br><br>
 
-    <label>Department:</label>
-    <select name="department">
-        <option value="">-- None --</option>
-        {% for d in departments %}
-        <option value="{{ d.id }}" {% if d.id == student.department_id %}selected{% endif %}>{{ d.name }}</option>
-        {% endfor %}
-    </select>
-    <br><br>
+    <!-- ========================= -->
+    <!-- PERSONAL INFORMATION -->
+    <!-- ========================= -->
 
-    <label>Guardian Name:</label>
-    <input type="text" name="guardian_name" value="{{ student.guardian_name }}">
-    <br><br>
+    <div class="form-card">
 
-    <label>Guardian Phone:</label>
-    <input type="text" name="guardian_phone" value="{{ student.guardian_phone }}">
-    <br><br>
+        <h2>Personal Information</h2>
 
-    <label>Elective Subjects:</label><br>
-    {% for subject in electives %}
-    <label>
-        <input type="checkbox" name="electives" value="{{ subject.id }}"
-            {% if subject in student.elective_subjects.all %}checked{% endif %}>
-        {{ subject.name }}
-    </label><br>
-    {% endfor %}
-    <br>
+        <div class="form-grid">
 
-    <button type="submit">Save Changes</button>
+            <div class="form-group">
+                <label>First Name</label>
+                <input
+                    type="text"
+                    name="first_name"
+                    value="{{ student.user.first_name }}"
+                >
+            </div>
+
+            <div class="form-group">
+                <label>Other Name</label>
+                <input
+                    type="text"
+                    name="other_name"
+                    value="{{ student.user.other_name }}"
+                >
+            </div>
+
+            <div class="form-group">
+                <label>Surname</label>
+                <input
+                    type="text"
+                    name="last_name"
+                    value="{{ student.user.last_name }}"
+                >
+            </div>
+
+            <div class="form-group">
+                <label>Email</label>
+                <input
+                    type="email"
+                    name="email"
+                    value="{{ student.user.email }}"
+                >
+            </div>
+
+            <div class="form-group">
+                <label>Phone Number</label>
+                <input
+                    type="text"
+                    name="phone_number"
+                    value="{{ student.user.phone_number }}"
+                >
+            </div>
+
+            <div class="form-group">
+                <label>Date of Birth</label>
+                <input
+                    type="date"
+                    name="date_of_birth"
+                    value="{{ student.date_of_birth|date:'Y-m-d' }}"
+                >
+            </div>
+
+            <div class="form-group">
+                <label>Gender</label>
+
+                <select name="gender">
+
+                    <option value="">-- Select --</option>
+
+                    <option value="MALE"
+                        {% if student.gender == 'MALE' %}selected{% endif %}>
+                        Male
+                    </option>
+
+                    <option value="FEMALE"
+                        {% if student.gender == 'FEMALE' %}selected{% endif %}>
+                        Female
+                    </option>
+
+                </select>
+
+            </div>
+
+            <div class="form-group">
+                <label>Nationality</label>
+                <input
+                    type="text"
+                    name="nationality"
+                    value="{{ student.nationality }}"
+                >
+            </div>
+
+            <div class="form-group">
+                <label>State of Origin</label>
+                <input
+                    type="text"
+                    name="state_of_origin"
+                    value="{{ student.state_of_origin }}"
+                >
+            </div>
+
+            <div class="form-group">
+                <label>Local Government</label>
+                <input
+                    type="text"
+                    name="local_government"
+                    value="{{ student.local_government }}"
+                >
+            </div>
+
+            <div class="form-group">
+                <label>Religion</label>
+                <input
+                    type="text"
+                    name="religion"
+                    value="{{ student.religion }}"
+                >
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- ========================= -->
+    <!-- PASSPORT -->
+    <!-- ========================= -->
+
+    <div class="form-card">
+
+        <h2>Passport Photograph</h2>
+
+        {% if student.passport %}
+
+            <img
+                src="{{ student.passport.url }}"
+                alt="Student Passport"
+                class="passport-preview"
+            >
+
+        {% endif %}
+
+        <div class="form-group">
+
+            <label>Change Passport</label>
+
+            <input
+                type="file"
+                name="passport"
+                accept="image/*"
+            >
+
+        </div>
+
+    </div>
+
+
+    <!-- ========================= -->
+    <!-- ACADEMIC INFORMATION -->
+    <!-- ========================= -->
+
+    <div class="form-card">
+
+        <h2>Academic Information</h2>
+
+        <div class="form-grid">
+
+            <div class="form-group">
+
+                <label>Admission Number</label>
+
+                <input
+                    type="text"
+                    name="admission_number"
+                    value="{{ student.admission_number }}"
+                >
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label>LIN</label>
+
+                <input
+                    type="text"
+                    name="lin"
+                    value="{{ student.lin|default:'' }}"
+                >
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label>Class</label>
+
+                <select name="school_class">
+
+                    {% for c in classes %}
+
+                    <option
+                        value="{{ c.id }}"
+                        {% if c.id == student.school_class_id %}
+                            selected
+                        {% endif %}
+                    >
+                        {{ c.name }}
+                    </option>
+
+                    {% endfor %}
+
+                </select>
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label>Department</label>
+
+                <select name="department">
+
+                    <option value="">-- None --</option>
+
+                    {% for d in departments %}
+
+                    <option
+                        value="{{ d.id }}"
+                        {% if d.id == student.department_id %}
+                            selected
+                        {% endif %}
+                    >
+                        {{ d.name }}
+                    </option>
+
+                    {% endfor %}
+
+                </select>
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label>Admission Date</label>
+
+                <input
+                    type="date"
+                    name="admission_date"
+                    value="{{ student.admission_date|date:'Y-m-d' }}"
+                >
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label>Previous School</label>
+
+                <input
+                    type="text"
+                    name="previous_school"
+                    value="{{ student.previous_school }}"
+                >
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label>Admission Status</label>
+
+                <select name="admission_status">
+
+                    <option value="ACTIVE"
+                        {% if student.admission_status == 'ACTIVE' %}selected{% endif %}>
+                        Active
+                    </option>
+
+                    <option value="TRANSFERRED"
+                        {% if student.admission_status == 'TRANSFERRED' %}selected{% endif %}>
+                        Transferred
+                    </option>
+
+                    <option value="GRADUATED"
+                        {% if student.admission_status == 'GRADUATED' %}selected{% endif %}>
+                        Graduated
+                    </option>
+
+                    <option value="WITHDRAWN"
+                        {% if student.admission_status == 'WITHDRAWN' %}selected{% endif %}>
+                        Withdrawn
+                    </option>
+
+                </select>
+
+            </div>
+
+        </div>
+
+
+        <h3>Elective Subjects</h3>
+
+        <div class="elective-grid">
+
+            {% for subject in electives %}
+
+            <label class="checkbox-item">
+
+                <input
+                    type="checkbox"
+                    name="electives"
+                    value="{{ subject.id }}"
+                    {% if subject in student.elective_subjects.all %}
+                        checked
+                    {% endif %}
+                >
+
+                {{ subject.name }}
+
+            </label>
+
+            {% endfor %}
+
+        </div>
+
+    </div>
+
+
+    <!-- ========================= -->
+    <!-- ADDRESS -->
+    <!-- ========================= -->
+
+    <div class="form-card">
+
+        <h2>Address</h2>
+
+        <div class="form-group">
+
+            <label>Home Address</label>
+
+            <textarea
+                name="home_address"
+                rows="4"
+            >{{ student.home_address }}</textarea>
+
+        </div>
+
+    </div>
+
+
+    <!-- ========================= -->
+    <!-- GUARDIAN -->
+    <!-- ========================= -->
+
+    <div class="form-card">
+
+        <h2>Parent / Guardian Information</h2>
+
+        <div class="form-grid">
+
+            <div class="form-group">
+
+                <label>Guardian Name</label>
+
+                <input
+                    type="text"
+                    name="guardian_name"
+                    value="{{ student.guardian_name }}"
+                >
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label>Relationship</label>
+
+                <input
+                    type="text"
+                    name="guardian_relationship"
+                    value="{{ student.guardian_relationship }}"
+                >
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label>Guardian Phone</label>
+
+                <input
+                    type="text"
+                    name="guardian_phone"
+                    value="{{ student.guardian_phone }}"
+                >
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label>Guardian Email</label>
+
+                <input
+                    type="email"
+                    name="guardian_email"
+                    value="{{ student.guardian_email }}"
+                >
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- ========================= -->
+    <!-- EMERGENCY CONTACT -->
+    <!-- ========================= -->
+
+    <div class="form-card">
+
+        <h2>Emergency Contact</h2>
+
+        <div class="form-grid">
+
+            <div class="form-group">
+
+                <label>Name</label>
+
+                <input
+                    type="text"
+                    name="emergency_contact_name"
+                    value="{{ student.emergency_contact_name }}"
+                >
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label>Phone</label>
+
+                <input
+                    type="text"
+                    name="emergency_contact_phone"
+                    value="{{ student.emergency_contact_phone }}"
+                >
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- ========================= -->
+    <!-- HEALTH -->
+    <!-- ========================= -->
+
+    <div class="form-card">
+
+        <h2>Health Information</h2>
+
+        <div class="form-grid">
+
+            <div class="form-group">
+
+                <label>Blood Group</label>
+
+                <select name="blood_group">
+
+                    <option value="">-- Select --</option>
+
+                    {% for value, label in blood_groups %}
+
+                    <option
+                        value="{{ value }}"
+                        {% if student.blood_group == value %}
+                            selected
+                        {% endif %}
+                    >
+                        {{ label }}
+                    </option>
+
+                    {% endfor %}
+
+                </select>
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label>Genotype</label>
+
+                <input
+                    type="text"
+                    name="genotype"
+                    value="{{ student.genotype }}"
+                >
+
+            </div>
+
+        </div>
+
+
+        <div class="form-group">
+
+            <label>Medical Condition</label>
+
+            <textarea
+                name="medical_condition"
+                rows="4"
+            >{{ student.medical_condition }}</textarea>
+
+        </div>
+
+    </div>
+
+
+    <!-- ========================= -->
+    <!-- ACCOUNT STATUS -->
+    <!-- ========================= -->
+
+    <div class="form-card">
+
+        <h2>Account Status</h2>
+
+        <label class="checkbox-item">
+
+            <input
+                type="checkbox"
+                name="is_active"
+                {% if student.is_active %}checked{% endif %}
+            >
+
+            Student account is active
+
+        </label>
+
+    </div>
+
+
+    <!-- ========================= -->
+    <!-- ACTIONS -->
+    <!-- ========================= -->
+
+    <div class="form-actions">
+
+        <button type="submit">
+            Save Changes
+        </button>
+
+        <a href="{% url 'student_list' %}">
+            Cancel
+        </a>
+
+    </div>
+
 </form>
-<p><a href="{% url 'student_list' %}">Back to student list</a></p>
+
+
+<style>
+
+.page-header {
+    margin-bottom: 25px;
+}
+
+.page-header h1 {
+    margin-bottom: 5px;
+}
+
+.page-header p {
+    color: #777;
+}
+
+
+.form-card {
+    background: #fff;
+    padding: 25px;
+    margin-bottom: 20px;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,.05);
+}
+
+.form-card h2 {
+    margin-top: 0;
+    margin-bottom: 20px;
+    color: #1a5c1a;
+    font-size: 19px;
+}
+
+.form-card h3 {
+    margin-top: 25px;
+}
+
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 18px;
+}
+
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+}
+
+
+.form-group label {
+    font-weight: 600;
+    font-size: 14px;
+}
+
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    padding: 10px 12px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 14px;
+    box-sizing: border-box;
+    width: 100%;
+}
+
+
+.elective-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+}
+
+
+.checkbox-item {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 14px;
+}
+
+
+.checkbox-item input {
+    width: auto;
+}
+
+
+.passport-preview {
+    width: 110px;
+    height: 130px;
+    object-fit: cover;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    display: block;
+    margin-bottom: 15px;
+}
+
+
+.form-actions {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 30px;
+}
+
+
+.form-actions button,
+.form-actions a {
+    padding: 11px 20px;
+    border-radius: 6px;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+
+.form-actions button {
+    background: #1a5c1a;
+    color: white;
+}
+
+
+.form-actions a {
+    background: #eee;
+    color: #333;
+}
+
+
+@media (max-width: 700px) {
+
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .elective-grid {
+        grid-template-columns: 1fr;
+    }
+
+}
+
+</style>
+
 {% endblock %}

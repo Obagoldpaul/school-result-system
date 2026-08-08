@@ -1,0 +1,99 @@
+{% if school_settings.school_logo %}
+    <img src="{{ school_settings.school_logo.url }}" class="watermark" alt="">
+    {% endif %}
+
+    <div class="school-header">
+        {% if school_settings.school_logo %}
+        <img src="{{ school_settings.school_logo.url }}" alt="School Logo">
+        {% endif %}
+
+        <h1>
+            {{ school_settings.school_name }}
+        </h1>
+
+        <p>
+            {{ school_settings.school_address }}
+        </p>
+
+        <p>
+            Tel: {{ school_settings.school_phone }}
+            |
+            Email: {{ school_settings.school_email }}
+        </p>
+    </div>
+    <div class="top-row">
+
+        <div class="box" style="flex:3;">
+    
+            <table style="border:none; width:100%;">
+                <tr>
+                    <td style="border:none;"><strong>Name:</strong></td>
+                    <td style="border:none;">{{ student.user.get_full_name }}</td>
+                </tr>
+    
+                <tr>
+                    <td style="border:none;"><strong>Admission No:</strong></td>
+                    <td style="border:none;">{{ student.admission_number }}</td>
+                </tr>
+    
+                <tr>
+                    <td style="border:none;"><strong>Class:</strong></td>
+                    <td style="border:none;">{{ student.school_class }}</td>
+                </tr>
+    
+                <tr>
+                    <td style="border:none;"><strong>To:</strong></td>
+                    <td style="border:none;">MR. & MRS. {{ student.user.last_name|default:"________________"|upper }}</td>
+                </tr>
+    
+                <tr>
+                    <td style="border:none;"><strong>Session:</strong></td>
+                    <td style="border:none;">{{ term.session }}</td>
+                </tr>
+    
+                <tr>
+                    <td style="border:none;"><strong>Term:</strong></td>
+                    <td style="border:none;">{{ term.get_name_display }}</td>
+                </tr>
+            </table>
+    
+        </div>
+    
+        <div class="box"
+             style="width:130px; text-align:center;">
+    
+            {% if student.passport %}
+    
+                <img src="{{ student.passport.url }}"
+                     alt="Passport"
+                     style="width:80px;height:95px;object-fit:cover;">
+    
+            {% else %}
+    
+                <div style="
+                    width:80px;
+                    height:95px;
+                    border:1px solid #333;
+                    margin:auto;
+                    display:flex;
+                    align-items:center;
+                    justify-content:center;
+                    font-size:11px;
+                ">
+                    No Photo
+                </div>
+    
+            {% endif %}
+    
+        </div>
+    
+    </div>
+
+    <div class="top-row">
+        <div class="box grading-box">
+            <strong>GRADING SCALE</strong><br>
+            A1 75-100 | B2 70-74 | B3 65-69 | C4 60-64 | C5 55-59 | C6 50-54 |  D7 45-49 | E8 40-44 | F9 0-39<br>
+        </div>
+    </div>
+
+    <div class="report-title">{{ term.session }} ACADEMIC PERFORMANCE REPORT</div>

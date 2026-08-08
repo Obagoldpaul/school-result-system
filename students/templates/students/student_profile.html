@@ -14,29 +14,27 @@ Student Profile
 
             <div class="text-center w-100 py-3">
 
-                <img src="/static/images/logo.png"
-                     style="height:80px;">
-            
+                <img src="/static/images/logo.png" style="height:80px;">
+
                 <h2 class="mt-2 mb-0">
-            
-                    Great Goshenland Blossom School
-            
+
+                    {{ school_settings.school_name }}
+
                 </h2>
-            
+
                 <small>
-            
+
                     Student Bio-Data Record
-            
+
                 </small>
-            
+
             </div>
 
             <h3 class="text-white mb-0">
                 Student Profile
             </h3>
 
-            <a href="{% url 'student_list' %}"
-               class="btn btn-light">
+            <a href="{% url 'student_list' %}" class="btn btn-light">
 
                 ← Back
 
@@ -49,85 +47,85 @@ Student Profile
             <div class="row mb-4">
 
                 <div class="col-md-3">
-            
+
                     <div class="card border-success shadow-sm">
-            
+
                         <div class="card-body text-center">
-            
+
                             <h6 class="text-success mb-1">
                                 Admission No.
                             </h6>
-            
+
                             <h5>
                                 {{ student.admission_number }}
                             </h5>
-            
+
                         </div>
-            
+
                     </div>
-            
+
                 </div>
-            
+
                 <div class="col-md-3">
-            
+
                     <div class="card border-primary shadow-sm">
-            
+
                         <div class="card-body text-center">
-            
+
                             <h6 class="text-primary mb-1">
                                 Class
                             </h6>
-            
+
                             <h5>
                                 {{ student.school_class }}
                             </h5>
-            
+
                         </div>
-            
+
                     </div>
-            
+
                 </div>
-            
+
                 <div class="col-md-3">
-            
+
                     <div class="card border-warning shadow-sm">
-            
+
                         <div class="card-body text-center">
-            
+
                             <h6 class="text-warning mb-1">
                                 Department
                             </h6>
-            
+
                             <h5>
                                 {{ student.department|default:"-" }}
                             </h5>
-            
+
                         </div>
-            
+
                     </div>
-            
+
                 </div>
-            
+
                 <div class="col-md-3">
-            
+
                     <div class="card border-info shadow-sm">
-            
+
                         <div class="card-body text-center">
-            
+
                             <h6 class="text-info mb-1">
                                 LIN
                             </h6>
-            
+
                             <h5>
                                 {{ student.lin }}
                             </h5>
-            
+
                         </div>
-            
+
                     </div>
-            
+
                 </div>
-            
+
             </div>
 
             <div class="row">
@@ -136,10 +134,7 @@ Student Profile
 
                     {% if student.passport %}
 
-                        <img
-                            src="{{ student.passport.url }}"
-                            class="img-thumbnail shadow mb-3"
-                            style="
+                    <img src="{{ student.passport.url }}" class="img-thumbnail shadow mb-3" style="
                                 width:200px;
                                 height:200px;
                                 border-radius:12px;
@@ -148,10 +143,8 @@ Student Profile
 
                     {% else %}
 
-                        <img
-    src="https://via.placeholder.com/200x200?text=No+Photo"
-    class="img-thumbnail shadow mb-3"
-    style="
+                    <img src="https://via.placeholder.com/200x200?text=No+Photo" class="img-thumbnail shadow mb-3"
+                        style="
         width:200px;
         height:200px;
         border-radius:12px;
@@ -167,13 +160,13 @@ Student Profile
                     <h2 class="fw-bold text-success">
 
                         {{ student.user.get_full_name }}
-                    
+
                     </h2>
-                    
+
                     <p class="text-muted">
-                    
+
                         Student Profile Record
-                    
+
                     </p>
 
                     <hr>
@@ -298,29 +291,26 @@ Student Profile
 
             <div class="text-muted">
 
-                    Printed on:
-                    {% now "F d, Y" %}
+                Printed on:
+                {% now "F d, Y" %}
 
             </div>
 
             <div class="text-end">
 
-                <a href="{% url 'edit_student' student.id %}"
-                   class="btn btn-warning">
+                <a href="{% url 'edit_student' student.id %}" class="btn btn-warning">
 
                     ✏ Edit Student
 
                 </a>
 
-                <a href="{% url 'select_report_term' student.id %}"
-                   class="btn btn-success">
+                <a href="{% url 'select_report_term' student.id %}" class="btn btn-success">
 
                     📄 Report Card
 
                 </a>
 
-                <a href="{% url 'student_payment_history' student.id %}"
-                    class="btn btn-outline-success">
+                <a href="{% url 'student_payment_history' student.id %}" class="btn btn-outline-success">
 
                     💰 Payment History
 
@@ -328,12 +318,10 @@ Student Profile
 
                 </a>
 
-                <button
-                    onclick="window.print()"
-                    class="btn btn-primary">
-        
+                <button onclick="window.print()" class="btn btn-primary">
+
                     🖨 Print Profile
-        
+
                 </button>
 
             </div>
@@ -345,57 +333,55 @@ Student Profile
 </div>
 
 <style>
-
     @media print {
-    
+
         .sidebar,
         .topbar,
         footer,
         .btn,
         .card-header a {
-    
+
             display: none !important;
-    
+
         }
-    
+
         body {
-    
+
             background: white !important;
-    
+
         }
-    
+
         .main-area,
         .content,
         .container-fluid {
-    
+
             width: 100% !important;
             margin: 0 !important;
             padding: 0 !important;
-    
+
         }
-    
+
         .card {
-    
+
             border: none !important;
             box-shadow: none !important;
-    
+
         }
-    
+
         .card-header {
-    
+
             background: #ffffff !important;
             color: #000 !important;
             border-bottom: 2px solid #198754;
-    
+
         }
-    
+
         .card-header h3 {
-    
+
             color: #198754 !important;
-    
+
         }
-    
+
     }
-    
-    </style>
+</style>
 {% endblock %}

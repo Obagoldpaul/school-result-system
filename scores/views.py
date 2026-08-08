@@ -209,8 +209,8 @@ def publish_allocation(request, allocation_id):
     return _redirect_with_query(request)
 
 
-@staff_required
 @login_required
+@staff_required
 def class_results(request):
     classes = SchoolClass.objects.all()
     terms = Term.objects.all()

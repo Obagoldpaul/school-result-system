@@ -64,6 +64,11 @@ def is_staff_member(user):
         or is_teacher(user)
     )
 
+def is_bursar(user):
+    return (
+        user.is_authenticated
+        and user.role == user.Role.BURSAR
+    )
 
 # ----------------------------
 # Workflow Permissions
@@ -97,6 +102,12 @@ def can_approve_scores(user):
 def can_publish_scores(user):
     return is_management(user)
 
+
+def can_manage_billing(user):
+    return (
+        is_management(user)
+        or is_bursar(user)
+    )
 
 # ----------------------------
 # Object Permissions

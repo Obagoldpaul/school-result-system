@@ -1,0 +1,140 @@
+<style>
+    @page {
+        size: A4;
+        margin: 1.2cm;
+    }
+
+    body {
+        font-family: Arial, sans-serif;
+        max-width: 800px;
+        margin: auto;
+        padding: 15px;
+        font-size: 11px;
+    }
+
+    .watermark {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 400px;
+        opacity: 0.08;
+        z-index: -1;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    th,
+    td {
+        border: 1px solid #333;
+        padding: 2px 4px;
+        text-align: left;
+        font-size: 11px;
+    }
+
+    .top-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+        margin-bottom: 6px;
+        align-items: flex-start;
+    }
+
+    .box {
+        border: 1px solid #333;
+        padding: 6px;
+        flex: 1;
+    }
+
+    .school-header {
+        text-align: center;
+        margin: 3px 0;
+    }
+
+    .school-header img {
+        height: 40px;
+    }
+
+    .school-header h1 {
+        margin: 3px 0;
+        color: #1a5c1a;
+        font-size: 18px;
+    }
+
+    .school-header p {
+        margin: 1px 0;
+        font-size: 10px;
+        color: #333;
+    }
+
+    .report-title {
+        background: #1a5c1a;
+        color: white;
+        text-align: center;
+        padding: 4px;
+        font-weight: bold;
+        margin: 4px 0;
+        font-size: 12px;
+    }
+
+    .term-banner {
+        background: #d4f0d4;
+        text-align: center;
+        padding: 4px;
+        font-weight: bold;
+        border: 1px solid #333;
+        font-size: 11px;
+    }
+
+    .grading-box {
+        font-size: 10px;
+    }
+
+    .summary-table td {
+        font-weight: bold;
+        padding: 3px 6px;
+    }
+
+    .habits-table th,
+    .habits-table td {
+        text-align: center;
+        padding: 3px;
+    }
+
+    .signature-box {
+        display: flex;
+        margin-top: 8px;
+    }
+
+    .signature-box .box {
+        min-height: 90px;
+    }
+
+    .bottom-row {
+        display: flex;
+        gap: 10px;
+        margin-top: 8px;
+        align-items: flex-start;
+    }
+
+    .bottom-row>div {
+        flex: 1;
+    }
+
+    .no-print {
+        margin-top: 10px;
+    }
+
+    @media print {
+        .no-print {
+            display: none;
+        }
+
+        body {
+            padding: 0;
+        }
+    }
+</style>

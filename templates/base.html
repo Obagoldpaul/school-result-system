@@ -1,6 +1,7 @@
 {% load static %}
 <!DOCTYPE html>
 <html>
+
 <head>
     <title>{% block title %}School Management System{% endblock %}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -13,17 +14,37 @@
     <link rel="stylesheet" href="{% static 'css/sidebar.css' %}">
     <link rel="stylesheet" href="{% static 'css/theme.css' %}">
     <style>
-        * { box-sizing: border-box; }
+        * {
+            box-sizing: border-box;
+        }
+
         body {
             font-family: 'Inter', Arial, sans-serif;
             margin: 0;
             background: #f0f2f0;
             color: #222;
         }
-        h1 { font-weight: 700; color: #16401c; margin-bottom: 8px; }
-        h2, h3 { font-weight: 600; color: #16401c; }
-        a { color: #1a5c1a; }
-        a:hover { color: #0d3d0d; }
+
+        h1 {
+            font-weight: 700;
+            color: #16401c;
+            margin-bottom: 8px;
+        }
+
+        h2,
+        h3 {
+            font-weight: 600;
+            color: #16401c;
+        }
+
+        a {
+            color: #1a5c1a;
+        }
+
+        a:hover {
+            color: #0d3d0d;
+        }
+
         footer {
             text-align: center;
             padding: 16px;
@@ -34,73 +55,128 @@
         }
     </style>
 </head>
+
 <body>
     <div class="app-layout">
         <div class="sidebar">
             <div class="brand">
-                <img src="{% static 'images/logo.png' %}" alt="Logo">
-                <span>GGBS · SRMS</span>
+                {% if school_settings.school_logo %}
+                <img src="{{ school_settings.school_logo.url }}" alt="Logo">
+                {% endif %}
+
+                <span>
+                    {{ school_settings.school_name|default:"School Management System" }}
+                </span>
             </div>
             <nav>
                 <a href="{% url 'dashboard_home' %}">Dashboard</a>
-
-                {% if is_admin %}
-                    <a href="{% url 'class_results' %}">Results</a>
-                    <a href="{% url 'select_allocation' %}">Enter Scores</a>
-                    <a href="{% url 'student_list' %}">Students</a>
-                    <a href="{% url 'promote_class' %}">Promote Class</a>
-                    <a href="{% url 'teacher_list' %}">Teachers</a>
-                    <a href="{% url 'subject_list' %}">Subjects</a>
-                    <a href="{% url 'allocation_list' %}">Allocations</a>
-                    <a href="{% url 'billing_dashboard' %}">Billing</a>
-                    <details>
-    <summary>Attendance</summary>
-    <div class="nav-sub-links">
-        <a href="{% url 'select_class_for_attendance' %}">Mark Attendance</a>
-        <a href="{% url 'class_attendance_summary' %}">View Summary</a>
-    </div>
-</details>
-                    <a href="{% url 'announcement_list' %}">Announcements</a>
-                    <a href="/admin/">Admin</a>
-
-                {% elif is_principal %}
-
-                    <a href="{% url 'class_results' %}">Results</a>
-                    <a href="{% url 'students_owing' %}">Billing</a>
-                    <details>
-    <summary>Attendance</summary>
-    <div class="nav-sub-links">
-        <a href="{% url 'select_class_for_attendance' %}">Mark Attendance</a>
-        <a href="{% url 'class_attendance_summary' %}">View Summary</a>
-    </div>
-</details>
-                    <a href="{% url 'announcement_list' %}">Announcements</a>
-
-                {% elif is_class_teacher %}
-
-                    <a href="{% url 'class_results' %}">My Class</a>
-                    <a href="{% url 'select_allocation' %}">Enter Scores</a>
-                    <details>
-    <summary>Attendance</summary>
-    <div class="nav-sub-links">
-        <a href="{% url 'select_class_for_attendance' %}">Mark Attendance</a>
-        <a href="{% url 'class_attendance_summary' %}">View Summary</a>
-    </div>
-</details>
-
-                {% elif is_teacher %}
-
-                    <a href="{% url 'select_allocation' %}">Enter Scores</a>
-
-                {% elif is_student %}
-
-                    {% if request.user.student_profile %}
-                        <a href="{% url 'select_report_term' request.user.student_profile.id %}">
-                            My Report Card
+            
+                {% if is_management %}
+            
+                <a href="{% url 'class_results' %}">
+                    Results
+                </a>
+            
+                <a href="{% url 'student_list' %}">
+                    Students
+                </a>
+            
+                <a href="{% url 'teacher_list' %}">
+                    Teachers
+                </a>
+            
+                <a href="{% url 'subject_list' %}">
+                    Subjects
+                </a>
+            
+                <a href="{% url 'allocation_list' %}">
+                    Allocations
+                </a>
+            
+                <a href="{% url 'academic_management' %}">
+                    Academic Session & Terms
+                </a>
+            
+                <details>
+                    <summary>Attendance</summary>
+                    <div class="nav-sub-links">
+                        <a href="{% url 'select_class_for_attendance' %}">
+                            Mark Attendance
                         </a>
-                    {% endif %}
-
+                        <a href="{% url 'class_attendance_summary' %}">
+                            View Summary
+                        </a>
+                    </div>
+                </details>
+            
+                <a href="{% url 'announcement_list' %}">
+                    Announcements
+                </a>
+            
+                {% if is_admin %}
+                <a href="{% url 'promote_class' %}">
+                    Promote Class
+                </a>
+            
+                <a href="{% url 'maintenance_home' %}">
+                    Maintenance
+                </a>
+            
+                <a href="/admin/">
+                    Admin
+                </a>
                 {% endif %}
+            
+                {% endif %}
+            
+            
+                <!-- Billing: Management OR Bursar -->
+                {% if can_manage_billing %}
+                <a href="{% url 'billing_dashboard' %}">
+                    Billing
+                </a>
+                {% endif %}
+            
+            
+                {% if is_class_teacher %}
+            
+                <a href="{% url 'class_results' %}">
+                    My Class
+                </a>
+            
+                <a href="{% url 'select_allocation' %}">
+                    Enter Scores
+                </a>
+            
+                <details>
+                    <summary>Attendance</summary>
+                    <div class="nav-sub-links">
+                        <a href="{% url 'select_class_for_attendance' %}">
+                            Mark Attendance
+                        </a>
+            
+                        <a href="{% url 'class_attendance_summary' %}">
+                            View Summary
+                        </a>
+                    </div>
+                </details>
+            
+                {% elif is_teacher %}
+            
+                <a href="{% url 'select_allocation' %}">
+                    Enter Scores
+                </a>
+            
+                {% elif is_student %}
+            
+                {% if request.user.student_profile %}
+                <a href="{% url 'select_report_term' request.user.student_profile.id %}">
+                    My Report Card
+                </a>
+                {% endif %}
+            
+                {% endif %}
+            
             </nav>
 
             {% if request.user.is_authenticated %}
@@ -118,7 +194,8 @@
                 </form>
                 <div class="topbar-right">
                     <div class="notif-wrapper" tabindex="0">
-                        <span class="notif-icon" style="cursor:pointer;">🔔{% if nav_announcement_count %}<span class="notif-badge">{{ nav_announcement_count }}</span>{% endif %}</span>
+                        <span class="notif-icon" style="cursor:pointer;">🔔{% if nav_announcement_count %}<span
+                                class="notif-badge">{{ nav_announcement_count }}</span>{% endif %}</span>
                         <div class="notif-dropdown">
                             {% for a in nav_announcements %}
                             <a href="{% url 'announcement_list' %}" class="notif-item">
@@ -138,11 +215,28 @@
                 {% block content %}
                 {% endblock %}
             </div>
-            <footer>
-                &copy; {% now "Y" %} Great Goshenland Blossom School. All rights reserved.
-            </footer>
-            <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+            <<footer class="text-center mt-4 py-3">
+
+                <small class="text-muted">
+
+                    Powered by <strong>Paul Media</strong>
+                    <br>
+
+                    Licensed to:
+                    <strong>
+                        {{ school_settings.school_name }}
+                    </strong>
+
+                    <br>
+
+                    © 2026 Paul Media. All Rights Reserved.
+
+                </small>
+
+                </footer>
+                <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
         </div>
     </div>
 </body>
+
 </html>

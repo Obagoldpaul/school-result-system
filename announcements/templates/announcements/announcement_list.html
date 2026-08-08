@@ -2,7 +2,7 @@
 {% block title %}Announcements{% endblock %}
 {% block content %}
 <h1>Announcements</h1>
-{% if is_admin or is_principal %}
+{% if is_management %}
 <p><a href="{% url 'post_announcement' %}">+ Post Announcement</a></p>
 {% endif %}
 
@@ -17,12 +17,21 @@
         Posted by {{ a.created_by }} — {{ a.created_at|timesince }} ago —
         <strong>{{ a.get_audience_display }}</strong>
     </p>
-    {% if is_admin or is_principal %}
-    <form method="POST" action="{% url 'delete_announcement' a.id %}" onsubmit="return confirm('Delete this announcement?');" style="display:inline;">
+    {% if is_management %}
+    <form method="POST"
+          action="{% url 'delete_announcement' a.id %}"
+          onsubmit="return confirm('Delete this announcement?');"
+          style="display:inline;">
+
         {% csrf_token %}
-        <button type="submit" style="background:#b83232; color:#fff; border:none; padding:6px 12px; border-radius:4px; cursor:pointer; font-size:12px;">Delete</button>
+
+        <button type="submit"
+                style="background:#b83232; color:#fff; border:none; padding:6px 12px; border-radius:4px; cursor:pointer; font-size:12px;">
+            Delete
+        </button>
+
     </form>
-    {% endif %}
+{% endif %}
 </div>
 {% empty %}
 <p>No announcements yet.</p>
