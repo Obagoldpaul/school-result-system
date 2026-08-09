@@ -1,14 +1,49 @@
 from django.db import models
 
 
+class Feature(models.Model):
+    """
+    Represents a feature/functionality available in Paul SchoolHub.
+
+    Features are assigned to subscription packages.
+    """
+
+    code = models.CharField(
+        max_length=50,
+        unique=True,
+        help_text="Unique internal code used to identify this feature."
+    )
+
+    name = models.CharField(
+        max_length=100
+    )
+
+    description = models.TextField(
+        blank=True
+    )
+
+    is_active = models.BooleanField(
+        default=True
+    )
+
+    class Meta:
+        ordering = ["name"]
+
+    def __str__(self):
+        return self.name
+
+
 class School(models.Model):
     """
     Represents a school using Paul SchoolHub.
-    Each school will have its own students, teachers,
+
+    Each school will eventually have its own students, teachers,
     classes, subjects, billing records, results, etc.
     """
 
-    name = models.CharField(max_length=200)
+    name = models.CharField(
+        max_length=200
+    )
 
     code = models.CharField(
         max_length=20,
@@ -53,7 +88,7 @@ class School(models.Model):
 
 class SubscriptionPackage(models.Model):
     """
-    Defines the packages available to schools.
+    Defines the subscription packages available to schools.
     """
 
     class PackageType(models.TextChoices):
@@ -75,6 +110,12 @@ class SubscriptionPackage(models.Model):
         max_digits=10,
         decimal_places=2,
         default=0
+    )
+
+    features = models.ManyToManyField(
+        Feature,
+        blank=True,
+        related_name="packages"
     )
 
     is_active = models.BooleanField(
