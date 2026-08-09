@@ -52,6 +52,8 @@ INSTALLED_APPS = [
     'announcements',
     'maintenance',
     'core',
+    
+    'schools',
 ]
 
 MIDDLEWARE = [
