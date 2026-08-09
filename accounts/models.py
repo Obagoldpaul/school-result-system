@@ -3,6 +3,15 @@ from django.db import models
 
 
 class User(AbstractUser):
+    
+    school = models.ForeignKey(
+    "schools.School",
+    on_delete=models.SET_NULL,
+    null=True,
+    blank=True,
+    related_name="users",
+    help_text="The school this user belongs to."
+    )
 
     class Role(models.TextChoices):
         ADMIN = "ADMIN", "Admin"
