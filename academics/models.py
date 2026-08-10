@@ -5,15 +5,29 @@ from django.core.exceptions import PermissionDenied
 class AcademicSession(models.Model):
     """e.g. 2025/2026"""
 
-    name = models.CharField(max_length=20, unique=True)
+    school = models.ForeignKey(
+    'schools.School',
+    on_delete=models.PROTECT,
+    related_name='academic_sessions'
+    )
+
+    name = models.CharField(max_length=20)
 
     is_current = models.BooleanField(
         default=False
     )
+    
+    class Meta:
+        unique_together = ('school', 'name')
 
     def save(self, *args, **kwargs):
         if self.is_current:
-            AcademicSession.objects.exclude(pk=self.pk).update(
+            AcademicSession.objects.filter(
+                school=self.school,
+                is_current=True
+            ).exclude(
+                pk=self.pk
+            ).update(
                 is_current=False
             )
 
@@ -67,28 +81,32 @@ class Term(models.Model):
 
         if self.is_current:
 
-            # Deactivate every other current term,
-            # regardless of session.
+        # Deactivate other current terms in the same school.
             Term.objects.filter(
-                is_current=True
-            ).exclude(
-                pk=self.pk
-            ).update(
-                is_current=False
-            )
+                session__school=self.session.school,
+            is_current=True
+        ).exclude(
+            pk=self.pk
+        ).update(
+            is_current=False
+        )
 
-            # Make this term's session the current session.
-            AcademicSession.objects.exclude(
-                pk=self.session_id
-            ).update(
-                is_current=False
-            )
+        # Make this term's session the current session
+        # for this school.
+        AcademicSession.objects.filter(
+            school=self.session.school,
+            is_current=True
+        ).exclude(
+            pk=self.session_id
+        ).update(
+            is_current=False
+        )
 
-            AcademicSession.objects.filter(
-                pk=self.session_id
-            ).update(
-                is_current=True
-            )
+        AcademicSession.objects.filter(
+            pk=self.session_id
+        ).update(
+            is_current=True
+        )
 
         super().save(*args, **kwargs)
 
