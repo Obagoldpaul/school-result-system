@@ -121,6 +121,10 @@ class Teacher(models.Model):
     is_active = models.BooleanField(
         default=True
     )
+    
+    @property
+    def school(self):
+        return self.user.school
 
 
 
