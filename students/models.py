@@ -1,6 +1,9 @@
 from django.db import models
 from django.conf import settings
 
+from django.db import models
+from django.core.exceptions import ValidationError
+
 
 class Department(models.Model):
 
@@ -211,6 +214,37 @@ class Student(models.Model):
         limit_choices_to={"is_elective": True},
         related_name="enrolled_students"
     )
+
+    @property
+    def school(self):
+        return self.user.school
+
+    def clean(self):
+        if not self.user_id:
+            return
+
+        student_school = self.user.school
+
+        if not student_school:
+            raise ValidationError(
+                "The student's user account must belong to a school."
+            )
+
+        if (
+            self.school_class_id
+            and self.school_class.school_id != student_school.id
+        ):
+            raise ValidationError(
+                "The student's class must belong to the same school as the student."
+            )
+
+        if (
+            self.department_id
+            and self.department.school_id != student_school.id
+        ):
+            raise ValidationError(
+                "The student's department must belong to the same school as the student."
+            )
 
     def __str__(self):
         return (
