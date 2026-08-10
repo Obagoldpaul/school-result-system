@@ -55,11 +55,34 @@ class Subject(models.Model):
 
 
 class ClassSubject(models.Model):
-    school_class = models.ForeignKey('students.SchoolClass', on_delete=models.CASCADE)
-    subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
+    school_class = models.ForeignKey(
+        'students.SchoolClass',
+        on_delete=models.CASCADE
+    )
+
+    subject = models.ForeignKey(
+        Subject,
+        on_delete=models.CASCADE
+    )
 
     class Meta:
         unique_together = ('school_class', 'subject')
+
+    def clean(self):
+        from django.core.exceptions import ValidationError
+
+        if (
+            self.school_class_id
+            and self.subject_id
+            and self.school_class.school_id != self.subject.school_id
+        ):
+            raise ValidationError(
+                "The class and subject must belong to the same school."
+            )
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.school_class} - {self.subject}"
