@@ -3,7 +3,21 @@ from django.conf import settings
 
 
 class Department(models.Model):
-    name = models.CharField(max_length=50, unique=True)
+
+    school = models.ForeignKey(
+        'schools.School',
+        on_delete=models.PROTECT,
+        related_name="departments",
+        null=True,
+        blank=True
+    )
+
+    name = models.CharField(
+        max_length=50
+    )
+
+    class Meta:
+        unique_together = ('school', 'name')
 
     def __str__(self):
         return self.name
