@@ -9,14 +9,25 @@ class Department(models.Model):
         return self.name
 
 class SchoolClass(models.Model):
+
+    school = models.ForeignKey(
+        'schools.School',
+        on_delete=models.PROTECT,
+        related_name="classes",
+        null=True,
+        blank=True
+    )
+
     name = models.CharField(
-        max_length=20,
-        unique=True
+        max_length=50
     )  # JSS1, JSS2, JSS3, SSS1...
 
     is_senior = models.BooleanField(
         default=False
     )
+
+    class Meta:
+        unique_together = ('school', 'name')
 
     def __str__(self):
         return self.name
