@@ -1,0 +1,9 @@
+{% extends 'base.html' %}
+
+{% block title %}Edit Subject{% endblock %}
+
+{% block content %}
+
+{% include 'partials/simple_form.html' with page_title="Edit Subject" submit_label="Save Changes" back_url=subject_list_url back_label="Back to Subjects" %}
+
+{% endblock %}

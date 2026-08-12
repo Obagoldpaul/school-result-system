@@ -1,18 +1,73 @@
 {% extends 'base.html' %}
+
 {% block title %}Class Subjects{% endblock %}
+
 {% block content %}
+
 <h1>Class - Subject Assignments</h1>
-<p><a href="{% url 'assign_subject_to_class' %}">+ New Assignment</a></p>
+
+<p>
+    <a href="{% url 'assign_subject_to_class' %}">
+        + New Assignment
+    </a>
+</p>
+
 <table>
+
     <tr>
         <th>Class</th>
         <th>Subject</th>
+        <th>Type</th>
+        <th>Parent Subject</th>
+        <th>Action</th>
     </tr>
+
     {% for cs in class_subjects %}
+
     <tr>
-        <td>{{ cs.school_class }}</td>
-        <td>{{ cs.subject }}</td>
+
+        <td>
+            {{ cs.school_class }}
+        </td>
+
+        <td>
+            {{ cs.subject.name }}
+        </td>
+
+        <td>
+            {% if cs.subject.is_elective %}
+                Elective
+            {% else %}
+                Compulsory
+            {% endif %}
+        </td>
+
+        <td>
+            {% if cs.subject.parent %}
+                {{ cs.subject.parent.name }}
+            {% else %}
+                -
+            {% endif %}
+        </td>
+
+        <td>
+            <a href="{% url 'unassign_subject_from_class' cs.id %}">
+                Unassign
+            </a>
+        </td>
+
     </tr>
+
+    {% empty %}
+
+    <tr>
+        <td colspan="5">
+            No subject assignments found.
+        </td>
+    </tr>
+
     {% endfor %}
+
 </table>
+
 {% endblock %}

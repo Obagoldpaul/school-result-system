@@ -7,8 +7,6 @@ class Subject(models.Model):
         'schools.School',
         on_delete=models.PROTECT,
         related_name="subjects",
-        null=True,
-        blank=True
     )
 
     name = models.CharField(

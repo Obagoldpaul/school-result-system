@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+
+{% block title %}Unassign Subject{% endblock %}
+
+{% block content %}
+
+<h1>Unassign Subject</h1>
+
+<p>
+    Are you sure you want to unassign
+    <strong>{{ assignment.subject.name }}</strong>
+    from
+    <strong>{{ assignment.school_class.name }}</strong>?
+</p>
+
+<form method="POST">
+    {% csrf_token %}
+
+    <button type="submit">
+        Yes, Unassign
+    </button>
+
+    <a href="{% url 'class_subject_list' %}">
+        Cancel
+    </a>
+</form>
+
+{% endblock %}
