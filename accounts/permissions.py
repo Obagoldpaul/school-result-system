@@ -128,6 +128,7 @@ def can_edit_allocation(user, allocation):
 
     return (
         allocation.teacher_id == teacher.id
+        and allocation.school_class.school_id == user.school_id
         and allocation.status == SubjectAllocation.Status.DRAFT
     )
 
@@ -145,10 +146,23 @@ def can_review_allocation(user, allocation):
     return (
         teacher.is_class_teacher
         and teacher.assigned_class_id == allocation.school_class_id
+        and allocation.school_class.school_id == user.school_id
     )
 
 
 def can_view_report(user, student):
+    """
+    Can this user view this student's report card?
+    """
+
+    if not user.is_authenticated or not user.school:
+        return False
+
+    if not student.school_class_id:
+        return False
+
+    if student.school_class.school_id != user.school_id:
+        return False
 
     if is_management(user):
         return True
@@ -160,11 +174,47 @@ def can_view_report(user, student):
 
     teacher = getattr(user, "teacher_profile", None)
 
-    if teacher:
+    if teacher is None:
+        return False
 
-        return (
-            teacher.is_class_teacher
-            and teacher.assigned_class_id == student.school_class_id
-        )
+    return (
+        teacher.is_class_teacher
+        and teacher.assigned_class_id == student.school_class_id
+        and teacher.user.school_id == user.school_id
+    )
 
-    return False
+def can_edit_report_extra(user, student):
+    """
+    Can this user edit the report-card extras for this student?
+    """
+
+    if not user.is_authenticated or not user.school:
+        return False
+
+    if not student.school_class_id:
+        return False
+
+    if student.school_class.school_id != user.school_id:
+        return False
+
+    if is_management(user):
+        return True
+
+    teacher = getattr(user, "teacher_profile", None)
+
+    if teacher is None:
+        return False
+
+    return (
+        teacher.is_class_teacher
+        and teacher.assigned_class_id == student.school_class_id
+        and teacher.user.school_id == user.school_id
+    )
+
+
+def can_edit_principal_remark(user):
+    """
+    Can this user edit the principal's remark?
+    """
+
+    return is_management(user)

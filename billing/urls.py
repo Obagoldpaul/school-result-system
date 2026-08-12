@@ -18,7 +18,6 @@ urlpatterns = [
     path("payment/<int:payment_id>/receipt/", views.payment_receipt, name="payment_receipt",),
     path("payment/<int:payment_id>/receipt/pdf/", views.payment_receipt_pdf, name="payment_receipt_pdf",),
     path("student/<int:student_id>/payments/", views.student_payment_history, name="student_payment_history"),
-    path("payment/<int:payment_id>/receipt/", views.payment_receipt_pdf, name="payment_receipt_pdf"),
     path('fees/<int:fee_id>/edit/', views.edit_fee_structure, name='edit_fee_structure'),
     path('fees/<int:fee_id>/delete/', views.delete_fee_structure, name='delete_fee_structure'),
     path("fees/<int:fee_id>/students/", views.fee_structure_students, name="fee_structure_students",),

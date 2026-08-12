@@ -4,6 +4,7 @@ from .forms import StudentRegistrationForm
 from .models import Student, SchoolClass, Department
 from accounts.decorators import staff_required, management_required
 from django.db import models
+from subjects.models import Subject
 
 @management_required
 @login_required
@@ -12,6 +13,7 @@ def register_student(request):
         form = StudentRegistrationForm(
             request.POST,
             request.FILES,
+            user=request.user,
         )
 
         if form.is_valid():
@@ -19,7 +21,9 @@ def register_student(request):
             return redirect("student_list")
 
     else:
-        form = StudentRegistrationForm()
+        form = StudentRegistrationForm(
+            user=request.user,
+        )
 
     print(form)
     print(form["lin"])
@@ -39,6 +43,7 @@ def student_list(request):
     status = request.GET.get("status", "ACTIVE")
 
     students = Student.objects.filter(
+        user__school=request.user.school,
         admission_status=status
     ).select_related(
         "user",
@@ -63,7 +68,9 @@ def student_list(request):
             models.Q(lin__icontains=search)
         )
 
-    classes = SchoolClass.objects.all().order_by("name")
+    classes = SchoolClass.objects.filter(
+        school=request.user.school
+    ).order_by("name")
 
     status_choices = Student._meta.get_field(
         "admission_status"
@@ -85,7 +92,11 @@ def student_list(request):
 @management_required
 @login_required
 def edit_student(request, student_id):
-    student = get_object_or_404(Student, id=student_id)
+    student = get_object_or_404(
+        Student,
+        id=student_id,
+        user__school=request.user.school,
+    )
 
     if request.method == 'POST':
 
@@ -105,12 +116,27 @@ def edit_student(request, student_id):
         # ACADEMIC INFORMATION
         # -------------------------
 
-        student.school_class_id = request.POST.get('school_class')
+        school_class_id = request.POST.get('school_class')
 
-        student.department_id = (
-            request.POST.get('department')
-            or None
+        school_class = get_object_or_404(
+            SchoolClass,
+            id=school_class_id,
+            school=request.user.school,
         )
+
+        student.school_class = school_class
+
+        department_id = request.POST.get('department')
+
+        if department_id:
+            department = get_object_or_404(
+                Department,
+                id=department_id,
+                school=request.user.school,
+            )
+            student.department = department
+        else:
+            student.department = None
 
         student.admission_number = request.POST.get(
             'admission_number', ''
@@ -234,15 +260,30 @@ def edit_student(request, student_id):
 
         elective_ids = request.POST.getlist('electives')
 
-        student.elective_subjects.set(elective_ids)
+        valid_electives = Subject.objects.filter(
+            id__in=elective_ids,
+            school=request.user.school,
+            is_elective=True,
+            is_active=True,
+        )
+
+        student.elective_subjects.set(valid_electives)
 
         return redirect('student_list')
 
-    from subjects.models import Subject
 
-    classes = SchoolClass.objects.all()
-    departments = Department.objects.all()
-    electives = Subject.objects.filter(is_elective=True)
+    classes = SchoolClass.objects.filter(
+        school=request.user.school
+    )
+
+    departments = Department.objects.filter(
+        school=request.user.school
+    )
+    electives = Subject.objects.filter(
+        school=request.user.school,
+        is_elective=True,
+        is_active=True,
+    )
 
     return render(
         request,
@@ -260,7 +301,9 @@ def edit_student(request, student_id):
 @login_required
 def promote_class(request):
 
-    classes = SchoolClass.objects.all()
+    classes = SchoolClass.objects.filter(
+        school=request.user.school
+    )
 
     if request.method == 'POST':
 
@@ -268,8 +311,24 @@ def promote_class(request):
         to_class_id = request.POST.get('to_class')
         action = request.POST.get('action')
 
+        from_class = get_object_or_404(
+            SchoolClass,
+            id=from_class_id,
+            school=request.user.school,
+        )
+
+        to_class = None
+
+        if to_class_id:
+            to_class = get_object_or_404(
+                SchoolClass,
+                id=to_class_id,
+                school=request.user.school,
+            )
+
         students = Student.objects.filter(
             school_class_id=from_class_id,
+            user__school=request.user.school,
             is_active=True
         )
 
@@ -278,7 +337,7 @@ def promote_class(request):
             if from_class_id and to_class_id and from_class_id != to_class_id:
 
                 count = students.update(
-                    school_class_id=to_class_id,
+                    school_class=to_class,
                     admission_status="ACTIVE",
                     is_active=True
                 )
@@ -289,8 +348,8 @@ def promote_class(request):
                     {
                         'count': count,
                         'action': 'Promoted',
-                        'from_class': SchoolClass.objects.get(id=from_class_id),
-                        'to_class': SchoolClass.objects.get(id=to_class_id),
+                        'from_class': from_class,
+                        'to_class': to_class,
                     }
                 )
 
@@ -308,7 +367,7 @@ def promote_class(request):
                 {
                     'count': count,
                     'action': 'Graduated',
-                    'from_class': SchoolClass.objects.get(id=from_class_id),
+                    'from_class': from_class,
                 }
             )
 
@@ -331,6 +390,7 @@ def student_profile(request, student_id):
             "department",
         ),
         id=student_id,
+        user__school=request.user.school,
     )
 
     return render(

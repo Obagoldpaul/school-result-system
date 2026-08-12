@@ -38,7 +38,7 @@ def build_dashboard(user):
         "subject_count": Subject.objects.filter(is_active=True).count(),
         "class_count": SchoolClass.objects.count(),
         "allocation_count": SubjectAllocation.objects.count(),
-        "current_term": get_current_term(),
+        "current_term": get_current_term(user),
         "is_management": is_management_user(user),
         "can_manage_billing": can_manage_billing(user),
     }

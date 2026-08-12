@@ -13,14 +13,35 @@ admin.site.register(Term)
 class SchoolSettingsAdmin(admin.ModelAdmin):
 
     def has_add_permission(self, request):
-        return SchoolSettings.objects.count() == 0
+        return True
 
     def changelist_view(self, request, extra_context=None):
-        settings = SchoolSettings.load()
 
-        return HttpResponseRedirect(
-            reverse(
-                "admin:academics_schoolsettings_change",
-                args=[settings.pk]
+        school = getattr(
+            request.user,
+            "school",
+            None
+        )
+
+        if school is None:
+            return super().changelist_view(
+                request,
+                extra_context
             )
+
+        settings = SchoolSettings.objects.filter(
+            school=school
+        ).first()
+
+        if settings:
+            return HttpResponseRedirect(
+                reverse(
+                    "admin:academics_schoolsettings_change",
+                    args=[settings.pk]
+                )
+            )
+
+        return super().changelist_view(
+            request,
+            extra_context
         )

@@ -1,8 +1,7 @@
 from django import forms
 from django.contrib.auth import get_user_model
 
-from .models import Student
-
+from .models import Student, SchoolClass, Department
 
 User = get_user_model()
 
@@ -280,6 +279,21 @@ class StudentRegistrationForm(forms.ModelForm):
             )
 
         return username
+    def __init__(self, *args, user=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.user = user
+        if user and user.school:
+            self.fields["school_class"].queryset = SchoolClass.objects.filter(
+                school=user.school
+            )
+
+            self.fields["department"].queryset = Department.objects.filter(
+                school=user.school
+            )
+
+        else:
+            self.fields["school_class"].queryset = SchoolClass.objects.none()
+            self.fields["department"].queryset = Department.objects.none()
 
 
     def clean_admission_number(self):
@@ -319,6 +333,7 @@ class StudentRegistrationForm(forms.ModelForm):
             other_name=self.cleaned_data.get("other_name", ""),
             email=self.cleaned_data.get("email", ""),
             role=User.Role.STUDENT,
+            school=self.user.school,
         )
 
         user.set_password(

@@ -15,12 +15,15 @@ def register_teacher(request):
 
         form = TeacherRegistrationForm(
             request.POST,
-            request.FILES
+            request.FILES,
+            user=request.user,
         )
 
         if form.is_valid():
 
-            form.save()
+            form.save(
+                user=request.user
+            )
 
             return redirect(
                 "teacher_list"
@@ -28,7 +31,7 @@ def register_teacher(request):
 
     else:
 
-        form = TeacherRegistrationForm()
+        form = TeacherRegistrationForm(user=request.user,)
 
 
     return render(
@@ -46,7 +49,7 @@ def register_teacher(request):
 @login_required
 def teacher_list(request):
 
-    teachers = Teacher.objects.all()
+    teachers = Teacher.objects.filter(user__school=request.user.school)
 
     search = request.GET.get("search")
     filter_type = request.GET.get("filter")
@@ -83,20 +86,20 @@ def teacher_list(request):
 
         "filter": filter_type or "",
 
-        "total_teachers": Teacher.objects.count(),
+        "total_teachers": teachers.count(),
 
         "class_teacher_count":
-            Teacher.objects.filter(
+            teachers.filter(
                 is_class_teacher=True
             ).count(),
 
         "assigned_count":
-            Teacher.objects.exclude(
+            teachers.exclude(
                 assigned_class__isnull=True
             ).count(),
 
         "inactive_count":
-            Teacher.objects.filter(
+            teachers.filter(
                 is_active=False
             ).count(),
     }
@@ -113,7 +116,7 @@ def teacher_list(request):
 @management_required
 @login_required
 def edit_teacher(request, teacher_id):
-    teacher = get_object_or_404(Teacher, id=teacher_id)
+    teacher = get_object_or_404(Teacher, id=teacher_id, user__school=request.user.school,)
 
     if request.method == 'POST':
 
@@ -158,7 +161,18 @@ def edit_teacher(request, teacher_id):
         )
 
         assigned_class_id = request.POST.get('assigned_class')
-        teacher.assigned_class_id = assigned_class_id or None
+
+        if assigned_class_id:
+            assigned_class = get_object_or_404(
+                SchoolClass,
+                id=assigned_class_id,
+                school=request.user.school,
+            )
+
+            teacher.assigned_class = assigned_class
+
+        else:
+            teacher.assigned_class = None
 
         teacher.is_active = (
             request.POST.get('is_active') == 'on'
@@ -178,7 +192,7 @@ def edit_teacher(request, teacher_id):
 
         return redirect('teacher_list')
 
-    classes = SchoolClass.objects.all()
+    classes = SchoolClass.objects.filter(school=request.user.school)
 
     return render(
         request,
@@ -195,7 +209,8 @@ def teacher_profile(request, teacher_id):
 
     teacher = get_object_or_404(
         Teacher,
-        id=teacher_id
+        id=teacher_id,
+        user__school=request.user.school,
     )
 
     return render(
@@ -212,7 +227,8 @@ def deactivate_teacher(request, teacher_id):
 
     teacher = get_object_or_404(
         Teacher,
-        id=teacher_id
+        id=teacher_id,
+        user__school=request.user.school,
     )
 
     teacher.is_active = False
@@ -227,7 +243,8 @@ def activate_teacher(request, teacher_id):
 
     teacher = get_object_or_404(
         Teacher,
-        id=teacher_id
+        id=teacher_id,
+        user__school=request.user.school,
     )
 
     teacher.is_active = True
@@ -241,7 +258,8 @@ def print_teacher_profile(request, teacher_id):
 
     teacher = get_object_or_404(
         Teacher,
-        id=teacher_id
+        id=teacher_id,
+        user__school=request.user.school,
     )
 
     return render(

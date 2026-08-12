@@ -24,11 +24,16 @@ def academic_management(request):
         )
         return redirect("dashboard_home")
 
+    school = request.user.school
+
     current_session = AcademicSession.objects.filter(
+        school=school,
         is_current=True
     ).first()
 
-    sessions = AcademicSession.objects.all().order_by("-name")
+    sessions = AcademicSession.objects.filter(
+        school=school
+    ).order_by("-name")
 
     # Which session are we viewing?
     selected_session_id = request.GET.get("session")
@@ -36,7 +41,8 @@ def academic_management(request):
     if selected_session_id:
         selected_session = get_object_or_404(
             AcademicSession,
-            id=selected_session_id
+            id=selected_session_id,
+            school=school,
         )
     else:
         selected_session = current_session
@@ -84,8 +90,9 @@ def create_academic_session(request):
 
     try:
         AcademicSession.objects.create(
-    name=name,
-    )
+            school=request.user.school,
+            name=name,
+        )
 
         messages.success(
             request,
@@ -115,7 +122,8 @@ def set_current_session(request, session_id):
 
     session = get_object_or_404(
         AcademicSession,
-        id=session_id
+        id=session_id,
+        school=request.user.school,
     )
 
     # Find the first term belonging to this session.
@@ -158,7 +166,8 @@ def create_term(request):
 
     session = get_object_or_404(
         AcademicSession,
-        id=request.POST.get("session_id")
+        id=request.POST.get("session_id"),
+        school=request.user.school,
     )
 
     name = request.POST.get("name")
@@ -209,7 +218,8 @@ def set_current_term(request, term_id):
 
     term = get_object_or_404(
         Term,
-        id=term_id
+        id=term_id,
+        session__school=request.user.school,
     )
 
     term.is_current = True

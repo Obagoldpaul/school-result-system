@@ -6,6 +6,8 @@ def get_class_results(school_class, term):
     Returns a list of dicts, one per student, with total score,
     average, and position — sorted by total score descending.
     """
+    if school_class.school_id != term.session.school_id:
+        return []
 
     from students.models import Student
     from .models import Score
@@ -52,7 +54,8 @@ def get_report_card_rows(student, term):
     Returns subject rows for a report card, combining parent/sub-subjects
     into a single averaged row where applicable.
     """
-
+    if student.school_class.school_id != term.session.school_id:
+        return []
     from .models import Score
 
     all_scores = Score.objects.filter(
@@ -117,7 +120,8 @@ def get_cumulative_report_rows(student, term):
     """
     Returns cumulative report rows across terms in the same session.
     """
-
+    if student.school_class.school_id != term.session.school_id:
+        return [], []
     from academics.models import Term
 
     current_order = get_term_order(term)

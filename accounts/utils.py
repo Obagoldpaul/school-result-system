@@ -17,11 +17,17 @@ def get_student(user):
     return getattr(user, "student_profile", None)
 
 
-def get_current_term():
+def get_current_term(user=None):
     """
-    Returns the active school term.
+    Returns the current term for the user's school.
     """
-    return Term.objects.filter(is_current=True).first()
+    if not user or not user.is_authenticated or not user.school:
+        return None
+
+    return Term.objects.filter(
+        session__school=user.school,
+        is_current=True
+    ).first()
 
 
 def is_management_user(user):

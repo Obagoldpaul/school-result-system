@@ -4,25 +4,94 @@ from academics.utils import get_term_order
 
 
 class Score(models.Model):
-    student = models.ForeignKey('students.Student', on_delete=models.CASCADE, related_name='scores')
-    subject = models.ForeignKey('subjects.Subject', on_delete=models.CASCADE)
-    term = models.ForeignKey('academics.Term', on_delete=models.CASCADE)
+    student = models.ForeignKey(
+        'students.Student',
+        on_delete=models.CASCADE,
+        related_name='scores'
+    )
+
+    subject = models.ForeignKey(
+        'subjects.Subject',
+        on_delete=models.CASCADE
+    )
+
+    term = models.ForeignKey(
+        'academics.Term',
+        on_delete=models.CASCADE
+    )
 
     ca_score = models.DecimalField(
-        max_digits=5, decimal_places=2, default=0,
-        validators=[MinValueValidator(0), MaxValueValidator(40)]
-    )
-    exam_score = models.DecimalField(
-        max_digits=5, decimal_places=2, default=0,
-        validators=[MinValueValidator(0), MaxValueValidator(60)]
+        max_digits=5,
+        decimal_places=2,
+        default=0,
+        validators=[
+            MinValueValidator(0),
+            MaxValueValidator(40),
+        ]
     )
 
-    recorded_by = models.ForeignKey('teachers.Teacher', on_delete=models.SET_NULL, null=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    exam_score = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=0,
+        validators=[
+            MinValueValidator(0),
+            MaxValueValidator(60),
+        ]
+    )
+
+    recorded_by = models.ForeignKey(
+        'teachers.Teacher',
+        on_delete=models.SET_NULL,
+        null=True
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True
+    )
+
+    updated_at = models.DateTimeField(
+        auto_now=True
+    )
 
     class Meta:
-        unique_together = ('student', 'subject', 'term')
+        unique_together = (
+            'student',
+            'subject',
+            'term',
+        )
+
+    def clean(self):
+        from django.core.exceptions import ValidationError
+
+        if not self.student_id or not self.subject_id or not self.term_id:
+            return
+
+        student_school_id = self.student.school_class.school_id
+        subject_school_id = self.subject.school_id
+        term_school_id = self.term.session.school_id
+
+        if student_school_id != subject_school_id:
+            raise ValidationError(
+                "The student and subject must belong to the same school."
+        )
+
+        if student_school_id != term_school_id:
+            raise ValidationError(
+                "The student and academic term must belong to the same school."
+        )
+
+        if (
+            self.recorded_by_id
+            and self.recorded_by.user.school_id != student_school_id
+        ):
+            raise ValidationError(
+                "The recording teacher must belong to the same school as the student."
+            )
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
 
     @property
     def total_score(self):
@@ -34,7 +103,10 @@ class Score(models.Model):
         return _grade_from_total(self.total_score)
 
     def __str__(self):
-        return f"{self.student} - {self.subject} - {self.term}: {self.total_score} ({self.grade})"
+        return (
+            f"{self.student} - {self.subject} - {self.term}: "
+            f"{self.total_score} ({self.grade})"
+        )
 
 
 
@@ -66,9 +138,26 @@ class ReportCardExtra(models.Model):
     class Meta:
         unique_together = ('student', 'term')
 
+    def clean(self):
+        from django.core.exceptions import ValidationError
+
+        if not self.student_id or not self.term_id:
+            return
+
+        student_school_id = self.student.school_class.school_id
+        term_school_id = self.term.session.school_id
+
+        if student_school_id != term_school_id:
+            raise ValidationError(
+                "The student and academic term must belong to the same school."
+            )
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
+
     def __str__(self):
         return f"{self.student} - {self.term} extras"
-
 
 
 

@@ -23,8 +23,7 @@ class AcademicSession(models.Model):
     def save(self, *args, **kwargs):
         if self.is_current:
             AcademicSession.objects.filter(
-                school=self.school,
-                is_current=True
+                school=self.school
             ).exclude(
                 pk=self.pk
             ).update(
@@ -81,32 +80,32 @@ class Term(models.Model):
 
         if self.is_current:
 
-        # Deactivate other current terms in the same school.
+        # Deactivate every other current term
+        # belonging to the same school.
             Term.objects.filter(
                 session__school=self.session.school,
-            is_current=True
-        ).exclude(
-            pk=self.pk
-        ).update(
-            is_current=False
-        )
+                is_current=True
+            ).exclude(
+                pk=self.pk
+            ).update(
+                is_current=False
+            )
 
         # Make this term's session the current session
-        # for this school.
-        AcademicSession.objects.filter(
-            school=self.session.school,
-            is_current=True
-        ).exclude(
-            pk=self.session_id
-        ).update(
-            is_current=False
-        )
+        # for this school only.
+            AcademicSession.objects.filter(
+                school=self.session.school
+            ).exclude(
+                pk=self.session_id
+            ).update(
+                is_current=False
+            )
 
-        AcademicSession.objects.filter(
-            pk=self.session_id
-        ).update(
-            is_current=True
-        )
+            AcademicSession.objects.filter(
+                pk=self.session_id
+            ).update(
+                is_current=True
+            )
 
         super().save(*args, **kwargs)
 
@@ -116,11 +115,18 @@ class Term(models.Model):
 
 class SchoolSettings(models.Model):
     """
-    Singleton model for school information.
-    Only one record should ever exist.
+    Settings belonging to one specific school.
     """
 
-    school_name = models.CharField(max_length=200)
+    school = models.OneToOneField(
+        'schools.School',
+        on_delete=models.CASCADE,
+        related_name='settings',
+    )
+
+    school_name = models.CharField(
+        max_length=200
+    )
 
     school_logo = models.ImageField(
         upload_to="school/",
@@ -128,14 +134,18 @@ class SchoolSettings(models.Model):
         null=True,
     )
 
-    school_address = models.TextField(blank=True)
+    school_address = models.TextField(
+        blank=True
+    )
 
     school_phone = models.CharField(
         max_length=30,
         blank=True,
     )
 
-    school_email = models.EmailField(blank=True)
+    school_email = models.EmailField(
+        blank=True
+    )
 
     principal_name = models.CharField(
         max_length=100,
@@ -147,18 +157,23 @@ class SchoolSettings(models.Model):
         blank=True,
         null=True,
     )
+    @classmethod
+    def load(cls, school):
+        """
+        Return the settings belonging to the specified school.
+        """
 
-    def save(self, *args, **kwargs):
-        self.pk = 1
-        super().save(*args, **kwargs)
+        if school is None:
+            raise ValueError(
+                "A school is required to load SchoolSettings."
+            )
+
+        return cls.objects.get(school=school)
 
     def delete(self, *args, **kwargs):
-        raise PermissionDenied("School settings cannot be deleted.")
-
-    @classmethod
-    def load(cls):
-        obj, created = cls.objects.get_or_create(pk=1)
-        return obj
+        raise PermissionDenied(
+            "School settings cannot be deleted."
+        )
 
     def __str__(self):
         return self.school_name

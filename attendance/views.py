@@ -4,7 +4,7 @@ from django.core.exceptions import PermissionDenied
 import datetime
 
 from accounts.decorators import staff_required
-from accounts.permissions import is_management, is_class_teacher
+from accounts.permissions import is_management
 from accounts.utils import get_teacher
 from students.models import Student, SchoolClass
 from .models import AttendanceRecord
@@ -14,112 +14,233 @@ from .models import AttendanceRecord
 @login_required
 def select_class_for_attendance(request):
     teacher = get_teacher(request.user)
-    if is_management(request.user):
-        classes = SchoolClass.objects.all()
-    elif teacher and teacher.is_class_teacher and teacher.assigned_class:
-        classes = SchoolClass.objects.filter(id=teacher.assigned_class_id)
-    else:
-        raise PermissionDenied("Only class teachers, principals, or admins can mark attendance.")
 
-    return render(request, 'attendance/select_class.html', {'classes': classes})
+    if is_management(request.user):
+        classes = SchoolClass.objects.filter(
+            school=request.user.school
+        )
+
+    elif teacher and teacher.is_class_teacher and teacher.assigned_class:
+        classes = SchoolClass.objects.filter(
+            id=teacher.assigned_class_id,
+            school=request.user.school,
+        )
+
+    else:
+        raise PermissionDenied(
+            "Only class teachers, principals, or admins can mark attendance."
+        )
+
+    return render(
+        request,
+        "attendance/select_class.html",
+        {
+            "classes": classes,
+        },
+    )
 
 
 @staff_required
 @login_required
 def mark_attendance(request, class_id):
-    school_class = get_object_or_404(SchoolClass, id=class_id)
+    school_class = get_object_or_404(
+        SchoolClass,
+        id=class_id,
+        school=request.user.school,
+    )
 
     teacher = get_teacher(request.user)
+
     if not is_management(request.user):
-        if not (teacher and teacher.is_class_teacher and teacher.assigned_class_id == school_class.id):
-            raise PermissionDenied("You can only mark attendance for your own class.")
+        if not (
+            teacher
+            and teacher.is_class_teacher
+            and teacher.assigned_class_id == school_class.id
+        ):
+            raise PermissionDenied(
+                "You can only mark attendance for your own class."
+            )
 
-    date_str = request.GET.get('date') or request.POST.get('date')
-    selected_date = datetime.date.fromisoformat(date_str) if date_str else datetime.date.today()
+    date_str = request.GET.get("date") or request.POST.get("date")
 
-    is_weekend = selected_date.weekday() >= 5  # 5 = Saturday, 6 = Sunday
-    
+    try:
+        selected_date = (
+            datetime.date.fromisoformat(date_str)
+            if date_str
+            else datetime.date.today()
+        )
+    except ValueError:
+        raise PermissionDenied("Invalid attendance date.")
 
-    students = Student.objects.filter(school_class=school_class, is_active=True)
+    is_weekend = selected_date.weekday() >= 5
 
-    if request.method == 'POST':
+    students = Student.objects.filter(
+        school_class=school_class,
+        is_active=True,
+    )
+
+    if request.method == "POST":
         if is_weekend:
-            return redirect(f'/attendance/mark/{school_class.id}/?date={selected_date}')
+            return redirect(
+                f"/attendance/mark/{school_class.id}/?date={selected_date}"
+            )
+
         for student in students:
-            is_present = request.POST.get(f'present_{student.id}') == 'on'
+            is_present = request.POST.get(
+                f"present_{student.id}"
+            ) == "on"
+
             AttendanceRecord.objects.update_or_create(
                 student=student,
                 date=selected_date,
-                defaults={'is_present': is_present, 'marked_by': request.user}
+                defaults={
+                    "is_present": is_present,
+                    "marked_by": request.user,
+                },
             )
-        return redirect(f'/attendance/mark/{school_class.id}/?date={selected_date}')
+
+        return redirect(
+            f"/attendance/mark/{school_class.id}/?date={selected_date}"
+        )
 
     existing = {
-        r.student_id: r.is_present for r in AttendanceRecord.objects.filter(
-            student__in=students, date=selected_date
+        record.student_id: record.is_present
+        for record in AttendanceRecord.objects.filter(
+            student__in=students,
+            date=selected_date,
         )
     }
-    student_rows = [(s, existing.get(s.id, True)) for s in students]
 
-    return render(request, 'attendance/mark_attendance.html', {
-        'school_class': school_class,
-        'selected_date': selected_date,
-        'student_rows': student_rows,
-        'is_weekend': is_weekend,
-    })
+    student_rows = [
+        (student, existing.get(student.id, True))
+        for student in students
+    ]
 
-    from django.db.models import Count, Q
-import datetime
+    return render(
+        request,
+        "attendance/mark_attendance.html",
+        {
+            "school_class": school_class,
+            "selected_date": selected_date,
+            "student_rows": student_rows,
+            "is_weekend": is_weekend,
+        },
+    )
 
 
 @staff_required
 @login_required
 def class_attendance_summary(request):
-    from students.models import SchoolClass
-
-    class_id = request.GET.get('class')
-    start_str = request.GET.get('start')
-    end_str = request.GET.get('end')
+    class_id = request.GET.get("class")
+    start_str = request.GET.get("start")
+    end_str = request.GET.get("end")
 
     teacher = get_teacher(request.user)
+
     if is_management(request.user):
-        classes = SchoolClass.objects.all()
+        classes = SchoolClass.objects.filter(
+            school=request.user.school
+        )
+
     elif teacher and teacher.is_class_teacher and teacher.assigned_class:
-        classes = SchoolClass.objects.filter(id=teacher.assigned_class_id)
+        classes = SchoolClass.objects.filter(
+            id=teacher.assigned_class_id,
+            school=request.user.school,
+        )
+
     else:
-        raise PermissionDenied("Only class teachers, principals, or admins can view this report.")
+        raise PermissionDenied(
+            "Only class teachers, principals, or admins can view this report."
+        )
 
     rows = []
     selected_class = None
-    start_date = datetime.date.fromisoformat(start_str) if start_str else None
-    end_date = datetime.date.fromisoformat(end_str) if end_str else None
+
+    try:
+        start_date = (
+            datetime.date.fromisoformat(start_str)
+            if start_str
+            else None
+        )
+
+        end_date = (
+            datetime.date.fromisoformat(end_str)
+            if end_str
+            else None
+        )
+
+    except ValueError:
+        raise PermissionDenied("Invalid attendance date range.")
 
     if class_id:
-        selected_class = get_object_or_404(SchoolClass, id=class_id)
-        if not is_management(request.user) and selected_class.id != teacher.assigned_class_id:
-            raise PermissionDenied("You can only view attendance for your own class.")
+        selected_class = get_object_or_404(
+            SchoolClass,
+            id=class_id,
+            school=request.user.school,
+        )
 
-        students = Student.objects.filter(school_class=selected_class, is_active=True)
+        if not is_management(request.user):
+            if (
+                not teacher
+                or not teacher.is_class_teacher
+                or teacher.assigned_class_id != selected_class.id
+            ):
+                raise PermissionDenied(
+                    "You can only view attendance for your own class."
+                )
+
+        students = Student.objects.filter(
+            school_class=selected_class,
+            is_active=True,
+        )
+
         for student in students:
-            records = AttendanceRecord.objects.filter(student=student)
-            if start_date:
-                records = records.filter(date__gte=start_date)
-            if end_date:
-                records = records.filter(date__lte=end_date)
-            days_marked = records.count()
-            days_present = records.filter(is_present=True).count()
-            percentage = round((days_present / days_marked) * 100, 1) if days_marked else None
-            rows.append({
-                'student': student,
-                'days_marked': days_marked,
-                'days_present': days_present,
-                'percentage': percentage,
-            })
+            records = AttendanceRecord.objects.filter(
+                student=student,
+            )
 
-    return render(request, 'attendance/class_summary.html', {
-        'classes': classes,
-        'selected_class': selected_class,
-        'start_date': start_date,
-        'end_date': end_date,
-        'rows': rows,
-    })
+            if start_date:
+                records = records.filter(
+                    date__gte=start_date
+                )
+
+            if end_date:
+                records = records.filter(
+                    date__lte=end_date
+                )
+
+            days_marked = records.count()
+
+            days_present = records.filter(
+                is_present=True
+            ).count()
+
+            percentage = (
+                round(
+                    (days_present / days_marked) * 100,
+                    1,
+                )
+                if days_marked
+                else None
+            )
+
+            rows.append(
+                {
+                    "student": student,
+                    "days_marked": days_marked,
+                    "days_present": days_present,
+                    "percentage": percentage,
+                }
+            )
+
+    return render(
+        request,
+        "attendance/class_summary.html",
+        {
+            "classes": classes,
+            "selected_class": selected_class,
+            "start_date": start_date,
+            "end_date": end_date,
+            "rows": rows,
+        },
+    )

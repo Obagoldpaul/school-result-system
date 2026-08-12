@@ -15,16 +15,28 @@ from .models import Score, ReportCardExtra
 from .reports import get_class_results
 from .forms import ReportCardExtraForm
 from . import services
+from accounts import permissions
+from django.core.exceptions import PermissionDenied
+from accounts import permissions
+
 
 
 @staff_required
 @login_required
 def select_allocation(request):
+    school = request.user.school
+
     teacher = get_teacher(request.user)
+
     if teacher:
-        allocations = SubjectAllocation.objects.filter(teacher=teacher)
+        allocations = SubjectAllocation.objects.filter(
+            teacher=teacher,
+            school_class__school=school,
+        )
     else:
-        allocations = SubjectAllocation.objects.all()
+        allocations = SubjectAllocation.objects.filter(
+            school_class__school=school,
+        )
 
     class_id = request.GET.get('class')
     term_id = request.GET.get('term')
@@ -32,35 +44,84 @@ def select_allocation(request):
     status = request.GET.get('status')
 
     if term_id:
-        selected_term_obj = Term.objects.filter(id=term_id).first()
+        selected_term_obj = Term.objects.filter(
+            id=term_id,
+            session__school=school,
+        ).first()
+
+        if selected_term_obj:
+            term_id = str(selected_term_obj.id)
+        else:
+            selected_term_obj = None
+            term_id = None
     else:
-        selected_term_obj = get_current_term()
-        term_id = str(selected_term_obj.id) if selected_term_obj else None
+        selected_term_obj = get_current_term(request.user)
+        term_id = (
+            str(selected_term_obj.id)
+            if selected_term_obj
+            else None
+        )
 
     if class_id:
-        allocations = allocations.filter(school_class_id=class_id)
+        allocations = allocations.filter(
+            school_class_id=class_id,
+            school_class__school=school,
+        )
+
     if term_id:
-        allocations = allocations.filter(term_id=term_id)
+        allocations = allocations.filter(
+            term_id=term_id
+        )
+
     if subject_id:
-        allocations = allocations.filter(subject_id=subject_id)
+        allocations = allocations.filter(
+            subject_id=subject_id
+        )
+
     if status:
-        allocations = allocations.filter(status=status)
+        allocations = allocations.filter(
+            status=status
+        )
 
     from subjects.models import Subject
 
-    allocations = allocations.select_related('teacher', 'subject', 'school_class', 'term')
+    allocations = allocations.select_related(
+        'teacher',
+        'subject',
+        'school_class',
+        'term',
+    )
+
+    classes = SchoolClass.objects.filter(
+        school=school
+    )
 
     grouped = []
-    for c in SchoolClass.objects.all():
-        class_allocations = [a for a in allocations if a.school_class_id == c.id]
+
+    for c in classes:
+        class_allocations = [
+            a for a in allocations
+            if a.school_class_id == c.id
+        ]
+
         if class_allocations:
-            grouped.append({'school_class': c, 'allocations': class_allocations})
+            grouped.append({
+                'school_class': c,
+                'allocations': class_allocations,
+            })
 
     context = {
         'grouped': grouped,
-        'classes': SchoolClass.objects.all(),
-        'terms': Term.objects.all(),
-        'subjects': Subject.objects.all(),
+        'classes': classes,
+        'terms': Term.objects.filter(
+            session__school=school
+        ).select_related(
+            'session'
+        ).order_by(
+            '-session__name',
+            'name',
+        ),
+        'subjects': Subject.objects.filter(school=school, is_active=True,),
         'status_choices': SubjectAllocation.Status.choices,
         'selected_class': class_id,
         'selected_term': term_id,
@@ -68,7 +129,12 @@ def select_allocation(request):
         'selected_status': status,
         'current_query': request.GET.urlencode(),
     }
-    return render(request, 'scores/select_allocation.html', context)
+
+    return render(
+        request,
+        'scores/select_allocation.html',
+        context
+    )
 
 
 @staff_required
@@ -212,8 +278,21 @@ def publish_allocation(request, allocation_id):
 @login_required
 @staff_required
 def class_results(request):
-    classes = SchoolClass.objects.all()
-    terms = Term.objects.all()
+    school = request.user.school
+
+    classes = SchoolClass.objects.filter(
+        school=school
+    )
+
+    terms = Term.objects.filter(
+        session__school=school
+    ).select_related(
+        'session'
+    ).order_by(
+        '-session__name',
+        'name',
+    )
+
     results = None
     selected_class = None
     selected_term = None
@@ -222,37 +301,95 @@ def class_results(request):
     term_id = request.GET.get('term')
 
     if class_id and term_id:
-        selected_class = get_object_or_404(SchoolClass, id=class_id)
-        selected_term = get_object_or_404(Term, id=term_id)
-        results = get_class_results(selected_class, selected_term)
+        selected_class = get_object_or_404(
+            SchoolClass,
+            id=class_id,
+            school=school,
+        )
 
-    return render(request, 'scores/class_results.html', {
-        'classes': classes,
-        'terms': terms,
-        'results': results,
-        'selected_class': selected_class,
-        'selected_term': selected_term,
-    })
+        selected_term = get_object_or_404(
+            Term,
+            id=term_id,
+            session__school=school,
+        )
+
+        results = get_class_results(
+            selected_class,
+            selected_term,
+        )
+
+    return render(
+        request,
+        'scores/class_results.html',
+        {
+            'classes': classes,
+            'terms': terms,
+            'results': results,
+            'selected_class': selected_class,
+            'selected_term': selected_term,
+        }
+    )
 
 
 @staff_required
 @login_required
 def edit_report_extra(request, student_id, term_id):
-    student = get_object_or_404(Student, id=student_id)
-    term = get_object_or_404(Term, id=term_id)
-    extra, created = ReportCardExtra.objects.get_or_create(student=student, term=term)
+    student = get_object_or_404(
+        Student,
+        id=student_id,
+        user__school=request.user.school,
+    )
+
+    term = get_object_or_404(
+        Term,
+        id=term_id,
+        session__school=request.user.school,
+    )
+
+    if not permissions.can_edit_report_extra(
+        request.user,
+        student,
+    ):
+        raise PermissionDenied(
+            "You do not have permission to edit this student's report details."
+        )
+
+    extra, created = ReportCardExtra.objects.get_or_create(
+        student=student,
+        term=term,
+    )
 
     if request.method == 'POST':
-        form = ReportCardExtraForm(request.POST, instance=extra)
+        form = ReportCardExtraForm(
+            request.POST,
+            instance=extra,
+            user=request.user,
+        )
+
         if form.is_valid():
             form.save()
-            return redirect('report_card', student_id=student.id, term_id=term.id)
-    else:
-        form = ReportCardExtraForm(instance=extra)
 
-    return render(request, 'scores/edit_report_extra.html', {
-        'form': form, 'student': student, 'term': term
-    })
+            return redirect(
+                'report_card',
+                student_id=student.id,
+                term_id=term.id,
+            )
+
+    else:
+        form = ReportCardExtraForm(
+            instance=extra,
+            user=request.user,
+        )
+
+    return render(
+        request,
+        'scores/edit_report_extra.html',
+        {
+            'form': form,
+            'student': student,
+            'term': term,
+        }
+    )
 
 
 @login_required
@@ -289,14 +426,23 @@ def report_card_pdf(request, student_id, term_id):
 
 @login_required
 def select_report_term(request, student_id):
-    student = get_object_or_404(Student, id=student_id)
+    student = get_object_or_404(
+        Student,
+        id=student_id,
+        user__school=request.user.school,
+    )
 
     student_profile = get_student(request.user)
     if student_profile and student_profile.id != student.id:
         from django.core.exceptions import PermissionDenied
         raise PermissionDenied("You can only view your own report cards.")
 
-    terms = Term.objects.all().order_by('session', 'name')
+    terms = Term.objects.filter(
+        session__school=student.school
+    ).order_by(
+        'session',
+        'name'
+    )
     return render(request, 'scores/select_report_term.html', {
         'student': student,
         'terms': terms,

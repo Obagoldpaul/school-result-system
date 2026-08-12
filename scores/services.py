@@ -5,8 +5,7 @@ from .reports import get_cumulative_report_rows, get_class_results
 from students.models import Student
 from .models import Score
 from .exceptions import ScoreValidationError
-from django.core.exceptions import PermissionDenied
-from allocations.models import SubjectAllocation
+
 
 
 
@@ -48,7 +47,9 @@ def build_report_card_context(student, term):
     'marks_obtainable': marks_obtainable,
     'percentage': percentage,
     'overall_percentage': overall_percentage,
-    'school_settings': SchoolSettings.load(),
+    'school_settings': SchoolSettings.load(
+        student.user.school
+    ),
     
     'days_present': days_present,
     'days_school_opened': days_school_opened,
@@ -58,12 +59,26 @@ def build_report_card_context(student, term):
 
 def check_report_card_access(user, student, term):
     from .models import is_class_term_fully_published
+
     if not can_view_report(user, student):
-        raise PermissionDenied("You do not have permission to view this report card.")
+        raise PermissionDenied(
+            "You do not have permission to view this report card."
+        )
+
+    if student.school_class.school_id != term.session.school_id:
+        raise PermissionDenied(
+            "The student and academic term must belong to the same school."
+        )
 
     from accounts.permissions import is_student
-    if is_student(user) and not is_class_term_fully_published(student.school_class, term):
-        raise PermissionDenied("This term's results have not been fully published yet.")
+
+    if is_student(user) and not is_class_term_fully_published(
+        student.school_class,
+        term,
+    ):
+        raise PermissionDenied(
+            "This term's results have not been fully published yet."
+        )
 
 
 def check_allocation_ownership(user, allocation):

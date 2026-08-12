@@ -4,6 +4,6 @@ from academics.models import SchoolSettings
 class BrandingService:
 
     @staticmethod
-    def settings():
+    def settings(school):
 
-        return SchoolSettings.load()
+        return SchoolSettings.load(school)

@@ -2,6 +2,7 @@ from django import forms
 from django.contrib.auth import get_user_model
 
 from .models import Teacher
+from students.models import SchoolClass
 
 
 User = get_user_model()
@@ -201,6 +202,15 @@ class TeacherRegistrationForm(forms.ModelForm):
                 }
             ),
         }
+    def __init__(self, *args, user=None, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        if user and user.school:
+            self.fields["assigned_class"].queryset = SchoolClass.objects.filter(
+                school=user.school
+            )
+        else:
+            self.fields["assigned_class"].queryset = SchoolClass.objects.none()
 
 
     def clean_username(self):
@@ -235,50 +245,40 @@ class TeacherRegistrationForm(forms.ModelForm):
 
 
 
-    def save(self, commit=True):
+    def save(self, commit=True, user=None):
 
-        user = User(
-
+        new_user = User(
             username=self.cleaned_data["username"],
-
             first_name=self.cleaned_data["first_name"],
-
             last_name=self.cleaned_data["last_name"],
-
             other_name=self.cleaned_data.get(
                 "other_name",
                 ""
             ),
-
             email=self.cleaned_data.get(
                 "email",
                 ""
             ),
-
             role=User.Role.TEACHER,
-
         )
 
+        if user and user.school:
+            new_user.school = user.school
 
-        user.set_password(
+        new_user.set_password(
             self.cleaned_data["password"]
         )
 
-
         if commit:
-            user.save()
-
+            new_user.save()
 
         teacher = super().save(
             commit=False
         )
 
-
-        teacher.user = user
-
+        teacher.user = new_user
 
         if commit:
             teacher.save()
-
 
         return teacher

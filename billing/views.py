@@ -4,6 +4,7 @@ from django.template.loader import get_template
 from django.http import HttpResponse
 from weasyprint import HTML
 from accounts.decorators import management_required
+from accounts.utils import get_current_term
 from students.models import Student, SchoolClass
 from academics.models import Term, SchoolSettings
 from .forms import FeeStructureForm, PaymentForm, OpeningBalanceForm
@@ -13,37 +14,48 @@ from django.db.models import Q
 from django.db import models
 from django.contrib import messages
 from accounts.decorators import billing_required
+from django.core.exceptions import PermissionDenied
 
 
 
-@billing_required
 @login_required
+@billing_required
 def billing_dashboard(request):
 
-    current_term = Term.objects.filter(
-        is_current=True
-    ).first()
+    school = request.user.school
+    current_term = get_current_term(request.user)
 
     total_students = Student.objects.filter(
+        school_class__school=school,
         is_active=True
     ).count()
 
-    total_fee_structures = FeeStructure.objects.count()
+    total_fee_structures = FeeStructure.objects.filter(
+        school_class__school=school
+    ).count()
 
-    total_opening_balances = OpeningBalance.objects.count()
+    total_opening_balances = OpeningBalance.objects.filter(
+        student__user__school=school
+    ).count()
 
-    total_payments = Payment.objects.count()
-    
+    total_payments = Payment.objects.filter(
+        student__user__school=school
+    ).count()
+
     recent_payments = Payment.objects.select_related(
         "student",
         "student__user",
         "term",
         "recorded_by"
+    ).filter(
+        student__user__school=school
     ).order_by(
-    "-date_paid"
+        "-date_paid"
     )[:5]
 
-    total_collected = Payment.objects.aggregate(
+    total_collected = Payment.objects.filter(
+        student__user__school=school
+    ).aggregate(
         total=Sum("amount")
     )["total"] or 0
 
@@ -55,6 +67,7 @@ def billing_dashboard(request):
     if current_term:
 
         students = Student.objects.filter(
+            user__school=school,
             is_active=True
         )
 
@@ -68,16 +81,14 @@ def billing_dashboard(request):
             if balance > 0:
 
                 students_owing += 1
-
                 outstanding += balance
-                
-                expected_revenue = total_collected + outstanding
 
-                if expected_revenue > 0:
+        expected_revenue = total_collected + outstanding
 
-                    collection_rate = (
-                        total_collected / expected_revenue
-                    ) * 100
+        if expected_revenue > 0:
+            collection_rate = (
+                total_collected / expected_revenue
+            ) * 100
 
     context = {
 
@@ -96,11 +107,11 @@ def billing_dashboard(request):
         "students_owing": students_owing,
 
         "outstanding": outstanding,
-        
+
         "expected_revenue": expected_revenue,
 
         "collection_rate": round(collection_rate, 2),
-        
+
         "recent_payments": recent_payments,
 
     }
@@ -111,41 +122,47 @@ def billing_dashboard(request):
         context,
     )
 
-@billing_required
 @login_required
+@billing_required
 def add_fee_structure(request):
-    if request.method == 'POST':
-        form = FeeStructureForm(request.POST)
-        if form.is_valid():
-            form.save()
-            return redirect('fee_structure_list')
-    else:
-        form = FeeStructureForm()
-    return render(request, 'billing/add_fee_structure.html', {
-    'form': form,
-    'fee_structure_list_url': '/billing/fees/',
-    'page_title': 'Add Fee Structure',
-    })
-
-@billing_required
-@login_required
-def edit_fee_structure(request, fee_id):
-
-    fee = get_object_or_404(
-        FeeStructure,
-        id=fee_id
-    )
 
     if request.method == "POST":
 
         form = FeeStructureForm(
             request.POST,
-            instance=fee
+            user=request.user,
         )
 
         if form.is_valid():
 
-            form.save()
+            fee = form.save(commit=False)
+
+            if request.user.is_superuser:
+                fee.save()
+
+            else:
+
+                if fee.school_class.school_id != request.user.school_id:
+                    raise PermissionDenied(
+                        "You cannot create a fee structure "
+                        "for another school."
+                    )
+
+                if fee.term.session.school_id != request.user.school_id:
+                    raise PermissionDenied(
+                        "You cannot use a term from another school."
+                    )
+
+                if (
+                    fee.department
+                    and fee.department.school_id
+                    != request.user.school_id
+                ):
+                    raise PermissionDenied(
+                        "You cannot use a department from another school."
+                    )
+
+                fee.save()
 
             return redirect(
                 "fee_structure_list"
@@ -154,34 +171,124 @@ def edit_fee_structure(request, fee_id):
     else:
 
         form = FeeStructureForm(
-            instance=fee
+            user=request.user,
         )
 
-    return render(request, 'billing/add_fee_structure.html', {
-    'form': form,
-    'fee_structure_list_url': '/billing/fees/',
-    'page_title': 'Edit Fee Structure',
-    })
-    
-@billing_required
+    return render(
+        request,
+        "billing/add_fee_structure.html",
+        {
+            "form": form,
+            "fee_structure_list_url": "/billing/fees/",
+            "page_title": "Add Fee Structure",
+        },
+    )
+
 @login_required
-def delete_fee_structure(request, fee_id):
+@billing_required
+def edit_fee_structure(request, fee_id):
 
     fee = get_object_or_404(
         FeeStructure,
+        id=fee_id,
+        school_class__school=request.user.school
+    )
+
+    if request.method == "POST":
+
+        form = FeeStructureForm(
+            request.POST,
+            instance=fee,
+            user=request.user,
+        )
+
+        if form.is_valid():
+
+            updated_fee = form.save(commit=False)
+
+            if request.user.is_superuser:
+                updated_fee.save()
+
+            else:
+
+                if (
+                    updated_fee.school_class.school_id
+                    != request.user.school_id
+                ):
+                    raise PermissionDenied(
+                        "You cannot assign a fee structure "
+                        "to another school."
+                    )
+
+                if (
+                    updated_fee.term.session.school_id
+                    != request.user.school_id
+                ):
+                    raise PermissionDenied(
+                        "You cannot use a term from another school."
+                    )
+
+                if (
+                    updated_fee.department
+                    and updated_fee.department.school_id
+                    != request.user.school_id
+                ):
+                    raise PermissionDenied(
+                        "You cannot use a department from another school."
+                    )
+
+                updated_fee.save()
+
+            return redirect(
+                "fee_structure_list"
+            )
+
+    else:
+
+        form = FeeStructureForm(
+            instance=fee,
+            user=request.user
+        )
+
+    return render(
+        request,
+        "billing/add_fee_structure.html",
+        {
+            "form": form,
+            "fee_structure_list_url": "/billing/fees/",
+            "page_title": "Edit Fee Structure",
+        },
+    )
+    
+@login_required
+@billing_required
+def delete_fee_structure(request, fee_id):
+
+    fee_queryset = FeeStructure.objects.all()
+
+    if not request.user.is_superuser:
+        fee_queryset = fee_queryset.filter(
+            school_class__school=request.user.school
+        )
+
+    fee = get_object_or_404(
+        fee_queryset,
         id=fee_id
     )
 
     # Prevent accidental deletion
     if request.method == "POST":
 
-        success_message = (f"Fee structure for {fee.school_class} ({fee.term}) was deleted successfully.")
+        success_message = (
+            f"Fee structure for {fee.school_class} "
+            f"({fee.term}) was deleted successfully."
+        )
 
         fee.delete()
 
         messages.success(
-                request,
-                success_message
+            request,
+            success_message
         )
 
         return redirect(
@@ -196,8 +303,8 @@ def delete_fee_structure(request, fee_id):
         }
     )
 
-@billing_required
 @login_required
+@billing_required
 def fee_structure_list(request):
 
     fees = FeeStructure.objects.select_related(
@@ -205,6 +312,11 @@ def fee_structure_list(request):
         "department",
         "term"
     )
+
+    if not request.user.is_superuser:
+        fees = fees.filter(
+            school_class__school=request.user.school
+        )
 
     search = request.GET.get("search", "")
 
@@ -214,23 +326,15 @@ def fee_structure_list(request):
         )
 
     context = {
-
         "fees": fees,
-
         "search": search,
-
-        "total_fees": FeeStructure.objects.count(),
-
-        "total_classes":
-            FeeStructure.objects.values(
-                "school_class"
-            ).distinct().count(),
-
-        "total_terms":
-            FeeStructure.objects.values(
-                "term"
-            ).distinct().count(),
-
+        "total_fees": fees.count(),
+        "total_classes": fees.values(
+            "school_class"
+        ).distinct().count(),
+        "total_terms": fees.values(
+            "term"
+        ).distinct().count(),
     }
 
     return render(
@@ -240,12 +344,19 @@ def fee_structure_list(request):
     )
     
 
-@billing_required
 @login_required
+@billing_required
 def fee_structure_students(request, fee_id):
 
+    fee_queryset = FeeStructure.objects.all()
+
+    if not request.user.is_superuser:
+        fee_queryset = fee_queryset.filter(
+            school_class__school=request.user.school
+        )
+
     fee = get_object_or_404(
-        FeeStructure,
+        fee_queryset,
         id=fee_id
     )
 
@@ -255,6 +366,7 @@ def fee_structure_students(request, fee_id):
         "department"
     ).filter(
         school_class=fee.school_class,
+        user__school=fee.school_class.school,
         is_active=True,
     )
 
@@ -321,11 +433,35 @@ def fee_structure_students(request, fee_id):
         context,
     )
 
-@billing_required
 @login_required
+@billing_required
 def record_payment(request, student_id, term_id):
-    student = get_object_or_404(Student, id=student_id)
-    term = get_object_or_404(Term, id=term_id)
+
+    student_queryset = Student.objects.all()
+    term_queryset = Term.objects.all()
+
+    if not request.user.is_superuser:
+        student_queryset = student_queryset.filter(
+            user__school=request.user.school
+        )
+
+        term_queryset = term_queryset.filter(
+            session__school=request.user.school
+        )
+
+    student = get_object_or_404(
+        student_queryset,
+        id=student_id
+    )
+
+    term = get_object_or_404(
+        term_queryset,
+        id=term_id
+    )
+    if student.user.school_id != term.session.school_id:
+        raise PermissionDenied(
+            "The student and term must belong to the same school."
+        )
 
     if request.method == 'POST':
         form = PaymentForm(request.POST)
@@ -353,63 +489,127 @@ def record_payment(request, student_id, term_id):
     })
 
 
-@billing_required
 @login_required
+@billing_required
 def students_owing(request):
-    class_id = request.GET.get('class')
-    term_id = request.GET.get('term') or (Term.objects.filter(is_current=True).first() and Term.objects.filter(is_current=True).first().id)
+    class_id = request.GET.get("class")
 
-    students = Student.objects.filter(is_active=True)
+    school = request.user.school
+
+    current_term = get_current_term(request.user)
+
+    term_id = request.GET.get("term") or (
+        current_term.id if current_term else None
+    )
+
+    students = Student.objects.filter(
+        user__school=school,
+        is_active=True,
+    )
+
     if class_id:
-        students = students.filter(school_class_id=class_id)
+        students = students.filter(
+            school_class_id=class_id,
+            school_class__school=school,
+        )
 
     rows = []
     term = None
+
     if term_id:
-        term = get_object_or_404(Term, id=term_id)
+        term = get_object_or_404(
+            Term,
+            id=term_id,
+            session__school=school,
+        )
+
         for student in students:
-            fee_amount, total_paid, balance = get_cumulative_balance(student, term)
+            fee_amount, total_paid, balance = get_cumulative_balance(
+                student,
+                term,
+            )
+
             if balance is not None and balance > 0:
                 rows.append({
-                    'student': student,
-                    'fee_amount': fee_amount,
-                    'total_paid': total_paid,
-                    'balance': balance,
+                    "student": student,
+                    "fee_amount": fee_amount,
+                    "total_paid": total_paid,
+                    "balance": balance,
                 })
 
-    return render(request, 'billing/students_owing.html', {
-        'rows': rows,
-        'classes': SchoolClass.objects.all(),
-        'terms': Term.objects.all(),
-        'selected_class': class_id,
-        'selected_term': term_id,
-        'term': term,
-    })
+    return render(
+        request,
+        "billing/students_owing.html",
+        {
+            "rows": rows,
+            "classes": SchoolClass.objects.filter(
+                school=school
+            ),
+            "terms": Term.objects.filter(
+                session__school=school
+            ),
+            "selected_class": class_id,
+            "selected_term": term_id,
+            "term": term,
+        },
+    )
 
 
-@billing_required
 @login_required
+@billing_required
 def add_opening_balance(request):
+
     if request.method == 'POST':
-        form = OpeningBalanceForm(request.POST)
+
+        form = OpeningBalanceForm(
+            request.POST,
+            user=request.user
+        )
+
         if form.is_valid():
-            form.save()
-            return redirect('students_owing')
+
+            balance = form.save(commit=False)
+
+            if (
+                not request.user.is_superuser
+                and balance.student.user.school_id != request.user.school_id
+            ):
+                raise PermissionDenied(
+                    "You cannot create an opening balance for a student "
+                    "from another school."
+                )
+
+            balance.save()
+
+            return redirect(
+                'students_owing'
+            )
+
     else:
-        form = OpeningBalanceForm()
-    return render(request, 'billing/add_opening_balance.html', {
-        'form': form,
-        'students_owing_url': '/billing/owing/',
-    })
+
+        form = OpeningBalanceForm(
+            user=request.user
+        )
+
+    return render(
+        request,
+        'billing/add_opening_balance.html',
+        {
+            'form': form,
+            'students_owing_url': '/billing/owing/',
+        }
+    )
 
 
-@billing_required
 @login_required
+@billing_required
 def opening_balance_list(request):
 
     balances = OpeningBalance.objects.select_related(
         "student",
         "student__user"
+    ).filter(
+        student__user__school=request.user.school
     )
 
     search = request.GET.get("search", "")
@@ -417,11 +617,9 @@ def opening_balance_list(request):
     if search:
 
         balances = balances.filter(
-            student__user__first_name__icontains=search
-        ) | balances.filter(
-            student__user__last_name__icontains=search
-        ) | balances.filter(
-            student__admission_number__icontains=search
+            Q(student__user__first_name__icontains=search)
+            | Q(student__user__last_name__icontains=search)
+            | Q(student__admission_number__icontains=search)
         )
 
     return render(
@@ -441,59 +639,160 @@ def _bill_context_for_student(student, term):
         'fee_amount': fee_amount,
         'total_paid': total_paid,
         'balance': balance,
-        'school_settings': SchoolSettings.load(),
+        'school_settings': SchoolSettings.load(
+            student.user.school
+            ),
     }
 
 
-@billing_required
 @login_required
+@billing_required
 def student_bill(request, student_id, term_id):
-    student = get_object_or_404(Student, id=student_id)
-    term = get_object_or_404(Term, id=term_id)
-    context = _bill_context_for_student(student, term)
-    return render(request, 'billing/bill.html', context)
+
+    student = get_object_or_404(
+        Student,
+        id=student_id,
+        user__school=request.user.school
+    )
+
+    term = get_object_or_404(
+        Term,
+        id=term_id,
+        session__school=request.user.school
+    )
+
+    context = _bill_context_for_student(
+        student,
+        term
+    )
+
+    return render(
+        request,
+        'billing/bill.html',
+        context
+    )
 
 
-@billing_required
 @login_required
+@billing_required
 def student_bill_pdf(request, student_id, term_id):
-    student = get_object_or_404(Student, id=student_id)
-    term = get_object_or_404(Term, id=term_id)
-    context = _bill_context_for_student(student, term)
 
-    template = get_template('billing/bill.html')
-    html_string = template.render(context, request=request)
+    student = get_object_or_404(
+        Student,
+        id=student_id,
+        user__school=request.user.school
+    )
 
-    response = HttpResponse(content_type='application/pdf')
-    response['Content-Disposition'] = f'attachment; filename="{student.admission_number}_bill.pdf"'
-    HTML(string=html_string, base_url=request.build_absolute_uri('/')).write_pdf(response)
+    term = get_object_or_404(
+        Term,
+        id=term_id,
+        session__school=request.user.school
+    )
+
+    context = _bill_context_for_student(
+        student,
+        term
+    )
+
+    template = get_template(
+        'billing/bill.html'
+    )
+
+    html_string = template.render(
+        context,
+        request=request
+    )
+
+    response = HttpResponse(
+        content_type='application/pdf'
+    )
+
+    response['Content-Disposition'] = (
+        f'attachment; '
+        f'filename="{student.admission_number}_bill.pdf"'
+    )
+
+    HTML(
+        string=html_string,
+        base_url=request.build_absolute_uri('/')
+    ).write_pdf(response)
+
     return response
 
 
-@billing_required
 @login_required
+@billing_required
 def class_bill_pdf(request, class_id, term_id):
-    school_class = get_object_or_404(SchoolClass, id=class_id)
-    term = get_object_or_404(Term, id=term_id)
-    students = Student.objects.filter(school_class=school_class, is_active=True)
 
-    bills = [_bill_context_for_student(s, term) for s in students]
+    school_class = get_object_or_404(
+        SchoolClass,
+        id=class_id,
+        school=request.user.school
+    )
 
-    template = get_template('billing/class_bills.html')
-    html_string = template.render({'bills': bills, 'school_class': school_class, 'term': term}, request=request)
+    term = get_object_or_404(
+        Term,
+        id=term_id,
+        session__school=request.user.school
+    )
 
-    response = HttpResponse(content_type='application/pdf')
-    response['Content-Disposition'] = f'attachment; filename="{school_class}_bills.pdf"'
-    HTML(string=html_string, base_url=request.build_absolute_uri('/')).write_pdf(response)
+    students = Student.objects.filter(
+        school_class=school_class,
+        user__school=request.user.school,
+        is_active=True
+    )
+
+    bills = [
+        _bill_context_for_student(
+            student,
+            term
+        )
+        for student in students
+    ]
+
+    template = get_template(
+        'billing/class_bills.html'
+    )
+
+    html_string = template.render(
+        {
+            'bills': bills,
+            'school_class': school_class,
+            'term': term,
+        },
+        request=request
+    )
+
+    response = HttpResponse(
+        content_type='application/pdf'
+    )
+
+    response['Content-Disposition'] = (
+        f'attachment; '
+        f'filename="{school_class}_bills.pdf"'
+    )
+
+    HTML(
+        string=html_string,
+        base_url=request.build_absolute_uri('/')
+    ).write_pdf(response)
+
     return response
 
 
-@billing_required
 @login_required
+@billing_required
 def edit_opening_balance(request, balance_id):
 
+    balance_queryset = OpeningBalance.objects.all()
+
+    if not request.user.is_superuser:
+        balance_queryset = balance_queryset.filter(
+            student__user__school=request.user.school
+        )
+
     balance = get_object_or_404(
-        OpeningBalance,
+        balance_queryset,
         id=balance_id
     )
 
@@ -501,12 +800,25 @@ def edit_opening_balance(request, balance_id):
 
         form = OpeningBalanceForm(
             request.POST,
-            instance=balance
+            instance=balance,
+            user=request.user
         )
 
         if form.is_valid():
 
-            form.save()
+            updated_balance = form.save(commit=False)
+
+            if (
+                not request.user.is_superuser
+                and updated_balance.student.user.school_id
+                != request.user.school_id
+            ):
+                raise PermissionDenied(
+                    "You cannot assign an opening balance "
+                    "to a student from another school."
+                )
+
+            updated_balance.save()
 
             return redirect(
                 "opening_balance_list"
@@ -515,7 +827,8 @@ def edit_opening_balance(request, balance_id):
     else:
 
         form = OpeningBalanceForm(
-            instance=balance
+            instance=balance,
+            user=request.user
         )
 
     return render(
@@ -527,12 +840,19 @@ def edit_opening_balance(request, balance_id):
         },
     )
     
-@billing_required
 @login_required
+@billing_required
 def delete_opening_balance(request, balance_id):
 
+    balance_queryset = OpeningBalance.objects.all()
+
+    if not request.user.is_superuser:
+        balance_queryset = balance_queryset.filter(
+            student__user__school=request.user.school
+        )
+
     balance = get_object_or_404(
-        OpeningBalance,
+        balance_queryset,
         id=balance_id
     )
 
@@ -543,8 +863,8 @@ def delete_opening_balance(request, balance_id):
     )
 
 
-@billing_required
 @login_required
+@billing_required
 def payment_list(request):
 
     payments = Payment.objects.select_related(
@@ -552,7 +872,12 @@ def payment_list(request):
         "student__user",
         "student__school_class",
         "term",
-    ).order_by("-date_paid", "-id")
+    ).filter(
+        student__user__school=request.user.school
+    ).order_by(
+        "-date_paid",
+        "-id"
+    )
 
     search = request.GET.get("search")
     class_id = request.GET.get("class")
@@ -569,12 +894,14 @@ def payment_list(request):
 
     if class_id:
         payments = payments.filter(
-            student__school_class_id=class_id
+            student__school_class_id=class_id,
+            student__school_class__school=request.user.school
         )
 
     if term_id:
         payments = payments.filter(
-            term_id=term_id
+            term_id=term_id,
+            term__session__school=request.user.school
         )
 
     if method:
@@ -587,28 +914,34 @@ def payment_list(request):
         "billing/payment_list.html",
         {
             "payments": payments,
-            "classes": SchoolClass.objects.all(),
-            "terms": Term.objects.all(),
+            "classes": SchoolClass.objects.filter(
+                school=request.user.school
+            ),
+            "terms": Term.objects.filter(
+                session__school=request.user.school
+            ),
             "methods": Payment.PAYMENT_METHODS,
-            "search": search or "",
             "selected_class": class_id or "",
             "selected_term": term_id or "",
             "selected_method": method or "",
         },
     )
     
-@billing_required
 @login_required
+@billing_required
 def payment_receipt(request, payment_id):
 
     payment = get_object_or_404(
         Payment,
-        id=payment_id
+        id=payment_id,
+        student__user__school=request.user.school
     )
 
     context = {
         "payment": payment,
-        "school_settings": SchoolSettings.load(),
+        "school_settings": SchoolSettings.load(
+            payment.student.user.school
+            ),
     }
 
     return render(
@@ -618,20 +951,22 @@ def payment_receipt(request, payment_id):
     )
     
 
-@billing_required
 @login_required
+@billing_required
 def payment_receipt_pdf(request, payment_id):
 
     payment = get_object_or_404(
         Payment,
-        id=payment_id
+        id=payment_id,
+        student__user__school=request.user.school
     )
 
     context = {
         "payment": payment,
-        "school_settings": SchoolSettings.load(),
+        "school_settings": SchoolSettings.load(
+            payment.student.user.school
+        ),
     }
-
 
     template = get_template(
         "billing/payment_receipt.html"
@@ -642,7 +977,6 @@ def payment_receipt_pdf(request, payment_id):
         request=request
     )
 
-
     response = HttpResponse(
         content_type="application/pdf"
     )
@@ -651,26 +985,26 @@ def payment_receipt_pdf(request, payment_id):
         f'attachment; filename="receipt_{payment.receipt_number}.pdf"'
     )
 
-
     HTML(
         string=html_string,
         base_url=request.build_absolute_uri("/")
     ).write_pdf(response)
 
-
     return response
 
-@billing_required
 @login_required
+@billing_required
 def student_payment_history(request, student_id):
 
     student = get_object_or_404(
         Student,
-        id=student_id
+        id=student_id,
+        user__school=request.user.school
     )
 
     payments = Payment.objects.filter(
-        student=student
+        student=student,
+        student__user__school=request.user.school
     ).select_related(
         "term",
         "recorded_by"
@@ -682,7 +1016,6 @@ def student_payment_history(request, student_id):
         total=models.Sum("amount")
     )["total"] or 0
 
-
     return render(
         request,
         "billing/student_payment_history.html",
@@ -690,28 +1023,6 @@ def student_payment_history(request, student_id):
             "student": student,
             "payments": payments,
             "total_paid": total_paid,
-        }
-    )
-    
-@billing_required
-@login_required
-def student_payment_history(request, student_id):
-
-    student = get_object_or_404(
-        Student,
-        id=student_id
-    )
-
-    payments = Payment.objects.filter(
-        student=student
-    ).order_by('-date_paid')
-
-    return render(
-        request,
-        "billing/student_payment_history.html",
-        {
-            "student": student,
-            "payments": payments,
         }
     )
     
