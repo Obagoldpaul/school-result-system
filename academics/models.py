@@ -157,6 +157,29 @@ class SchoolSettings(models.Model):
         blank=True,
         null=True,
     )
+    
+    primary_color = models.CharField(
+        max_length=7,
+        default="#1F4E79",
+        help_text="Primary school colour in HEX format, e.g. #1F4E79.",
+    )
+
+    secondary_color = models.CharField(
+        max_length=7,
+        default="#D9EAF7",
+        help_text="Secondary/accent school colour in HEX format.",
+    )
+
+    report_card_heading = models.CharField(
+        max_length=200,
+        default="STUDENT REPORT CARD",
+    )
+
+    school_motto = models.CharField(
+        max_length=300,
+        blank=True,
+    )
+    
     @classmethod
     def load(cls, school):
         """

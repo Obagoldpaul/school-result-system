@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+
+{% block title %}School Settings{% endblock %}
+
+{% block content %}
+
+<div class="container">
+    <div class="page-header">
+        <h1>School Settings</h1>
+        <p>
+            Manage the information and branding used by
+            {{ school_settings.school_name }}.
+        </p>
+    </div>
+
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+            <div class="alert alert-danger">
+                {{ form.non_field_errors }}
+            </div>
+        {% endif %}
+
+        <div class="form-group">
+            <label for="{{ form.school_name.id_for_label }}">
+                School Name
+            </label>
+            {{ form.school_name }}
+            {{ form.school_name.errors }}
+        </div>
+
+        <div class="form-group">
+            <label for="{{ form.school_logo.id_for_label }}">
+                School Logo
+            </label>
+            {{ form.school_logo }}
+            {{ form.school_logo.errors }}
+        </div>
+
+        {% if school_settings.school_logo %}
+            <div style="margin: 10px 0;">
+                <img
+                    src="{{ school_settings.school_logo.url }}"
+                    alt="School Logo"
+                    style="max-width: 150px; max-height: 150px;"
+                >
+            </div>
+        {% endif %}
+
+        <div class="form-group">
+            <label for="{{ form.school_address.id_for_label }}">
+                School Address
+            </label>
+            {{ form.school_address }}
+            {{ form.school_address.errors }}
+        </div>
+
+        <div class="form-group">
+            <label for="{{ form.school_phone.id_for_label }}">
+                Phone
+            </label>
+            {{ form.school_phone }}
+            {{ form.school_phone.errors }}
+        </div>
+
+        <div class="form-group">
+            <label for="{{ form.school_email.id_for_label }}">
+                Email
+            </label>
+            {{ form.school_email }}
+            {{ form.school_email.errors }}
+        </div>
+
+        <div class="form-group">
+            <label for="{{ form.principal_name.id_for_label }}">
+                Principal's Name
+            </label>
+            {{ form.principal_name }}
+            {{ form.principal_name.errors }}
+        </div>
+
+        <div class="form-group">
+            <label for="{{ form.principal_signature.id_for_label }}">
+                Principal's Signature
+            </label>
+            {{ form.principal_signature }}
+            {{ form.principal_signature.errors }}
+        </div>
+
+        {% if school_settings.principal_signature %}
+            <div style="margin: 10px 0;">
+                <img
+                    src="{{ school_settings.principal_signature.url }}"
+                    alt="Principal Signature"
+                    style="max-width: 250px; max-height: 100px;"
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="{{ form.primary_color.id_for_label }}">
+                    Primary Colour
+                </label>
+                {{ form.primary_color }}
+                {{ form.primary_color.errors }}
+            </div>
+            
+            <div class="form-group">
+                <label for="{{ form.secondary_color.id_for_label }}">
+                    Secondary / Accent Colour
+                </label>
+                {{ form.secondary_color }}
+                {{ form.secondary_color.errors }}
+            </div>
+            
+            <div class="form-group">
+                <label for="{{ form.report_card_heading.id_for_label }}">
+                    Report Card Heading
+                </label>
+                {{ form.report_card_heading }}
+                {{ form.report_card_heading.errors }}
+            </div>
+            
+            <div class="form-group">
+                <label for="{{ form.school_motto.id_for_label }}">
+                    School Motto
+                </label>
+                {{ form.school_motto }}
+                {{ form.school_motto.errors }}
+            </div>
+        {% endif %}
+
+        <button type="submit">
+            Save School Settings
+        </button>
+    </form>
+</div>
+
+{% endblock %}
