@@ -17,11 +17,20 @@ class AttendanceRecord(models.Model):
 
 def get_attendance_summary(student, term):
     """Returns (days_present, days_marked) for a student within a term's date range."""
+
+    if student.school_class.school_id != term.session.school_id:
+        return None, None
+
     if not term.start_date or not term.end_date:
         return None, None
+
     records = AttendanceRecord.objects.filter(
-        student=student, date__gte=term.start_date, date__lte=term.end_date
+        student=student,
+        date__gte=term.start_date,
+        date__lte=term.end_date
     )
+
     days_marked = records.count()
     days_present = records.filter(is_present=True).count()
+
     return days_present, days_marked

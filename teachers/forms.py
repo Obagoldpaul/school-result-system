@@ -205,6 +205,8 @@ class TeacherRegistrationForm(forms.ModelForm):
     def __init__(self, *args, user=None, **kwargs):
         super().__init__(*args, **kwargs)
 
+        self.user = user
+
         if user and user.school:
             self.fields["assigned_class"].queryset = SchoolClass.objects.filter(
                 school=user.school
@@ -233,12 +235,16 @@ class TeacherRegistrationForm(forms.ModelForm):
 
         staff_id = self.cleaned_data["staff_id"]
 
+        if not self.user or not self.user.school:
+            return staff_id
+
         if Teacher.objects.filter(
-            staff_id=staff_id
+            staff_id=staff_id,
+            user__school=self.user.school,
         ).exists():
 
             raise forms.ValidationError(
-                "This staff ID already exists."
+                "This staff ID already exists in this school."
             )
 
         return staff_id

@@ -1,5 +1,6 @@
 from django.db import models
 from django.conf import settings
+from django.core.exceptions import ValidationError
 
 
 class Teacher(models.Model):
@@ -71,7 +72,6 @@ class Teacher(models.Model):
 
     staff_id = models.CharField(
         max_length=20,
-        unique=True
     )
 
 
@@ -125,6 +125,26 @@ class Teacher(models.Model):
     @property
     def school(self):
         return self.user.school
+    
+    def clean(self):
+
+        if not self.user_id:
+            return
+
+        teacher_school = self.user.school
+
+        if not teacher_school:
+            raise ValidationError(
+                "The teacher's user account must belong to a school."
+            )
+
+        if (
+            self.assigned_class_id
+            and self.assigned_class.school_id != teacher_school.id
+        ):
+            raise ValidationError(
+                "The teacher's assigned class must belong to the same school as the teacher."
+            )
 
 
 

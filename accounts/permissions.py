@@ -95,12 +95,36 @@ def can_review_scores(user):
     )
 
 
-def can_approve_scores(user):
-    return is_management(user)
+def can_approve_scores(user, allocation=None):
+    if not user.is_authenticated or not user.school:
+        return False
+
+    if not is_management(user):
+        return False
+
+    if allocation is not None:
+        return (
+            allocation.school_class.school_id
+            == user.school_id
+        )
+
+    return True
 
 
-def can_publish_scores(user):
-    return is_management(user)
+def can_publish_scores(user, allocation=None):
+    if not user.is_authenticated or not user.school:
+        return False
+
+    if not is_management(user):
+        return False
+
+    if allocation is not None:
+        return (
+            allocation.school_class.school_id
+            == user.school_id
+        )
+
+    return True
 
 
 def can_manage_billing(user):
@@ -116,10 +140,31 @@ def can_manage_billing(user):
 def can_edit_allocation(user, allocation):
     """
     Can this user edit this particular allocation?
+
+    An allocation must always belong to the same school
+    as the logged-in user.
     """
+
+    if not user.is_authenticated or not user.school:
+        return False
+
+    # ==========================
+    # MULTI-TENANT SAFETY
+    # ==========================
+
+    if allocation.school_class.school_id != user.school_id:
+        return False
+
+    # ==========================
+    # MANAGEMENT
+    # ==========================
 
     if is_management(user):
         return True
+
+    # ==========================
+    # TEACHER
+    # ==========================
 
     teacher = getattr(user, "teacher_profile", None)
 
@@ -135,6 +180,16 @@ def can_edit_allocation(user, allocation):
 
 def can_review_allocation(user, allocation):
 
+    if not user.is_authenticated or not user.school:
+        return False
+
+    # ==========================
+    # MULTI-TENANT SAFETY
+    # ==========================
+
+    if allocation.school_class.school_id != user.school_id:
+        return False
+
     if is_management(user):
         return True
 
@@ -146,7 +201,7 @@ def can_review_allocation(user, allocation):
     return (
         teacher.is_class_teacher
         and teacher.assigned_class_id == allocation.school_class_id
-        and allocation.school_class.school_id == user.school_id
+        and teacher.user.school_id == user.school_id
     )
 
 

@@ -82,17 +82,53 @@ def check_report_card_access(user, student, term):
 
 
 def check_allocation_ownership(user, allocation):
-    if not _can_edit_allocation(user, allocation) and allocation.status != SubjectAllocation.Status.DRAFT:
-        # allow view access even if not editable; real edit-lock happens in can_edit_allocation below
-        pass
+    """
+    Ensures the allocation belongs to the user's school
+    and that the user is allowed to access it.
+    """
+
+    if not user.is_authenticated or not user.school:
+        raise PermissionDenied(
+            "You do not belong to a school."
+        )
+
+    # ==========================
+    # MULTI-TENANT SAFETY
+    # ==========================
+
+    if allocation.school_class.school_id != user.school_id:
+        raise PermissionDenied(
+            "You cannot access an allocation from another school."
+        )
+
+    # ==========================
+    # MANAGEMENT
+    # ==========================
+
     from accounts.permissions import is_management
+
+    if is_management(user):
+        return
+
+    # ==========================
+    # TEACHER
+    # ==========================
+
     teacher = getattr(user, "teacher_profile", None)
-    if teacher and allocation.teacher_id != teacher.id and not is_management(user):
-        raise PermissionDenied("You are not assigned to teach this subject/class.")
+
+    if teacher is None:
+        raise PermissionDenied(
+            "You are not assigned to this allocation."
+        )
+
+    if allocation.teacher_id != teacher.id:
+        raise PermissionDenied(
+            "You are not assigned to teach this subject/class."
+        )
 
 
 def can_edit_allocation(user, allocation):
-    return _can_edit_allocation(user, allocation) or user.is_superuser
+    return _can_edit_allocation(user, allocation)
 
 
 def submit_allocation_for_review(allocation, user=None):
@@ -238,7 +274,7 @@ def ensure_can_review(user, allocation):
 def ensure_can_approve(user, allocation):
     from accounts.permissions import can_approve_scores
 
-    if not can_approve_scores(user):
+    if not can_approve_scores(user, allocation):
         raise PermissionDenied(
             "You cannot approve results."
         )
@@ -251,7 +287,7 @@ def ensure_can_approve(user, allocation):
 def ensure_can_publish(user, allocation):
     from accounts.permissions import can_publish_scores
 
-    if not can_publish_scores(user):
+    if not can_publish_scores(user, allocation):
         raise PermissionDenied(
             "You cannot publish results."
         )
@@ -260,4 +296,3 @@ def ensure_can_publish(user, allocation):
         raise PermissionDenied(
             "Only Approved results can be published."
         )
-

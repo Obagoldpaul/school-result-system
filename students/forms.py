@@ -300,11 +300,15 @@ class StudentRegistrationForm(forms.ModelForm):
 
         admission_number = self.cleaned_data["admission_number"]
 
+        if not self.user or not self.user.school:
+            return admission_number
+
         if Student.objects.filter(
-            admission_number=admission_number
+            admission_number=admission_number,
+            school_class__school=self.user.school,
         ).exists():
             raise forms.ValidationError(
-                "This admission number already exists."
+                "This admission number already exists in this school."
             )
 
         return admission_number

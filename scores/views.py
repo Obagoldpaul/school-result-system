@@ -140,7 +140,11 @@ def select_allocation(request):
 @staff_required
 @login_required
 def enter_scores(request, allocation_id):
-    allocation = get_object_or_404(SubjectAllocation, id=allocation_id)
+    allocation = get_object_or_404(
+        SubjectAllocation,
+        id=allocation_id,
+        school_class__school=request.user.school,
+        )
     services.check_allocation_ownership(request.user, allocation)
     can_edit = services.can_edit_allocation(request.user, allocation)
 
@@ -192,7 +196,11 @@ def _redirect_with_query(request):
 @staff_required
 @login_required
 def submit_allocation(request, allocation_id):
-    allocation = get_object_or_404(SubjectAllocation, id=allocation_id)
+    allocation = get_object_or_404(
+        SubjectAllocation, 
+        id=allocation_id,
+        school_class__school=request.user.school,
+    )
 
     services.ensure_can_submit(
         request.user,
@@ -210,7 +218,10 @@ def submit_allocation(request, allocation_id):
 @staff_required
 @login_required
 def review_allocation(request, allocation_id):
-    allocation = get_object_or_404(SubjectAllocation, id=allocation_id)
+    allocation = get_object_or_404(
+        SubjectAllocation, 
+        id=allocation_id,
+        school_class__school=request.user.school,)
 
     services.ensure_can_review(
         request.user,
@@ -239,6 +250,7 @@ def approve_allocation(request, allocation_id):
     allocation = get_object_or_404(
         SubjectAllocation,
         id=allocation_id,
+        school_class__school=request.user.school,
     )
 
     services.ensure_can_approve(
@@ -260,6 +272,7 @@ def publish_allocation(request, allocation_id):
     allocation = get_object_or_404(
         SubjectAllocation,
         id=allocation_id,
+        school_class__school=request.user.school,
     )
 
     services.ensure_can_publish(
