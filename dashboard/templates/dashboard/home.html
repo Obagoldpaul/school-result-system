@@ -46,11 +46,7 @@
 
             {% if school_settings.school_logo %}
 
-            <img
-                src="{{ school_settings.school_logo.url }}"
-                style="height:90px;"
-                alt="School Logo"
-            >
+            <img src="{{ school_settings.school_logo.url }}" style="height:90px;" alt="School Logo">
 
             {% endif %}
 
@@ -181,10 +177,7 @@
 
         <div class="col-md-3">
 
-            <a
-                href="{% url 'billing_dashboard' %}"
-                class="btn btn-success w-100 py-3"
-            >
+            <a href="{% url 'billing_dashboard' %}" class="btn btn-success w-100 py-3">
 
                 💰<br>
 
@@ -197,10 +190,7 @@
 
         <div class="col-md-3">
 
-            <a
-                href="{% url 'students_owing' %}"
-                class="btn btn-warning w-100 py-3"
-            >
+            <a href="{% url 'students_owing' %}" class="btn btn-warning w-100 py-3">
 
                 ⚠️<br>
 
@@ -213,10 +203,7 @@
 
         <div class="col-md-3">
 
-            <a
-                href="{% url 'fee_structure_list' %}"
-                class="btn btn-success w-100 py-3"
-            >
+            <a href="{% url 'fee_structure_list' %}" class="btn btn-success w-100 py-3">
 
                 📋<br>
 
@@ -229,10 +216,7 @@
 
         <div class="col-md-3">
 
-            <a
-                href="{% url 'payment_list' %}"
-                class="btn btn-success w-100 py-3"
-            >
+            <a href="{% url 'payment_list' %}" class="btn btn-success w-100 py-3">
 
                 🧾<br>
 
@@ -329,6 +313,202 @@
 {% endif %}
 
 {% endif %}
+
+<!-- =========================================================
+BIRTHDAYS
+========================================================= -->
+
+<div class="section-card">
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+
+        <h3 class="mb-0">
+            🎂 Birthdays
+        </h3>
+
+        <span style="font-size:13px; color:#777;">
+            Next 30 days
+        </span>
+
+    </div>
+
+
+    <!-- Today's Birthdays -->
+
+    {% if today_birthdays %}
+
+    <div style="margin-bottom:20px;">
+
+        <h5 style="color:#1a5c1a; margin-bottom:10px;">
+            🎉 Today
+        </h5>
+
+
+        {% for birthday in today_birthdays %}
+
+        <div style="
+           padding:12px;
+           background:#f0f8f1;
+           border-left:4px solid #1a5c1a;
+           border-radius:6px;
+           margin-bottom:8px;
+       ">
+
+            <strong>
+                {{ birthday.name }}
+            </strong>
+
+            <div style="font-size:13px; color:#666; margin-top:3px;">
+
+                {{ birthday.type }}
+
+                {% if birthday.class %}
+                • {{ birthday.class }}
+                {% endif %}
+
+                — Birthday today! 🎉
+
+            </div>
+
+        </div>
+
+        {% endfor %}
+
+    </div>
+
+    {% else %}
+
+    <div style="
+       padding:12px;
+       background:#f8f8f8;
+       border-radius:6px;
+       color:#777;
+       margin-bottom:20px;
+   ">
+
+        No birthdays today.
+
+    </div>
+
+    {% endif %}
+
+
+    <!-- Upcoming Birthdays -->
+
+    <h5 style="color:#16401c; margin-bottom:10px;">
+        Upcoming
+    </h5>
+
+
+    {% if upcoming_birthdays %}
+
+    <div class="table-responsive">
+
+        <table>
+
+            <thead>
+
+                <tr>
+
+                    <th>
+                        Name
+                    </th>
+
+                    <th>
+                        Type
+                    </th>
+
+                    <th>
+                        Class / Role
+                    </th>
+
+                    <th>
+                        Birthday
+                    </th>
+
+                    <th>
+                        When
+                    </th>
+
+                </tr>
+
+            </thead>
+
+
+            <tbody>
+
+                {% for birthday in upcoming_birthdays %}
+
+                <tr>
+
+                    <td>
+                        <strong>
+                            {{ birthday.name }}
+                        </strong>
+                    </td>
+
+
+                    <td>
+                        {{ birthday.type }}
+                    </td>
+
+
+                    <td>
+
+                        {% if birthday.class %}
+                        {{ birthday.class }}
+                        {% else %}
+                        Staff
+                        {% endif %}
+
+                    </td>
+
+
+                    <td>
+                        {{ birthday.birthday|date:"M d" }}
+                    </td>
+
+
+                    <td>
+
+                        {% if birthday.days_until == 1 %}
+
+                        Tomorrow 🎂
+
+                        {% else %}
+
+                        In {{ birthday.days_until }} days
+
+                        {% endif %}
+
+                    </td>
+
+                </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+    {% else %}
+
+    <div style="
+       padding:12px;
+       background:#f8f8f8;
+       border-radius:6px;
+       color:#777;
+   ">
+
+        No upcoming birthdays in the next 30 days.
+
+    </div>
+
+    {% endif %}
+
+</div>
 
 
 <!-- =========================================================
@@ -498,16 +678,13 @@
         Quick Actions
     </h3>
 
-
     <div class="row g-3">
 
-
+        <!-- Register Student -->
         <div class="col-md-3">
 
-            <a
-                href="{% url 'register_student' %}"
-                class="btn btn-success w-100 py-3"
-            >
+            <a href="{% url 'register_student' %}"
+               class="btn btn-success w-100 py-3">
 
                 👨‍🎓<br>
 
@@ -518,12 +695,26 @@
         </div>
 
 
+        <!-- Class Management -->
         <div class="col-md-3">
 
-            <a
-                href="{% url 'register_teacher' %}"
-                class="btn btn-success w-100 py-3"
-            >
+            <a href="{% url 'class_management' %}"
+               class="btn btn-success w-100 py-3">
+
+                🏫<br>
+
+                Class Management
+
+            </a>
+
+        </div>
+
+
+        <!-- Register Teacher -->
+        <div class="col-md-3">
+
+            <a href="{% url 'register_teacher' %}"
+               class="btn btn-success w-100 py-3">
 
                 👩‍🏫<br>
 
@@ -534,12 +725,11 @@
         </div>
 
 
+        <!-- Allocate Subjects -->
         <div class="col-md-3">
 
-            <a
-                href="{% url 'add_allocation' %}"
-                class="btn btn-success w-100 py-3"
-            >
+            <a href="{% url 'add_allocation' %}"
+               class="btn btn-success w-100 py-3">
 
                 📚<br>
 
@@ -550,12 +740,11 @@
         </div>
 
 
+        <!-- Billing -->
         <div class="col-md-3">
 
-            <a
-                href="{% url 'students_owing' %}"
-                class="btn btn-success w-100 py-3"
-            >
+            <a href="{% url 'students_owing' %}"
+               class="btn btn-success w-100 py-3">
 
                 💰<br>
 
@@ -565,11 +754,9 @@
 
         </div>
 
-
     </div>
 
 </div>
-
 
 <!-- Pending Approval -->
 
@@ -581,15 +768,13 @@
 
         Awaiting Your Approval
 
-        <span
-            style="
+        <span style="
                 background:#d9822b;
                 color:#fff;
                 border-radius:10px;
                 padding:2px 8px;
                 font-size:12px;
-            "
-        >
+            ">
             {{ pending_approval|length }}
         </span>
 
@@ -637,10 +822,7 @@
 
             <td>
 
-                <a
-                    href="{% url 'approve_allocation' a.id %}"
-                    onclick="return confirm('Approve these results?')"
-                >
+                <a href="{% url 'approve_allocation' a.id %}" onclick="return confirm('Approve these results?')">
                     Approve
                 </a>
 
@@ -667,15 +849,13 @@
 
         Approved, Ready to Publish
 
-        <span
-            style="
+        <span style="
                 background:#d9822b;
                 color:#fff;
                 border-radius:10px;
                 padding:2px 8px;
                 font-size:12px;
-            "
-        >
+            ">
             {{ pending_publish|length }}
         </span>
 
@@ -723,10 +903,8 @@
 
             <td>
 
-                <a
-                    href="{% url 'publish_allocation' a.id %}"
-                    onclick="return confirm('Publish these results? Students will be able to see them.')"
-                >
+                <a href="{% url 'publish_allocation' a.id %}"
+                    onclick="return confirm('Publish these results? Students will be able to see them.')">
                     Publish
                 </a>
 
@@ -754,32 +932,26 @@
     </h3>
 
 
-    <ul
-        style="
+    <ul style="
             list-style:none;
             padding:0;
             margin:0;
-        "
-    >
+        ">
 
         {% for activity in recent_activities %}
 
-        <li
-            style="
+        <li style="
                 padding:8px 0;
                 border-bottom:1px solid #eee;
                 font-size:13px;
-            "
-        >
+            ">
 
             {{ activity.description }}
 
-            <span
-                style="
+            <span style="
                     color:#999;
                     float:right;
-                "
-            >
+                ">
                 {{ activity.created_at|timesince }} ago
             </span>
 
@@ -821,9 +993,7 @@
 
     <div class="stat-card">
 
-        <div
-            class="stat-number"
-            style="
+        <div class="stat-number" style="
                 font-size:16px;
                 color:
                 {% if latest_result_published %}
@@ -831,13 +1001,12 @@
                 {% else %}
                     #d9822b
                 {% endif %};
-            "
-        >
+            ">
 
             {% if latest_result_published %}
-                Published
+            Published
             {% else %}
-                Not Yet
+            Not Yet
             {% endif %}
 
         </div>
@@ -861,17 +1030,14 @@
     </h3>
 
 
-    <a
-        href="{% url 'select_report_term' my_student_id %}"
-        style="
+    <a href="{% url 'select_report_term' my_student_id %}" style="
             border:1px solid #1a5c1a;
             color:#1a5c1a;
             padding:8px 14px;
             text-decoration:none;
             border-radius:4px;
             display:inline-block;
-        "
-    >
+        ">
         View My Report Card
     </a>
 
@@ -886,14 +1052,12 @@
 
     <details>
 
-        <summary
-            style="
+        <summary style="
                 cursor:pointer;
                 font-weight:600;
                 color:#16401c;
                 font-size:16px;
-            "
-        >
+            ">
 
             My Fees ({{ my_fee_term }}) — click to view
 
@@ -926,8 +1090,7 @@
                     Balance:
                 </strong>
 
-                <span
-                    style="
+                <span style="
                         color:
                         {% if my_balance > 0 %}
                             #b83232
@@ -936,8 +1099,7 @@
                         {% endif %};
 
                         font-weight:600;
-                    "
-                >
+                    ">
                     ₦{{ my_balance|intcomma }}
                 </span>
 
@@ -1020,16 +1182,14 @@
 
         {% if my_draft_count > 0 %}
 
-        <span
-            style="
+        <span style="
                 background:#d9822b;
                 color:#fff;
                 border-radius:10px;
                 padding:2px 8px;
                 font-size:12px;
                 margin-left:6px;
-            "
-        >
+            ">
             {{ my_draft_count }} awaiting submission
         </span>
 
@@ -1196,9 +1356,7 @@
 
                 {% if my_class_term %}
 
-                <a
-                    href="{% url 'edit_report_extra' s.id my_class_term.id %}"
-                >
+                <a href="{% url 'edit_report_extra' s.id my_class_term.id %}">
                     Remarks/Attendance
                 </a>
 

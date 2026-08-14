@@ -53,47 +53,112 @@
 
     <form method="GET" class="allocation-filter">
 
+        <!-- TERM FILTER -->
+    
         <div class="filter-field">
-
+    
             <label for="term">
                 Academic Term
             </label>
-
-            <select name="term" id="term" onchange="this.form.submit()">
-
+    
+            <select
+                name="term"
+                id="term"
+                onchange="this.form.submit()"
+            >
+    
                 {% for t in terms %}
-
-                <option value="{{ t.id }}" {% if selected_term and t.id == selected_term.id %} selected {% endif %}>
-                    {{ t }}
-                </option>
-
+    
+                    <option
+                        value="{{ t.id }}"
+                        {% if selected_term and t.id == selected_term.id %}
+                            selected
+                        {% endif %}
+                    >
+                        {{ t }}
+                    </option>
+    
                 {% endfor %}
-
+    
             </select>
-
+    
         </div>
-
-
-        {% if selected_term %}
-
-        <div class="selected-term">
-
-            Currently viewing:
-
-            <strong>
-                {{ selected_term }}
-            </strong>
-
+    
+    
+        <!-- CLASS FILTER -->
+    
+        <div class="filter-field">
+    
+            <label for="class">
+                Class
+            </label>
+    
+            <select
+                name="class"
+                id="class"
+                onchange="this.form.submit()"
+            >
+    
+                <option value="">
+                    All Classes
+                </option>
+    
+                {% for c in classes %}
+    
+                    <option
+                        value="{{ c.id }}"
+                        {% if selected_class and c.id == selected_class.id %}
+                            selected
+                        {% endif %}
+                    >
+                        {{ c.name }}
+                    </option>
+    
+                {% endfor %}
+    
+            </select>
+    
         </div>
-
+    
+    
+        {% if selected_term or selected_class %}
+    
+            <div class="selected-term">
+    
+                Currently viewing:
+    
+                {% if selected_term %}
+                    <strong>{{ selected_term }}</strong>
+                {% endif %}
+    
+                {% if selected_class %}
+                    —
+                    <strong>{{ selected_class.name }}</strong>
+                {% endif %}
+    
+            </div>
+    
         {% endif %}
-
+    
+    
         {% if is_management %}
-        <a href="{% url 'add_allocation' %}" class="add-button">
-            + New Allocation
-        </a>
+    
+            <a
+                href="{% url 'add_allocation' %}"
+                class="add-button"
+            >
+                + New Allocation
+            </a>
+    
+            <a
+                href="{% url 'bulk_add_allocation' %}"
+                class="btn btn-success"
+            >
+                Bulk Allocate Subjects
+            </a>
+    
         {% endif %}
-
+    
     </form>
 
 </div>

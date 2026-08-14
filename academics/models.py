@@ -180,6 +180,11 @@ class SchoolSettings(models.Model):
         blank=True,
     )
     
+    show_class_position = models.BooleanField(
+        default=True,
+        help_text="Show the student's class position on the report card.",
+    )
+    
     @classmethod
     def load(cls, school):
         """

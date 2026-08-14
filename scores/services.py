@@ -47,6 +47,7 @@ def build_report_card_context(student, term):
     'marks_obtainable': marks_obtainable,
     'percentage': percentage,
     'overall_percentage': overall_percentage,
+    'position': position,
     'school_settings': SchoolSettings.load(
         student.user.school
     ),

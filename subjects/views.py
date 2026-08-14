@@ -1,9 +1,15 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 
-from .forms import SubjectForm, ClassSubjectForm
+from .forms import (
+    SubjectForm,
+    ClassSubjectForm,
+    BulkClassSubjectForm,
+)
 from .models import Subject, ClassSubject
 from accounts.decorators import staff_required
+
+from django.contrib import messages
 
 
 
@@ -211,5 +217,58 @@ def inactive_subject_list(request):
         'subjects/inactive_subject_list.html',
         {
             'subjects': subjects,
+        }
+    )
+    
+@staff_required
+@login_required
+def bulk_assign_subjects(request):
+
+    school = request.user.school
+
+    if request.method == 'POST':
+
+        form = BulkClassSubjectForm(
+            request.POST,
+            user=request.user,
+        )
+
+        if form.is_valid():
+
+            school_class = form.cleaned_data["school_class"]
+            subjects = form.cleaned_data["subjects"]
+
+            created_count = 0
+
+            for subject in subjects:
+
+                _, created = ClassSubject.objects.get_or_create(
+                    school_class=school_class,
+                    subject=subject,
+                )
+
+                if created:
+                    created_count += 1
+
+            messages.success(
+                request,
+                f"{created_count} subject(s) assigned to {school_class}."
+            )
+
+            return redirect(
+                'class_subject_list'
+            )
+
+    else:
+
+        form = BulkClassSubjectForm(
+            user=request.user,
+        )
+
+    return render(
+        request,
+        'subjects/bulk_assign_subjects.html',
+        {
+            'form': form,
         }
     )

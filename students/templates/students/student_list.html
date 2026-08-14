@@ -16,8 +16,7 @@ Student Management
                 Student Management
             </h3>
 
-            <a href="{% url 'register_student' %}"
-               class="btn btn-light">
+            <a href="{% url 'register_student' %}" class="btn btn-light">
                 + Register Student
             </a>
 
@@ -29,70 +28,62 @@ Student Management
 
                 <div class="col-md-4">
 
-                    <input
-                        type="text"
-                        name="search"
-                        value="{{ search|default:'' }}"
-                        class="form-control"
+                    <input type="text" name="search" value="{{ search|default:'' }}" class="form-control"
                         placeholder="Search by name, admission number or LIN">
 
                 </div>
 
                 <div class="col-md-3">
 
-                    <select
-                        name="class"
-                        class="form-select">
-                
+                    <select name="class" class="form-select">
+
                         <option value="">
                             All Classes
                         </option>
-                
-                        {% for c in classes %}
-                
-                        <option
-                            value="{{ c.id }}"
-                            {% if c.id == selected_class %}selected{% endif %}>
-                
-                            {{ c.name }}
-                
-                        </option>
-                
+
+                        {% for group in grouped_classes %}
+
+                        <optgroup label="{{ group.label }}">
+
+                            {% for c in group.classes %}
+
+                            <option value="{{ c.id }}" {% if c.id == selected_class %}selected{% endif %}>
+
+                                {{ c.name }}
+
+                            </option>
+
+                            {% endfor %}
+
+                        </optgroup>
+
                         {% endfor %}
-                
+
                     </select>
-                
                 </div>
-                
-                
+
+
                 <div class="col-md-3">
-                
-                    <select
-                        name="status"
-                        class="form-select">
-                
+
+                    <select name="status" class="form-select">
+
                         {% for value,label in status_choices %}
-                
-                        <option value="{{ value }}"
-                            {% if selected_status == value %}
-                                selected
-                            {% endif %}
-                        >
-                
+
+                        <option value="{{ value }}" {% if selected_status == value %} selected {% endif %}>
+
                             {{ label }}
-                
+
                         </option>
-                
+
                         {% endfor %}
-                
+
                     </select>
-                
+
                 </div>
 
                 <div class="col-md-2">
 
-                    <button
-                        class="btn btn-success w-100">
+                    <button class="btn btn-success w-100">
 
                         Search
 
@@ -102,9 +93,7 @@ Student Management
 
                 <div class="col-md-2">
 
-                    <a
-                        href="{% url 'student_list' %}"
-                        class="btn btn-secondary w-100">
+                    <a href="{% url 'student_list' %}" class="btn btn-secondary w-100">
 
                         Reset
 
@@ -116,7 +105,7 @@ Student Management
 
             <div class="table-responsive">
 
-                
+
 
                 <table class="table table-hover table-bordered align-middle">
 
@@ -145,160 +134,154 @@ Student Management
                     <tbody>
 
                         {% for student in students %}
-                        
+
                         <tr>
-                        
+
                             <!-- Photo -->
                             <td class="text-center">
-                        
+
                                 {% if student.passport %}
-                        
-                                    <img src="{{ student.passport.url }}"
-                                         class="rounded-circle border"
-                                         style="
+
+                                <img src="{{ student.passport.url }}" class="rounded-circle border" style="
                                             width:55px;
                                             height:55px;
                                             object-fit:cover;
                                          ">
-                        
+
                                 {% else %}
-                        
-                                    <img src="https://via.placeholder.com/55"
-                                         class="rounded-circle border">
-                        
+
+                                <img src="https://via.placeholder.com/55" class="rounded-circle border">
+
                                 {% endif %}
-                        
+
                             </td>
-                        
-                        
+
+
                             <!-- Student -->
                             <td>
-                        
+
                                 <strong>
-                        
+
                                     {{ student.user.get_full_name }}
-                        
+
                                 </strong>
-                        
+
                                 <br>
-                        
+
                                 <small class="text-muted">
-                        
+
                                     {{ student.admission_number }}
-                        
+
                                 </small>
-                        
+
                             </td>
-                        
-                        
+
+
                             <!-- LIN -->
                             <td>
-                        
+
                                 {{ student.lin|default:"-" }}
-                        
+
                             </td>
-                        
-                        
+
+
                             <!-- Class -->
                             <td>
-                        
+
                                 <span class="badge bg-primary">
-                        
+
                                     {{ student.school_class }}
-                        
+
                                 </span>
-                        
+
                             </td>
-                        
-                        
+
+
                             <!-- Department -->
                             <td>
-                        
+
                                 {{ student.department|default:"-" }}
-                        
+
                             </td>
-                        
-                        
+
+
                             <!-- Status -->
                             <td>
-                        
+
                                 {% if student.admission_status == "ACTIVE" %}
-                        
-                                    <span class="badge bg-success">
-                                        Active
-                                    </span>
-                        
-                                
+
+                                <span class="badge bg-success">
+                                    Active
+                                </span>
+
+
                                 {% elif student.admission_status == "GRADUATED" %}
-                        
-                                    <span class="badge bg-primary">
-                                        Graduated
-                                    </span>
-                        
-                                
+
+                                <span class="badge bg-primary">
+                                    Graduated
+                                </span>
+
+
                                 {% else %}
-                        
-                                    <span class="badge bg-secondary">
-                        
-                                        {{ student.admission_status }}
-                        
-                                    </span>
-                        
+
+                                <span class="badge bg-secondary">
+
+                                    {{ student.admission_status }}
+
+                                </span>
+
                                 {% endif %}
-                        
+
                             </td>
-                        
-                        
+
+
                             <!-- Actions -->
                             <td class="text-center">
-                        
+
                                 <div class="btn-group btn-group-sm" role="group">
-                        
-                                    <a href="{% url 'student_profile' student.id %}"
-                                       class="btn btn-outline-primary"
-                                       title="View">
-                        
+
+                                    <a href="{% url 'student_profile' student.id %}" class="btn btn-outline-primary"
+                                        title="View">
+
                                         👁
-                        
+
                                     </a>
-                        
-                                    <a href="{% url 'edit_student' student.id %}"
-                                       class="btn btn-outline-warning"
-                                       title="Edit">
-                        
+
+                                    <a href="{% url 'edit_student' student.id %}" class="btn btn-outline-warning"
+                                        title="Edit">
+
                                         ✏
-                        
+
                                     </a>
-                        
-                                    <a href="{% url 'select_report_term' student.id %}"
-                                       class="btn btn-outline-success"
-                                       title="Report Card">
-                        
+
+                                    <a href="{% url 'select_report_term' student.id %}" class="btn btn-outline-success"
+                                        title="Report Card">
+
                                         📄
-                        
+
                                     </a>
-                        
+
                                 </div>
-                        
+
                             </td>
-                        
+
                         </tr>
-                        
+
                         {% empty %}
-                        
+
                         <tr>
-                        
+
                             <td colspan="7" class="text-center text-muted py-5">
-                        
+
                                 No students found.
-                        
+
                             </td>
-                        
+
                         </tr>
-                        
+
                         {% endfor %}
-                        
-                        </tbody>
+
+                    </tbody>
 
                 </table>
 

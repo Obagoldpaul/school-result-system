@@ -1,4 +1,8 @@
 <style>
+    :root {
+        --primary-color: {{ school_settings.primary_color|default:"#1F4E79" }};
+        --secondary-color: {{ school_settings.secondary_color|default:"#D9EAF7" }};
+    }
     @page {
         size: A4;
         margin: 1.2cm;
@@ -60,7 +64,7 @@
 
     .school-header h1 {
         margin: 3px 0;
-        color: #1a5c1a;
+        color: var(--primary-color);
         font-size: 18px;
     }
 
@@ -71,7 +75,7 @@
     }
 
     .report-title {
-        background: #1a5c1a;
+        background: var(--primary-color);
         color: white;
         text-align: center;
         padding: 4px;
@@ -81,7 +85,7 @@
     }
 
     .term-banner {
-        background: #d4f0d4;
+        background: var(--secondary-color);
         text-align: center;
         padding: 4px;
         font-weight: bold;

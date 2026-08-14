@@ -70,7 +70,33 @@ def student_list(request):
 
     classes = SchoolClass.objects.filter(
         school=request.user.school
-    ).order_by("name")
+    )
+
+    section_order = [
+        SchoolClass.Section.PRE_PRIMARY,
+        SchoolClass.Section.PRIMARY,
+        SchoolClass.Section.JUNIOR_SECONDARY,
+        SchoolClass.Section.SENIOR_SECONDARY,
+    ]
+
+    section_labels = dict(
+        SchoolClass.Section.choices
+    )
+
+    grouped_classes = []
+
+    for section in section_order:
+
+        section_classes = classes.filter(
+            section=section
+        ).order_by("name")
+
+        if section_classes.exists():
+
+            grouped_classes.append({
+                "label": section_labels[section],
+                "classes": section_classes,
+            })
 
     status_choices = Student._meta.get_field(
         "admission_status"
@@ -82,10 +108,75 @@ def student_list(request):
         {
             "students": students,
             "classes": classes,
+            "grouped_classes": grouped_classes,
             "selected_class": int(class_id) if class_id else None,
             "search": search,
             "selected_status": status,
             "status_choices": status_choices,
+        },
+    )
+    
+@management_required
+@login_required
+def class_management(request):
+
+    classes = (
+        SchoolClass.objects
+        .filter(
+            school=request.user.school
+        )
+        .annotate(
+            student_count=models.Count(
+                "student"
+            )
+        )
+        .order_by(
+            "section",
+            "name",
+        )
+    )
+
+    sections = [
+        (
+            SchoolClass.Section.PRE_PRIMARY,
+            "Pre-Primary",
+        ),
+        (
+            SchoolClass.Section.PRIMARY,
+            "Primary",
+        ),
+        (
+            SchoolClass.Section.JUNIOR_SECONDARY,
+            "Junior Secondary",
+        ),
+        (
+            SchoolClass.Section.SENIOR_SECONDARY,
+            "Senior Secondary",
+        ),
+    ]
+
+    section_classes = []
+
+    for section_value, section_label in sections:
+
+        section_class_list = [
+            school_class
+            for school_class in classes
+            if school_class.section == section_value
+        ]
+
+        section_classes.append({
+            "value": section_value,
+            "label": section_label,
+            "classes": section_class_list,
+        })
+
+    return render(
+        request,
+        "students/class_management.html",
+        {
+            "section_classes": section_classes,
+            "class_count": classes.count(),
         },
     )
 

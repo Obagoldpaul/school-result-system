@@ -1,6 +1,7 @@
 from django import forms
 
 from .models import Subject, ClassSubject
+from students.models import SchoolClass
 
 
 class SubjectForm(forms.ModelForm):
@@ -83,7 +84,6 @@ class SubjectForm(forms.ModelForm):
 
         subject.school = self.user.school
 
-        # New subjects should always start active.
         if not subject.pk:
             subject.is_active = True
 
@@ -105,6 +105,7 @@ class ClassSubjectForm(forms.ModelForm):
         self.user = user
 
         if user and user.is_authenticated and user.school:
+
             self.fields["school_class"].queryset = (
                 user.school.classes.all()
             )
@@ -113,7 +114,9 @@ class ClassSubjectForm(forms.ModelForm):
                 school=user.school,
                 is_active=True,
             )
+
         else:
+
             self.fields["school_class"].queryset = (
                 self.fields["school_class"].queryset.none()
             )
@@ -146,3 +149,41 @@ class ClassSubjectForm(forms.ModelForm):
             )
 
         return cleaned_data
+
+
+class BulkClassSubjectForm(forms.Form):
+
+    school_class = forms.ModelChoiceField(
+        queryset=SchoolClass.objects.none(),
+        widget=forms.Select(
+            attrs={
+                'class': 'form-select',
+            }
+        )
+    )
+
+    subjects = forms.ModelMultipleChoiceField(
+        queryset=Subject.objects.none(),
+        required=False,
+        widget=forms.CheckboxSelectMultiple()
+    )
+
+    def __init__(self, *args, user=None, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.user = user
+
+        if user and user.is_authenticated and user.school:
+
+            self.fields["school_class"].queryset = (
+                SchoolClass.objects.filter(
+                    school=user.school
+                ).order_by("name")
+            )
+
+            self.fields["subjects"].queryset = (
+                Subject.objects.filter(
+                    school=user.school,
+                    is_active=True,
+                ).order_by("name")
+            )

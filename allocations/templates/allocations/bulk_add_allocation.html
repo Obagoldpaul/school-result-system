@@ -1,0 +1,372 @@
+{% extends 'base.html' %}
+
+{% block title %}
+Bulk Subject Allocation
+{% endblock %}
+
+{% block content %}
+
+<div class="section-card">
+
+    <h1>Bulk Subject Allocation</h1>
+
+    <p class="text-muted">
+        Select a class and term, then assign a teacher to each subject.
+        You can allocate all selected subjects with one click.
+    </p>
+
+
+    {% if form.non_field_errors %}
+
+    <div class="alert alert-danger">
+        {{ form.non_field_errors }}
+    </div>
+
+    {% endif %}
+
+
+    <form method="POST">
+
+        {% csrf_token %}
+
+
+        <!-- CLASS -->
+
+        <div class="mb-3">
+
+            <label for="{{ form.school_class.id_for_label }}" class="form-label">
+
+                Class
+
+            </label>
+
+            {{ form.school_class }}
+
+            {% for error in form.school_class.errors %}
+
+            <div class="text-danger">
+                {{ error }}
+            </div>
+
+            {% endfor %}
+
+        </div>
+
+
+        <!-- TERM -->
+
+        <div class="mb-4">
+
+            <label for="{{ form.term.id_for_label }}" class="form-label">
+
+                Term
+
+            </label>
+
+            {{ form.term }}
+
+            {% for error in form.term.errors %}
+
+            <div class="text-danger">
+                {{ error }}
+            </div>
+
+            {% endfor %}
+
+        </div>
+
+
+        {% if selected_class and selected_term %}
+
+        <hr>
+
+        <div class="d-flex justify-content-between align-items-center mb-3">
+
+            <div>
+
+                <h3 class="mb-1">
+                    {{ selected_class.name }}
+                </h3>
+
+                <small class="text-muted">
+                    {{ selected_term }}
+                </small>
+
+            </div>
+
+            <div>
+
+                <button type="button" class="btn btn-sm btn-outline-success" onclick="assignAll()">
+
+                    Assign All
+
+                </button>
+
+                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="clearAll()">
+
+                    Clear All
+
+                </button>
+
+            </div>
+
+        </div>
+
+
+        <div class="table-responsive">
+
+            <table class="table table-bordered align-middle">
+
+                <thead>
+
+                    <tr>
+
+                        <th style="width: 50px;">
+                            #
+                        </th>
+
+                        <th>
+                            Subject
+                        </th>
+
+                        <th>
+                            Teacher
+                        </th>
+
+                        <th style="width: 160px;">
+                            Status
+                        </th>
+
+                    </tr>
+
+                </thead>
+
+
+                <tbody>
+
+                    {% for row in subject_rows %}
+
+                    {% with subject=row.subject existing=row.existing %}
+
+                    <tr>
+
+                        <td>
+                            {{ forloop.counter }}
+                        </td>
+
+
+                        <td>
+
+                            <strong>
+                                {{ subject.name }}
+                            </strong>
+
+                            {% if subject.is_elective %}
+
+                            <span class="badge bg-info">
+                                Elective
+                            </span>
+
+                            {% endif %}
+
+                        </td>
+
+
+                        <td>
+
+                            <select name="teacher_{{ subject.id }}" class="form-select teacher-select"
+                                data-subject="{{ subject.id }}">
+
+                                <option value="">
+                                    -- Select Teacher --
+                                </option>
+
+                                {% for teacher in teachers %}
+
+                                <option value="{{ teacher.id }}" {% if existing and existing.teacher_id == teacher.id %}
+                                    selected {% endif %}>
+
+                                    {{ teacher.user.get_full_name|default:teacher.user.username }}
+
+                                </option>
+
+                                {% endfor %}
+
+                            </select>
+
+                        </td>
+
+
+                        <td>
+
+                            {% if existing %}
+
+                            {% if existing.status == 'DRAFT' %}
+
+                            <span class="badge bg-secondary">
+                                Draft
+                            </span>
+
+                            {% elif existing.status == 'SUBMITTED' %}
+
+                            <span class="badge bg-warning text-dark">
+                                Submitted
+                            </span>
+
+                            {% elif existing.status == 'REVIEWED' %}
+
+                            <span class="badge bg-info">
+                                Reviewed
+                            </span>
+
+                            {% elif existing.status == 'APPROVED' %}
+
+                            <span class="badge bg-success">
+                                Approved
+                            </span>
+
+                            {% elif existing.status == 'PUBLISHED' %}
+
+                            <span class="badge bg-primary">
+                                Published
+                            </span>
+
+                            {% endif %}
+
+                            {% else %}
+
+                            <span class="badge bg-light text-dark">
+                                Not Allocated
+                            </span>
+
+                            {% endif %}
+
+                        </td>
+
+                    </tr>
+
+                    {% endwith %}
+
+                    {% empty %}
+
+                    <tr>
+
+                        <td colspan="4" class="text-center">
+
+                            No active subjects found.
+
+                        </td>
+
+                    </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+
+        <div class="mt-3">
+
+            <button
+                type="submit"
+                name="action"
+                value="allocate_all"
+                class="btn btn-success">
+
+                Allocate All
+
+            </button>
+
+            <a href="{% url 'allocation_list' %}" class="btn btn-secondary">
+
+                Cancel
+
+            </a>
+
+        </div>
+
+        {% else %}
+
+        <div class="alert alert-info mt-3">
+
+            Select a class and term to display the subjects
+            and teacher assignments.
+
+        </div>
+
+        <button 
+            type="submit"
+            name="action" 
+            value="load_subjects" 
+            class="btn btn-primary">
+
+            Load Subjects
+
+        </button>
+
+        {% endif %}
+
+    </form>
+
+</div>
+
+
+<script>
+
+    function assignAll() {
+
+        const selects = document.querySelectorAll(
+            '.teacher-select'
+        );
+
+        let firstTeacher = null;
+
+        for (const select of selects) {
+
+            if (select.value) {
+                firstTeacher = select.value;
+                break;
+            }
+
+        }
+
+        if (!firstTeacher) {
+
+            alert(
+                'Select at least one teacher first.'
+            );
+
+            return;
+        }
+
+        for (const select of selects) {
+
+            if (!select.value) {
+                select.value = firstTeacher;
+            }
+
+        }
+
+    }
+
+
+    function clearAll() {
+
+        const selects = document.querySelectorAll(
+            '.teacher-select'
+        );
+
+        selects.forEach(function (select) {
+
+            select.value = '';
+
+        });
+
+    }
+
+</script>
+
+{% endblock %}

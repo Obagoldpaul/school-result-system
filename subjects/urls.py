@@ -28,6 +28,12 @@ urlpatterns = [
         views.assign_subject_to_class,
         name='assign_subject_to_class'
     ),
+    
+    path(
+        'bulk-assign/',
+        views.bulk_assign_subjects,
+        name='bulk_assign_subjects'
+    ),
 
     path(
         'class-subjects/',

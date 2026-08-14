@@ -23,7 +23,7 @@
                 <td>{{ marks_obtainable }}</td>
             </tr>
 
-            {% if not request.user.student_profile %}
+            {% if school_settings.show_class_position %}
             <tr class="summary-table">
                 <td>POSITION IN CLASS</td>
                 <td>{{ position }}</td>

@@ -17,9 +17,9 @@
         {% csrf_token %}
 
         {% if form.non_field_errors %}
-            <div class="alert alert-danger">
-                {{ form.non_field_errors }}
-            </div>
+        <div class="alert alert-danger">
+            {{ form.non_field_errors }}
+        </div>
         {% endif %}
 
         <div class="form-group">
@@ -39,13 +39,10 @@
         </div>
 
         {% if school_settings.school_logo %}
-            <div style="margin: 10px 0;">
-                <img
-                    src="{{ school_settings.school_logo.url }}"
-                    alt="School Logo"
-                    style="max-width: 150px; max-height: 150px;"
-                >
-            </div>
+        <div style="margin: 10px 0;">
+            <img src="{{ school_settings.school_logo.url }}" alt="School Logo"
+                style="max-width: 150px; max-height: 150px;">
+        </div>
         {% endif %}
 
         <div class="form-group">
@@ -89,46 +86,55 @@
         </div>
 
         {% if school_settings.principal_signature %}
-            <div style="margin: 10px 0;">
-                <img
-                    src="{{ school_settings.principal_signature.url }}"
-                    alt="Principal Signature"
-                    style="max-width: 250px; max-height: 100px;"
-                >
-            </div>
-
-            <div class="form-group">
-                <label for="{{ form.primary_color.id_for_label }}">
-                    Primary Colour
-                </label>
-                {{ form.primary_color }}
-                {{ form.primary_color.errors }}
-            </div>
-            
-            <div class="form-group">
-                <label for="{{ form.secondary_color.id_for_label }}">
-                    Secondary / Accent Colour
-                </label>
-                {{ form.secondary_color }}
-                {{ form.secondary_color.errors }}
-            </div>
-            
-            <div class="form-group">
-                <label for="{{ form.report_card_heading.id_for_label }}">
-                    Report Card Heading
-                </label>
-                {{ form.report_card_heading }}
-                {{ form.report_card_heading.errors }}
-            </div>
-            
-            <div class="form-group">
-                <label for="{{ form.school_motto.id_for_label }}">
-                    School Motto
-                </label>
-                {{ form.school_motto }}
-                {{ form.school_motto.errors }}
-            </div>
+        <div style="margin: 10px 0;">
+            <img src="{{ school_settings.principal_signature.url }}" alt="Principal Signature"
+                style="max-width: 250px; max-height: 100px;">
+        </div>
         {% endif %}
+
+        <hr>
+
+        <h2>Report Card Settings</h2>
+
+        <div class="form-group">
+            <label for="{{ form.primary_color.id_for_label }}">
+                Primary Colour
+            </label>
+            {{ form.primary_color }}
+            {{ form.primary_color.errors }}
+        </div>
+
+        <div class="form-group">
+            <label for="{{ form.secondary_color.id_for_label }}">
+                Secondary / Accent Colour
+            </label>
+            {{ form.secondary_color }}
+            {{ form.secondary_color.errors }}
+        </div>
+
+        <div class="form-group">
+            <label for="{{ form.report_card_heading.id_for_label }}">
+                Report Card Heading
+            </label>
+            {{ form.report_card_heading }}
+            {{ form.report_card_heading.errors }}
+        </div>
+
+        <div class="form-group">
+            <label for="{{ form.school_motto.id_for_label }}">
+                School Motto
+            </label>
+            {{ form.school_motto }}
+            {{ form.school_motto.errors }}
+        </div>
+
+        <div class="form-group">
+            <label>
+                {{ form.show_class_position }}
+                Show class position
+            </label>
+            {{ form.show_class_position.errors }}
+        </div>
 
         <button type="submit">
             Save School Settings

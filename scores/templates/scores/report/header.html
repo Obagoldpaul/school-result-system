@@ -10,6 +10,11 @@
         <h1>
             {{ school_settings.school_name }}
         </h1>
+        {% if school_settings.school_motto %}
+        <p>
+            <strong><em>{{ school_settings.school_motto }}</em></strong>
+        </p>
+        {% endif %}
 
         <p>
             {{ school_settings.school_address }}
@@ -96,4 +101,6 @@
         </div>
     </div>
 
-    <div class="report-title">{{ term.session }} ACADEMIC PERFORMANCE REPORT</div>
+    <div class="report-title">
+        {{ school_settings.report_card_heading|default:"STUDENT REPORT CARD" }}
+    </div>

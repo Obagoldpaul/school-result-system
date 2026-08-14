@@ -1,39 +1,220 @@
 {% extends 'base.html' %}
+
 {% block title %}Announcements{% endblock %}
+
 {% block content %}
-<h1>Announcements</h1>
-{% if is_management %}
-<p><a href="{% url 'post_announcement' %}">+ Post Announcement</a></p>
-{% endif %}
 
-{% for a in announcements %}
-<div class="section-card">
-    <h3>{{ a.title }}</h3>
-    {% if a.image %}
-    <img src="{{ a.image.url }}" alt="{{ a.title }}" style="max-width:100%; border-radius:8px; margin-bottom:10px;">
-    {% endif %}
-    <p>{{ a.body|linebreaks }}</p>
-    <p style="color:#999; font-size:12px;">
-        Posted by {{ a.created_by }} — {{ a.created_at|timesince }} ago —
-        <strong>{{ a.get_audience_display }}</strong>
-    </p>
-    {% if is_management %}
-    <form method="POST"
-          action="{% url 'delete_announcement' a.id %}"
-          onsubmit="return confirm('Delete this announcement?');"
-          style="display:inline;">
+<div class="container">
 
-        {% csrf_token %}
+    <div class="d-flex justify-content-between align-items-center mb-4">
 
-        <button type="submit"
-                style="background:#b83232; color:#fff; border:none; padding:6px 12px; border-radius:4px; cursor:pointer; font-size:12px;">
-            Delete
-        </button>
+        <div>
+            <h1>Announcements</h1>
 
-    </form>
-{% endif %}
+            <p class="text-muted">
+                School announcements and important updates
+            </p>
+        </div>
+
+        {% if is_management %}
+        <a
+            href="{% url 'post_announcement' %}"
+            class="btn btn-success"
+        >
+            + Post Announcement
+        </a>
+        {% endif %}
+
+    </div>
+
+
+    {% for a in announcements %}
+
+    <div
+        class="section-card"
+        style="
+            position:relative;
+            {% if a.pinned %}
+                border-left:5px solid #d9822b;
+            {% endif %}
+        "
+    >
+
+        {% if a.pinned %}
+
+        <div
+            style="
+                display:inline-block;
+                background:#d9822b;
+                color:#fff;
+                padding:3px 8px;
+                border-radius:10px;
+                font-size:11px;
+                font-weight:600;
+                margin-bottom:8px;
+            "
+        >
+            📌 IMPORTANT
+        </div>
+
+        {% endif %}
+
+
+        {% if not a.is_read %}
+
+        <span
+            style="
+                float:right;
+                background:#1a5c1a;
+                color:white;
+                padding:3px 8px;
+                border-radius:10px;
+                font-size:11px;
+            "
+        >
+            NEW
+        </span>
+
+        {% endif %}
+
+
+        <h3>
+            {{ a.title }}
+        </h3>
+
+
+        {% if a.image %}
+
+        <img
+            src="{{ a.image.url }}"
+            alt="{{ a.title }}"
+            style="
+                max-width:100%;
+                max-height:350px;
+                object-fit:cover;
+                border-radius:8px;
+                margin-bottom:10px;
+            "
+        >
+
+        {% endif %}
+
+
+        <p>
+            {{ a.body|truncatewords:40|linebreaks }}
+        </p>
+
+
+        <p
+            style="
+                color:#999;
+                font-size:12px;
+            "
+        >
+
+            Posted by {{ a.created_by }}
+
+            —
+
+            {{ a.created_at|timesince }} ago
+
+            —
+
+            <strong>
+                {{ a.get_audience_display }}
+            </strong>
+
+        </p>
+
+
+        <div
+            style="
+                display:flex;
+                gap:8px;
+                flex-wrap:wrap;
+            "
+        >
+
+            <a
+                href="{% url 'announcement_detail' a.id %}"
+                class="btn btn-sm btn-outline-success"
+            >
+                {% if a.is_read %}
+                    Read Again
+                {% else %}
+                    Read Announcement
+                {% endif %}
+            </a>
+
+
+            {% if is_management %}
+
+            <form
+                method="POST"
+                action="{% url 'toggle_announcement_pin' a.id %}"
+                style="display:inline;"
+            >
+
+                {% csrf_token %}
+
+                <button
+                    type="submit"
+                    class="btn btn-sm btn-outline-warning"
+                >
+                    {% if a.pinned %}
+                        Unpin
+                    {% else %}
+                        📌 Pin
+                    {% endif %}
+                </button>
+
+            </form>
+
+
+            <a
+                href="{% url 'announcement_readers' a.id %}"
+                class="btn btn-sm btn-outline-primary"
+            >
+                👁 View Readers
+            </a>
+
+
+            <form
+                method="POST"
+                action="{% url 'delete_announcement' a.id %}"
+                onsubmit="return confirm('Delete this announcement?');"
+                style="display:inline;"
+            >
+
+                {% csrf_token %}
+
+                <button
+                    type="submit"
+                    class="btn btn-sm btn-outline-danger"
+                >
+                    Delete
+                </button>
+
+            </form>
+
+            {% endif %}
+
+        </div>
+
+    </div>
+
+    {% empty %}
+
+    <div class="section-card">
+
+        <p class="text-muted mb-0">
+            No announcements yet.
+        </p>
+
+    </div>
+
+    {% endfor %}
+
 </div>
-{% empty %}
-<p>No announcements yet.</p>
-{% endfor %}
+
 {% endblock %}

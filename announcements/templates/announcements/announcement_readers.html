@@ -1,0 +1,267 @@
+{% extends 'base.html' %}
+
+{% block title %}Announcement Readers{% endblock %}
+
+{% block content %}
+
+<div class="container">
+
+    <div class="mb-3">
+
+        <a href="{% url 'announcement_list' %}">
+            ← Back to Announcements
+        </a>
+
+    </div>
+
+
+    <div class="section-card">
+
+        <h1>
+            {{ announcement.title }}
+        </h1>
+
+        <p class="text-muted">
+            {{ announcement.get_audience_display }}
+        </p>
+
+
+        <!-- =====================================================
+             SUMMARY
+        ====================================================== -->
+
+        <div class="row g-3 mb-4">
+
+            <div class="col-md-4">
+
+                <div
+                    style="
+                        background:#e8f5e9;
+                        padding:20px;
+                        border-radius:8px;
+                        text-align:center;
+                    "
+                >
+
+                    <div style="font-size:28px;">
+                        👁
+                    </div>
+
+                    <div
+                        style="
+                            font-size:28px;
+                            font-weight:700;
+                        "
+                    >
+                        {{ read_count }}
+                    </div>
+
+                    <div>
+                        Read
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div class="col-md-4">
+
+                <div
+                    style="
+                        background:#fff3e0;
+                        padding:20px;
+                        border-radius:8px;
+                        text-align:center;
+                    "
+                >
+
+                    <div style="font-size:28px;">
+                        ⏳
+                    </div>
+
+                    <div
+                        style="
+                            font-size:28px;
+                            font-weight:700;
+                        "
+                    >
+                        {{ unread_count }}
+                    </div>
+
+                    <div>
+                        Unread
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div class="col-md-4">
+
+                <div
+                    style="
+                        background:#e3f2fd;
+                        padding:20px;
+                        border-radius:8px;
+                        text-align:center;
+                    "
+                >
+
+                    <div style="font-size:28px;">
+                        👥
+                    </div>
+
+                    <div
+                        style="
+                            font-size:28px;
+                            font-weight:700;
+                        "
+                    >
+                        {{ total_recipients }}
+                    </div>
+
+                    <div>
+                        Total Recipients
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- =====================================================
+             READ
+        ====================================================== -->
+
+        <h3>
+            👁 Read ({{ read_count }})
+        </h3>
+
+
+        {% if readers %}
+
+        <div class="table-responsive mb-5">
+
+            <table>
+
+                <thead>
+
+                    <tr>
+
+                        <th>
+                            Name
+                        </th>
+
+                        <th>
+                            Role
+                        </th>
+
+                    </tr>
+
+                </thead>
+
+                <tbody>
+
+                    {% for user in readers %}
+
+                    <tr>
+
+                        <td>
+                            {{ user.get_full_name|default:user.username }}
+                        </td>
+
+                        <td>
+                            {{ user.get_role_display }}
+                        </td>
+
+                    </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+        {% else %}
+
+        <p class="text-muted mb-5">
+            Nobody has read this announcement yet.
+        </p>
+
+        {% endif %}
+
+
+        <!-- =====================================================
+             UNREAD
+        ====================================================== -->
+
+        <h3>
+            ⏳ Unread ({{ unread_count }})
+        </h3>
+
+
+        {% if unread_users %}
+
+        <div class="table-responsive">
+
+            <table>
+
+                <thead>
+
+                    <tr>
+
+                        <th>
+                            Name
+                        </th>
+
+                        <th>
+                            Role
+                        </th>
+
+                    </tr>
+
+                </thead>
+
+                <tbody>
+
+                    {% for user in unread_users %}
+
+                    <tr>
+
+                        <td>
+                            {{ user.get_full_name|default:user.username }}
+                        </td>
+
+                        <td>
+                            {{ user.get_role_display }}
+                        </td>
+
+                    </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+        {% else %}
+
+        <p class="text-success">
+            ✓ Everyone has read this announcement.
+        </p>
+
+        {% endif %}
+
+    </div>
+
+</div>
+
+{% endblock %}

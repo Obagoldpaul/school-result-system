@@ -5,9 +5,58 @@ from .models import Student, SchoolClass, Department
 
 User = get_user_model()
 
+class GroupedSchoolClassChoiceField(forms.ModelChoiceField):
+
+    def __iter__(self):
+        if self.empty_label is not None:
+            yield ("", self.empty_label)
+
+        queryset = self.queryset.order_by(
+            "section",
+            "name",
+        )
+
+        section_labels = dict(
+            SchoolClass.Section.choices
+        )
+
+        for section in [
+            SchoolClass.Section.PRE_PRIMARY,
+            SchoolClass.Section.PRIMARY,
+            SchoolClass.Section.JUNIOR_SECONDARY,
+            SchoolClass.Section.SENIOR_SECONDARY,
+        ]:
+
+            classes = queryset.filter(
+                section=section
+            )
+
+            if not classes.exists():
+                continue
+
+            yield (
+                section_labels[section],
+                [
+                    (
+                        self.prepare_value(obj),
+                        self.label_from_instance(obj),
+                    )
+                    for obj in classes
+                ],
+            )
 
 class StudentRegistrationForm(forms.ModelForm):
 
+    school_class = GroupedSchoolClassChoiceField(
+        queryset=SchoolClass.objects.none(),
+        empty_label="Select class",
+        widget=forms.Select(
+            attrs={
+                "class": "form-select"
+            }
+        )
+    )
+    
     username = forms.CharField(
         max_length=150,
         widget=forms.TextInput(
@@ -281,18 +330,61 @@ class StudentRegistrationForm(forms.ModelForm):
         return username
     def __init__(self, *args, user=None, **kwargs):
         super().__init__(*args, **kwargs)
+
         self.user = user
+
         if user and user.school:
-            self.fields["school_class"].queryset = SchoolClass.objects.filter(
+
+            classes = SchoolClass.objects.filter(
                 school=user.school
             )
+
+            section_order = [
+                SchoolClass.Section.PRE_PRIMARY,
+                SchoolClass.Section.PRIMARY,
+                SchoolClass.Section.JUNIOR_SECONDARY,
+                SchoolClass.Section.SENIOR_SECONDARY,
+            ]
+
+            section_labels = dict(
+                SchoolClass.Section.choices
+            )
+
+            grouped_choices = [
+                ("", "Select class")
+            ]
+
+            for section in section_order:
+
+                section_classes = classes.filter(
+                    section=section
+                ).order_by("name")
+
+                if section_classes.exists():
+
+                    grouped_choices.append(
+                        (
+                            section_labels[section],
+                            [
+                                (
+                                    str(school_class.id),
+                                    school_class.name
+                                )
+                                for school_class in section_classes
+                            ]
+                        )
+                    )
+
+            self.fields["school_class"].choices = grouped_choices
 
             self.fields["department"].queryset = Department.objects.filter(
                 school=user.school
             )
 
         else:
+
             self.fields["school_class"].queryset = SchoolClass.objects.none()
+
             self.fields["department"].queryset = Department.objects.none()
 
 

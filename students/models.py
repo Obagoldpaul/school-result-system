@@ -27,6 +27,12 @@ class Department(models.Model):
 
 class SchoolClass(models.Model):
 
+    class Section(models.TextChoices):
+        PRE_PRIMARY = "PRE_PRIMARY", "Pre-Primary"
+        PRIMARY = "PRIMARY", "Primary"
+        JUNIOR_SECONDARY = "JUNIOR_SECONDARY", "Junior Secondary"
+        SENIOR_SECONDARY = "SENIOR_SECONDARY", "Senior Secondary"
+
     school = models.ForeignKey(
         'schools.School',
         on_delete=models.PROTECT,
@@ -37,10 +43,12 @@ class SchoolClass(models.Model):
 
     name = models.CharField(
         max_length=50
-    )  # JSS1, JSS2, JSS3, SSS1...
+    )
 
-    is_senior = models.BooleanField(
-        default=False
+    section = models.CharField(
+        max_length=30,
+        choices=Section.choices,
+        default=Section.PRIMARY,
     )
 
     class Meta:

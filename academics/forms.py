@@ -18,6 +18,7 @@ class SchoolSettingsForm(forms.ModelForm):
             "secondary_color",
             "report_card_heading",
             "school_motto",
+            "show_class_position",
         ]
 
         widgets = {
@@ -67,6 +68,11 @@ class SchoolSettingsForm(forms.ModelForm):
             "school_motto": forms.TextInput(
                 attrs={
                     "class": "form-control",
+                }
+            ),
+            "show_class_position": forms.CheckboxInput(
+                attrs={
+                    "class": "form-check-input",
                 }
             ),
         }
