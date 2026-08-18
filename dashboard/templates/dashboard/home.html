@@ -46,7 +46,9 @@
 
             {% if school_settings.school_logo %}
 
-            <img src="{{ school_settings.school_logo.url }}" style="height:90px;" alt="School Logo">
+            <img src="{{ school_settings.school_logo.url }}"
+                 style="height:90px;"
+                 alt="School Logo">
 
             {% endif %}
 
@@ -59,7 +61,6 @@
 
 <!-- =========================================================
      BURSAR DASHBOARD
-     Visible to Bursar only
 ========================================================= -->
 
 {% if can_manage_billing and not is_management %}
@@ -80,8 +81,6 @@
     <div class="billing-stat-grid">
 
 
-        <!-- Total Collected -->
-
         <div class="billing-stat-card">
 
             <div class="billing-icon">
@@ -98,8 +97,6 @@
 
         </div>
 
-
-        <!-- Outstanding -->
 
         <div class="billing-stat-card">
 
@@ -118,8 +115,6 @@
         </div>
 
 
-        <!-- Students Owing -->
-
         <div class="billing-stat-card">
 
             <div class="billing-icon">
@@ -136,8 +131,6 @@
 
         </div>
 
-
-        <!-- Collection Rate -->
 
         <div class="billing-stat-card">
 
@@ -177,10 +170,10 @@
 
         <div class="col-md-3">
 
-            <a href="{% url 'billing_dashboard' %}" class="btn btn-success w-100 py-3">
+            <a href="{% url 'billing_dashboard' %}"
+               class="btn btn-success w-100 py-3">
 
                 💰<br>
-
                 Billing Dashboard
 
             </a>
@@ -190,10 +183,10 @@
 
         <div class="col-md-3">
 
-            <a href="{% url 'students_owing' %}" class="btn btn-warning w-100 py-3">
+            <a href="{% url 'students_owing' %}"
+               class="btn btn-warning w-100 py-3">
 
                 ⚠️<br>
-
                 Students Owing
 
             </a>
@@ -203,23 +196,10 @@
 
         <div class="col-md-3">
 
-            <a href="{% url 'fee_structure_list' %}" class="btn btn-success w-100 py-3">
-
-                📋<br>
-
-                Fee Structures
-
-            </a>
-
-        </div>
-
-
-        <div class="col-md-3">
-
-            <a href="{% url 'payment_list' %}" class="btn btn-success w-100 py-3">
+            <a href="{% url 'payment_list' %}"
+               class="btn btn-success w-100 py-3">
 
                 🧾<br>
-
                 Payment Records
 
             </a>
@@ -260,21 +240,10 @@
 
             <tr>
 
-                <th>
-                    Student
-                </th>
-
-                <th>
-                    Amount
-                </th>
-
-                <th>
-                    Term
-                </th>
-
-                <th>
-                    Date
-                </th>
+                <th>Student</th>
+                <th>Amount</th>
+                <th>Term</th>
+                <th>Date</th>
 
             </tr>
 
@@ -314,9 +283,13 @@
 
 {% endif %}
 
+
 <!-- =========================================================
-BIRTHDAYS
+     SCHOOL BIRTHDAYS
+     MANAGEMENT / STAFF
 ========================================================= -->
+
+{% if not my_student_id %}
 
 <div class="section-card">
 
@@ -333,7 +306,7 @@ BIRTHDAYS
     </div>
 
 
-    <!-- Today's Birthdays -->
+    <!-- TODAY -->
 
     {% if today_birthdays %}
 
@@ -347,18 +320,22 @@ BIRTHDAYS
         {% for birthday in today_birthdays %}
 
         <div style="
-           padding:12px;
-           background:#f0f8f1;
-           border-left:4px solid #1a5c1a;
-           border-radius:6px;
-           margin-bottom:8px;
-       ">
+            padding:12px;
+            background:#f0f8f1;
+            border-left:4px solid #1a5c1a;
+            border-radius:6px;
+            margin-bottom:8px;
+        ">
 
             <strong>
                 {{ birthday.name }}
             </strong>
 
-            <div style="font-size:13px; color:#666; margin-top:3px;">
+            <div style="
+                font-size:13px;
+                color:#666;
+                margin-top:3px;
+            ">
 
                 {{ birthday.type }}
 
@@ -379,12 +356,12 @@ BIRTHDAYS
     {% else %}
 
     <div style="
-       padding:12px;
-       background:#f8f8f8;
-       border-radius:6px;
-       color:#777;
-       margin-bottom:20px;
-   ">
+        padding:12px;
+        background:#f8f8f8;
+        border-radius:6px;
+        color:#777;
+        margin-bottom:20px;
+    ">
 
         No birthdays today.
 
@@ -393,7 +370,7 @@ BIRTHDAYS
     {% endif %}
 
 
-    <!-- Upcoming Birthdays -->
+    <!-- UPCOMING -->
 
     <h5 style="color:#16401c; margin-bottom:10px;">
         Upcoming
@@ -410,25 +387,11 @@ BIRTHDAYS
 
                 <tr>
 
-                    <th>
-                        Name
-                    </th>
-
-                    <th>
-                        Type
-                    </th>
-
-                    <th>
-                        Class / Role
-                    </th>
-
-                    <th>
-                        Birthday
-                    </th>
-
-                    <th>
-                        When
-                    </th>
+                    <th>Name</th>
+                    <th>Type</th>
+                    <th>Class / Role</th>
+                    <th>Birthday</th>
+                    <th>When</th>
 
                 </tr>
 
@@ -447,11 +410,9 @@ BIRTHDAYS
                         </strong>
                     </td>
 
-
                     <td>
                         {{ birthday.type }}
                     </td>
-
 
                     <td>
 
@@ -463,11 +424,9 @@ BIRTHDAYS
 
                     </td>
 
-
                     <td>
                         {{ birthday.birthday|date:"M d" }}
                     </td>
-
 
                     <td>
 
@@ -496,11 +455,11 @@ BIRTHDAYS
     {% else %}
 
     <div style="
-       padding:12px;
-       background:#f8f8f8;
-       border-radius:6px;
-       color:#777;
-   ">
+        padding:12px;
+        background:#f8f8f8;
+        border-radius:6px;
+        color:#777;
+    ">
 
         No upcoming birthdays in the next 30 days.
 
@@ -510,6 +469,8 @@ BIRTHDAYS
 
 </div>
 
+{% endif %}
+
 
 <!-- =========================================================
      MANAGEMENT DASHBOARD
@@ -518,7 +479,7 @@ BIRTHDAYS
 {% if is_management %}
 
 
-<!-- Management Statistics -->
+<!-- MANAGEMENT STATISTICS -->
 
 <div class="stat-grid">
 
@@ -594,7 +555,7 @@ BIRTHDAYS
 </div>
 
 
-<!-- Management Workflow -->
+<!-- MANAGEMENT WORKFLOW -->
 
 <div class="workflow-grid">
 
@@ -670,7 +631,7 @@ BIRTHDAYS
 </div>
 
 
-<!-- Management Quick Actions -->
+<!-- MANAGEMENT QUICK ACTIONS -->
 
 <div class="section-card">
 
@@ -678,16 +639,16 @@ BIRTHDAYS
         Quick Actions
     </h3>
 
+
     <div class="row g-3">
 
-        <!-- Register Student -->
+
         <div class="col-md-3">
 
             <a href="{% url 'register_student' %}"
                class="btn btn-success w-100 py-3">
 
                 👨‍🎓<br>
-
                 Register Student
 
             </a>
@@ -695,14 +656,12 @@ BIRTHDAYS
         </div>
 
 
-        <!-- Class Management -->
         <div class="col-md-3">
 
             <a href="{% url 'class_management' %}"
                class="btn btn-success w-100 py-3">
 
                 🏫<br>
-
                 Class Management
 
             </a>
@@ -710,14 +669,12 @@ BIRTHDAYS
         </div>
 
 
-        <!-- Register Teacher -->
         <div class="col-md-3">
 
             <a href="{% url 'register_teacher' %}"
                class="btn btn-success w-100 py-3">
 
                 👩‍🏫<br>
-
                 Register Teacher
 
             </a>
@@ -725,14 +682,12 @@ BIRTHDAYS
         </div>
 
 
-        <!-- Allocate Subjects -->
         <div class="col-md-3">
 
             <a href="{% url 'add_allocation' %}"
                class="btn btn-success w-100 py-3">
 
                 📚<br>
-
                 Allocate Subjects
 
             </a>
@@ -740,25 +695,25 @@ BIRTHDAYS
         </div>
 
 
-        <!-- Billing -->
         <div class="col-md-3">
 
             <a href="{% url 'students_owing' %}"
                class="btn btn-success w-100 py-3">
 
                 💰<br>
-
                 Billing
 
             </a>
 
         </div>
 
+
     </div>
 
 </div>
 
-<!-- Pending Approval -->
+
+<!-- PENDING APPROVAL -->
 
 {% if pending_approval %}
 
@@ -769,13 +724,15 @@ BIRTHDAYS
         Awaiting Your Approval
 
         <span style="
-                background:#d9822b;
-                color:#fff;
-                border-radius:10px;
-                padding:2px 8px;
-                font-size:12px;
-            ">
+            background:#d9822b;
+            color:#fff;
+            border-radius:10px;
+            padding:2px 8px;
+            font-size:12px;
+        ">
+
             {{ pending_approval|length }}
+
         </span>
 
     </h3>
@@ -785,21 +742,10 @@ BIRTHDAYS
 
         <tr>
 
-            <th>
-                Subject
-            </th>
-
-            <th>
-                Class
-            </th>
-
-            <th>
-                Term
-            </th>
-
-            <th>
-                Action
-            </th>
+            <th>Subject</th>
+            <th>Class</th>
+            <th>Term</th>
+            <th>Action</th>
 
         </tr>
 
@@ -822,8 +768,11 @@ BIRTHDAYS
 
             <td>
 
-                <a href="{% url 'approve_allocation' a.id %}" onclick="return confirm('Approve these results?')">
+                <a href="{% url 'approve_allocation' a.id %}"
+                   onclick="return confirm('Approve these results?')">
+
                     Approve
+
                 </a>
 
             </td>
@@ -839,7 +788,7 @@ BIRTHDAYS
 {% endif %}
 
 
-<!-- Approved / Ready to Publish -->
+<!-- APPROVED / READY TO PUBLISH -->
 
 {% if pending_publish %}
 
@@ -850,13 +799,15 @@ BIRTHDAYS
         Approved, Ready to Publish
 
         <span style="
-                background:#d9822b;
-                color:#fff;
-                border-radius:10px;
-                padding:2px 8px;
-                font-size:12px;
-            ">
+            background:#d9822b;
+            color:#fff;
+            border-radius:10px;
+            padding:2px 8px;
+            font-size:12px;
+        ">
+
             {{ pending_publish|length }}
+
         </span>
 
     </h3>
@@ -866,21 +817,10 @@ BIRTHDAYS
 
         <tr>
 
-            <th>
-                Subject
-            </th>
-
-            <th>
-                Class
-            </th>
-
-            <th>
-                Term
-            </th>
-
-            <th>
-                Action
-            </th>
+            <th>Subject</th>
+            <th>Class</th>
+            <th>Term</th>
+            <th>Action</th>
 
         </tr>
 
@@ -904,8 +844,10 @@ BIRTHDAYS
             <td>
 
                 <a href="{% url 'publish_allocation' a.id %}"
-                    onclick="return confirm('Publish these results? Students will be able to see them.')">
+                   onclick="return confirm('Publish these results? Students will be able to see them.')">
+
                     Publish
+
                 </a>
 
             </td>
@@ -921,7 +863,7 @@ BIRTHDAYS
 {% endif %}
 
 
-<!-- Recent Activities -->
+<!-- RECENT ACTIVITIES -->
 
 {% if recent_activities %}
 
@@ -933,26 +875,28 @@ BIRTHDAYS
 
 
     <ul style="
-            list-style:none;
-            padding:0;
-            margin:0;
-        ">
+        list-style:none;
+        padding:0;
+        margin:0;
+    ">
 
         {% for activity in recent_activities %}
 
         <li style="
-                padding:8px 0;
-                border-bottom:1px solid #eee;
-                font-size:13px;
-            ">
+            padding:8px 0;
+            border-bottom:1px solid #eee;
+            font-size:13px;
+        ">
 
             {{ activity.description }}
 
             <span style="
-                    color:#999;
-                    float:right;
-                ">
+                color:#999;
+                float:right;
+            ">
+
                 {{ activity.created_at|timesince }} ago
+
             </span>
 
         </li>
@@ -975,6 +919,10 @@ BIRTHDAYS
 {% if my_student_id %}
 
 
+<!-- =========================================================
+     STUDENT SUMMARY CARDS
+========================================================= -->
+
 <div class="stat-grid">
 
 
@@ -993,7 +941,8 @@ BIRTHDAYS
 
     <div class="stat-card">
 
-        <div class="stat-number" style="
+        <div class="stat-number"
+             style="
                 font-size:16px;
                 color:
                 {% if latest_result_published %}
@@ -1001,12 +950,12 @@ BIRTHDAYS
                 {% else %}
                     #d9822b
                 {% endif %};
-            ">
+             ">
 
             {% if latest_result_published %}
-            Published
+                Published
             {% else %}
-            Not Yet
+                Not Yet
             {% endif %}
 
         </div>
@@ -1018,69 +967,496 @@ BIRTHDAYS
     </div>
 
 
+    <div class="stat-card">
+
+        <div class="stat-number">
+
+            {% if student_attendance_percentage is not None %}
+                {{ student_attendance_percentage }}%
+            {% else %}
+                —
+            {% endif %}
+
+        </div>
+
+        <div class="stat-label">
+            Attendance
+        </div>
+
+    </div>
+
+
+    <div class="stat-card">
+
+        <div class="stat-number"
+             style="
+                font-size:16px;
+                color:
+                {% if my_balance > 0 %}
+                    #b83232
+                {% else %}
+                    #1a5c1a
+                {% endif %};
+             ">
+
+            ₦{{ my_balance|default:0|intcomma }}
+
+        </div>
+
+        <div class="stat-label">
+            Current Balance
+        </div>
+
+    </div>
+
+
 </div>
 
 
-<!-- Student Results -->
+<!-- =========================================================
+STUDENT PROFILE
+========================================================= -->
 
-<div class="section-card">
+<div class="section-card" id="student-profile">
+
+<h3 class="mb-4">
+   👤 My Profile
+</h3>
+
+<div class="row g-4 align-items-start">
+
+   <!-- STUDENT PASSPORT -->
+
+   <div class="col-md-3 text-center">
+
+       {% if request.user.student_profile.passport %}
+
+           <img
+               src="{{ request.user.student_profile.passport.url }}"
+               alt="Student Passport"
+               style="
+                   width:150px;
+                   height:180px;
+                   object-fit:cover;
+                   border-radius:8px;
+                   border:1px solid #ddd;
+                   padding:4px;
+                   background:#fff;
+               "
+           >
+
+       {% else %}
+
+           <div style="
+               width:150px;
+               height:180px;
+               margin:0 auto;
+               display:flex;
+               align-items:center;
+               justify-content:center;
+               text-align:center;
+               background:#f5f5f5;
+               border:1px solid #ddd;
+               border-radius:8px;
+               color:#888;
+               font-size:13px;
+           ">
+
+               No Passport Photo
+
+           </div>
+
+       {% endif %}
+
+       <div class="mt-2">
+
+           <strong>
+               Passport Photograph
+           </strong>
+
+       </div>
+
+   </div>
+
+
+   <!-- STUDENT INFORMATION -->
+
+   <div class="col-md-9">
+
+       <div class="row g-3">
+
+           <div class="col-md-6">
+
+               <strong>
+                   Full Name
+               </strong>
+
+               <p class="text-muted mb-0">
+                   {{ request.user.get_full_name|default:request.user.username }}
+               </p>
+
+           </div>
+
+
+           <div class="col-md-6">
+
+               <strong>
+                   Admission Number
+               </strong>
+
+               <p class="text-muted mb-0">
+                   {{ request.user.student_profile.admission_number }}
+               </p>
+
+           </div>
+
+
+           <div class="col-md-6">
+
+               <strong>
+                   Class
+               </strong>
+
+               <p class="text-muted mb-0">
+                   {{ request.user.student_profile.school_class }}
+               </p>
+
+           </div>
+
+
+           <div class="col-md-6">
+
+               <strong>
+                   Date of Birth
+               </strong>
+
+               <p class="text-muted mb-0">
+
+                   {% if request.user.student_profile.date_of_birth %}
+
+                       {{ request.user.student_profile.date_of_birth|date:"F d, Y" }}
+
+                   {% else %}
+
+                       Not provided
+
+                   {% endif %}
+
+               </p>
+
+           </div>
+
+
+           <div class="col-md-6">
+
+               <strong>
+                   Gender
+               </strong>
+
+               <p class="text-muted mb-0">
+
+                   {{ request.user.student_profile.get_gender_display|default:"Not provided" }}
+
+               </p>
+
+           </div>
+
+
+           <div class="col-md-6">
+
+               <strong>
+                   Nationality
+               </strong>
+
+               <p class="text-muted mb-0">
+
+                   {{ request.user.student_profile.nationality|default:"Not provided" }}
+
+               </p>
+
+           </div>
+
+
+           <div class="col-md-6">
+
+               <strong>
+                   Guardian
+               </strong>
+
+               <p class="text-muted mb-0">
+
+                   {{ request.user.student_profile.guardian_name|default:"Not provided" }}
+
+               </p>
+
+           </div>
+
+
+           <div class="col-md-6">
+
+               <strong>
+                   Guardian Phone
+               </strong>
+
+               <p class="text-muted mb-0">
+
+                   {{ request.user.student_profile.guardian_phone|default:"Not provided" }}
+
+               </p>
+
+           </div>
+
+       </div>
+
+   </div>
+
+</div>
+
+</div>
+
+
+<!-- =========================================================
+     STUDENT ACADEMIC SUMMARY
+========================================================= -->
+
+<div class="section-card" id="student-academics">
 
     <h3>
-        My Results
+        📚 Academic Summary
     </h3>
 
 
-    <a href="{% url 'select_report_term' my_student_id %}" style="
-            border:1px solid #1a5c1a;
-            color:#1a5c1a;
-            padding:8px 14px;
-            text-decoration:none;
-            border-radius:4px;
-            display:inline-block;
-        ">
-        View My Report Card
-    </a>
+    <div class="row g-3 mb-3">
+
+
+        <div class="col-md-6">
+
+            <div class="stat-card">
+
+                <div class="stat-number">
+                    {{ subjects_registered }}
+                </div>
+
+                <div class="stat-label">
+                    Subjects Registered
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="col-md-6">
+
+            <div class="stat-card">
+
+                <div class="stat-number"
+                     style="
+                        font-size:16px;
+                        color:
+                        {% if latest_result_published %}
+                            #1a5c1a
+                        {% else %}
+                            #d9822b
+                        {% endif %};
+                     ">
+
+                    {% if latest_result_published %}
+                        Published
+                    {% else %}
+                        Not Yet
+                    {% endif %}
+
+                </div>
+
+                <div class="stat-label">
+                    Latest Result
+                </div>
+
+            </div>
+
+        </div>
+
+
+    </div>
+
+
+    <div class="mt-3">
+
+        <a href="{% url 'select_report_term' my_student_id %}"
+           style="
+                border:1px solid #1a5c1a;
+                color:#1a5c1a;
+                padding:8px 14px;
+                text-decoration:none;
+                border-radius:4px;
+                display:inline-block;
+           ">
+
+            View My Report Card
+
+        </a>
+
+    </div>
 
 </div>
 
 
-<!-- Student Fees -->
+<!-- =========================================================
+     STUDENT ATTENDANCE
+========================================================= -->
+
+<div class="section-card" id="student-attendance">
+
+    <h3>
+        📅 My Attendance
+    </h3>
+
+
+    {% if student_attendance_marked %}
+
+    <div class="row g-3">
+
+
+        <div class="col-md-4">
+
+            <div class="stat-card text-center">
+
+                <div class="stat-number">
+
+                    {{ student_attendance_present }}
+
+                </div>
+
+                <div class="stat-label">
+                    Days Present
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="col-md-4">
+
+            <div class="stat-card text-center">
+
+                <div class="stat-number">
+
+                    {{ student_attendance_marked }}
+
+                </div>
+
+                <div class="stat-label">
+                    Days Marked
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="col-md-4">
+
+            <div class="stat-card text-center">
+
+                <div class="stat-number">
+
+                    {{ student_attendance_percentage }}%
+
+                </div>
+
+                <div class="stat-label">
+                    Attendance Rate
+                </div>
+
+            </div>
+
+        </div>
+
+
+    </div>
+
+
+    <div style="
+        margin-top:15px;
+        padding:12px;
+        background:#f0f8f1;
+        border-left:4px solid #1a5c1a;
+        border-radius:5px;
+    ">
+
+        <strong>
+            Current Term:
+        </strong>
+
+        {{ current_term }}
+
+    </div>
+
+
+    {% else %}
+
+    <div style="
+        padding:15px;
+        background:#f8f8f8;
+        border-radius:6px;
+        color:#777;
+    ">
+
+        No attendance records have been recorded for the current term yet.
+
+    </div>
+
+    {% endif %}
+
+</div>
+
+
+<!-- =========================================================
+     STUDENT FEES
+========================================================= -->
 
 {% if my_fee_amount is not None %}
 
-<div class="section-card">
+<div class="section-card" id="student-fees">
 
     <details>
 
         <summary style="
-                cursor:pointer;
-                font-weight:600;
-                color:#16401c;
-                font-size:16px;
-            ">
+            cursor:pointer;
+            font-weight:600;
+            color:#16401c;
+            font-size:16px;
+        ">
 
-            My Fees ({{ my_fee_term }}) — click to view
+            💰 My Fees ({{ my_fee_term }}) — click to view
 
         </summary>
 
 
         <div style="margin-top:12px;">
 
+
             <p>
+
                 <strong>
                     Amount Due:
                 </strong>
 
                 ₦{{ my_fee_amount|intcomma }}
+
             </p>
 
 
             <p>
+
                 <strong>
                     Total Paid:
                 </strong>
 
                 ₦{{ my_total_paid|intcomma }}
+
             </p>
 
 
@@ -1090,24 +1466,192 @@ BIRTHDAYS
                     Balance:
                 </strong>
 
-                <span style="
-                        color:
-                        {% if my_balance > 0 %}
-                            #b83232
-                        {% else %}
-                            #1a5c1a
-                        {% endif %};
 
-                        font-weight:600;
-                    ">
+                <span style="
+                    color:
+                    {% if my_balance > 0 %}
+                        #b83232
+                    {% else %}
+                        #1a5c1a
+                    {% endif %};
+
+                    font-weight:600;
+                ">
+
                     ₦{{ my_balance|intcomma }}
+
                 </span>
 
             </p>
 
+
         </div>
 
     </details>
+
+</div>
+
+{% endif %}
+
+
+<!-- =========================================================
+     STUDENT PAYMENT HISTORY
+========================================================= -->
+
+<div class="section-card" id="student-payments">
+
+    <h3>
+        💳 Payment History
+    </h3>
+
+    <p class="text-muted">
+
+        View all payments recorded on your school fee account.
+
+    </p>
+
+
+    <a href="{% url 'my_payment_history' %}"
+       style="
+            border:1px solid #1a5c1a;
+            color:#1a5c1a;
+            padding:8px 14px;
+            text-decoration:none;
+            border-radius:4px;
+            display:inline-block;
+       ">
+
+        View My Payment History
+
+    </a>
+
+</div>
+
+
+<!-- =========================================================
+     SCHOOL PAYMENT INFORMATION
+========================================================= -->
+
+{% if school_bank_name or school_account_name or school_account_number %}
+
+<div class="section-card" id="school-payment-information">
+
+    <h3>
+        🏦 School Payment Account
+    </h3>
+
+
+    <p class="text-muted">
+
+        Use the account below for school fee payments.
+
+    </p>
+
+
+    {% if school_bank_name %}
+
+    <p>
+
+        <strong>
+            Bank:
+        </strong>
+
+        {{ school_bank_name }}
+
+    </p>
+
+    {% endif %}
+
+
+    {% if school_account_name %}
+
+    <p>
+
+        <strong>
+            Account Name:
+        </strong>
+
+        {{ school_account_name }}
+
+    </p>
+
+    {% endif %}
+
+
+    {% if school_account_number %}
+
+    <p>
+
+        <strong>
+            Account Number:
+        </strong>
+
+
+        <span style="
+            font-size:20px;
+            font-weight:700;
+            letter-spacing:1px;
+        ">
+
+            {{ school_account_number }}
+
+        </span>
+
+    </p>
+
+    {% endif %}
+
+
+    <div style="
+        padding:10px;
+        background:#fff8e1;
+        border-left:4px solid #d9822b;
+        border-radius:5px;
+        font-size:13px;
+    ">
+
+        Please confirm your payment details before making a transfer.
+
+    </div>
+
+
+</div>
+
+{% endif %}
+
+<!-- =========================================================
+STUDENT'S OWN BIRTHDAY
+========================================================= -->
+
+{% if my_birthday %}
+
+<div class="section-card" id="student-birthday">
+
+<div class="d-flex justify-content-between align-items-center">
+
+   <div>
+
+       <h3 class="mb-1">
+           🎂 My Birthday
+       </h3>
+
+       <p class="mb-0 text-muted">
+           Your date of birth
+       </p>
+
+   </div>
+
+   <div style="
+       font-size:18px;
+       font-weight:600;
+       color:#16401c;
+   ">
+
+       {{ my_birthday|date:"F j, Y" }}
+
+   </div>
+
+</div>
 
 </div>
 
@@ -1170,7 +1714,9 @@ BIRTHDAYS
 {% endif %}
 
 
-<!-- Teaching Assignments -->
+<!-- =========================================================
+     TEACHING ASSIGNMENTS
+========================================================= -->
 
 {% if my_allocations %}
 
@@ -1183,14 +1729,16 @@ BIRTHDAYS
         {% if my_draft_count > 0 %}
 
         <span style="
-                background:#d9822b;
-                color:#fff;
-                border-radius:10px;
-                padding:2px 8px;
-                font-size:12px;
-                margin-left:6px;
-            ">
+            background:#d9822b;
+            color:#fff;
+            border-radius:10px;
+            padding:2px 8px;
+            font-size:12px;
+            margin-left:6px;
+        ">
+
             {{ my_draft_count }} awaiting submission
+
         </span>
 
         {% endif %}
@@ -1202,25 +1750,11 @@ BIRTHDAYS
 
         <tr>
 
-            <th>
-                Subject
-            </th>
-
-            <th>
-                Class
-            </th>
-
-            <th>
-                Term
-            </th>
-
-            <th>
-                Status
-            </th>
-
-            <th>
-                Action
-            </th>
+            <th>Subject</th>
+            <th>Class</th>
+            <th>Term</th>
+            <th>Status</th>
+            <th>Action</th>
 
         </tr>
 
@@ -1264,7 +1798,9 @@ BIRTHDAYS
 {% endif %}
 
 
-<!-- Class Teacher Dashboard -->
+<!-- =========================================================
+     CLASS TEACHER DASHBOARD
+========================================================= -->
 
 {% if my_class_students %}
 
@@ -1375,7 +1911,9 @@ BIRTHDAYS
 {% endif %}
 
 
-<!-- Teacher Review -->
+<!-- =========================================================
+     TEACHER REVIEW
+========================================================= -->
 
 {% if pending_review and not is_management %}
 
@@ -1390,21 +1928,10 @@ BIRTHDAYS
 
         <tr>
 
-            <th>
-                Subject
-            </th>
-
-            <th>
-                Class
-            </th>
-
-            <th>
-                Term
-            </th>
-
-            <th>
-                Action
-            </th>
+            <th>Subject</th>
+            <th>Class</th>
+            <th>Term</th>
+            <th>Action</th>
 
         </tr>
 

@@ -146,6 +146,24 @@ class SchoolSettings(models.Model):
     school_email = models.EmailField(
         blank=True
     )
+    
+    bank_name = models.CharField(
+        max_length=100,
+        blank=True,
+        help_text="Bank where school payments should be made.",
+    )
+
+    account_name = models.CharField(
+        max_length=150,
+        blank=True,
+        help_text="Name on the school payment account.",
+    )
+
+    account_number = models.CharField(
+        max_length=20,
+        blank=True,
+        help_text="School bank account number for payments.",
+    )
 
     principal_name = models.CharField(
         max_length=100,

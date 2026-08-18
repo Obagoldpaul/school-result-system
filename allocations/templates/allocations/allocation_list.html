@@ -21,7 +21,7 @@
 
 {% block content %}
 
-<div class="page-header">
+<div class="page-header d-flex justify-content-between align-items-center">
 
     <div>
         <h1>Subject Allocations</h1>
@@ -30,6 +30,32 @@
             View subject and teacher allocations for each academic term.
         </p>
     </div>
+
+
+    {% if is_management %}
+
+    <div class="d-flex gap-2">
+
+        <a
+            href="{% url 'add_allocation' %}"
+            class="btn btn-outline-success">
+
+            + New Allocation
+
+        </a>
+
+
+        <a
+            href="{% url 'bulk_add_allocation' %}"
+            class="btn btn-success">
+
+            Bulk Allocate Subjects
+
+        </a>
+
+    </div>
+
+    {% endif %}
 
 </div>
 
@@ -54,250 +80,242 @@
     <form method="GET" class="allocation-filter">
 
         <!-- TERM FILTER -->
-    
+
         <div class="filter-field">
-    
+
             <label for="term">
                 Academic Term
             </label>
-    
-            <select
-                name="term"
-                id="term"
-                onchange="this.form.submit()"
-            >
-    
+
+            <select name="term" id="term" onchange="this.form.submit()">
+
                 {% for t in terms %}
-    
-                    <option
-                        value="{{ t.id }}"
-                        {% if selected_term and t.id == selected_term.id %}
-                            selected
-                        {% endif %}
-                    >
-                        {{ t }}
-                    </option>
-    
+
+                <option value="{{ t.id }}" {% if selected_term and t.id == selected_term.id %} selected {% endif %}>
+                    {{ t }}
+                </option>
+
                 {% endfor %}
-    
+
             </select>
-    
+
         </div>
-    
-    
+
+
         <!-- CLASS FILTER -->
-    
+
         <div class="filter-field">
-    
+
             <label for="class">
                 Class
             </label>
-    
-            <select
-                name="class"
-                id="class"
-                onchange="this.form.submit()"
-            >
-    
+
+            <select name="class" id="class" onchange="this.form.submit()">
+
                 <option value="">
                     All Classes
                 </option>
-    
+
                 {% for c in classes %}
-    
-                    <option
-                        value="{{ c.id }}"
-                        {% if selected_class and c.id == selected_class.id %}
-                            selected
-                        {% endif %}
-                    >
-                        {{ c.name }}
-                    </option>
-    
+
+                <option value="{{ c.id }}" {% if selected_class and c.id == selected_class.id %} selected {% endif %}>
+                    {{ c.name }}
+                </option>
+
                 {% endfor %}
-    
+
             </select>
-    
+
         </div>
-    
-    
+
+
         {% if selected_term or selected_class %}
-    
-            <div class="selected-term">
-    
-                Currently viewing:
-    
-                {% if selected_term %}
-                    <strong>{{ selected_term }}</strong>
-                {% endif %}
-    
-                {% if selected_class %}
-                    —
-                    <strong>{{ selected_class.name }}</strong>
-                {% endif %}
-    
-            </div>
-    
+
+        <div class="selected-term">
+
+            Currently viewing:
+
+            {% if selected_term %}
+            <strong>{{ selected_term }}</strong>
+            {% endif %}
+
+            {% if selected_class %}
+            —
+            <strong>{{ selected_class.name }}</strong>
+            {% endif %}
+
+        </div>
+
         {% endif %}
-    
-    
-        {% if is_management %}
-    
-            <a
-                href="{% url 'add_allocation' %}"
-                class="add-button"
-            >
-                + New Allocation
-            </a>
-    
-            <a
-                href="{% url 'bulk_add_allocation' %}"
-                class="btn btn-success"
-            >
-                Bulk Allocate Subjects
-            </a>
-    
-        {% endif %}
-    
+
+
     </form>
 
 </div>
 
 
-<!-- ALLOCATIONS -->
+<!-- =========================================================
+SUBJECT ALLOCATIONS BY SCHOOL SECTION
+========================================================= -->
 
-{% for group in grouped %}
+{% for section in section_groups %}
 
-<div class="section-card allocation-card">
+<div class="section-card mb-4">
 
-    <div class="allocation-header">
+    <!-- SECTION HEADER -->
 
-        <div>
+    <div class="section-card-header">
 
-            <h2>
-                {{ group.school_class }}
-            </h2>
+        <h2>
+            {{ section.label }}
+        </h2>
 
-            <p class="text-muted">
-                Subject and teacher assignments
-            </p>
+        <p class="text-muted">
+            Subject allocations for {{ section.label }} classes.
+        </p>
+
+    </div>
+
+
+    <!-- CLASSES IN THIS SECTION -->
+
+    {% for group in section.classes %}
+
+    <div class="card shadow-sm border-0 mb-4 allocation-card">
+
+        <!-- CLASS HEADER -->
+
+        <div class="allocation-header">
+
+            <div>
+
+                <h2>
+                    {{ group.school_class.name }}
+                </h2>
+
+                <p class="text-muted">
+                    Subject and teacher assignments
+                </p>
+
+            </div>
+
+
+            <span class="allocation-count">
+
+                {{ group.allocations|length }}
+
+                allocation{{ group.allocations|length|pluralize }}
+
+            </span>
 
         </div>
 
 
-        <span class="allocation-count">
+        <!-- ALLOCATIONS TABLE -->
 
-            {{ group.allocations|length }}
+        <div class="table-container">
 
-            allocation{{ group.allocations|length|pluralize }}
+            <table class="allocation-table">
 
-        </span>
+                <thead>
 
-    </div>
+                    <tr>
 
+                        <th>#</th>
 
-    <div class="table-container">
+                        <th>Subject</th>
 
-        <table class="allocation-table">
+                        <th>Teacher</th>
 
-            <thead>
+                        <th>Status</th>
 
-                <tr>
+                    </tr>
 
-                    <th>#</th>
-
-                    <th>Subject</th>
-
-                    <th>Teacher</th>
-
-                    <th>Status</th>
-
-                </tr>
-
-            </thead>
+                </thead>
 
 
-            <tbody>
+                <tbody>
 
-                {% for a in group.allocations %}
+                    {% for a in group.allocations %}
 
-                <tr>
+                    <tr>
 
-                    <td>
-                        {{ forloop.counter }}
-                    </td>
-
-
-                    <td>
-
-                        <strong>
-                            {{ a.subject }}
-                        </strong>
-
-                    </td>
+                        <td>
+                            {{ forloop.counter }}
+                        </td>
 
 
-                    <td>
+                        <td>
 
-                        {{ a.teacher }}
+                            <strong>
+                                {{ a.subject }}
+                            </strong>
 
-                    </td>
+                        </td>
 
 
-                    <td>
+                        <td>
+                            {{ a.teacher }}
+                        </td>
 
-                        {% if a.status == 'DRAFT' %}
 
-                        <span class="status-badge draft">
-                            Draft
-                        </span>
+                        <td>
 
-                        {% elif a.status == 'SUBMITTED' %}
+                            {% if a.status == 'DRAFT' %}
 
-                        <span class="status-badge submitted">
-                            Submitted
-                        </span>
+                            <span class="status-badge draft">
+                                Draft
+                            </span>
 
-                        {% elif a.status == 'REVIEWED' %}
+                            {% elif a.status == 'SUBMITTED' %}
 
-                        <span class="status-badge reviewed">
-                            Reviewed
-                        </span>
+                            <span class="status-badge submitted">
+                                Submitted
+                            </span>
 
-                        {% elif a.status == 'APPROVED' %}
+                            {% elif a.status == 'REVIEWED' %}
 
-                        <span class="status-badge approved">
-                            Approved
-                        </span>
+                            <span class="status-badge reviewed">
+                                Reviewed
+                            </span>
 
-                        {% elif a.status == 'PUBLISHED' %}
+                            {% elif a.status == 'APPROVED' %}
 
-                        <span class="status-badge published">
-                            Published
-                        </span>
+                            <span class="status-badge approved">
+                                Approved
+                            </span>
 
-                        {% else %}
+                            {% elif a.status == 'PUBLISHED' %}
 
-                        <span class="status-badge">
-                            {{ a.get_status_display }}
-                        </span>
+                            <span class="status-badge published">
+                                Published
+                            </span>
 
-                        {% endif %}
+                            {% else %}
 
-                    </td>
+                            <span class="status-badge">
+                                {{ a.get_status_display }}
+                            </span>
 
-                </tr>
+                            {% endif %}
 
-                {% endfor %}
+                        </td>
 
-            </tbody>
+                    </tr>
 
-        </table>
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
 
     </div>
+
+    {% endfor %}
 
 </div>
-
 
 {% empty %}
 

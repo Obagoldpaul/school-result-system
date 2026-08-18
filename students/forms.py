@@ -453,5 +453,26 @@ class StudentRegistrationForm(forms.ModelForm):
 
 
         return student
-    
+
+class SchoolClassForm(forms.ModelForm):
+    class Meta:
+        model = SchoolClass
+        fields = ["name", "section"]
+        widgets = {
+            "name": forms.TextInput(
+                attrs={
+                    "class": "form-control",
+                    "placeholder": "e.g. BASIC 1",
+                }
+            ),
+            "section": forms.Select(
+                attrs={
+                    "class": "form-select",
+                }
+            ),
+        }
+
+    def __init__(self, *args, user=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.user = user
     

@@ -83,23 +83,79 @@
     <p><strong>Class:</strong> {{ student.school_class }}</p>
     <p><strong>Term:</strong> {{ term }}</p>
 
-    <table>
-        <tr>
-            <td>Total Fees Owed (cumulative)</td>
-            <td>₦{{ fee_amount|default:0|intcomma }}</td>
-        </tr>
-        <tr>
-            <td>Total Paid</td>
-            <td>₦{{ total_paid|intcomma }}</td>
-        </tr>
-        <tr class="balance-row">
-            <td>Balance Due</td>
-            <td>₦{{ balance|default:0|intcomma }}</td>
-        </tr>
-    </table>
+    <h3 style="margin-top:25px;">Fee Breakdown</h3>
 
-    <p style="margin-top:30px; font-size:11px; color:#666;">This bill reflects cumulative fees for the current session
-        up to and including {{ term }}.</p>
+<table>
+    <thead>
+        <tr>
+            <th>Fee Category</th>
+            <th>Type</th>
+            <th>Amount</th>
+            <th>Paid</th>
+            <th>Balance</th>
+            <th>Status</th>
+        </tr>
+    </thead>
+
+    <tbody>
+        {% for item in fee_breakdown %}
+        <tr>
+            <td>{{ item.fee_category.name }}</td>
+
+            <td>
+                {{ item.fee_category.get_category_type_display }}
+            </td>
+
+            <td>
+                ₦{{ item.amount|intcomma }}
+            </td>
+
+            <td>
+                ₦{{ item.paid|intcomma }}
+            </td>
+
+            <td>
+                ₦{{ item.balance|intcomma }}
+            </td>
+
+            <td>
+                {{ item.status }}
+            </td>
+        </tr>
+
+        {% empty %}
+        <tr>
+            <td colspan="6" style="text-align:center;">
+                No fees have been assigned for this term.
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+
+    <tfoot>
+        <tr>
+            <td colspan="2"><strong>Total</strong></td>
+
+            <td>
+                <strong>₦{{ fee_amount|default:0|intcomma }}</strong>
+            </td>
+
+            <td>
+                <strong>₦{{ total_paid|default:0|intcomma }}</strong>
+            </td>
+
+            <td class="balance-row">
+                <strong>₦{{ balance|default:0|intcomma }}</strong>
+            </td>
+
+            <td></td>
+        </tr>
+    </tfoot>
+</table>
+
+<p style="margin-top:30px; font-size:11px; color:#666;">
+    This bill reflects the fees assigned to the student for {{ term }}.
+</p>
 </body>
 
 </html>

@@ -1,0 +1,284 @@
+{% extends "base.html" %}
+
+{% block title %}
+Manage Optional Fee Students
+{% endblock %}
+
+{% block content %}
+
+<div class="container-fluid mt-4">
+
+    <div class="card shadow">
+
+        <div class="card-header school-header">
+
+            <div class="d-flex justify-content-between align-items-center">
+
+                <div>
+
+                    <h3 class="text-white mb-1">
+                        {{ assignment.fee_category.name }}
+                    </h3>
+
+                    <div class="text-white">
+
+                        {{ assignment.term }}
+
+                        {% if assignment.school_class %}
+                            | {{ assignment.school_class }}
+                        {% endif %}
+
+                        {% if assignment.department %}
+                            | {{ assignment.department }}
+                        {% endif %}
+
+                        | ₦{{ assignment.amount|floatformat:2 }}
+
+                    </div>
+
+                </div>
+
+                <a
+                    href="{% url 'fee_assignment_list' %}"
+                    class="btn btn-light"
+                >
+                    Back to Fee Assignments
+                </a>
+
+            </div>
+
+        </div>
+
+        <div class="card-body">
+
+            {% if messages %}
+
+                {% for message in messages %}
+
+                    <div class="alert alert-{{ message.tags }}">
+                        {{ message }}
+                    </div>
+
+                {% endfor %}
+
+            {% endif %}
+
+            <!-- SEARCH -->
+
+            <form method="GET" class="mb-4">
+
+                <div class="row">
+
+                    <div class="col-md-8">
+
+                        <input
+                            type="text"
+                            name="search"
+                            value="{{ search }}"
+                            class="form-control"
+                            placeholder="Search by student name or admission number"
+                        >
+
+                    </div>
+
+                    <div class="col-md-4">
+
+                        <button
+                            type="submit"
+                            class="btn btn-primary"
+                        >
+                            Search
+                        </button>
+
+                        {% if search %}
+
+                            <a
+                                href="{% url 'manage_optional_fee_students' assignment.id %}"
+                                class="btn btn-secondary"
+                            >
+                                Clear
+                            </a>
+
+                        {% endif %}
+
+                    </div>
+
+                </div>
+
+            </form>
+
+            <!-- INFORMATION -->
+
+            <div class="alert alert-info">
+
+                <strong>
+                    Optional Fee
+                </strong>
+
+                <br>
+
+                Students will only be charged this fee when they
+                are marked as <strong>Opted In</strong>.
+
+            </div>
+
+            <!-- STUDENT COUNT -->
+
+            <div class="mb-3">
+
+                <strong>
+                    Students found:
+                </strong>
+
+                {{ total_students }}
+
+            </div>
+
+            <!-- STUDENTS -->
+
+            <div class="table-responsive">
+
+                <table class="table table-bordered table-hover align-middle">
+
+                    <thead class="table-success">
+
+                        <tr>
+
+                            <th>S/N</th>
+
+                            <th>Student</th>
+
+                            <th>Admission Number</th>
+
+                            <th>Class</th>
+
+                            <th>Department</th>
+
+                            <th>Status</th>
+
+                            <th>Action</th>
+
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                        {% for record in student_records %}
+
+                        <tr>
+
+                            <td>
+                                {{ forloop.counter }}
+                            </td>
+
+                            <td>
+
+                                <strong>
+                                    {{ record.student.user.get_full_name }}
+                                </strong>
+
+                            </td>
+
+                            <td>
+                                {{ record.student.admission_number }}
+                            </td>
+
+                            <td>
+                                {{ record.student.school_class|default:"-" }}
+                            </td>
+
+                            <td>
+                                {{ record.student.department|default:"-" }}
+                            </td>
+
+                            <td>
+
+                                {% if record.opted_in %}
+
+                                    <span class="badge bg-success">
+                                        Opted In
+                                    </span>
+
+                                {% else %}
+
+                                    <span class="badge bg-secondary">
+                                        Not Enrolled
+                                    </span>
+
+                                {% endif %}
+
+                            </td>
+
+                            <td>
+
+                                <form method="POST">
+
+                                    {% csrf_token %}
+
+                                    <input
+                                        type="hidden"
+                                        name="student_id"
+                                        value="{{ record.student.id }}"
+                                    >
+
+                                    {% if record.opted_in %}
+
+                                        <button
+                                            type="submit"
+                                            name="action"
+                                            value="opt_out"
+                                            class="btn btn-sm btn-danger"
+                                        >
+                                            Remove
+                                        </button>
+
+                                    {% else %}
+
+                                        <button
+                                            type="submit"
+                                            name="action"
+                                            value="opt_in"
+                                            class="btn btn-sm btn-success"
+                                        >
+                                            Opt In
+                                        </button>
+
+                                    {% endif %}
+
+                                </form>
+
+                            </td>
+
+                        </tr>
+
+                        {% empty %}
+
+                        <tr>
+
+                            <td
+                                colspan="7"
+                                class="text-center text-muted py-4"
+                            >
+
+                                No students found.
+
+                            </td>
+
+                        </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

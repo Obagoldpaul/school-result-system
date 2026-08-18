@@ -348,33 +348,60 @@ def allocation_list(request):
         )
 
     # ----------------------------
-    # Classes
+    # Classes grouped by section
     # ----------------------------
 
     classes = SchoolClass.objects.filter(
         school=school
-    ).order_by('name')
+    ).order_by(
+        'section',
+        'name',
+    )
 
-    grouped = []
+    section_order = [
+        SchoolClass.Section.PRE_PRIMARY,
+        SchoolClass.Section.PRIMARY,
+        SchoolClass.Section.JUNIOR_SECONDARY,
+        SchoolClass.Section.SENIOR_SECONDARY,
+    ]
 
-    for c in classes:
+    section_groups = []
 
-        class_allocations = [
-            a for a in allocations
-            if a.school_class_id == c.id
-        ]
+    for section_value, section_label in SchoolClass.Section.choices:
 
-        if class_allocations:
-            grouped.append({
-                'school_class': c,
-                'allocations': class_allocations,
+        if section_value not in section_order:
+            continue
+
+        section_classes = []
+
+        for c in classes:
+
+            if c.section != section_value:
+                continue
+
+            class_allocations = [
+                a for a in allocations
+                if a.school_class_id == c.id
+            ]
+
+            if class_allocations:
+                section_classes.append({
+                    'school_class': c,
+                    'allocations': class_allocations,
+                })
+
+        if section_classes:
+            section_groups.append({
+                'value': section_value,
+                'label': section_label,
+                'classes': section_classes,
             })
-
+            
     return render(
         request,
         'allocations/allocation_list.html',
         {
-            'grouped': grouped,
+            'section_groups': section_groups,
 
             'terms': Term.objects.filter(
                 session__school=school

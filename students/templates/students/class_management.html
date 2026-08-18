@@ -23,10 +23,19 @@ Class Management
                 </small>
             </div>
 
-            <div>
+            <div class="d-flex align-items-center gap-2">
+
                 <span class="badge bg-light text-dark fs-6">
                     {{ class_count }} Classes
                 </span>
+
+                <a href="{% url 'add_class' %}"
+                   class="btn btn-light">
+
+                    + Add Class
+
+                </a>
+
             </div>
 
         </div>
@@ -109,6 +118,14 @@ Class Management
                                     class="btn btn-outline-primary">
 
                                     View Students
+
+                                </a>
+
+                                <a
+                                    href="{% url 'edit_class' school_class.id %}"
+                                    class="btn btn-outline-warning">
+
+                                    ✏️ Edit Class
 
                                 </a>
 

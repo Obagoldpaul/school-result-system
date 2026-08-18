@@ -12,6 +12,9 @@ class SchoolSettingsForm(forms.ModelForm):
             "school_address",
             "school_phone",
             "school_email",
+            "bank_name",
+            "account_name",
+            "account_number",
             "principal_name",
             "principal_signature",
             "primary_color",
@@ -43,6 +46,29 @@ class SchoolSettingsForm(forms.ModelForm):
                     "class": "form-control",
                 }
             ),
+            
+            "bank_name": forms.TextInput(
+                attrs={
+                    "class": "form-control",
+                    "placeholder": "e.g. First Bank",
+                }
+            ),
+
+            "account_name": forms.TextInput(
+                attrs={
+                    "class": "form-control",
+                    "placeholder": "e.g. Great Goshenland Blossom School",
+                }
+            ),
+
+            "account_number": forms.TextInput(
+                attrs={
+                    "class": "form-control",
+                    "placeholder": "e.g. 0123456789",
+                    "inputmode": "numeric",
+                }
+            ),
+            
             "principal_name": forms.TextInput(
                 attrs={
                     "class": "form-control",

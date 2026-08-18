@@ -69,6 +69,45 @@
             {{ form.school_email.errors }}
         </div>
 
+        <hr>
+
+        <h2>School Payment Account</h2>
+
+        <p class="text-muted">
+            These details will be displayed to students and parents
+            when making school fee payments.
+        </p>
+
+        <div class="form-group">
+            <label for="{{ form.bank_name.id_for_label }}">
+                Bank Name
+            </label>
+
+            {{ form.bank_name }}
+
+            {{ form.bank_name.errors }}
+        </div>
+
+        <div class="form-group">
+            <label for="{{ form.account_name.id_for_label }}">
+                Account Name
+            </label>
+
+            {{ form.account_name }}
+
+            {{ form.account_name.errors }}
+        </div>
+
+        <div class="form-group">
+            <label for="{{ form.account_number.id_for_label }}">
+                Account Number
+            </label>
+
+            {{ form.account_number }}
+
+            {{ form.account_number.errors }}
+        </div>
+
         <div class="form-group">
             <label for="{{ form.principal_name.id_for_label }}">
                 Principal's Name

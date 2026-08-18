@@ -1,0 +1,933 @@
+
+{% extends "base.html" %}
+
+{% block title %}
+Edit Fee Assignment
+{% endblock %}
+
+{% block content %}
+
+<div class="container-fluid mt-4">
+
+    <div class="card shadow">
+
+        <div class="card-header school-header">
+            <h3 class="text-white mb-0">
+                Edit Fee Assignment
+            </h3>
+        </div>
+
+        <div class="card-body">
+
+            {% if form.non_field_errors %}
+
+                <div class="alert alert-danger">
+
+                    {% for error in form.non_field_errors %}
+                        <div>{{ error }}</div>
+                    {% endfor %}
+
+                </div>
+
+            {% endif %}
+
+
+            <form method="POST">
+
+                {% csrf_token %}
+
+
+                <!-- ================================================= -->
+                <!-- FEE CATEGORY -->
+                <!-- ================================================= -->
+
+                <div class="mb-3">
+
+                    <label
+                        for="{{ form.fee_category.id_for_label }}"
+                        class="form-label"
+                    >
+                        Fee Category
+                    </label>
+
+                    {{ form.fee_category }}
+
+                    {% for error in form.fee_category.errors %}
+
+                        <div class="text-danger mt-1">
+                            {{ error }}
+                        </div>
+
+                    {% endfor %}
+
+                </div>
+
+
+                <!-- ================================================= -->
+                <!-- ACADEMIC SESSION -->
+                <!-- ================================================= -->
+
+                <div class="mb-3">
+
+                    <label
+                        for="{{ form.session.id_for_label }}"
+                        class="form-label"
+                    >
+                        Academic Session
+                    </label>
+
+                    {{ form.session }}
+
+                    {% for error in form.session.errors %}
+
+                        <div class="text-danger mt-1">
+                            {{ error }}
+                        </div>
+
+                    {% endfor %}
+
+                </div>
+
+
+                <!-- ================================================= -->
+                <!-- TERM -->
+                <!-- ================================================= -->
+
+                <div class="mb-3">
+
+                    <label
+                        for="{{ form.term.id_for_label }}"
+                        class="form-label"
+                    >
+                        Term
+                    </label>
+
+                    {{ form.term }}
+
+                    {% for error in form.term.errors %}
+
+                        <div class="text-danger mt-1">
+                            {{ error }}
+                        </div>
+
+                    {% endfor %}
+
+                </div>
+
+
+                <!-- ================================================= -->
+                <!-- CLASS -->
+                <!-- ================================================= -->
+
+                <div class="mb-3">
+
+                    <label
+                        for="{{ form.school_class.id_for_label }}"
+                        class="form-label"
+                    >
+                        Class
+                    </label>
+
+                    {{ form.school_class }}
+
+                    <div class="form-text">
+                        Select a class for a class-wide or
+                        class-and-department fee assignment.
+                    </div>
+
+                    {% for error in form.school_class.errors %}
+
+                        <div class="text-danger mt-1">
+                            {{ error }}
+                        </div>
+
+                    {% endfor %}
+
+                </div>
+
+
+                <!-- ================================================= -->
+                <!-- DEPARTMENT -->
+                <!-- ================================================= -->
+
+                <div class="mb-3">
+
+                    <label
+                        for="{{ form.department.id_for_label }}"
+                        class="form-label"
+                    >
+                        Department
+                    </label>
+
+                    {{ form.department }}
+
+                    <div class="form-text">
+                        Optional. Leave blank for the entire class.
+                    </div>
+
+                    {% for error in form.department.errors %}
+
+                        <div class="text-danger mt-1">
+                            {{ error }}
+                        </div>
+
+                    {% endfor %}
+
+                </div>
+
+
+                <!-- ================================================= -->
+                <!-- INDIVIDUAL STUDENT -->
+                <!-- ================================================= -->
+
+                <div class="mb-3">
+
+                    <label class="form-label">
+                        Individual Student
+                    </label>
+
+                    <div class="form-text mb-2">
+                        Use this only when assigning the fee to
+                        one specific student.
+                    </div>
+
+
+                    <!-- Search box -->
+
+                    <input
+                        type="text"
+                        id="student-search"
+                        class="form-control"
+                        placeholder="Search student by name or admission number..."
+                        autocomplete="off"
+                    >
+
+
+                    <!-- Search results -->
+
+                    <div
+                        id="student-search-results"
+                        class="list-group mt-2"
+                        style="max-height: 300px; overflow-y: auto;"
+                    >
+                    </div>
+
+
+                    <!-- Selected student -->
+
+                    <div
+                        id="selected-student"
+                        class="alert alert-success mt-3
+                               {% if not assignment.student %}
+                                   d-none
+                               {% endif %}"
+                    >
+
+                        <div
+                            class="d-flex justify-content-between
+                                   align-items-center"
+                        >
+
+                            <div>
+
+                                <strong>
+                                    Selected Student
+                                </strong>
+
+                                <div id="selected-student-name">
+
+                                    {% if assignment.student %}
+
+                                        {{ assignment.student.user.get_full_name|default:assignment.student.user.username }}
+
+                                    {% endif %}
+
+                                </div>
+
+                                <small
+                                    id="selected-student-details"
+                                    class="text-muted"
+                                >
+
+                                    {% if assignment.student %}
+
+                                        {{ assignment.student.admission_number }}
+
+                                        {% if assignment.student.school_class %}
+                                            • {{ assignment.student.school_class }}
+                                        {% endif %}
+
+                                    {% endif %}
+
+                                </small>
+
+                            </div>
+
+
+                            <button
+                                type="button"
+                                id="clear-student"
+                                class="btn btn-sm btn-outline-danger"
+                            >
+                                Remove
+                            </button>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- Hidden Django student field -->
+
+                    {{ form.student }}
+
+
+                    {% for error in form.student.errors %}
+
+                        <div class="text-danger mt-1">
+                            {{ error }}
+                        </div>
+
+                    {% endfor %}
+
+                </div>
+
+
+                <!-- ================================================= -->
+                <!-- AMOUNT -->
+                <!-- ================================================= -->
+
+                <div class="mb-3">
+
+                    <label
+                        for="{{ form.amount.id_for_label }}"
+                        class="form-label"
+                    >
+                        Amount
+                    </label>
+
+                    {{ form.amount }}
+
+                    {% for error in form.amount.errors %}
+
+                        <div class="text-danger mt-1">
+                            {{ error }}
+                        </div>
+
+                    {% endfor %}
+
+                </div>
+
+
+                <!-- ================================================= -->
+                <!-- ACTIVE -->
+                <!-- ================================================= -->
+
+                <div class="mb-3 form-check">
+
+                    {{ form.is_active }}
+
+                    <label
+                        for="{{ form.is_active.id_for_label }}"
+                        class="form-check-label"
+                    >
+                        Active
+                    </label>
+
+                    {% for error in form.is_active.errors %}
+
+                        <div class="text-danger mt-1">
+                            {{ error }}
+                        </div>
+
+                    {% endfor %}
+
+                </div>
+
+
+                <!-- ================================================= -->
+                <!-- BUTTONS -->
+                <!-- ================================================= -->
+
+                <div class="mt-4">
+
+                    <button
+                        type="submit"
+                        class="btn btn-success"
+                    >
+                        Update Fee Assignment
+                    </button>
+
+                    <a
+                        href="{% url 'fee_assignment_list' %}"
+                        class="btn btn-secondary"
+                    >
+                        Cancel
+                    </a>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<script>
+
+document.addEventListener(
+    "DOMContentLoaded",
+    function () {
+
+
+        // =========================================================
+        // ELEMENTS
+        // =========================================================
+
+        const sessionField =
+            document.getElementById(
+                "id_session"
+            );
+
+        const termField =
+            document.getElementById(
+                "id_term"
+            );
+
+        const classField =
+            document.getElementById(
+                "id_school_class"
+            );
+
+        const studentSearch =
+            document.getElementById(
+                "student-search"
+            );
+
+        const studentResults =
+            document.getElementById(
+                "student-search-results"
+            );
+
+        const studentField =
+            document.getElementById(
+                "id_student"
+            );
+
+        const selectedStudent =
+            document.getElementById(
+                "selected-student"
+            );
+
+        const selectedStudentName =
+            document.getElementById(
+                "selected-student-name"
+            );
+
+        const selectedStudentDetails =
+            document.getElementById(
+                "selected-student-details"
+            );
+
+        const clearStudentButton =
+            document.getElementById(
+                "clear-student"
+            );
+
+
+        // =========================================================
+        // EXISTING STUDENT
+        // =========================================================
+
+        const existingStudentId =
+            "{{ assignment.student.id|default:'' }}";
+
+
+        // =========================================================
+        // SESSION → TERM
+        // =========================================================
+
+        function loadTerms(
+            sessionId,
+            selectedTermId = null
+        ) {
+
+            termField.innerHTML = "";
+
+            const defaultOption =
+                document.createElement(
+                    "option"
+                );
+
+            defaultOption.value = "";
+
+            defaultOption.textContent =
+                "Select term";
+
+            termField.appendChild(
+                defaultOption
+            );
+
+
+            if (!sessionId) {
+                return;
+            }
+
+
+            fetch(
+                "{% url 'fee_assignment_terms' %}?session="
+                + encodeURIComponent(
+                    sessionId
+                )
+            )
+
+            .then(
+                response =>
+                    response.json()
+            )
+
+            .then(
+                data => {
+
+                    data.terms.forEach(
+                        function (term) {
+
+                            const option =
+                                document.createElement(
+                                    "option"
+                                );
+
+                            option.value =
+                                term.id;
+
+                            option.textContent =
+                                term.name;
+
+
+                            if (
+                                selectedTermId
+                                &&
+                                String(term.id)
+                                ===
+                                String(selectedTermId)
+                            ) {
+
+                                option.selected =
+                                    true;
+
+                            }
+
+
+                            termField.appendChild(
+                                option
+                            );
+
+                        }
+                    );
+
+                }
+            )
+
+            .catch(
+                error => {
+
+                    console.error(
+                        "Error loading terms:",
+                        error
+                    );
+
+                }
+            );
+
+        }
+
+
+        sessionField.addEventListener(
+            "change",
+            function () {
+
+                loadTerms(
+                    this.value
+                );
+
+            }
+        );
+
+
+        // =========================================================
+        // STUDENT SEARCH
+        // =========================================================
+
+        let searchTimer = null;
+
+
+        function searchStudents() {
+
+            const query =
+                studentSearch.value.trim();
+
+
+            studentResults.innerHTML = "";
+
+
+            if (query.length < 2) {
+
+                return;
+
+            }
+
+
+            const classId =
+                classField.value;
+
+
+            let url =
+                "{% url 'fee_assignment_student_search' %}"
+                + "?q="
+                + encodeURIComponent(
+                    query
+                );
+
+
+            if (classId) {
+
+                url +=
+                    "&class_id="
+                    + encodeURIComponent(
+                        classId
+                    );
+
+            }
+
+
+            studentResults.innerHTML = `
+                <div class="list-group-item text-muted">
+                    Searching...
+                </div>
+            `;
+
+
+            fetch(url)
+
+                .then(
+                    response =>
+                        response.json()
+                )
+
+                .then(
+                    data => {
+
+                        studentResults.innerHTML =
+                            "";
+
+
+                        if (
+                            !data.students
+                            ||
+                            data.students.length === 0
+                        ) {
+
+                            studentResults.innerHTML = `
+                                <div class="list-group-item text-muted">
+                                    No students found.
+                                </div>
+                            `;
+
+                            return;
+
+                        }
+
+
+                        data.students.forEach(
+                            function (student) {
+
+                                const item =
+                                    document.createElement(
+                                        "button"
+                                    );
+
+                                item.type =
+                                    "button";
+
+                                item.className =
+                                    "list-group-item list-group-item-action";
+
+
+                                const name =
+                                    document.createElement(
+                                        "strong"
+                                    );
+
+                                name.textContent =
+                                    student.name;
+
+
+                                const details =
+                                    document.createElement(
+                                        "small"
+                                    );
+
+                                details.className =
+                                    "d-block text-muted";
+
+
+                                let detailsText =
+                                    student.admission_number;
+
+
+                                if (
+                                    student.class_name
+                                ) {
+
+                                    detailsText +=
+                                        " • "
+                                        +
+                                        student.class_name;
+
+                                }
+
+
+                                details.textContent =
+                                    detailsText;
+
+
+                                item.appendChild(
+                                    name
+                                );
+
+                                item.appendChild(
+                                    details
+                                );
+
+
+                                item.addEventListener(
+                                    "click",
+                                    function () {
+
+                                        selectStudent(
+                                            student
+                                        );
+
+                                    }
+                                );
+
+
+                                studentResults.appendChild(
+                                    item
+                                );
+
+                            }
+                        );
+
+                    }
+                )
+
+                .catch(
+                    error => {
+
+                        console.error(
+                            "Student search error:",
+                            error
+                        );
+
+                        studentResults.innerHTML = `
+                            <div class="list-group-item text-danger">
+                                Unable to search students.
+                            </div>
+                        `;
+
+                    }
+                );
+
+        }
+
+
+        studentSearch.addEventListener(
+            "input",
+            function () {
+
+                clearTimeout(
+                    searchTimer
+                );
+
+
+                searchTimer =
+                    setTimeout(
+                        searchStudents,
+                        300
+                    );
+
+            }
+        );
+
+
+        // =========================================================
+        // SELECT STUDENT
+        // =========================================================
+
+        function selectStudent(
+            student
+        ) {
+
+            studentField.value =
+                student.id;
+
+
+            selectedStudentName.textContent =
+                student.name;
+
+
+            selectedStudentDetails.textContent =
+                student.admission_number
+                +
+                (
+                    student.class_name
+                        ? " • "
+                        + student.class_name
+                        : ""
+                );
+
+
+            selectedStudent.classList.remove(
+                "d-none"
+            );
+
+
+            studentSearch.value =
+                "";
+
+
+            studentResults.innerHTML =
+                "";
+
+        }
+
+
+        // =========================================================
+        // CLEAR STUDENT
+        // =========================================================
+
+        clearStudentButton.addEventListener(
+            "click",
+            function () {
+
+                studentField.value =
+                    "";
+
+
+                studentSearch.value =
+                    "";
+
+
+                selectedStudent.classList.add(
+                    "d-none"
+                );
+
+
+                selectedStudentName.textContent =
+                    "";
+
+
+                selectedStudentDetails.textContent =
+                    "";
+
+
+                studentResults.innerHTML =
+                    "";
+
+            }
+        );
+
+
+        // =========================================================
+        // CLASS CHANGE
+        // =========================================================
+
+        classField.addEventListener(
+            "change",
+            function () {
+
+                /*
+                 * Only clear the student if the user actually
+                 * changes the class.
+                 *
+                 * This prevents the existing student from being
+                 * cleared when the edit page first loads.
+                 */
+
+                if (
+                    studentField.value
+                    &&
+                    existingStudentId
+                    &&
+                    String(studentField.value)
+                    ===
+                    String(existingStudentId)
+                ) {
+
+                    return;
+
+                }
+
+
+                studentField.value =
+                    "";
+
+
+                studentSearch.value =
+                    "";
+
+
+                selectedStudent.classList.add(
+                    "d-none"
+                );
+
+
+                studentResults.innerHTML =
+                    "";
+
+            }
+        );
+
+
+        // =========================================================
+        // INITIALISE EXISTING TERM
+        // =========================================================
+
+        const initialSessionId =
+            sessionField.value;
+
+        const initialTermId =
+            "{{ assignment.term.id }}";
+
+
+        if (initialSessionId) {
+
+            loadTerms(
+                initialSessionId,
+                initialTermId
+            );
+
+        }
+
+
+        // =========================================================
+        // INITIALISE EXISTING STUDENT
+        // =========================================================
+
+        if (existingStudentId) {
+
+            studentField.value =
+                existingStudentId;
+
+        }
+
+    }
+);
+
+</script>
+
+{% endblock %}

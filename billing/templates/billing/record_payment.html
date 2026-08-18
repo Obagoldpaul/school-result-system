@@ -1,15 +1,296 @@
 {% extends 'base.html' %}
-{% load humanize %}₦
+{% load humanize %}
+
 {% block title %}Record Payment{% endblock %}
+
 {% block content %}
-<h1>Record Payment: {{ student.user.get_full_name }} ({{ term }})</h1>
-<p><strong>Fee Amount:</strong> {% if fee_amount %}₦{{ fee_amount|intcomma }}{% else %}Not set for this class/term{% endif %}</p>
-<p><strong>Total Paid So Far:</strong> ₦{{ total_paid|intcomma }}</p>
-<p><strong>Balance:</strong> {% if balance is not None %}₦{{ balance|intcomma }}{% else %}-{% endif %}</p>
+
+<h1>
+    Record Payment:
+    {{ student.user.get_full_name }}
+    ({{ term }})
+</h1>
+
+<!-- ========================================================= -->
+<!-- CURRENT BILL SUMMARY -->
+<!-- ========================================================= -->
+
+<h2>Current Bill</h2>
+
+<p>
+    <strong>Total Fees:</strong>
+    {% if fee_amount %}
+    ₦{{ fee_amount|intcomma }}
+    {% else %}
+    Not set
+    {% endif %}
+</p>
+
+<p>
+    <strong>Total Paid So Far:</strong>
+    ₦{{ total_paid|intcomma }}
+</p>
+
+<p>
+    <strong>Overall Balance:</strong>
+    {% if balance is not None %}
+    ₦{{ balance|intcomma }}
+    {% else %}
+    -
+    {% endif %}
+</p>
+
+
+<!-- ========================================================= -->
+<!-- FEE BREAKDOWN -->
+<!-- ========================================================= -->
+
+<h2>Fee Breakdown</h2>
+
+{% if fee_breakdown %}
+
+<table border="1" cellpadding="8" cellspacing="0">
+
+    <thead>
+
+        <tr>
+            <th>Fee Category</th>
+            <th>Type</th>
+            <th>Assigned</th>
+            <th>Paid</th>
+            <th>Outstanding</th>
+            <th>Status</th>
+        </tr>
+
+    </thead>
+
+    <tbody>
+
+        {% for item in fee_breakdown %}
+
+        <tr>
+
+            <td>
+                {{ item.fee_category.name }}
+            </td>
+
+            <td>
+                {{ item.category_type }}
+            </td>
+
+            <td>
+                ₦{{ item.amount|intcomma }}
+            </td>
+
+            <td>
+                ₦{{ item.paid|intcomma }}
+            </td>
+
+            <td>
+                ₦{{ item.balance|intcomma }}
+            </td>
+
+            <td>
+                {{ item.status }}
+            </td>
+
+        </tr>
+
+        {% endfor %}
+
+    </tbody>
+
+</table>
+
+{% else %}
+
+<p>
+    No fee categories have been assigned to this student
+    for this term.
+</p>
+
+{% endif %}
+
+
+<!-- ========================================================= -->
+<!-- PAYMENT FORM -->
+<!-- ========================================================= -->
+
+<h2>Payment Details</h2>
+
 <form method="POST">
+
     {% csrf_token %}
+
     {{ form.as_p }}
-    <button type="submit">Record Payment</button>
+
+
+    <!-- ===================================================== -->
+    <!-- PAYMENT ALLOCATION -->
+    <!-- ===================================================== -->
+
+    <h2>Allocate Payment</h2>
+
+    <p>
+        Enter how the payment should be distributed among
+        the student's outstanding fee categories.
+    </p>
+
+    {{ allocation_formset.management_form }}
+
+    {% if allocation_formset.non_form_errors %}
+
+    <div>
+
+        {% for error in allocation_formset.non_form_errors %}
+
+        <p>
+            <strong>{{ error }}</strong>
+        </p>
+
+        {% endfor %}
+
+    </div>
+
+    {% endif %}
+
+
+    {% for allocation_form in allocation_formset %}
+
+    <div style="
+        border: 1px solid #ddd;
+        padding: 15px;
+        margin-bottom: 15px;
+        border-radius: 6px;
+    ">
+
+        <p>
+            <strong>Fee Category</strong>
+        </p>
+
+        {{ allocation_form.fee_category }}
+
+        <div
+            class="fee-balance"
+            data-form-index="{{ forloop.counter0 }}"
+            style="
+                margin: 8px 0 15px;
+                padding: 8px;
+                background: #f5f5f5;
+                border-radius: 4px;
+            "
+        >
+            Select a fee category to see the outstanding balance.
+        </div>
+
+        <p>
+            <strong>Amount to Allocate</strong>
+        </p>
+
+        {{ allocation_form.amount }}
+
+        <p>
+            <strong>Note</strong>
+        </p>
+
+        {{ allocation_form.note }}
+
+        {% if allocation_form.DELETE %}
+            <div style="margin-top: 10px;">
+                {{ allocation_form.DELETE }}
+                <label for="{{ allocation_form.DELETE.id_for_label }}">
+                    Remove
+                </label>
+            </div>
+        {% endif %}
+
+        {% for error in allocation_form.errors.values %}
+            {% for error_message in error %}
+                <p style="color: red;">
+                    {{ error_message }}
+                </p>
+            {% endfor %}
+        {% endfor %}
+
+    </div>
+
+{% endfor %}
+
+
+    <button type="submit">
+        Record Payment
+    </button>
+
 </form>
-<p><a href="{% url 'students_owing' %}">Back to Students Owing</a></p>
+
+
+<p>
+    <a href="{% url 'students_owing' %}">
+        Back to Students Owing
+    </a>
+</p>
+
+<script>
+    const feeBalances = {
+        {% for category_id, balance in fee_balances.items %}
+            "{{ category_id }}": "{{ balance }}",
+        {% endfor %}
+    };
+
+    document.addEventListener("DOMContentLoaded", function () {
+
+        const categorySelects = document.querySelectorAll(
+            'select[name$="-fee_category"]'
+        );
+
+        categorySelects.forEach(function (select) {
+
+            const container = select.closest("div");
+
+            const balanceBox = container.querySelector(
+                ".fee-balance"
+            );
+
+            if (!balanceBox) {
+                return;
+            }
+
+            function updateBalance() {
+
+                const categoryId = select.value;
+
+                if (!categoryId) {
+
+                    balanceBox.textContent =
+                        "Select a fee category to see the outstanding balance.";
+
+                    return;
+                }
+
+                const balance =
+                    feeBalances[categoryId] || "0";
+
+                balanceBox.textContent =
+                    "Outstanding: ₦" +
+                    Number(balance).toLocaleString(
+                        "en-NG",
+                        {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2
+                        }
+                    );
+            }
+
+            select.addEventListener(
+                "change",
+                updateBalance
+            );
+
+            updateBalance();
+
+        });
+
+    });
+</script>
+
 {% endblock %}

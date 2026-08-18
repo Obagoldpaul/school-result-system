@@ -1,0 +1,247 @@
+{% extends "base.html" %}
+
+{% block title %}Student Fee Bill{% endblock %}
+
+{% block content %}
+
+<div class="container mt-4">
+
+    <div class="card shadow">
+
+        <div class="card-header">
+            <h4 class="mb-0">
+                🧾 Student Fee Bill
+            </h4>
+        </div>
+
+        <div class="card-body">
+
+            <p class="text-muted">
+                Select a class first, then select the student whose bill
+                you want to view.
+            </p>
+
+            <form method="POST">
+
+                {% csrf_token %}
+
+                <div class="mb-3">
+
+                    <label for="{{ form.school_class.id_for_label }}"
+                           class="form-label">
+                        Class
+                    </label>
+
+                    {{ form.school_class }}
+
+                </div>
+
+
+                <div class="mb-3">
+
+                    <label for="{{ form.student.id_for_label }}"
+                           class="form-label">
+                        Student
+                    </label>
+
+                    <select
+                        name="{{ form.student.html_name }}"
+                        id="{{ form.student.id_for_label }}"
+                        class="form-select">
+
+                        <option value="">
+                            Select a class first
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <div class="mb-3">
+
+                    <label for="{{ form.term.id_for_label }}"
+                           class="form-label">
+                        Term
+                    </label>
+
+                    {{ form.term }}
+
+                </div>
+
+
+                <div class="mt-4">
+
+                    <button type="submit"
+                            class="btn btn-primary">
+
+                        🧾 View Fee Bill
+
+                    </button>
+
+                    <a href="{% url 'billing_dashboard' %}"
+                       class="btn btn-secondary">
+
+                        Cancel
+
+                    </a>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<script>
+
+document.addEventListener("DOMContentLoaded", function () {
+
+    const classSelect = document.getElementById(
+        "{{ form.school_class.id_for_label }}"
+    );
+
+    const studentSelect = document.getElementById(
+        "{{ form.student.id_for_label }}"
+    );
+
+
+    classSelect.addEventListener("change", function () {
+
+        const classId = this.value;
+
+
+        // Clear existing students
+        studentSelect.innerHTML = "";
+
+
+        if (!classId) {
+
+            const option = document.createElement("option");
+
+            option.value = "";
+
+            option.textContent = "Select a class first";
+
+            studentSelect.appendChild(option);
+
+            return;
+        }
+
+
+        // Show loading message
+        const loadingOption = document.createElement("option");
+
+        loadingOption.value = "";
+
+        loadingOption.textContent = "Loading students...";
+
+        studentSelect.appendChild(loadingOption);
+
+
+        fetch(
+            "{% url 'students_by_class' %}?school_class=" + classId
+        )
+
+        .then(response => {
+
+            if (!response.ok) {
+
+                throw new Error(
+                    "Unable to load students."
+                );
+
+            }
+
+            return response.json();
+
+        })
+
+        .then(data => {
+
+            studentSelect.innerHTML = "";
+
+
+            const defaultOption =
+                document.createElement("option");
+
+            defaultOption.value = "";
+
+            defaultOption.textContent =
+                "Select student";
+
+            studentSelect.appendChild(
+                defaultOption
+            );
+
+
+            if (data.students.length === 0) {
+
+                const emptyOption =
+                    document.createElement("option");
+
+                emptyOption.value = "";
+
+                emptyOption.textContent =
+                    "No active students found in this class";
+
+                studentSelect.appendChild(
+                    emptyOption
+                );
+
+                return;
+            }
+
+
+            data.students.forEach(function (student) {
+
+                const option =
+                    document.createElement("option");
+
+                option.value = student.id;
+
+                option.textContent =
+                    student.name +
+                    " (" +
+                    student.admission_number +
+                    ")";
+
+                studentSelect.appendChild(
+                    option
+                );
+
+            });
+
+        })
+
+        .catch(error => {
+
+            console.error(error);
+
+            studentSelect.innerHTML = "";
+
+            const errorOption =
+                document.createElement("option");
+
+            errorOption.value = "";
+
+            errorOption.textContent =
+                "Unable to load students";
+
+            studentSelect.appendChild(
+                errorOption
+            );
+
+        });
+
+    });
+
+});
+
+</script>
+
+{% endblock %}

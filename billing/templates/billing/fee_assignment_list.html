@@ -1,0 +1,627 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}
+Fee Assignments
+{% endblock %}
+
+{% block content %}
+
+<div class="container-fluid mt-4">
+
+    <div class="card shadow">
+
+        <div class="card-header school-header d-flex justify-content-between align-items-center">
+
+            <h3 class="text-white mb-0">
+                Fee Assignments
+            </h3>
+
+            <a href="{% url 'add_fee_assignment' %}"
+               class="btn btn-light">
+
+                + Add Fee Assignment
+
+            </a>
+
+        </div>
+
+        <div class="card-body">
+
+            {% if messages %}
+
+                {% for message in messages %}
+
+                    <div class="alert alert-{{ message.tags }}">
+                        {{ message }}
+                    </div>
+
+                {% endfor %}
+
+            {% endif %}
+
+
+            <!-- ================================================= -->
+            <!-- FILTERS -->
+            <!-- ================================================= -->
+
+            <div class="card border mb-4">
+
+                <div class="card-header bg-light">
+
+                    <strong>
+                        Filter Fee Assignments
+                    </strong>
+
+                </div>
+
+                <div class="card-body">
+
+                    <form method="GET">
+
+                        <div class="row g-3">
+
+                            <!-- Search -->
+
+                            <div class="col-md-4">
+
+                                <label class="form-label">
+                                    Search
+                                </label>
+
+                                <input
+                                    type="text"
+                                    name="search"
+                                    value="{{ search }}"
+                                    class="form-control"
+                                    placeholder="Student, admission no., class or fee..."
+                                >
+
+                            </div>
+
+
+                            <!-- Session -->
+
+                            <div class="col-md-2">
+
+                                <label class="form-label">
+                                    Academic Session
+                                </label>
+
+                                <select
+                                    name="session"
+                                    class="form-select"
+                                    id="sessionFilter"
+                                >
+
+                                    <option value="">
+                                        All Sessions
+                                    </option>
+
+                                    {% for session in sessions %}
+
+                                        <option
+                                            value="{{ session.id }}"
+                                            {% if selected_session|stringformat:"s" == session.id|stringformat:"s" %}
+                                                selected
+                                            {% endif %}
+                                        >
+                                            {{ session }}
+                                        </option>
+
+                                    {% endfor %}
+
+                                </select>
+
+                            </div>
+
+
+                            <!-- Term -->
+
+                            <div class="col-md-2">
+
+                                <label class="form-label">
+                                    Term
+                                </label>
+
+                                <select
+                                    name="term"
+                                    class="form-select"
+                                    id="termFilter"
+                                >
+
+                                    <option value="">
+                                        All Terms
+                                    </option>
+
+                                    {% for term in terms %}
+
+                                        <option
+                                            value="{{ term.id }}"
+                                            data-session="{{ term.session_id }}"
+                                            {% if selected_term|stringformat:"s" == term.id|stringformat:"s" %}
+                                                selected
+                                            {% endif %}
+                                        >
+                                            {{ term.session }} - {{ term.get_name_display }}
+                                        </option>
+
+                                    {% endfor %}
+
+                                </select>
+
+                            </div>
+
+
+                            <!-- Category -->
+
+                            <div class="col-md-2">
+
+                                <label class="form-label">
+                                    Fee Category
+                                </label>
+
+                                <select
+                                    name="category"
+                                    class="form-select"
+                                >
+
+                                    <option value="">
+                                        All Categories
+                                    </option>
+
+                                    {% for category in categories %}
+
+                                        <option
+                                            value="{{ category.id }}"
+                                            {% if selected_category|stringformat:"s" == category.id|stringformat:"s" %}
+                                                selected
+                                            {% endif %}
+                                        >
+                                            {{ category.name }}
+                                        </option>
+
+                                    {% endfor %}
+
+                                </select>
+
+                            </div>
+
+
+                            <!-- Type -->
+
+                            <div class="col-md-2">
+
+                                <label class="form-label">
+                                    Fee Type
+                                </label>
+
+                                <select
+                                    name="type"
+                                    class="form-select"
+                                >
+
+                                    <option value="">
+                                        All Types
+                                    </option>
+
+                                    <option
+                                        value="COMPULSORY"
+                                        {% if selected_type == "COMPULSORY" %}
+                                            selected
+                                        {% endif %}
+                                    >
+                                        Compulsory
+                                    </option>
+
+                                    <option
+                                        value="OPTIONAL"
+                                        {% if selected_type == "OPTIONAL" %}
+                                            selected
+                                        {% endif %}
+                                    >
+                                        Optional
+                                    </option>
+
+                                </select>
+
+                            </div>
+
+
+                            <!-- Status -->
+
+                            <div class="col-md-2">
+
+                                <label class="form-label">
+                                    Status
+                                </label>
+
+                                <select
+                                    name="status"
+                                    class="form-select"
+                                >
+
+                                    <option value="">
+                                        All Status
+                                    </option>
+
+                                    <option
+                                        value="active"
+                                        {% if selected_status == "active" %}
+                                            selected
+                                        {% endif %}
+                                    >
+                                        Active
+                                    </option>
+
+                                    <option
+                                        value="inactive"
+                                        {% if selected_status == "inactive" %}
+                                            selected
+                                        {% endif %}
+                                    >
+                                        Inactive
+                                    </option>
+
+                                </select>
+
+                            </div>
+
+
+                            <!-- Buttons -->
+
+                            <div class="col-md-4 d-flex align-items-end gap-2">
+
+                                <button
+                                    type="submit"
+                                    class="btn btn-primary"
+                                >
+                                    Filter
+                                </button>
+
+                                <a
+                                    href="{% url 'fee_assignment_list' %}"
+                                    class="btn btn-secondary"
+                                >
+                                    Clear
+                                </a>
+
+                            </div>
+
+                        </div>
+
+                    </form>
+
+                </div>
+
+            </div>
+
+
+            <!-- ================================================= -->
+            <!-- ASSIGNMENT TABLE -->
+            <!-- ================================================= -->
+
+            <div class="table-responsive">
+
+                <table class="table table-bordered table-hover align-middle">
+
+                    <thead class="table-success">
+
+                        <tr>
+
+                            <th>S/N</th>
+
+                            <th>Fee Category</th>
+
+                            <th>Term</th>
+
+                            <th>Target</th>
+
+                            <th class="text-end">
+                                Amount
+                            </th>
+
+                            <th>Status</th>
+
+                            <th>Enrollment</th>
+
+                            <th>Actions</th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody>
+
+                        {% for assignment in assignments %}
+
+                        <tr>
+
+                            <!-- S/N -->
+
+                            <td>
+                                {{ forloop.counter }}
+                            </td>
+
+
+                            <!-- Fee Category -->
+
+                            <td>
+
+                                <strong>
+                                    {{ assignment.fee_category.name }}
+                                </strong>
+
+                                <br>
+
+                                {% if assignment.fee_category.category_type == "OPTIONAL" %}
+
+                                    <span class="badge bg-warning text-dark">
+                                        Optional
+                                    </span>
+
+                                {% else %}
+
+                                    <span class="badge bg-primary">
+                                        Compulsory
+                                    </span>
+
+                                {% endif %}
+
+                            </td>
+
+
+                            <!-- Term -->
+
+                            <td>
+
+                                {{ assignment.term.session }}
+
+                                <br>
+
+                                <small class="text-muted">
+                                    {{ assignment.term.get_name_display }}
+                                </small>
+
+                            </td>
+
+
+                            <!-- Target -->
+
+                            <td>
+
+                                {% if assignment.student %}
+
+                                    <strong>
+                                        {{ assignment.student.user.get_full_name|default:assignment.student.user.username }}
+                                    </strong>
+
+                                    <br>
+
+                                    <small class="text-muted">
+
+                                        {{ assignment.student.admission_number }}
+
+                                    </small>
+
+                                {% elif assignment.department %}
+
+                                    {{ assignment.school_class }}
+
+                                    <br>
+
+                                    <small class="text-muted">
+                                        {{ assignment.department }}
+                                    </small>
+
+                                {% elif assignment.school_class %}
+
+                                    {{ assignment.school_class }}
+
+                                {% else %}
+
+                                    <span class="text-muted">
+                                        No target
+                                    </span>
+
+                                {% endif %}
+
+                            </td>
+
+
+                            <!-- Amount -->
+
+                            <td class="text-end fw-bold">
+
+                                ₦{{ assignment.amount|intcomma }}
+
+                            </td>
+
+
+                            <!-- Status -->
+
+                            <td>
+
+                                {% if assignment.is_active %}
+
+                                    <span class="badge bg-success">
+                                        Active
+                                    </span>
+
+                                {% else %}
+
+                                    <span class="badge bg-secondary">
+                                        Inactive
+                                    </span>
+
+                                {% endif %}
+
+                            </td>
+
+
+                            <!-- Enrollment -->
+
+                            <td>
+
+                                {% if assignment.fee_category.category_type == "OPTIONAL" %}
+
+                                    <span class="badge bg-info text-dark">
+
+                                        {{ assignment.enrollment_count }}
+                                        enrolled
+
+                                    </span>
+
+                                {% else %}
+
+                                    <span class="text-muted">
+                                        —
+                                    </span>
+
+                                {% endif %}
+
+                            </td>
+
+
+                            <!-- Actions -->
+
+                            <td>
+
+                                <div class="d-flex flex-wrap gap-1">
+
+                                    {% if assignment.fee_category.category_type == "OPTIONAL" %}
+
+                                        <a
+                                            href="{% url 'manage_optional_fee_students' assignment.id %}"
+                                            class="btn btn-sm btn-primary"
+                                        >
+                                            Manage Students
+                                        </a>
+
+                                    {% endif %}
+
+
+                                    <a
+                                        href="{% url 'edit_fee_assignment' assignment.id %}"
+                                        class="btn btn-sm btn-outline-primary"
+                                    >
+                                        Edit
+                                    </a>
+
+                                </div>
+
+                            </td>
+
+                        </tr>
+
+
+                        {% empty %}
+
+                        <tr>
+
+                            <td
+                                colspan="8"
+                                class="text-center text-muted py-5"
+                            >
+
+                                <h5>
+                                    No fee assignments found.
+                                </h5>
+
+                                <p class="mb-0">
+                                    Try changing your filters or create a new fee assignment.
+                                </p>
+
+                            </td>
+
+                        </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- ========================================================= -->
+<!-- SESSION → TERM FILTER -->
+<!-- ========================================================= -->
+
+<script>
+
+document.addEventListener(
+    "DOMContentLoaded",
+    function () {
+
+        const sessionFilter =
+            document.getElementById("sessionFilter");
+
+        const termFilter =
+            document.getElementById("termFilter");
+
+        if (!sessionFilter || !termFilter) {
+            return;
+        }
+
+        function filterTerms() {
+
+            const sessionId =
+                sessionFilter.value;
+
+            const options =
+                termFilter.querySelectorAll(
+                    "option[data-session]"
+                );
+
+            options.forEach(
+                function (option) {
+
+                    if (
+                        !sessionId ||
+                        option.dataset.session === sessionId
+                    ) {
+
+                        option.hidden = false;
+
+                    } else {
+
+                        option.hidden = true;
+
+                    }
+
+                }
+            );
+
+            if (
+                termFilter.selectedOptions.length &&
+                termFilter.selectedOptions[0].hidden
+            ) {
+
+                termFilter.value = "";
+
+            }
+
+        }
+
+        sessionFilter.addEventListener(
+            "change",
+            filterTerms
+        );
+
+        filterTerms();
+
+    }
+);
+
+</script>
+
+{% endblock %}

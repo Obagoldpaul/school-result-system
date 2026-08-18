@@ -203,11 +203,63 @@
 
                 {% elif is_student %}
 
-                {% if request.user.student_profile %}
-                <a href="{% url 'select_report_term' request.user.student_profile.id %}">
-                    My Report Card
+                <!-- =====================================================
+                     STUDENT PORTAL NAVIGATION
+                ===================================================== -->
+
+                <div class="student-nav-heading">
+                    STUDENT PORTAL
+                </div>
+
+                <a href="{% url 'dashboard_home' %}#student-profile">
+                    👤 My Profile
                 </a>
-                {% endif %}
+
+                <details>
+                    <summary>📚 Academics</summary>
+
+                    <div class="nav-sub-links">
+
+                        <a href="{% url 'dashboard_home' %}#student-academics">
+                            Academic Summary
+                        </a>
+
+                        {% if request.user.student_profile %}
+                        <a href="{% url 'select_report_term' request.user.student_profile.id %}">
+                            My Report Card
+                        </a>
+                        {% endif %}
+
+                    </div>
+                </details>
+
+                <details>
+                    <summary>💰 Fees & Payments</summary>
+
+                    <div class="nav-sub-links">
+
+                        <a href="{% url 'dashboard_home' %}#student-fees">
+                            My Fees
+                        </a>
+
+                        <a href="{% url 'my_payment_history' %}">
+                            Payment History
+                        </a>
+
+                    </div>
+                </details>
+
+                <a href="{% url 'dashboard_home' %}#student-attendance">
+                    📅 My Attendance
+                </a>
+
+                <a href="{% url 'dashboard_home' %}#school-payment-information">
+                    🏦 Payment Information
+                </a>
+
+                <a href="{% url 'announcement_list' %}">
+                    📢 Announcements
+                </a>
 
                 {% endif %}
 

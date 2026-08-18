@@ -1,6 +1,7 @@
+from django.contrib import messages
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
-from .forms import StudentRegistrationForm
+from .forms import StudentRegistrationForm, SchoolClassForm
 from .models import Student, SchoolClass, Department
 from accounts.decorators import staff_required, management_required
 from django.db import models
@@ -178,6 +179,82 @@ def class_management(request):
             "section_classes": section_classes,
             "class_count": classes.count(),
         },
+    )
+    
+@management_required
+@login_required
+def add_class(request):
+    if request.method == "POST":
+        form = SchoolClassForm(
+            request.POST,
+            user=request.user
+        )
+
+        if form.is_valid():
+            school_class = form.save(commit=False)
+            school_class.school = request.user.school
+            school_class.save()
+
+            messages.success(
+                request,
+                f"{school_class.name} was created successfully."
+            )
+
+            return redirect("class_management")
+
+    else:
+        form = SchoolClassForm(user=request.user)
+
+    return render(
+        request,
+        "students/class_form.html",
+        {
+            "form": form,
+            "page_title": "Add Class",
+        }
+    )
+
+
+@management_required
+@login_required
+def edit_class(request, class_id):
+    school_class = get_object_or_404(
+        SchoolClass,
+        id=class_id,
+        school=request.user.school
+    )
+
+    if request.method == "POST":
+        form = SchoolClassForm(
+            request.POST,
+            instance=school_class,
+            user=request.user
+        )
+
+        if form.is_valid():
+            school_class = form.save()
+
+            messages.success(
+                request,
+                f"{school_class.name} was updated successfully."
+            )
+
+            return redirect("class_management")
+
+    else:
+        form = SchoolClassForm(
+            instance=school_class,
+            user=request.user
+        )
+
+    return render(
+        request,
+        "students/class_form.html",
+        {
+            "form": form,
+            "page_title": "Edit Class",
+            "school_class": school_class,
+        }
     )
 
 @management_required

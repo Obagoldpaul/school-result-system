@@ -19,6 +19,8 @@ from students.birthday_utils import (
     get_upcoming_birthdays,
 )
 
+from attendance.models import get_attendance_summary
+
 import datetime
 
 
@@ -45,7 +47,20 @@ def build_dashboard(user):
 
     school = user.school
 
+    # ======================================================
+    # CURRENT USER DATA
+    # ======================================================
+
+    teacher = get_teacher(user)
+    student = get_student(user)
+    current_term = get_current_term(user)
+
+    # ======================================================
+    # BASE DASHBOARD CONTEXT
+    # ======================================================
+
     context = {
+
         "greeting": get_greeting(),
 
         # --------------------------------------------------
@@ -79,7 +94,7 @@ def build_dashboard(user):
         # ACADEMIC INFORMATION
         # --------------------------------------------------
 
-        "current_term": get_current_term(user),
+        "current_term": current_term,
 
         # --------------------------------------------------
         # PERMISSIONS
@@ -91,19 +106,68 @@ def build_dashboard(user):
 
         # --------------------------------------------------
         # BIRTHDAYS
-        # Management will use these on the dashboard.
+        # Only management will receive school-wide
+        # birthday information.
         # --------------------------------------------------
 
         "today_birthdays": [],
 
         "upcoming_birthdays": [],
+
     }
 
-    teacher = get_teacher(user)
-    student = get_student(user)
+    # ======================================================
+    # STUDENT ATTENDANCE
+    # ======================================================
+
+    student_attendance_present = 0
+    student_attendance_marked = 0
+    student_attendance_percentage = 0
+
+    if student and current_term:
+
+        (
+            student_attendance_present,
+            student_attendance_marked,
+        ) = get_attendance_summary(
+            student,
+            current_term,
+        )
+
+        student_attendance_present = (
+            student_attendance_present or 0
+        )
+
+        student_attendance_marked = (
+            student_attendance_marked or 0
+        )
+
+        if student_attendance_marked > 0:
+
+            student_attendance_percentage = round(
+                (
+                    student_attendance_present
+                    / student_attendance_marked
+                ) * 100,
+                1,
+            )
+
+    context.update({
+
+        "student_attendance_present":
+            student_attendance_present,
+
+        "student_attendance_marked":
+            student_attendance_marked,
+
+        "student_attendance_percentage":
+            student_attendance_percentage,
+
+    })
 
     # ======================================================
     # BIRTHDAYS
+    # MANAGEMENT ONLY
     # ======================================================
 
     if context["is_management"] and school:
@@ -123,51 +187,81 @@ def build_dashboard(user):
 
     if can_manage_billing(user):
 
-        billing_term = context["current_term"]
+        billing_term = current_term
 
         billing_context = {
+
             "billing_total_collected": 0,
+
             "billing_students_owing": 0,
+
             "billing_outstanding": 0,
+
             "billing_expected_revenue": 0,
+
             "billing_collection_rate": 0,
+
             "billing_recent_payments": [],
+
         }
 
         if billing_term and school:
 
-            # Only students belonging to this school.
+            # --------------------------------------------------
+            # SCHOOL STUDENTS
+            # --------------------------------------------------
+
             students = Student.objects.filter(
                 user__school=school,
                 is_active=True,
             )
 
-            # Only payments belonging to students in this school.
-            total_collected = Payment.objects.filter(
-                student__user__school=school,
-                term=billing_term,
-            ).aggregate(
-                total=Sum("amount")
-            )["total"] or 0
+            # --------------------------------------------------
+            # TOTAL COLLECTED
+            # --------------------------------------------------
+
+            total_collected = (
+                Payment.objects
+                .filter(
+                    student__user__school=school,
+                    term=billing_term,
+                )
+                .aggregate(
+                    total=Sum("amount")
+                )["total"] or 0
+            )
 
             students_owing = 0
             outstanding = 0
 
+            # --------------------------------------------------
+            # STUDENT BALANCES
+            # --------------------------------------------------
+
             for s in students:
 
-                fee_amount, total_paid, balance = (
-                    get_cumulative_balance(
-                        s,
-                        billing_term
-                    )
+                (
+                    fee_amount,
+                    total_paid,
+                    balance,
+                ) = get_cumulative_balance(
+                    s,
+                    billing_term
                 )
 
                 if balance > 0:
+
                     students_owing += 1
+
                     outstanding += balance
 
+            # --------------------------------------------------
+            # EXPECTED REVENUE
+            # --------------------------------------------------
+
             expected_revenue = (
-                total_collected + outstanding
+                total_collected
+                + outstanding
             )
 
             collection_rate = 0
@@ -179,7 +273,10 @@ def build_dashboard(user):
                     / expected_revenue
                 ) * 100
 
-            # Only show payments from this school.
+            # --------------------------------------------------
+            # RECENT PAYMENTS
+            # --------------------------------------------------
+
             recent_payments = (
                 Payment.objects
                 .select_related(
@@ -219,6 +316,7 @@ def build_dashboard(user):
 
                 "billing_recent_payments":
                     recent_payments,
+
             })
 
         context.update(
@@ -258,6 +356,7 @@ def build_dashboard(user):
                 allocations.filter(
                     status=SubjectAllocation.Status.APPROVED
                 ).count(),
+
         })
 
         # --------------------------------------------------
@@ -305,14 +404,15 @@ def build_dashboard(user):
                     my_class_students,
 
                 "my_class_term":
-                    context["current_term"],
+                    current_term,
+
             })
 
             # --------------------------------------------------
             # PENDING TEACHER REMARKS
             # --------------------------------------------------
 
-            if context["current_term"]:
+            if current_term:
 
                 from scores.models import ReportCardExtra
 
@@ -324,7 +424,7 @@ def build_dashboard(user):
                         ReportCardExtra.objects
                         .filter(
                             student=s,
-                            term=context["current_term"],
+                            term=current_term,
                         )
                         .first()
                     )
@@ -333,6 +433,7 @@ def build_dashboard(user):
                         not extra
                         or not extra.teacher_remark
                     ):
+
                         pending_remarks += 1
 
                 context[
@@ -380,6 +481,7 @@ def build_dashboard(user):
                     school_class__school=school,
                     status=SubjectAllocation.Status.PUBLISHED,
                 ).count(),
+
         })
 
         # --------------------------------------------------
@@ -404,7 +506,87 @@ def build_dashboard(user):
 
     if student:
 
+        # --------------------------------------------------
+        # BASIC STUDENT INFORMATION
+        # --------------------------------------------------
+
         context["my_student_id"] = student.id
+
+        context["student_profile"] = student
+
+        context["student_class"] = (
+            student.school_class
+        )
+
+        context["student_admission_number"] = (
+            student.admission_number
+        )
+
+        context["student_department"] = (
+            student.department
+        )
+
+        # --------------------------------------------------
+        # STUDENT BIRTHDAY
+        #
+        # IMPORTANT:
+        # A student receives ONLY their own birthday.
+        # They do NOT receive school-wide birthday data.
+        # --------------------------------------------------
+
+        context["my_birthday"] = (
+            student.date_of_birth
+        )
+
+        # --------------------------------------------------
+        # SCHOOL PAYMENT ACCOUNT
+        # --------------------------------------------------
+
+        context["school_bank_name"] = getattr(
+            school.settings,
+            "bank_name",
+            ""
+        )
+
+        context["school_account_name"] = getattr(
+            school.settings,
+            "account_name",
+            ""
+        )
+
+        context["school_account_number"] = getattr(
+            school.settings,
+            "account_number",
+            ""
+        )
+
+        # --------------------------------------------------
+        # STUDENT PAYMENT HISTORY
+        # --------------------------------------------------
+
+        student_payments = (
+            Payment.objects
+            .filter(
+                student=student,
+                student__user__school=school,
+            )
+            .select_related(
+                "term",
+                "recorded_by",
+            )
+            .order_by(
+                "-date_paid",
+                "-id",
+            )
+        )
+
+        context["my_payment_history"] = (
+            student_payments[:10]
+        )
+
+        context["my_payment_count"] = (
+            student_payments.count()
+        )
 
         # --------------------------------------------------
         # SUBJECT REGISTRATION
@@ -426,14 +608,17 @@ def build_dashboard(user):
         )
 
         context["subjects_registered"] = (
-            registered_count + elective_count
+            registered_count
+            + elective_count
+        )
+
+        context["student_subject_count"] = (
+            context["subjects_registered"]
         )
 
         # --------------------------------------------------
         # BILLING
         # --------------------------------------------------
-
-        current_term = context["current_term"]
 
         if current_term:
 
@@ -476,5 +661,19 @@ def build_dashboard(user):
                 student.school_class,
                 current_term,
             )
+
+        else:
+
+            context["my_fee_amount"] = None
+
+            context["my_total_paid"] = 0
+
+            context["my_balance"] = 0
+
+            context["my_fee_term"] = None
+
+            context[
+                "latest_result_published"
+            ] = False
 
     return context

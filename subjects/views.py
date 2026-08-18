@@ -162,22 +162,99 @@ def assign_subject_to_class(request):
 @login_required
 def class_subject_list(request):
 
+    school = request.user.school
+
     class_subjects = (
         ClassSubject.objects
         .filter(
-            school_class__school=request.user.school
+            school_class__school=school
         )
         .select_related(
             'school_class',
             'subject',
+            'subject__parent',
+        )
+        .order_by(
+            'school_class__section',
+            'school_class__name',
+            'subject__name',
         )
     )
+
+    # --------------------------------------------------
+    # SECTION ORDER
+    # --------------------------------------------------
+
+    section_order = [
+        (
+            'PRE_PRIMARY',
+            'Pre-Primary',
+        ),
+        (
+            'PRIMARY',
+            'Primary',
+        ),
+        (
+            'JUNIOR_SECONDARY',
+            'Junior Secondary',
+        ),
+        (
+            'SENIOR_SECONDARY',
+            'Senior Secondary',
+        ),
+    ]
+
+    # --------------------------------------------------
+    # GROUP BY SECTION → CLASS
+    # --------------------------------------------------
+
+    grouped_sections = []
+
+    for section_value, section_label in section_order:
+
+        section_assignments = [
+            cs
+            for cs in class_subjects
+            if cs.school_class.section == section_value
+        ]
+
+        classes = []
+
+        class_ids = []
+        for cs in section_assignments:
+            if cs.school_class_id not in class_ids:
+                class_ids.append(cs.school_class_id)
+
+        for class_id in class_ids:
+
+            class_obj = next(
+                cs.school_class
+                for cs in section_assignments
+                if cs.school_class_id == class_id
+            )
+
+            assignments = [
+                cs
+                for cs in section_assignments
+                if cs.school_class_id == class_id
+            ]
+
+            classes.append({
+                'school_class': class_obj,
+                'assignments': assignments,
+            })
+
+        grouped_sections.append({
+            'value': section_value,
+            'label': section_label,
+            'classes': classes,
+        })
 
     return render(
         request,
         'subjects/class_subject_list.html',
         {
-            'class_subjects': class_subjects
+            'grouped_sections': grouped_sections,
         }
     )
 
