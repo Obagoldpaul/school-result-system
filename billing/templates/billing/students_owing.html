@@ -19,14 +19,12 @@
             </h2>
 
             <p class="text-muted mb-0">
-                View outstanding student balances across academic sessions.
+                View outstanding student balances by academic session and term.
             </p>
         </div>
 
-        <a
-            href="{% url 'add_opening_balance' %}"
-            class="btn btn-outline-primary"
-        >
+        <a href="{% url 'add_opening_balance' %}"
+           class="btn btn-outline-primary">
             + Add Opening Balance
         </a>
 
@@ -45,20 +43,101 @@
 
                 <div class="row g-3 align-items-end">
 
+                    <!-- ====================================== -->
+                    <!-- ACADEMIC SESSION -->
+                    <!-- ====================================== -->
+
                     <div class="col-md-4">
 
-                        <label
-                            for="class"
-                            class="form-label fw-semibold"
-                        >
+                        <label for="session"
+                               class="form-label fw-semibold">
+                            Academic Session
+                        </label>
+
+                        <select class="form-select"
+                                id="session"
+                                name="session">
+
+                            <option value="">
+                                Select academic session
+                            </option>
+
+                            {% for s in sessions %}
+
+                            <option value="{{ s.id }}"
+                                {% if selected_session == s.id|stringformat:"s" %}
+                                    selected
+                                {% endif %}>
+                                {{ s.name }}
+                            </option>
+
+                            {% endfor %}
+
+                        </select>
+
+                    </div>
+
+
+                    <!-- ====================================== -->
+                    <!-- TERM -->
+                    <!-- ====================================== -->
+
+                    <div class="col-md-4">
+
+                        <label for="term"
+                               class="form-label fw-semibold">
+                            Term
+                        </label>
+
+                        <select class="form-select"
+                                id="term"
+                                name="term"
+                                {% if not selected_session %}disabled{% endif %}>
+
+                            {% if selected_session %}
+
+                                <option value="">
+                                    Select term
+                                </option>
+
+                                {% for t in terms %}
+
+                                <option value="{{ t.id }}"
+                                    {% if selected_term == t.id|stringformat:"s" %}
+                                        selected
+                                    {% endif %}>
+                                    {{ t.get_name_display }}
+                                </option>
+
+                                {% endfor %}
+
+                            {% else %}
+
+                                <option value="">
+                                    Select academic session first
+                                </option>
+
+                            {% endif %}
+
+                        </select>
+
+                    </div>
+
+
+                    <!-- ====================================== -->
+                    <!-- CLASS -->
+                    <!-- ====================================== -->
+
+                    <div class="col-md-4">
+
+                        <label for="class"
+                               class="form-label fw-semibold">
                             Class
                         </label>
 
-                        <select
-                            class="form-select"
-                            id="class"
-                            name="class"
-                        >
+                        <select class="form-select"
+                                id="class"
+                                name="class">
 
                             <option value="">
                                 All classes
@@ -66,12 +145,10 @@
 
                             {% for c in classes %}
 
-                            <option
-                                value="{{ c.id }}"
+                            <option value="{{ c.id }}"
                                 {% if selected_class == c.id|stringformat:"s" %}
                                     selected
-                                {% endif %}
-                            >
+                                {% endif %}>
                                 {{ c.name }}
                             </option>
 
@@ -82,57 +159,24 @@
                     </div>
 
 
-                    <div class="col-md-4">
+                    <!-- ====================================== -->
+                    <!-- BUTTONS -->
+                    <!-- ====================================== -->
 
-                        <label
-                            for="term"
-                            class="form-label fw-semibold"
-                        >
-                            Academic Term
-                        </label>
+                    <div class="col-md-6">
 
-                        <select
-                            class="form-select"
-                            id="term"
-                            name="term"
-                        >
-
-                            {% for t in terms %}
-
-                            <option
-                                value="{{ t.id }}"
-                                {% if selected_term == t.id|stringformat:"s" %}
-                                    selected
-                                {% endif %}
-                            >
-                                {{ t }}
-                            </option>
-
-                            {% endfor %}
-
-                        </select>
-
-                    </div>
-
-
-                    <div class="col-md-2">
-
-                        <button
-                            class="btn btn-primary w-100"
-                            type="submit"
-                        >
+                        <button class="btn btn-primary w-100"
+                                type="submit">
                             Filter
                         </button>
 
                     </div>
 
 
-                    <div class="col-md-2">
+                    <div class="col-md-6">
 
-                        <a
-                            href="{% url 'students_owing' %}"
-                            class="btn btn-outline-secondary w-100"
-                        >
+                        <a href="{% url 'students_owing' %}"
+                           class="btn btn-outline-secondary w-100">
                             Reset
                         </a>
 
@@ -150,7 +194,7 @@
     {% if term %}
 
     <!-- ================================================== -->
-    <!-- SELECTED TERM INFORMATION -->
+    <!-- SELECTED SESSION / TERM INFORMATION -->
     <!-- ================================================== -->
 
     <div class="d-flex justify-content-between align-items-center mb-3">
@@ -158,11 +202,19 @@
         <div>
 
             <span class="text-muted">
-                Selected term:
+                Academic Session:
             </span>
 
             <strong>
-                {{ term }}
+                {{ term.session.name }}
+            </strong>
+
+            <span class="text-muted ms-3">
+                Term:
+            </span>
+
+            <strong>
+                {{ term.get_name_display }}
             </strong>
 
             <span class="text-muted ms-2">
@@ -174,10 +226,8 @@
 
         {% if selected_class %}
 
-        <a
-            href="{% url 'class_bill_pdf' selected_class term.id %}"
-            class="btn btn-outline-success btn-sm"
-        >
+        <a href="{% url 'class_bill_pdf' selected_class term.id %}"
+           class="btn btn-outline-success btn-sm">
             🖨 Print Class Bills
         </a>
 
@@ -220,11 +270,19 @@
                 <div class="card-body">
 
                     <small class="text-muted">
-                        Selected Term
+                        Selected Session / Term
                     </small>
 
                     <h5 class="fw-bold mb-0">
-                        {{ term }}
+
+                        {{ term.session.name }}
+
+                        <span class="text-muted">
+                            —
+                        </span>
+
+                        {{ term.get_name_display }}
+
                     </h5>
 
                 </div>
@@ -247,6 +305,10 @@
                     <h4 class="fw-bold text-danger mb-0">
                         All Outstanding Accounts
                     </h4>
+
+                    <small class="text-muted">
+                        Across all sessions
+                    </small>
 
                 </div>
 
@@ -316,224 +378,216 @@
 
                     <tbody>
 
-                    {% for row in rows %}
+                        {% for row in rows %}
 
-                    <tr>
+                        <tr>
 
-                        <!-- ADMISSION -->
+                            <!-- ADMISSION -->
 
-                        <td class="ps-3">
+                            <td class="ps-3">
 
-                            <span class="fw-semibold">
-                                {{ row.student.admission_number }}
-                            </span>
-
-                        </td>
-
-
-                        <!-- STUDENT -->
-
-                        <td>
-
-                            <div class="fw-semibold">
-                                {{ row.student.user.get_full_name }}
-                            </div>
-
-                        </td>
-
-
-                        <!-- CLASS -->
-
-                        <td>
-
-                            <span class="badge bg-light text-dark border">
-                                {{ row.student.school_class }}
-                            </span>
-
-                        </td>
-
-
-                        <!-- TERM FEE -->
-
-                        <td class="text-end">
-
-                            ₦{{ row.fee_amount|intcomma }}
-
-                        </td>
-
-
-                        <!-- TERM PAID -->
-
-                        <td class="text-end text-success fw-semibold">
-
-                            ₦{{ row.total_paid|intcomma }}
-
-                        </td>
-
-
-                        <!-- TERM BALANCE -->
-
-                        <td class="text-end">
-
-                            {% if row.balance > 0 %}
-
-                            <span class="badge bg-danger-subtle text-danger">
-
-                                ₦{{ row.balance|intcomma }}
-
-                            </span>
-
-                            {% else %}
-
-                            <span class="badge bg-success-subtle text-success">
-
-                                Paid
-
-                            </span>
-
-                            {% endif %}
-
-                        </td>
-
-
-                        <!-- OUTSTANDING TERMS -->
-
-                        <td>
-
-                            {% for owing in row.outstanding_terms %}
-
-                            <div class="mb-1">
-
-                                <span class="badge bg-danger-subtle text-danger">
-
-                                    {{ owing.term }}
-
+                                <span class="fw-semibold">
+                                    {{ row.student.admission_number }}
                                 </span>
 
-                                <span class="small fw-semibold">
+                            </td>
 
-                                    ₦{{ owing.balance|intcomma }}
 
+                            <!-- STUDENT -->
+
+                            <td>
+
+                                <div class="fw-semibold">
+                                    {{ row.student.user.get_full_name }}
+                                </div>
+
+                            </td>
+
+
+                            <!-- CLASS -->
+
+                            <td>
+
+                                <span class="badge bg-light text-dark border">
+                                    {{ row.student.school_class }}
                                 </span>
 
-                            </div>
-
-                            {% endfor %}
+                            </td>
 
 
-                            {% if row.opening_arrears %}
+                            <!-- TERM FEE -->
 
-                            <div>
+                            <td class="text-end">
 
-                                <span class="badge bg-warning-subtle text-warning-emphasis">
+                                ₦{{ row.fee_amount|intcomma }}
 
-                                    Opening Balance
-
-                                </span>
-
-                                <span class="small fw-semibold">
-
-                                    ₦{{ row.opening_arrears|intcomma }}
-
-                                </span>
-
-                            </div>
-
-                            {% endif %}
-
-                        </td>
+                            </td>
 
 
-                        <!-- ACCOUNT ARREARS -->
+                            <!-- TERM PAID -->
 
-                        <td class="text-end">
+                            <td class="text-end text-success fw-semibold">
 
-                            <div class="fw-bold text-danger">
+                                ₦{{ row.total_paid|intcomma }}
 
-                                ₦{{ row.account_arrears|intcomma }}
-
-                            </div>
-
-                            <small class="text-muted">
-                                Total outstanding
-                            </small>
-
-                        </td>
+                            </td>
 
 
-                        <!-- ACTIONS -->
+                            <!-- TERM BALANCE -->
 
-                        <td class="text-center">
-
-                            <div class="btn-group btn-group-sm">
+                            <td class="text-end">
 
                                 {% if row.balance > 0 %}
 
-                                <a
-                                    href="{% url 'record_payment' row.student.id term.id %}"
-                                    class="btn btn-outline-success"
-                                    title="Record payment"
-                                >
-                                    Pay
-                                </a>
+                                <span class="badge bg-danger-subtle text-danger">
+
+                                    ₦{{ row.balance|intcomma }}
+
+                                </span>
+
+                                {% else %}
+
+                                <span class="badge bg-success-subtle text-success">
+
+                                    Paid
+
+                                </span>
 
                                 {% endif %}
 
-
-                                <a
-                                    href="{% url 'student_bill_pdf' row.student.id term.id %}"
-                                    class="btn btn-outline-secondary"
-                                    title="Print bill"
-                                >
-                                    Bill
-                                </a>
+                            </td>
 
 
-                                <a
-                                    href="{% url 'student_payment_history' row.student.id %}"
-                                    class="btn btn-outline-primary"
-                                    title="Payment history"
-                                >
-                                    History
-                                </a>
+                            <!-- OUTSTANDING TERMS -->
+
+                            <td>
+
+                                {% for owing in row.outstanding_terms %}
+
+                                <div class="mb-1">
+
+                                    <span class="badge bg-danger-subtle text-danger">
+
+                                        {{ owing.term.session.name }}
+                                        —
+                                        {{ owing.term.get_name_display }}
+
+                                    </span>
+
+                                    <span class="small fw-semibold">
+
+                                        ₦{{ owing.balance|intcomma }}
+
+                                    </span>
+
+                                </div>
+
+                                {% endfor %}
 
 
-                                <a
-                                    href="{% url 'student_account_statement' row.student.id %}"
-                                    class="btn btn-outline-dark"
-                                    title="Account statement"
-                                >
-                                    Statement
-                                </a>
+                                {% if row.opening_arrears %}
 
-                            </div>
+                                <div>
 
-                        </td>
+                                    <span class="badge bg-warning-subtle text-warning-emphasis">
 
-                    </tr>
+                                        Opening Balance
 
-                    {% empty %}
+                                    </span>
 
-                    <tr>
+                                    <span class="small fw-semibold">
 
-                        <td
-                            colspan="9"
-                            class="text-center py-5 text-muted"
-                        >
+                                        ₦{{ row.opening_arrears|intcomma }}
 
-                            <div class="fs-4 mb-2">
-                                ✓
-                            </div>
+                                    </span>
 
-                            <div class="fw-semibold">
-                                No students owing for this selection.
-                            </div>
+                                </div>
 
-                        </td>
+                                {% endif %}
 
-                    </tr>
+                            </td>
 
-                    {% endfor %}
+
+                            <!-- ACCOUNT ARREARS -->
+
+                            <td class="text-end">
+
+                                <div class="fw-bold text-danger">
+
+                                    ₦{{ row.account_arrears|intcomma }}
+
+                                </div>
+
+                                <small class="text-muted">
+                                    Total outstanding
+                                </small>
+
+                            </td>
+
+
+                            <!-- ACTIONS -->
+
+                            <td class="text-center">
+
+                                <div class="btn-group btn-group-sm">
+
+                                    {% if row.balance > 0 %}
+
+                                    <a href="{% url 'record_payment' row.student.id term.id %}"
+                                       class="btn btn-outline-success"
+                                       title="Record payment">
+                                        Pay
+                                    </a>
+
+                                    {% endif %}
+
+
+                                    <a href="{% url 'student_bill_pdf' row.student.id term.id %}"
+                                       class="btn btn-outline-secondary"
+                                       title="Print bill">
+                                        Bill
+                                    </a>
+
+
+                                    <a href="{% url 'student_payment_history' row.student.id %}"
+                                       class="btn btn-outline-primary"
+                                       title="Payment history">
+                                        History
+                                    </a>
+
+
+                                    <a href="{% url 'student_account_statement' row.student.id %}"
+                                       class="btn btn-outline-dark"
+                                       title="Account statement">
+                                        Statement
+                                    </a>
+
+                                </div>
+
+                            </td>
+
+                        </tr>
+
+                        {% empty %}
+
+                        <tr>
+
+                            <td colspan="9"
+                                class="text-center py-5 text-muted">
+
+                                <div class="fs-4 mb-2">
+                                    ✓
+                                </div>
+
+                                <div class="fw-semibold">
+                                    No students owing for this selection.
+                                </div>
+
+                            </td>
+
+                        </tr>
+
+                        {% endfor %}
 
                     </tbody>
 
@@ -548,5 +602,164 @@
     {% endif %}
 
 </div>
+
+
+<!-- ====================================================== -->
+<!-- SESSION → TERM DYNAMIC FILTER -->
+<!-- ====================================================== -->
+
+<script>
+
+document.addEventListener("DOMContentLoaded", function () {
+
+    const sessionSelect = document.getElementById("session");
+    const termSelect = document.getElementById("term");
+
+    if (!sessionSelect || !termSelect) {
+        return;
+    }
+
+
+    sessionSelect.addEventListener("change", function () {
+
+        const sessionId = this.value;
+
+        termSelect.innerHTML = "";
+
+
+        if (!sessionId) {
+
+            termSelect.disabled = true;
+
+            const option = document.createElement("option");
+
+            option.value = "";
+
+            option.textContent =
+                "Select academic session first";
+
+            termSelect.appendChild(option);
+
+            return;
+        }
+
+
+        termSelect.disabled = true;
+
+        const loadingOption =
+            document.createElement("option");
+
+        loadingOption.value = "";
+
+        loadingOption.textContent =
+            "Loading terms...";
+
+        termSelect.appendChild(
+            loadingOption
+        );
+
+
+        fetch(
+            "{% url 'terms_by_session' %}?session=" +
+            encodeURIComponent(sessionId)
+        )
+
+        .then(response => {
+
+            if (!response.ok) {
+
+                throw new Error(
+                    "Unable to load terms."
+                );
+
+            }
+
+            return response.json();
+
+        })
+
+        .then(data => {
+
+            termSelect.innerHTML = "";
+
+            termSelect.disabled = false;
+
+
+            const defaultOption =
+                document.createElement("option");
+
+            defaultOption.value = "";
+
+            defaultOption.textContent =
+                "Select term";
+
+            termSelect.appendChild(
+                defaultOption
+            );
+
+
+            if (!data.terms || data.terms.length === 0) {
+
+                const emptyOption =
+                    document.createElement("option");
+
+                emptyOption.value = "";
+
+                emptyOption.textContent =
+                    "No terms found for this session";
+
+                termSelect.appendChild(
+                    emptyOption
+                );
+
+                return;
+            }
+
+
+            data.terms.forEach(function (term) {
+
+                const option =
+                    document.createElement("option");
+
+                option.value = term.id;
+
+                option.textContent = term.name;
+
+                termSelect.appendChild(
+                    option
+                );
+
+            });
+
+        })
+
+        .catch(error => {
+
+            console.error(error);
+
+            termSelect.innerHTML = "";
+
+            termSelect.disabled = false;
+
+
+            const errorOption =
+                document.createElement("option");
+
+            errorOption.value = "";
+
+            errorOption.textContent =
+                "Unable to load terms";
+
+            termSelect.appendChild(
+                errorOption
+            );
+
+        });
+
+    });
+
+});
+
+</script>
 
 {% endblock %}

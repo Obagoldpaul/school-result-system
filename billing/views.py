@@ -1435,15 +1435,33 @@ def record_payment(request, student_id, term_id):
 @login_required
 @billing_required
 def students_owing(request):
+
     class_id = request.GET.get("class")
+    session_id = request.GET.get("session")
+    term_id = request.GET.get("term")
 
     school = request.user.school
 
     current_term = get_current_term(request.user)
 
-    term_id = request.GET.get("term") or (
-        current_term.id if current_term else None
-    )
+    # ---------------------------------------------------------
+    # DEFAULT SESSION / TERM
+    # ---------------------------------------------------------
+    # On the first visit, use the current session and term.
+    # Once the user selects a session, do NOT automatically
+    # force the current term if it belongs to another session.
+    # ---------------------------------------------------------
+
+    if not session_id and current_term:
+        session_id = str(current_term.session_id)
+
+    if not term_id and current_term:
+        if not session_id or str(current_term.session_id) == str(session_id):
+            term_id = str(current_term.id)
+
+    # ---------------------------------------------------------
+    # STUDENTS
+    # ---------------------------------------------------------
 
     students = Student.objects.filter(
         user__school=school,
@@ -1458,44 +1476,121 @@ def students_owing(request):
 
     rows = []
     term = None
+    session = None
 
-    if term_id:
-        term = get_object_or_404(
-            Term,
-            id=term_id,
-            session__school=school,
+    # ---------------------------------------------------------
+    # SELECT SESSION
+    # ---------------------------------------------------------
+
+    if session_id:
+
+        session = get_object_or_404(
+            AcademicSession,
+            id=session_id,
+            school=school,
         )
 
-        account_terms = Term.objects.filter(
-            session__school=school,
-        ).select_related("session").order_by("session_id")
+    # ---------------------------------------------------------
+    # SELECT TERM
+    # ---------------------------------------------------------
+
+    if term_id:
+
+        # If a session has been selected, the term MUST belong
+        # to that exact session.
+        if session:
+
+            term = get_object_or_404(
+                Term,
+                id=term_id,
+                session=session,
+                session__school=school,
+            )
+
+        else:
+
+            term = get_object_or_404(
+                Term,
+                id=term_id,
+                session__school=school,
+            )
+
+            # Keep session synchronized with the selected term.
+            session = term.session
+            session_id = str(term.session_id)
+
+    # ---------------------------------------------------------
+    # ACCOUNT TERMS
+    # ---------------------------------------------------------
+    # Keep this unchanged so account arrears continue to show
+    # outstanding balances across all sessions.
+    # ---------------------------------------------------------
+
+    account_terms = Term.objects.filter(
+        session__school=school,
+    ).select_related(
+        "session"
+    )
+
+    # ---------------------------------------------------------
+    # STUDENT OWING CALCULATION
+    # ---------------------------------------------------------
+
+    if term:
 
         for student in students:
-            # Keep this page in sync with the allocation-based student bill.
-            # The old cumulative helper subtracts raw Payment amounts, which
-            # can include legacy/unallocated payments and hide a balance that
-            # is still visible on the bill.
-            fee_breakdown = get_student_fee_breakdown(student, term)
-            fee_amount = sum(item["amount"] for item in fee_breakdown)
-            total_paid = sum(item["paid"] for item in fee_breakdown)
-            balance = sum(item["balance"] for item in fee_breakdown)
+
+            # Keep this page in sync with the allocation-based
+            # student bill.
+            fee_breakdown = get_student_fee_breakdown(
+                student,
+                term,
+            )
+
+            fee_amount = sum(
+                item["amount"]
+                for item in fee_breakdown
+            )
+
+            total_paid = sum(
+                item["paid"]
+                for item in fee_breakdown
+            )
+
+            balance = sum(
+                item["balance"]
+                for item in fee_breakdown
+            )
 
             outstanding_terms = []
+
             term_arrears = Decimal("0.00")
+
             for account_term in sorted(
                 account_terms,
-                key=lambda item: (item.session_id, get_term_order(item)),
+                key=lambda item: (
+                    item.session_id,
+                    get_term_order(item),
+                ),
             ):
+
                 account_breakdown = get_student_fee_breakdown(
                     student,
                     account_term,
                 )
+
                 account_balance = sum(
-                    (item["balance"] for item in account_breakdown),
+                    (
+                        item["balance"]
+                        for item in account_breakdown
+                    ),
                     Decimal("0.00"),
                 )
+
                 if account_balance > 0:
+
                     term_arrears += account_balance
+
                     outstanding_terms.append({
                         "term": account_term,
                         "balance": account_balance,
@@ -1505,11 +1600,16 @@ def students_owing(request):
                 student
             )
 
-            opening_arrears = account_summary["opening_arrears"]
+            opening_arrears = account_summary[
+                "opening_arrears"
+            ]
 
-            account_arrears = account_summary["account_arrears"]
+            account_arrears = account_summary[
+                "account_arrears"
+            ]
 
             if account_arrears > 0:
+
                 rows.append({
                     "student": student,
                     "fee_amount": fee_amount,
@@ -1520,19 +1620,58 @@ def students_owing(request):
                     "opening_arrears": opening_arrears,
                 })
 
+    # ---------------------------------------------------------
+    # FILTER DATA
+    # ---------------------------------------------------------
+
+    sessions = AcademicSession.objects.filter(
+        school=school
+    ).order_by(
+        "-name"
+    )
+
+    terms = Term.objects.filter(
+        session__school=school
+    ).select_related(
+        "session"
+    ).order_by(
+        "session__name",
+        "name",
+    )
+
+    # Only show terms belonging to the selected session.
+    if session:
+
+        terms = terms.filter(
+            session=session
+        )
+
+    # ---------------------------------------------------------
+    # RENDER
+    # ---------------------------------------------------------
+
     return render(
         request,
         "billing/students_owing.html",
         {
             "rows": rows,
+
             "classes": SchoolClass.objects.filter(
                 school=school
             ),
-            "terms": Term.objects.filter(
-                session__school=school
-            ),
+
+            "sessions": sessions,
+
+            "terms": terms,
+
             "selected_class": class_id,
+
+            "selected_session": session_id,
+
             "selected_term": term_id,
+
+            "session": session,
+
             "term": term,
         },
     )
