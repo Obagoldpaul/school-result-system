@@ -28,6 +28,11 @@ urlpatterns = [
     path("payment/<int:payment_id>/receipt/pdf/", views.payment_receipt_pdf, name="payment_receipt_pdf",),
     path("student/<int:student_id>/payments/", views.student_payment_history, name="student_payment_history"),
     path("student/<int:student_id>/statement/", views.student_account_statement, name="student_account_statement"),
+    path(
+        "student/statement/",
+        views.select_student_account_statement,
+        name="select_student_account_statement",
+    ),
     path("my-payments/", views.my_payment_history, name="my_payment_history",),
     path("my-payment/<int:payment_id>/receipt/pdf/", views.my_payment_receipt_pdf, name="my_payment_receipt_pdf",),
     path('students-by-class/', views.students_by_class, name='students_by_class'),

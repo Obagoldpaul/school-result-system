@@ -2975,6 +2975,42 @@ def student_account_statement(request, student_id):
     )
     
 @login_required
+@billing_required
+def select_student_account_statement(request):
+
+    school = request.user.school
+
+    students = Student.objects.filter(
+        user__school=school,
+        is_active=True,
+    ).select_related(
+        "user",
+        "school_class",
+    ).order_by(
+        "school_class__name",
+        "user__last_name",
+        "user__first_name",
+    )
+
+    query = request.GET.get("q", "").strip()
+
+    if query:
+        students = students.filter(
+            Q(user__first_name__icontains=query)
+            | Q(user__last_name__icontains=query)
+            | Q(admission_number__icontains=query)
+        )
+
+    return render(
+        request,
+        "billing/select_student_account_statement.html",
+        {
+            "students": students,
+            "query": query,
+        },
+    )
+    
+@login_required
 def my_payment_history(request):
     """
     Student-facing payment history.
