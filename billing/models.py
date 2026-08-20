@@ -1,7 +1,9 @@
+from decimal import Decimal
 from django.db import models
 from django.core.exceptions import ValidationError
 from academics.utils import get_term_order
 import datetime
+from django.db.models import Q, Sum
 
 class FeeCategory(models.Model):
     """
@@ -389,7 +391,12 @@ class PaymentAllocation(models.Model):
     """
     Shows exactly what a payment was used to pay for.
 
-    One Payment can be divided across multiple fee categories.
+    A payment can be allocated either to:
+        1. A normal fee category
+        2. The student's opening balance
+
+    One Payment can therefore be divided across multiple
+    fee categories and/or the opening balance.
     """
 
     payment = models.ForeignKey(
@@ -402,6 +409,16 @@ class PaymentAllocation(models.Model):
         FeeCategory,
         on_delete=models.PROTECT,
         related_name="payment_allocations",
+        null=True,
+        blank=True,
+    )
+
+    opening_balance = models.ForeignKey(
+        "OpeningBalance",
+        on_delete=models.PROTECT,
+        related_name="payment_allocations",
+        null=True,
+        blank=True,
     )
 
     amount = models.DecimalField(
@@ -425,13 +442,31 @@ class PaymentAllocation(models.Model):
             models.UniqueConstraint(
                 fields=["payment", "fee_category"],
                 name="unique_payment_fee_category",
-            )
+            ),
+
+            models.UniqueConstraint(
+                fields=["payment", "opening_balance"],
+                name="unique_payment_opening_balance",
+            ),
         ]
 
     def __str__(self):
+
+        if self.opening_balance:
+
+            destination = "Opening Balance"
+
+        elif self.fee_category:
+
+            destination = str(self.fee_category)
+
+        else:
+
+            destination = "Unassigned"
+
         return (
             f"{self.payment.receipt_number} - "
-            f"{self.fee_category}: ₦{self.amount}"
+            f"{destination}: ₦{self.amount}"
         )
         
 def get_student_fee_breakdown(student, term):
@@ -487,6 +522,181 @@ def get_student_fee_breakdown(student, term):
 
     return breakdown
 
+def get_student_account_summary(student):
+    """
+    Returns the student's complete account position
+    across all academic sessions.
+
+    Payments are counted through PaymentAllocation so that
+    unallocated/legacy payments do not incorrectly reduce
+    outstanding fee balances.
+    """
+
+    from academics.models import AcademicSession
+
+    sessions = (
+        AcademicSession.objects
+        .filter(
+            school=student.user.school,
+        )
+        .prefetch_related("terms")
+        .order_by("id")
+    )
+
+    statement_sessions = []
+
+    total_charged = Decimal("0.00")
+    total_allocated = Decimal("0.00")
+
+    for session in sessions:
+
+        term_rows = []
+
+        for term in sorted(
+            session.terms.all(),
+            key=get_term_order,
+        ):
+
+            breakdown = get_student_fee_breakdown(
+                student,
+                term,
+            )
+
+            charged = sum(
+                (
+                    item["amount"]
+                    for item in breakdown
+                ),
+                Decimal("0.00"),
+            )
+
+            allocated = sum(
+                (
+                    item["paid"]
+                    for item in breakdown
+                ),
+                Decimal("0.00"),
+            )
+
+            balance = sum(
+                (
+                    item["balance"]
+                    for item in breakdown
+                ),
+                Decimal("0.00"),
+            )
+
+            allocation_exists = PaymentAllocation.objects.filter(
+                payment__student=student,
+                payment__term=term,
+            ).exists()
+
+            if charged or allocated or allocation_exists:
+
+                term_rows.append({
+                    "term": term,
+                    "charged": charged,
+                    "allocated": allocated,
+                    "balance": balance,
+                    "breakdown": breakdown,
+                })
+
+                total_charged += charged
+                total_allocated += allocated
+
+        if term_rows:
+
+            statement_sessions.append({
+                "session": session,
+                "terms": term_rows,
+                "charged": sum(
+                    (
+                        row["charged"]
+                        for row in term_rows
+                    ),
+                    Decimal("0.00"),
+                ),
+                "allocated": sum(
+                    (
+                        row["allocated"]
+                        for row in term_rows
+                    ),
+                    Decimal("0.00"),
+                ),
+                "arrears": sum(
+                    (
+                        row["balance"]
+                        for row in term_rows
+                    ),
+                    Decimal("0.00"),
+                ),
+            })
+
+    # ---------------------------------------------------------
+    # OPENING BALANCE
+    # ---------------------------------------------------------
+
+    opening_balance = (
+        OpeningBalance.objects
+        .filter(student=student)
+        .first()
+    )
+
+    if opening_balance:
+
+        opening_balance_paid = (
+            opening_balance.payments.aggregate(
+                total=Sum("amount")
+            )["total"]
+            or Decimal("0.00")
+        )
+
+        opening_arrears = (
+            opening_balance.amount
+            - opening_balance_paid
+        )
+
+        # Never allow the balance to become negative.
+        if opening_arrears < Decimal("0.00"):
+            opening_arrears = Decimal("0.00")
+
+    else:
+
+        opening_balance_paid = Decimal("0.00")
+
+        opening_arrears = Decimal("0.00")
+
+    # ---------------------------------------------------------
+    # TERM ARREARS
+    # ---------------------------------------------------------
+
+    term_arrears = sum(
+        (
+            session_row["arrears"]
+            for session_row in statement_sessions
+        ),
+        Decimal("0.00"),
+    )
+
+    # ---------------------------------------------------------
+    # TOTAL ACCOUNT ARREARS
+    # ---------------------------------------------------------
+
+    account_arrears = (
+        term_arrears
+        + opening_arrears
+    )
+
+    return {
+        "statement_sessions": statement_sessions,
+        "total_charged": total_charged,
+        "total_allocated": total_allocated,
+        "term_arrears": term_arrears,
+        "opening_balance": opening_balance,
+        "opening_arrears": opening_arrears,
+        "account_arrears": account_arrears,
+    }
+
 class OpeningBalance(models.Model):
     """One-time arrears a student owed BEFORE this system was used, entered manually during setup."""
     student = models.OneToOneField('students.Student', on_delete=models.CASCADE)
@@ -495,6 +705,133 @@ class OpeningBalance(models.Model):
 
     def __str__(self):
         return f"{self.student} - Opening balance: {self.amount}"
+    
+class OpeningBalancePayment(models.Model):
+    """
+    Payment made specifically toward a student's opening balance.
+
+    Opening balance payments are kept separate from normal term-fee
+    PaymentAllocation records because the opening balance represents
+    arrears that existed before the billing system was introduced.
+    """
+
+    PAYMENT_METHODS = [
+        ("Cash", "Cash"),
+        ("Bank Transfer", "Bank Transfer"),
+        ("POS", "POS"),
+        ("Cheque", "Cheque"),
+        ("Online", "Online"),
+    ]
+
+    opening_balance = models.ForeignKey(
+        OpeningBalance,
+        on_delete=models.CASCADE,
+        related_name="payments",
+    )
+
+    amount = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+    )
+
+    payment_method = models.CharField(
+        max_length=20,
+        choices=PAYMENT_METHODS,
+        default="Cash",
+    )
+
+    receipt_number = models.CharField(
+        max_length=30,
+        unique=True,
+        blank=True,
+    )
+
+    reference = models.CharField(
+        max_length=100,
+        blank=True,
+        help_text="Bank transaction ID, POS reference, cheque number, etc.",
+    )
+
+    date_paid = models.DateField(
+        auto_now_add=True,
+    )
+
+    recorded_by = models.ForeignKey(
+        "accounts.User",
+        on_delete=models.SET_NULL,
+        null=True,
+    )
+
+    note = models.CharField(
+        max_length=200,
+        blank=True,
+        help_text="Additional payment note",
+    )
+
+    def __str__(self):
+        return (
+            f"{self.opening_balance.student} "
+            f"paid ₦{self.amount:,.2f} "
+            f"toward opening balance"
+        )
+
+    def save(self, *args, **kwargs):
+
+        super().save(*args, **kwargs)
+
+        if not self.receipt_number:
+
+            self.receipt_number = (
+                f"OB-REC-{self.date_paid.strftime('%Y%m%d')}-"
+                f"{self.id:05d}"
+            )
+
+            super().save(
+                update_fields=["receipt_number"]
+            )
+
+def get_opening_balance_paid(student):
+    """
+    Returns the total amount paid toward a student's opening balance.
+    """
+
+    opening = OpeningBalance.objects.filter(
+        student=student
+    ).first()
+
+    if not opening:
+        return Decimal("0.00")
+
+    return OpeningBalancePayment.objects.filter(
+        opening_balance=opening
+    ).aggregate(
+        total=models.Sum("amount")
+    )["total"] or Decimal("0.00")
+
+
+def get_opening_balance_arrears(student):
+    """
+    Returns the remaining unpaid opening balance.
+    """
+
+    opening = OpeningBalance.objects.filter(
+        student=student
+    ).first()
+
+    if not opening:
+        return Decimal("0.00")
+
+    paid = OpeningBalancePayment.objects.filter(
+        opening_balance=opening
+    ).aggregate(
+        total=models.Sum("amount")
+    )["total"] or Decimal("0.00")
+
+    return max(
+        opening.amount - paid,
+        Decimal("0.00"),
+    )
+
 
 def get_fee_for_student(student, term):
     """
@@ -570,36 +907,69 @@ def get_cumulative_balance(student, up_to_term):
             for item in fee_breakdown
         )
 
-    # ---------------------------------------------------------
-    # OPENING BALANCE
-    # ---------------------------------------------------------
+        # ---------------------------------------------------------
+        # OPENING BALANCE
+        # ---------------------------------------------------------
 
-    opening = OpeningBalance.objects.filter(
-        student=student
-    ).first()
+        opening = OpeningBalance.objects.filter(
+            student=student
+        ).first()
 
-    if opening:
-        total_fees += opening.amount
+        opening_amount = (
+            opening.amount
+            if opening
+            else Decimal("0.00")
+        )
 
-    # ---------------------------------------------------------
-    # TOTAL PAYMENTS UP TO SELECTED TERM
-    # ---------------------------------------------------------
+        opening_paid = Decimal("0.00")
 
-    total_paid = Payment.objects.filter(
-        student=student,
-        term__in=relevant_terms,
-    ).aggregate(
-        total=models.Sum("amount")
-    )["total"] or 0
+        if opening:
 
-    # ---------------------------------------------------------
-    # BALANCE
-    # ---------------------------------------------------------
+            opening_paid = (
+                OpeningBalancePayment.objects.filter(
+                    opening_balance=opening
+                ).aggregate(
+                    total=models.Sum("amount")
+                )["total"]
+                or Decimal("0.00")
+            )
 
-    balance = total_fees - total_paid
+        opening_arrears = max(
+            opening_amount - opening_paid,
+            Decimal("0.00"),
+        )
 
-    return (
-        total_fees,
-        total_paid,
-        balance,
-    )
+        # ---------------------------------------------------------
+        # TOTAL PAYMENTS UP TO SELECTED TERM
+        # ---------------------------------------------------------
+
+        term_payments = Payment.objects.filter(
+            student=student,
+            term__in=relevant_terms,
+        ).aggregate(
+            total=models.Sum("amount")
+        )["total"] or Decimal("0.00")
+
+        # ---------------------------------------------------------
+        # TOTAL PAID
+        # ---------------------------------------------------------
+
+        total_paid = (
+            opening_paid +
+            term_payments
+        )
+
+        # ---------------------------------------------------------
+        # BALANCE
+        # ---------------------------------------------------------
+
+        balance = (
+            total_fees
+            - total_paid
+        )
+
+        return (
+            total_fees,
+            total_paid,
+            balance,
+        )

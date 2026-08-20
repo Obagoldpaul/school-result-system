@@ -1,33 +1,435 @@
 {% extends 'base.html' %}
+
 {% block title %}Mark Attendance{% endblock %}
+
 {% block content %}
-<h1>Mark Attendance: {{ school_class }}</h1>
 
-<form method="GET" style="margin-bottom: 15px;">
-    <label>Date:</label>
-    <input type="date" name="date" value="{{ selected_date|date:'Y-m-d' }}" onchange="this.form.submit()">
-</form>
+<div class="container-fluid">
 
-{% if is_weekend %}
-<p style="color: #b83232; font-weight: 600;">Attendance cannot be marked for weekends. Please select a weekday.</p>
-{% else %}
-<form method="POST">
-    {% csrf_token %}
-    <input type="hidden" name="date" value="{{ selected_date|date:'Y-m-d' }}">
-    <table>
-        <tr><th>Admission No.</th><th>Name</th><th>Present</th></tr>
-        {% for student, is_present in student_rows %}
-        <tr>
-            <td>{{ student.admission_number }}</td>
-            <td>{{ student.user.get_full_name }}</td>
-            <td><input type="checkbox" name="present_{{ student.id }}" {% if is_present %}checked{% endif %}></td>
-        </tr>
-        {% endfor %}
-    </table>
-    <br>
-    <button type="submit">Save Attendance</button>
-</form>
+    <!-- =========================================================
+         PAGE HEADER
+    ========================================================== -->
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <div>
+
+            <h2>Mark Attendance</h2>
+
+            <p class="text-muted mb-0">
+                {{ school_class }} —
+                {{ selected_date|date:"l, d F Y" }}
+            </p>
+
+        </div>
+
+        <a
+            href="{% url 'select_class_for_attendance' %}"
+            class="btn btn-secondary"
+        >
+            ← Back to Classes
+        </a>
+
+    </div>
+
+
+    {% if is_weekend %}
+
+        <div class="alert alert-warning">
+
+            Attendance cannot be marked for weekends.
+            Please select a weekday.
+
+        </div>
+
+    {% else %}
+
+
+        <!-- =====================================================
+             ATTENDANCE STATISTICS
+        ====================================================== -->
+
+        <div class="row g-3 mb-4">
+
+            <!-- TOTAL STUDENTS -->
+
+            <div class="col-md-3">
+
+                <div class="card shadow-sm text-center h-100">
+
+                    <div class="card-body">
+
+                        <div class="text-muted">
+                            Total Students
+                        </div>
+
+                        <h3 class="mb-0">
+                            {{ total_students }}
+                        </h3>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- PRESENT -->
+
+            <div class="col-md-3">
+
+                <div class="card shadow-sm text-center h-100">
+
+                    <div class="card-body">
+
+                        <div class="text-muted">
+                            Present
+                        </div>
+
+                        <h3 class="mb-0">
+                            {{ present_count }}
+                        </h3>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- ABSENT -->
+
+            <div class="col-md-3">
+
+                <div class="card shadow-sm text-center h-100">
+
+                    <div class="card-body">
+
+                        <div class="text-muted">
+                            Absent
+                        </div>
+
+                        <h3 class="mb-0">
+                            {{ absent_count }}
+                        </h3>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- NOT MARKED -->
+
+            <div class="col-md-3">
+
+                <div class="card shadow-sm text-center h-100">
+
+                    <div class="card-body">
+
+                        <div class="text-muted">
+                            Not Marked
+                        </div>
+
+                        <h3 class="mb-0">
+                            {{ unmarked_count }}
+                        </h3>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- =====================================================
+             DATE SELECTION
+        ====================================================== -->
+
+        <div class="card mb-4">
+
+            <div class="card-body">
+
+                <form method="GET">
+
+                    <label
+                        for="attendance-date"
+                        class="form-label fw-bold"
+                    >
+                        Attendance Date
+                    </label>
+
+                    <div class="d-flex gap-2">
+
+                        <input
+                            type="date"
+                            id="attendance-date"
+                            name="date"
+                            value="{{ selected_date|date:'Y-m-d' }}"
+                            class="form-control"
+                            style="max-width: 250px;"
+                        >
+
+                        <button
+                            type="submit"
+                            class="btn btn-primary"
+                        >
+                            View Date
+                        </button>
+
+                    </div>
+
+                </form>
+
+            </div>
+
+        </div>
+
+
+        <!-- =====================================================
+             ATTENDANCE FORM
+        ====================================================== -->
+
+        <form method="POST">
+
+            {% csrf_token %}
+
+            <input
+                type="hidden"
+                name="date"
+                value="{{ selected_date|date:'Y-m-d' }}"
+            >
+
+
+            <div class="card">
+
+                <!-- CARD HEADER -->
+
+                <div class="card-header">
+
+                    <strong>
+                        {{ school_class }} Students
+                    </strong>
+
+                </div>
+
+
+                <!-- STUDENT TABLE -->
+
+                <div class="card-body p-0">
+
+                    <div class="table-responsive">
+
+                        <table class="table table-hover mb-0">
+
+                            <thead>
+
+                                <tr>
+
+                                    <th>#</th>
+
+                                    <th>
+                                        Admission No.
+                                    </th>
+
+                                    <th>
+                                        Student Name
+                                    </th>
+
+                                    <th class="text-center">
+                                        Status
+                                    </th>
+
+                                </tr>
+
+                            </thead>
+
+
+                            <tbody>
+
+                                {% for student, status in student_rows %}
+
+                                <tr>
+
+                                    <td>
+                                        {{ forloop.counter }}
+                                    </td>
+
+
+                                    <td>
+                                        {{ student.admission_number }}
+                                    </td>
+
+
+                                    <td>
+                                        {{ student.user.get_full_name }}
+                                    </td>
+
+
+                                    <td class="text-center">
+
+                                        <!-- PRESENT -->
+
+                                        <label class="me-3">
+
+                                            <input
+                                                type="radio"
+                                                name="attendance_{{ student.id }}"
+                                                value="present"
+
+                                                {% if status == "present" %}
+                                                    checked
+                                                {% endif %}
+                                            >
+
+                                            Present
+
+                                        </label>
+
+
+                                        <!-- ABSENT -->
+
+                                        <label>
+
+                                            <input
+                                                type="radio"
+                                                name="attendance_{{ student.id }}"
+                                                value="absent"
+
+                                                {% if status == "absent" %}
+                                                    checked
+                                                {% endif %}
+                                            >
+
+                                            Absent
+
+                                        </label>
+
+
+                                        <!-- NOT MARKED INDICATOR -->
+
+                                        {% if status == "not_marked" %}
+
+                                            <div
+                                                class="mt-1 text-muted small"
+                                            >
+                                                Not marked
+                                            </div>
+
+                                        {% endif %}
+
+                                    </td>
+
+                                </tr>
+
+
+                                {% empty %}
+
+                                <tr>
+
+                                    <td
+                                        colspan="4"
+                                        class="text-center py-4"
+                                    >
+
+                                        No active students found
+                                        in this class.
+
+                                    </td>
+
+                                </tr>
+
+                                {% endfor %}
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                </div>
+
+
+                <!-- SAVE BUTTON -->
+
+                {% if student_rows %}
+
+<div class="card-footer">
+
+    <div class="d-flex justify-content-between align-items-center">
+
+        <div>
+
+            <button
+                type="button"
+                class="btn btn-outline-success"
+                id="mark-all-present"
+            >
+                ✓ Mark All Present
+            </button>
+
+        </div>
+
+
+        <div>
+
+            <button
+                type="submit"
+                class="btn btn-success"
+            >
+                Save Attendance
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
 {% endif %}
-       
-<p><a href="{% url 'select_class_for_attendance' %}">Back to class list</a></p>
+
+            </div>
+
+        </form>
+
+    {% endif %}
+
+</div>
+
+<script>
+
+    document.addEventListener("DOMContentLoaded", function () {
+    
+        const markAllPresentButton =
+            document.getElementById("mark-all-present");
+    
+    
+        if (!markAllPresentButton) {
+            return;
+        }
+    
+    
+        markAllPresentButton.addEventListener("click", function () {
+    
+            const presentRadios =
+                document.querySelectorAll(
+                    'input[type="radio"][value="present"]'
+                );
+    
+    
+            presentRadios.forEach(function (radio) {
+    
+                radio.checked = true;
+    
+            });
+    
+        });
+    
+    });
+    
+    </script>
 {% endblock %}
+

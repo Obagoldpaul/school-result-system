@@ -18,7 +18,83 @@
 </form>
 
 {% if selected_class %}
+
 <h2>{{ selected_class }}</h2>
+
+{% if current_term %}
+<div style="
+    margin: 15px 0;
+    padding: 12px;
+    background: #f0f8f1;
+    border-left: 4px solid #1a5c1a;
+    border-radius: 5px;
+">
+    <strong>Term:</strong>
+    {{ current_term }}
+</div>
+<div class="row g-3 mb-4">
+
+    <div class="col-md-4">
+        <div class="card shadow-sm text-center">
+            <div class="card-body">
+                <div class="text-muted">Total Students</div>
+                <h3>{{ total_students }}</h3>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card shadow-sm text-center">
+            <div class="card-body">
+                <div class="text-muted">Students Marked</div>
+                <h3>{{ students_marked }}</h3>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card shadow-sm text-center">
+            <div class="card-body">
+                <div class="text-muted">Overall Attendance</div>
+
+                <h3>
+                    {% if overall_percentage is not None %}
+                        {{ overall_percentage }}%
+                    {% else %}
+                        -
+                    {% endif %}
+                </h3>
+
+            </div>
+        </div>
+    </div>
+
+</div>
+
+
+<div class="row g-3 mb-4">
+
+    <div class="col-md-6">
+        <div class="card shadow-sm text-center">
+            <div class="card-body">
+                <div class="text-muted">Present Records</div>
+                <h3>{{ total_present_records }}</h3>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card shadow-sm text-center">
+            <div class="card-body">
+                <div class="text-muted">Absent Records</div>
+                <h3>{{ total_absent_records }}</h3>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+{% endif %}
 <table>
     <tr>
         <th>Admission No.</th>

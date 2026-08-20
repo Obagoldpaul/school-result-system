@@ -4,8 +4,16 @@ from subjects.models import Subject
 from allocations.models import SubjectAllocation
 from accounts.permissions import can_manage_billing
 
-from billing.models import Payment, get_cumulative_balance
+from billing.models import (
+    Payment,
+    PaymentAllocation,
+    get_cumulative_balance,
+    get_student_fee_breakdown,
+    get_student_account_summary,
+)
+
 from django.db.models import Sum
+from decimal import Decimal
 
 from accounts.utils import (
     get_teacher,
@@ -188,6 +196,8 @@ def build_dashboard(user):
     if can_manage_billing(user):
 
         billing_term = current_term
+        
+        current_term_collected = 0
 
         billing_context = {
 
@@ -230,6 +240,8 @@ def build_dashboard(user):
                     total=Sum("amount")
                 )["total"] or 0
             )
+            
+            current_term_collected = total_collected
 
             students_owing = 0
             outstanding = 0
@@ -316,6 +328,9 @@ def build_dashboard(user):
 
                 "billing_recent_payments":
                     recent_payments,
+                
+                "billing_current_term_collected":
+                    current_term_collected,
 
             })
 
@@ -446,6 +461,81 @@ def build_dashboard(user):
 
     if context["is_management"] and school:
 
+        # --------------------------------------------------
+        # TODAY'S ATTENDANCE
+        # --------------------------------------------------
+
+        from attendance.models import AttendanceRecord
+
+        today = datetime.date.today()
+
+        active_students = Student.objects.filter(
+            user__school=school,
+            is_active=True,
+        )
+
+        today_attendance = AttendanceRecord.objects.filter(
+            student__user__school=school,
+            student__is_active=True,
+            date=today,
+        )
+
+        attendance_present = today_attendance.filter(
+            is_present=True
+        ).count()
+
+        attendance_absent = today_attendance.filter(
+            is_present=False
+        ).count()
+
+        attendance_marked = today_attendance.count()
+
+        attendance_total = active_students.count()
+
+        attendance_unmarked = (
+            attendance_total - attendance_marked
+        )
+
+        attendance_percentage = (
+            round(
+                (attendance_present / attendance_marked) * 100,
+                1,
+            )
+            if attendance_marked
+            else 0
+        )
+
+        context.update({
+
+            "management_attendance_present":
+                attendance_present,
+
+            "management_attendance_absent":
+                attendance_absent,
+
+            "management_attendance_marked":
+                attendance_marked,
+
+            "management_attendance_unmarked":
+                attendance_unmarked,
+
+            "management_attendance_percentage":
+                attendance_percentage,
+
+        })
+        
+        # --------------------------------------------------
+        # ATTENDANCE ALERT
+        # --------------------------------------------------
+
+        context["attendance_alert"] = (
+            attendance_unmarked > 0
+        )
+
+        context["attendance_unmarked_count"] = (
+            attendance_unmarked
+        )
+        
         # --------------------------------------------------
         # SUBJECT ALLOCATION WORKFLOW
         # --------------------------------------------------
@@ -622,25 +712,90 @@ def build_dashboard(user):
 
         if current_term:
 
-            (
-                fee_amount,
-                total_paid,
-                balance,
-            ) = get_cumulative_balance(
-                student,
-                current_term
+            # Complete account position across all sessions.
+            account_summary = get_student_account_summary(
+                student
             )
 
+            # --------------------------------------------------
+            # CURRENT TERM
+            # --------------------------------------------------
+
+            current_term_breakdown = get_student_fee_breakdown(
+                student,
+                current_term,
+            )
+
+            current_term_amount = sum(
+                (
+                    item["amount"]
+                    for item in current_term_breakdown
+                ),
+                Decimal("0.00"),
+            )
+
+            current_term_paid = sum(
+                (
+                    item["paid"]
+                    for item in current_term_breakdown
+                ),
+                Decimal("0.00"),
+            )
+
+            current_term_balance = sum(
+                (
+                    item["balance"]
+                    for item in current_term_breakdown
+                ),
+                Decimal("0.00"),
+            )
+
+            # --------------------------------------------------
+            # CURRENT TERM
+            # --------------------------------------------------
+
             context["my_fee_amount"] = (
-                fee_amount
+                current_term_amount
             )
 
             context["my_total_paid"] = (
-                total_paid
+                current_term_paid
             )
 
+            context["my_current_term_balance"] = (
+                current_term_balance
+            )
+
+            context["my_term_charged"] = (
+                current_term_amount
+            )
+
+            context["my_term_paid"] = (
+                current_term_paid
+            )
+
+            # --------------------------------------------------
+            # COMPLETE ACCOUNT
+            # --------------------------------------------------
+
             context["my_balance"] = (
-                balance
+                account_summary["account_arrears"]
+            )
+
+            context["my_account_arrears"] = (
+                account_summary["account_arrears"]
+            )
+
+            context["my_term_arrears"] = (
+                account_summary["term_arrears"]
+            )
+
+            context["my_opening_arrears"] = (
+                account_summary["opening_arrears"]
+            )
+
+            context["my_account_summary"] = (
+                account_summary
             )
 
             context["my_fee_term"] = (

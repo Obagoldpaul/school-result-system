@@ -1,5 +1,8 @@
+from decimal import Decimal
+
 from django import forms
 from django.forms import formset_factory
+from django.db import models
 
 from .models import (
     FeeCategory,
@@ -7,6 +10,7 @@ from .models import (
     Payment,
     OpeningBalance,
     PaymentAllocation,
+    OpeningBalancePayment,
 )
 
 from students.models import SchoolClass, Department, Student
@@ -66,6 +70,11 @@ class OpeningBalanceForm(forms.ModelForm):
     class Meta:
         model = OpeningBalance
         fields = ['student', 'amount', 'note']
+        widgets = {
+            "student": forms.Select(attrs={"class": "form-select", "id": "opening-balance-student"}),
+            "amount": forms.NumberInput(attrs={"class": "form-control", "min": "0.01", "step": "0.01", "placeholder": "0.00"}),
+            "note": forms.TextInput(attrs={"class": "form-control", "placeholder": "e.g. Balance from 2025/2026 session"}),
+        }
 
     def __init__(self, *args, **kwargs):
 
@@ -79,6 +88,114 @@ class OpeningBalanceForm(forms.ModelForm):
                 user__school=user.school,
                 is_active=True
             )
+
+        self.fields["student"].label_from_instance = lambda student: (
+            f"{student.admission_number} — "
+            f"{student.user.get_full_name() or student.user.username} "
+            f"({student.school_class})"
+        )
+        self.fields["student"].help_text = (
+            "Search by admission number, student name, or class."
+        )
+
+class OpeningBalancePaymentForm(forms.ModelForm):
+
+    class Meta:
+        model = OpeningBalancePayment
+        fields = [
+            "amount",
+            "payment_method",
+            "reference",
+            "note",
+        ]
+
+        widgets = {
+            "amount": forms.NumberInput(
+                attrs={
+                    "class": "form-control",
+                    "min": "0.01",
+                    "step": "0.01",
+                    "placeholder": "0.00",
+                }
+            ),
+
+            "payment_method": forms.Select(
+                attrs={
+                    "class": "form-select",
+                }
+            ),
+
+            "reference": forms.TextInput(
+                attrs={
+                    "class": "form-control",
+                    "placeholder": "Bank transaction ID, POS reference, etc.",
+                }
+            ),
+
+            "note": forms.TextInput(
+                attrs={
+                    "class": "form-control",
+                    "placeholder": "Optional payment note",
+                }
+            ),
+        }
+
+    def __init__(self, *args, **kwargs):
+
+        opening_balance = kwargs.pop(
+            "opening_balance",
+            None
+        )
+
+        super().__init__(*args, **kwargs)
+
+        self.opening_balance = opening_balance
+
+        if opening_balance:
+
+            total_paid = (
+                opening_balance.payments.aggregate(
+                    total=models.Sum("amount")
+                )["total"]
+                or Decimal("0.00")
+            )
+
+            self.total_paid = total_paid
+
+            self.remaining_balance = (
+                opening_balance.amount - total_paid
+            )
+
+        else:
+
+            self.total_paid = Decimal("0.00")
+
+            self.remaining_balance = Decimal("0.00")
+
+    def clean_amount(self):
+
+        amount = self.cleaned_data.get("amount")
+
+        if amount is None:
+            return amount
+
+        if amount <= Decimal("0.00"):
+
+            raise forms.ValidationError(
+                "Payment amount must be greater than zero."
+            )
+
+        if self.opening_balance:
+
+            if amount > self.remaining_balance:
+
+                raise forms.ValidationError(
+                    f"Payment cannot exceed the remaining "
+                    f"opening balance of "
+                    f"₦{self.remaining_balance:,.2f}."
+                )
+
+        return amount
 
 class FeeAssignmentForm(forms.ModelForm):
 
@@ -469,6 +586,34 @@ class PaymentForm(forms.ModelForm):
             "note",
         ]
 
+        widgets = {
+            "amount": forms.NumberInput(attrs={
+                "class": "form-control",
+                "min": "0.01",
+                "step": "0.01",
+                "placeholder": "Enter amount received",
+            }),
+            "payment_method": forms.Select(attrs={"class": "form-select"}),
+            "reference": forms.TextInput(attrs={
+                "class": "form-control",
+                "placeholder": "Bank, POS, or cheque reference (optional)",
+            }),
+            "note": forms.TextInput(attrs={
+                "class": "form-control",
+                "placeholder": "Optional note for this payment",
+            }),
+        }
+
+    def clean_amount(self):
+        amount = self.cleaned_data["amount"]
+
+        if amount < Decimal("0.01"):
+            raise forms.ValidationError(
+                "Enter a payment amount greater than zero."
+            )
+
+        return amount
+
 class StudentBillForm(forms.Form):
 
     school_class = forms.ModelChoiceField(
@@ -483,10 +628,16 @@ class StudentBillForm(forms.Form):
         empty_label="Select student",
     )
 
+    session = forms.ModelChoiceField(
+        queryset=AcademicSession.objects.none(),
+        label="Academic Session",
+        empty_label="Select academic session",
+    )
+
     term = forms.ModelChoiceField(
         queryset=Term.objects.none(),
         label="Term",
-        empty_label="Select term",
+        empty_label="Select academic session first",
     )
 
     def __init__(self, *args, **kwargs):
@@ -497,14 +648,18 @@ class StudentBillForm(forms.Form):
 
         if user and user.is_authenticated:
 
+            # -------------------------------------------------
+            # SCHOOL / SESSION / STUDENT ACCESS
+            # -------------------------------------------------
+
             if user.is_superuser:
 
                 self.fields["school_class"].queryset = (
                     SchoolClass.objects.all()
                 )
 
-                self.fields["term"].queryset = (
-                    Term.objects.all()
+                self.fields["session"].queryset = (
+                    AcademicSession.objects.all()
                 )
 
                 students_queryset = Student.objects.filter(
@@ -519,9 +674,9 @@ class StudentBillForm(forms.Form):
                     )
                 )
 
-                self.fields["term"].queryset = (
-                    Term.objects.filter(
-                        session__school=user.school
+                self.fields["session"].queryset = (
+                    AcademicSession.objects.filter(
+                        school=user.school
                     )
                 )
 
@@ -530,9 +685,9 @@ class StudentBillForm(forms.Form):
                     is_active=True
                 )
 
-            # -----------------------------------------
+            # -------------------------------------------------
             # FILTER STUDENTS BY SELECTED CLASS
-            # -----------------------------------------
+            # -------------------------------------------------
 
             selected_class = None
 
@@ -562,6 +717,88 @@ class StudentBillForm(forms.Form):
 
             self.fields["student"].queryset = students_queryset
 
+            # -------------------------------------------------
+            # FILTER TERMS BY SELECTED ACADEMIC SESSION
+            # -------------------------------------------------
+
+            selected_session = None
+
+            if self.is_bound:
+
+                selected_session_id = self.data.get(
+                    "session"
+                )
+
+                if selected_session_id:
+
+                    try:
+
+                        if user.is_superuser:
+
+                            selected_session = (
+                                AcademicSession.objects.get(
+                                    id=selected_session_id
+                                )
+                            )
+
+                        else:
+
+                            selected_session = (
+                                AcademicSession.objects.get(
+                                    id=selected_session_id,
+                                    school=user.school
+                                )
+                            )
+
+                    except AcademicSession.DoesNotExist:
+
+                        selected_session = None
+
+            if selected_session:
+
+                self.fields["term"].queryset = (
+                    Term.objects.filter(
+                        session=selected_session
+                    ).order_by("name")
+                )
+
+                # ---------------------------------------------
+                # SHOW ONLY:
+                # First Term
+                # Second Term
+                # Third Term
+                #
+                # Do NOT display the session beside the term.
+                # ---------------------------------------------
+
+                self.fields["term"].label_from_instance = (
+                    lambda obj: obj.get_name_display()
+                )
+
+    # ---------------------------------------------------------
+    # VALIDATE SESSION + TERM
+    # ---------------------------------------------------------
+
+    def clean(self):
+
+        cleaned_data = super().clean()
+
+        session = cleaned_data.get("session")
+        term = cleaned_data.get("term")
+
+        if (
+            session
+            and term
+            and term.session_id != session.id
+        ):
+
+            self.add_error(
+                "term",
+                "The selected term does not belong to the selected academic session."
+            )
+
+        return cleaned_data
+
 class PaymentAllocationForm(forms.ModelForm):
 
     class Meta:
@@ -571,6 +808,20 @@ class PaymentAllocationForm(forms.ModelForm):
             "amount",
             "note",
         ]
+
+        widgets = {
+            "fee_category": forms.Select(attrs={"class": "form-select"}),
+            "amount": forms.NumberInput(attrs={
+                "class": "form-control allocation-amount",
+                "min": "0.01",
+                "step": "0.01",
+                "placeholder": "0.00",
+            }),
+            "note": forms.TextInput(attrs={
+                "class": "form-control",
+                "placeholder": "Optional allocation note",
+            }),
+        }
 
     def __init__(self, *args, **kwargs):
 
@@ -585,6 +836,10 @@ class PaymentAllocationForm(forms.ModelForm):
         )
 
         super().__init__(*args, **kwargs)
+
+        # An allocation row may be left unused.  The view ignores rows with
+        # no amount, while completed rows are checked by clean_amount().
+        self.fields["amount"].required = False
 
         if fee_categories is not None:
 
@@ -620,11 +875,22 @@ class PaymentAllocationForm(forms.ModelForm):
             for category_id, balance
             in self.fee_balances.items()
         }        
+
+    def clean_amount(self):
+        amount = self.cleaned_data.get("amount")
+
+        # Empty allocation rows are allowed; completed rows must be positive.
+        if amount is not None and amount < Decimal("0.01"):
+            raise forms.ValidationError(
+                "Enter an allocation amount greater than zero."
+            )
+
+        return amount
         
 
 
 PaymentAllocationFormSet = formset_factory(
     PaymentAllocationForm,
-    extra=1,
+    extra=0,
     can_delete=True,
 )

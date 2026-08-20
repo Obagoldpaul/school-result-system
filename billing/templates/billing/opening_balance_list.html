@@ -17,8 +17,7 @@ Opening Balances
                 Opening Balance Management
             </h3>
 
-            <a href="{% url 'add_opening_balance' %}"
-               class="btn btn-light">
+            <a href="{% url 'add_opening_balance' %}" class="btn btn-light">
 
                 + Add Opening Balance
 
@@ -32,11 +31,7 @@ Opening Balances
 
                 <div class="col-md-4">
 
-                    <input
-                        type="text"
-                        name="search"
-                        value="{{ search }}"
-                        class="form-control"
+                    <input type="text" name="search" value="{{ search }}" class="form-control"
                         placeholder="Search student">
 
                 </div>
@@ -53,8 +48,7 @@ Opening Balances
 
                 <div class="col-md-2">
 
-                    <a href="{% url 'opening_balance_list' %}"
-                       class="btn btn-secondary w-100">
+                    <a href="{% url 'opening_balance_list' %}" class="btn btn-secondary w-100">
 
                         Reset
 
@@ -73,17 +67,13 @@ Opening Balances
                         <tr>
 
                             <th>Admission No.</th>
-
                             <th>Student</th>
-
-                            <th>Amount</th>
-
+                            <th>Opening Balance</th>
+                            <th>Paid</th>
+                            <th>Remaining</th>
                             <th>Note</th>
-
                             <th class="text-center">
-
                                 Actions
-
                             </th>
 
                         </tr>
@@ -109,9 +99,16 @@ Opening Balances
                             </td>
 
                             <td class="fw-bold text-danger">
-
                                 ₦{{ balance.amount|intcomma }}
+                            </td>
 
+                            <td class="fw-bold text-success">
+                                ₦{{ balance.total_paid|intcomma }}
+                            </td>
+
+                            <td
+                                class="fw-bold {% if balance.remaining_balance > 0 %}text-danger{% else %}text-success{% endif %}">
+                                ₦{{ balance.remaining_balance|intcomma }}
                             </td>
 
                             <td>
@@ -124,21 +121,49 @@ Opening Balances
 
                                 <div class="btn-group">
 
+                                    {% if balance.remaining_balance > 0 %}
+                                
+                                    <a href="{% url 'pay_opening_balance' balance.id %}"
+                                       class="btn btn-outline-success btn-sm">
+                                
+                                        Pay
+                                
+                                    </a>
+                                
+                                    {% else %}
+                                
+                                    <span class="btn btn-outline-secondary btn-sm disabled">
+                                
+                                        Paid
+                                
+                                    </span>
+                                
+                                    {% endif %}
+                                
+                                    <a href="{% url 'opening_balance_payment_history' balance.id %}"
+                                       class="btn btn-outline-primary btn-sm">
+                                
+                                        History
+                                
+                                    </a>
+                                
                                     <a href="{% url 'edit_opening_balance' balance.id %}"
-                                       class="btn btn-outline-warning btn-sm">
-
+                                       class="btn btn-outline-warning btn-sm"
+                                       title="Edit opening balance">
+                                
                                         ✏
-
+                                
                                     </a>
-
+                                
                                     <a href="{% url 'delete_opening_balance' balance.id %}"
-                                    onclick="return confirm('Delete this opening balance?')"
-                                       class="btn btn-outline-danger btn-sm">
-
+                                       onclick="return confirm('Delete this opening balance?')"
+                                       class="btn btn-outline-danger btn-sm"
+                                       title="Delete opening balance">
+                                
                                         🗑
-
+                                
                                     </a>
-
+                                
                                 </div>
 
                             </td>
@@ -149,8 +174,7 @@ Opening Balances
 
                         <tr>
 
-                            <td colspan="5"
-                                class="text-center text-muted">
+                            <td colspan="7" class="text-center text-muted">
 
                                 No opening balances found.
 

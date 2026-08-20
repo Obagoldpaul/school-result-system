@@ -1,5 +1,39 @@
 {% extends 'base.html' %}
 {% block title %}Add Opening Balance{% endblock %}
 {% block content %}
-{% include 'partials/simple_form.html' with page_title="Add Opening Balance (Pre-existing Arrears)" submit_label="Save" back_url=students_owing_url back_label="View Students Owing" %}
+<div class="container mt-4" style="max-width: 760px;">
+    <div class="card shadow-sm">
+        <div class="card-body p-4">
+            <h1 class="h3">Add Opening Balance</h1>
+            <p class="text-muted">Use this only for arrears that existed before the student began using this billing system.</p>
+            <form method="post" novalidate>
+                {% csrf_token %}
+                {% if form.non_field_errors %}<div class="alert alert-danger">{{ form.non_field_errors }}</div>{% endif %}
+                <div class="mb-3">
+                    <label class="form-label" for="student-search">Student</label>
+                    <input class="form-control mb-2" id="student-search" type="search" placeholder="Type admission number, name, or class..." autocomplete="off">
+                    {{ form.student }}
+                    <div class="form-text">{{ form.student.help_text }}</div>
+                    <div class="text-danger small">{{ form.student.errors }}</div>
+                </div>
+                <div class="mb-3"><label class="form-label" for="{{ form.amount.id_for_label }}">Amount</label>{{ form.amount }}<div class="text-danger small">{{ form.amount.errors }}</div></div>
+                <div class="mb-4"><label class="form-label" for="{{ form.note.id_for_label }}">Note</label>{{ form.note }}<div class="text-danger small">{{ form.note.errors }}</div></div>
+                <button class="btn btn-primary" type="submit">Save Opening Balance</button>
+                <a class="btn btn-outline-secondary" href="{{ students_owing_url }}">View Students Owing</a>
+            </form>
+        </div>
+    </div>
+</div>
+<script>
+(() => {
+  const search = document.getElementById('student-search');
+  const select = document.getElementById('opening-balance-student');
+  search.addEventListener('input', () => {
+    const query = search.value.trim().toLowerCase();
+    for (const option of select.options) {
+      option.hidden = Boolean(option.value) && !option.text.toLowerCase().includes(query);
+    }
+  });
+})();
+</script>
 {% endblock %}

@@ -1,0 +1,305 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Pay Opening Balance{% endblock %}
+
+{% block content %}
+
+<div class="container py-4" style="max-width: 850px;">
+
+    <!-- ===================================================== -->
+    <!-- PAGE HEADER -->
+    <!-- ===================================================== -->
+
+    <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
+
+        <div>
+            <h1 class="h3 mb-1">
+                Pay Opening Balance
+            </h1>
+
+            <p class="text-muted mb-0">
+                {{ student.user.get_full_name }}
+                &middot;
+                {{ student.admission_number }}
+            </p>
+        </div>
+
+        <a
+            href="{% url 'opening_balance_list' %}"
+            class="btn btn-outline-secondary"
+        >
+            Back to Opening Balances
+        </a>
+
+    </div>
+
+
+    <!-- ===================================================== -->
+    <!-- STUDENT / BALANCE SUMMARY -->
+    <!-- ===================================================== -->
+
+    <div class="card shadow-sm mb-4">
+
+        <div class="card-body">
+
+            <h2 class="h5 mb-3">
+                Opening Balance Summary
+            </h2>
+
+            <div class="row g-3">
+
+                <div class="col-md-4">
+
+                    <div class="text-muted small">
+                        Student
+                    </div>
+
+                    <strong>
+                        {{ student.user.get_full_name }}
+                    </strong>
+
+                </div>
+
+
+                <div class="col-md-4">
+
+                    <div class="text-muted small">
+                        Original Balance
+                    </div>
+
+                    <strong>
+                        &#8358;{{ opening_balance.amount|intcomma }}
+                    </strong>
+
+                </div>
+
+
+                <div class="col-md-4">
+
+                    <div class="text-muted small">
+                        Already Paid
+                    </div>
+
+                    <strong class="text-success">
+                        &#8358;{{ total_paid|intcomma }}
+                    </strong>
+
+                </div>
+
+
+                <div class="col-md-4">
+
+                    <div class="text-muted small">
+                        Remaining Balance
+                    </div>
+
+                    <strong class="text-danger fs-5">
+                        &#8358;{{ remaining_balance|intcomma }}
+                    </strong>
+
+                </div>
+
+            </div>
+
+            {% if opening_balance.note %}
+
+                <hr>
+
+                <div>
+                    <div class="text-muted small">
+                        Note
+                    </div>
+
+                    <span>
+                        {{ opening_balance.note }}
+                    </span>
+                </div>
+
+            {% endif %}
+
+        </div>
+
+    </div>
+
+
+    <!-- ===================================================== -->
+    <!-- PAYMENT FORM -->
+    <!-- ===================================================== -->
+
+    <div class="card shadow-sm">
+
+        <div class="card-body">
+
+            <h2 class="h5 mb-1">
+                Payment Details
+            </h2>
+
+            <p class="text-muted mb-4">
+                Record a payment toward this student's opening balance.
+            </p>
+
+
+            {% if form.non_field_errors %}
+
+                <div class="alert alert-danger">
+
+                    {{ form.non_field_errors }}
+
+                </div>
+
+            {% endif %}
+
+
+            <form method="POST">
+
+                {% csrf_token %}
+
+
+                <!-- ============================================= -->
+                <!-- AMOUNT -->
+                <!-- ============================================= -->
+
+                <div class="mb-3">
+
+                    <label
+                        for="{{ form.amount.id_for_label }}"
+                        class="form-label"
+                    >
+                        Amount Received
+                    </label>
+
+                    {{ form.amount }}
+
+                    {% if form.amount.errors %}
+
+                        <div class="text-danger small mt-1">
+                            {{ form.amount.errors }}
+                        </div>
+
+                    {% endif %}
+
+                    <div class="form-text">
+                        Maximum payment allowed:
+                        <strong>
+                            &#8358;{{ remaining_balance|intcomma }}
+                        </strong>
+                    </div>
+
+                </div>
+
+
+                <!-- ============================================= -->
+                <!-- PAYMENT METHOD -->
+                <!-- ============================================= -->
+
+                <div class="mb-3">
+
+                    <label
+                        for="{{ form.payment_method.id_for_label }}"
+                        class="form-label"
+                    >
+                        Payment Method
+                    </label>
+
+                    {{ form.payment_method }}
+
+                    {% if form.payment_method.errors %}
+
+                        <div class="text-danger small mt-1">
+                            {{ form.payment_method.errors }}
+                        </div>
+
+                    {% endif %}
+
+                </div>
+
+
+                <!-- ============================================= -->
+                <!-- REFERENCE -->
+                <!-- ============================================= -->
+
+                <div class="mb-3">
+
+                    <label
+                        for="{{ form.reference.id_for_label }}"
+                        class="form-label"
+                    >
+                        Reference
+                    </label>
+
+                    {{ form.reference }}
+
+                    {% if form.reference.errors %}
+
+                        <div class="text-danger small mt-1">
+                            {{ form.reference.errors }}
+                        </div>
+
+                    {% endif %}
+
+                    <div class="form-text">
+                        Bank transaction ID, POS reference,
+                        cheque number, etc.
+                    </div>
+
+                </div>
+
+
+                <!-- ============================================= -->
+                <!-- NOTE -->
+                <!-- ============================================= -->
+
+                <div class="mb-4">
+
+                    <label
+                        for="{{ form.note.id_for_label }}"
+                        class="form-label"
+                    >
+                        Note
+                    </label>
+
+                    {{ form.note }}
+
+                    {% if form.note.errors %}
+
+                        <div class="text-danger small mt-1">
+                            {{ form.note.errors }}
+                        </div>
+
+                    {% endif %}
+
+                </div>
+
+
+                <!-- ============================================= -->
+                <!-- ACTIONS -->
+                <!-- ============================================= -->
+
+                <div class="d-flex flex-wrap gap-2">
+
+                    <button
+                        type="submit"
+                        class="btn btn-primary"
+                    >
+                        Record Payment
+                    </button>
+
+                    <a
+                        href="{% url 'opening_balance_list' %}"
+                        class="btn btn-outline-secondary"
+                    >
+                        Cancel
+                    </a>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

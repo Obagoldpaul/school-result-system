@@ -46,9 +46,7 @@
 
             {% if school_settings.school_logo %}
 
-            <img src="{{ school_settings.school_logo.url }}"
-                 style="height:90px;"
-                 alt="School Logo">
+            <img src="{{ school_settings.school_logo.url }}" style="height:90px;" alt="School Logo">
 
             {% endif %}
 
@@ -57,6 +55,7 @@
     </div>
 
 </div>
+
 
 
 <!-- =========================================================
@@ -88,7 +87,7 @@
             </div>
 
             <div class="billing-value">
-                ₦{{ billing_total_collected|intcomma }}
+                ₦{{ billing_current_term_collected|intcomma }}
             </div>
 
             <div class="billing-label">
@@ -170,8 +169,7 @@
 
         <div class="col-md-3">
 
-            <a href="{% url 'billing_dashboard' %}"
-               class="btn btn-success w-100 py-3">
+            <a href="{% url 'billing_dashboard' %}" class="btn btn-success w-100 py-3">
 
                 💰<br>
                 Billing Dashboard
@@ -183,8 +181,7 @@
 
         <div class="col-md-3">
 
-            <a href="{% url 'students_owing' %}"
-               class="btn btn-warning w-100 py-3">
+            <a href="{% url 'students_owing' %}" class="btn btn-warning w-100 py-3">
 
                 ⚠️<br>
                 Students Owing
@@ -196,8 +193,7 @@
 
         <div class="col-md-3">
 
-            <a href="{% url 'payment_list' %}"
-               class="btn btn-success w-100 py-3">
+            <a href="{% url 'payment_list' %}" class="btn btn-success w-100 py-3">
 
                 🧾<br>
                 Payment Records
@@ -285,11 +281,691 @@
 
 
 <!-- =========================================================
-     SCHOOL BIRTHDAYS
-     MANAGEMENT / STAFF
+     MANAGEMENT DASHBOARD
 ========================================================= -->
 
-{% if not my_student_id %}
+{% if is_management %}
+
+
+<!-- =========================================================
+     MANAGEMENT OPERATIONAL STATISTICS
+========================================================= -->
+
+<div class="stat-grid">
+
+    <!-- STUDENTS -->
+    <div class="stat-card text-center">
+
+        <div class="display-5 mb-2">
+            👨‍🎓
+        </div>
+
+        <h2 class="fw-bold">
+            {{ student_count }}
+        </h2>
+
+        <p class="text-muted mb-0">
+            Students
+        </p>
+
+    </div>
+
+
+    <!-- TEACHERS -->
+    <div class="stat-card text-center">
+
+        <div class="display-5 mb-2">
+            👩‍🏫
+        </div>
+
+        <h2 class="fw-bold">
+            {{ teacher_count }}
+        </h2>
+
+        <p class="text-muted mb-0">
+            Teachers
+        </p>
+
+    </div>
+
+
+    <!-- CLASSES -->
+    <div class="stat-card text-center">
+
+        <div class="display-5 mb-2">
+            🏫
+        </div>
+
+        <h2 class="fw-bold">
+            {{ class_count }}
+        </h2>
+
+        <p class="text-muted mb-0">
+            Classes
+        </p>
+
+    </div>
+
+
+    <!-- ATTENDANCE -->
+    <div class="stat-card text-center">
+
+        <div class="display-5 mb-2">
+            📋
+        </div>
+
+        <h2 class="fw-bold">
+            {{ management_attendance_percentage }}%
+        </h2>
+
+        <p class="text-muted mb-1">
+            Attendance Today
+        </p>
+
+        <small class="text-muted">
+
+            {{ management_attendance_present }} Present
+            ·
+            {{ management_attendance_absent }} Absent
+
+        </small>
+
+    </div>
+
+</div>
+
+
+<!-- =========================================================
+     MANAGEMENT WORKFLOW
+========================================================= -->
+
+<div class="workflow-grid">
+
+    <!-- PENDING TEACHER SUBMISSIONS -->
+    <div class="workflow-card">
+
+        <div class="display-6 mb-2">
+            📝
+        </div>
+
+        <div class="count">
+            {{ pending_submission_count }}
+        </div>
+
+        <div class="label">
+            Pending Teacher Submissions
+        </div>
+
+    </div>
+
+
+    <!-- PENDING CLASS TEACHER REVIEWS -->
+    <div class="workflow-card">
+
+        <div class="display-6 mb-2">
+            👨‍🏫
+        </div>
+
+        <div class="count">
+            {{ pending_review|length }}
+        </div>
+
+        <div class="label">
+            Pending Class Teacher Reviews
+        </div>
+
+    </div>
+
+
+    <!-- PENDING PRINCIPAL APPROVAL -->
+    <div class="workflow-card">
+
+        <div class="display-6 mb-2">
+            ✅
+        </div>
+
+        <div class="count">
+            {{ pending_approval|length }}
+        </div>
+
+        <div class="label">
+            Pending Principal Approval
+        </div>
+
+    </div>
+
+
+    <!-- PUBLISHED RESULTS -->
+    <div class="workflow-card published">
+
+        <div class="display-6 mb-2">
+            🎉
+        </div>
+
+        <div class="count">
+            {{ published_count }}
+        </div>
+
+        <div class="label">
+            Published Results
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- =========================================================
+     MANAGEMENT QUICK ACTIONS
+========================================================= -->
+
+<div class="section-card">
+
+    <h3 class="mb-4">
+        Quick Actions
+    </h3>
+
+    <div class="row g-3">
+
+        <!-- REGISTER STUDENT -->
+        <div class="col-md-3">
+
+            <a
+                href="{% url 'register_student' %}"
+                class="btn btn-success w-100 py-3"
+            >
+                👨‍🎓<br>
+                Register Student
+            </a>
+
+        </div>
+
+
+        <!-- CLASS MANAGEMENT -->
+        <div class="col-md-3">
+
+            <a
+                href="{% url 'class_management' %}"
+                class="btn btn-success w-100 py-3"
+            >
+                🏫<br>
+                Class Management
+            </a>
+
+        </div>
+
+
+        <!-- REGISTER TEACHER -->
+        <div class="col-md-3">
+
+            <a
+                href="{% url 'register_teacher' %}"
+                class="btn btn-success w-100 py-3"
+            >
+                👩‍🏫<br>
+                Register Teacher
+            </a>
+
+        </div>
+
+
+        <!-- ALLOCATE SUBJECTS -->
+        <div class="col-md-3">
+
+            <a
+                href="{% url 'add_allocation' %}"
+                class="btn btn-success w-100 py-3"
+            >
+                📚<br>
+                Allocate Subjects
+            </a>
+
+        </div>
+
+
+        <!-- BILLING -->
+        <div class="col-md-3">
+
+            <a
+                href="{% url 'students_owing' %}"
+                class="btn btn-success w-100 py-3"
+            >
+                💰<br>
+                Billing
+            </a>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- =========================================================
+     THINGS REQUIRING ACTION
+========================================================= -->
+
+<div class="section-card">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <h3 class="mb-0">
+            ⚠️ Things Requiring Action
+        </h3>
+
+    </div>
+
+
+    <div class="row g-3">
+
+
+        <!-- =====================================================
+             PENDING RESULT APPROVAL
+        ====================================================== -->
+
+        <div class="col-md-6">
+
+            <div class="card h-100 border-warning">
+
+                <div class="card-body">
+
+                    <div class="d-flex justify-content-between align-items-start">
+
+                        <div>
+
+                            <h5 class="mb-2">
+                                Pending Result Approval
+                            </h5>
+
+                            <p class="text-muted mb-3">
+
+                                {% if pending_approval %}
+
+                                    {{ pending_approval|length }}
+                                    result{{ pending_approval|length|pluralize }}
+                                    awaiting your approval.
+
+                                {% else %}
+
+                                    No results awaiting approval.
+
+                                {% endif %}
+
+                            </p>
+
+                        </div>
+
+
+                        <div style="font-size:28px;">
+                            ✅
+                        </div>
+
+                    </div>
+
+
+                    {% if pending_approval %}
+
+                        <a
+                            href="{% url 'select_allocation' %}?status=REVIEWED"
+                            class="btn btn-warning btn-sm"
+                        >
+                            Review Results
+                        </a>
+
+                    {% else %}
+
+                        <span class="badge bg-success">
+                            All Clear
+                        </span>
+
+                    {% endif %}
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- =====================================================
+             PENDING PUBLICATION
+        ====================================================== -->
+
+        <div class="col-md-6">
+
+            <div class="card h-100 border-primary">
+
+                <div class="card-body">
+
+                    <div class="d-flex justify-content-between align-items-start">
+
+                        <div>
+
+                            <h5 class="mb-2">
+                                Pending Publication
+                            </h5>
+
+                            <p class="text-muted mb-3">
+
+                                {% if pending_publish %}
+
+                                    {{ pending_publish|length }}
+                                    result{{ pending_publish|length|pluralize }}
+                                    ready to publish.
+
+                                {% else %}
+
+                                    No results waiting for publication.
+
+                                {% endif %}
+
+                            </p>
+
+                        </div>
+
+
+                        <div style="font-size:28px;">
+                            📢
+                        </div>
+
+                    </div>
+
+
+                    {% if pending_publish %}
+
+                        <a
+                            href="{% url 'select_allocation' %}?status=APPROVED"
+                            class="btn btn-primary btn-sm"
+                        >
+                            View Results
+                        </a>
+
+                    {% else %}
+
+                        <span class="badge bg-success">
+                            All Clear
+                        </span>
+
+                    {% endif %}
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- =====================================================
+             STUDENTS OWING
+        ====================================================== -->
+
+        <div class="col-md-6">
+
+            <div class="card h-100 border-danger">
+
+                <div class="card-body">
+
+                    <div class="d-flex justify-content-between align-items-start">
+
+                        <div>
+
+                            <h5 class="mb-2">
+                                Students Owing
+                            </h5>
+
+                            <p class="text-muted mb-3">
+
+                                {% if billing_students_owing %}
+
+                                    {{ billing_students_owing }}
+                                    student{{ billing_students_owing|pluralize }}
+                                    currently owing fees.
+
+                                {% else %}
+
+                                    No students currently owing.
+
+                                {% endif %}
+
+                            </p>
+
+                        </div>
+
+
+                        <div style="font-size:28px;">
+                            💰
+                        </div>
+
+                    </div>
+
+
+                    {% if billing_students_owing %}
+
+                        <a
+                            href="{% url 'students_owing' %}"
+                            class="btn btn-danger btn-sm"
+                        >
+                            View Students Owing
+                        </a>
+
+                    {% else %}
+
+                        <span class="badge bg-success">
+                            All Clear
+                        </span>
+
+                    {% endif %}
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- =====================================================
+             ATTENDANCE ALERT
+        ====================================================== -->
+
+        <div class="col-md-6">
+
+            <div class="card h-100 border-warning">
+
+                <div class="card-body">
+
+                    <div class="d-flex justify-content-between align-items-start">
+
+                        <div>
+
+                            <h5 class="mb-2">
+                                Attendance Alert
+                            </h5>
+
+                            <p class="text-muted mb-3">
+
+                                {% if attendance_alert %}
+
+                                    {{ attendance_unmarked_count }}
+                                    student{{ attendance_unmarked_count|pluralize }}
+                                    not yet marked today.
+
+                                {% else %}
+
+                                    Attendance is fully marked today.
+
+                                {% endif %}
+
+                            </p>
+
+                        </div>
+
+
+                        <div style="font-size:28px;">
+                            📋
+                        </div>
+
+                    </div>
+
+
+                    {% if attendance_alert %}
+
+                        <a
+                            href="{% url 'select_class_for_attendance' %}"
+                            class="btn btn-warning btn-sm"
+                        >
+                            Mark Attendance
+                        </a>
+
+                    {% else %}
+
+                        <span class="badge bg-success">
+                            All Clear
+                        </span>
+
+                    {% endif %}
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+    </div>
+
+</div>
+
+
+<!-- RECENT ACTIVITIES -->
+
+{% if recent_activities %}
+
+<div class="section-card">
+
+    <h3>
+        Latest Activities
+    </h3>
+
+    <ul style="
+        list-style:none;
+        padding:0;
+        margin:0;
+    ">
+
+        {% for activity in recent_activities %}
+
+        <li style="
+            padding:8px 0;
+            border-bottom:1px solid #eee;
+            font-size:13px;
+        ">
+
+            {{ activity.description }}
+
+            <span style="
+                color:#999;
+                float:right;
+            ">
+
+                {{ activity.created_at|timesince }} ago
+
+            </span>
+
+        </li>
+
+        {% endfor %}
+
+    </ul>
+
+</div>
+
+{% endif %}
+
+
+<!-- =========================================================
+     MANAGEMENT ANNOUNCEMENTS
+========================================================= -->
+
+{% if nav_announcements %}
+
+<div class="section-card">
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+
+        <h3 class="mb-0">
+            📢 Announcements
+        </h3>
+
+        <a
+            href="{% url 'announcement_list' %}"
+            class="btn btn-sm btn-outline-primary"
+        >
+            View All
+        </a>
+
+    </div>
+
+    {% for announcement in nav_announcements %}
+
+    <div style="
+        padding:12px 0;
+        border-bottom:1px solid #eee;
+    ">
+
+        <div class="d-flex justify-content-between align-items-start">
+
+            <div>
+
+                <a
+                    href="{% url 'announcement_detail' announcement.id %}"
+                    style="
+                        font-weight:600;
+                        text-decoration:none;
+                    "
+                >
+                    {{ announcement.title }}
+                </a>
+
+                {% if announcement.pinned %}
+
+                <span class="badge bg-warning text-dark ms-2">
+                    Pinned
+                </span>
+
+                {% endif %}
+
+            </div>
+
+            <span style="
+                font-size:12px;
+                color:#999;
+                white-space:nowrap;
+            ">
+                {{ announcement.created_at|timesince }} ago
+            </span>
+
+        </div>
+
+        <div style="
+            font-size:13px;
+            color:#666;
+            margin-top:5px;
+        ">
+            {{ announcement.body|truncatewords:20 }}
+        </div>
+
+    </div>
+
+    {% endfor %}
+
+</div>
+
+{% endif %}
+
+
+<!-- =========================================================
+     MANAGEMENT SCHOOL BIRTHDAYS
+========================================================= -->
 
 <div class="section-card">
 
@@ -469,445 +1145,6 @@
 
 </div>
 
-{% endif %}
-
-
-<!-- =========================================================
-     MANAGEMENT DASHBOARD
-========================================================= -->
-
-{% if is_management %}
-
-
-<!-- MANAGEMENT STATISTICS -->
-
-<div class="stat-grid">
-
-
-    <div class="stat-card text-center">
-
-        <div class="display-5 mb-2">
-            👨‍🎓
-        </div>
-
-        <h2 class="fw-bold">
-            {{ student_count }}
-        </h2>
-
-        <p class="text-muted mb-0">
-            Students
-        </p>
-
-    </div>
-
-
-    <div class="stat-card text-center">
-
-        <div class="display-5 mb-2">
-            👩‍🏫
-        </div>
-
-        <h2 class="fw-bold">
-            {{ teacher_count }}
-        </h2>
-
-        <p class="text-muted mb-0">
-            Teachers
-        </p>
-
-    </div>
-
-
-    <div class="stat-card text-center">
-
-        <div class="display-5 mb-2">
-            📚
-        </div>
-
-        <h2 class="fw-bold">
-            {{ subject_count }}
-        </h2>
-
-        <p class="text-muted mb-0">
-            Subjects
-        </p>
-
-    </div>
-
-
-    <div class="stat-card text-center">
-
-        <div class="display-5 mb-2">
-            🏫
-        </div>
-
-        <h2 class="fw-bold">
-            {{ class_count }}
-        </h2>
-
-        <p class="text-muted mb-0">
-            Classes
-        </p>
-
-    </div>
-
-
-</div>
-
-
-<!-- MANAGEMENT WORKFLOW -->
-
-<div class="workflow-grid">
-
-
-    <div class="workflow-card">
-
-        <div class="display-6 mb-2">
-            📝
-        </div>
-
-        <div class="count">
-            {{ pending_submission_count }}
-        </div>
-
-        <div class="label">
-            Pending Teacher Submissions
-        </div>
-
-    </div>
-
-
-    <div class="workflow-card">
-
-        <div class="display-6 mb-2">
-            👨‍🏫
-        </div>
-
-        <div class="count">
-            {{ pending_review|length }}
-        </div>
-
-        <div class="label">
-            Pending Class Teacher Reviews
-        </div>
-
-    </div>
-
-
-    <div class="workflow-card">
-
-        <div class="display-6 mb-2">
-            ✅
-        </div>
-
-        <div class="count">
-            {{ pending_approval|length }}
-        </div>
-
-        <div class="label">
-            Pending Principal Approval
-        </div>
-
-    </div>
-
-
-    <div class="workflow-card published">
-
-        <div class="display-6 mb-2">
-            🎉
-        </div>
-
-        <div class="count">
-            {{ published_count }}
-        </div>
-
-        <div class="label">
-            Published Results
-        </div>
-
-    </div>
-
-
-</div>
-
-
-<!-- MANAGEMENT QUICK ACTIONS -->
-
-<div class="section-card">
-
-    <h3 class="mb-4">
-        Quick Actions
-    </h3>
-
-
-    <div class="row g-3">
-
-
-        <div class="col-md-3">
-
-            <a href="{% url 'register_student' %}"
-               class="btn btn-success w-100 py-3">
-
-                👨‍🎓<br>
-                Register Student
-
-            </a>
-
-        </div>
-
-
-        <div class="col-md-3">
-
-            <a href="{% url 'class_management' %}"
-               class="btn btn-success w-100 py-3">
-
-                🏫<br>
-                Class Management
-
-            </a>
-
-        </div>
-
-
-        <div class="col-md-3">
-
-            <a href="{% url 'register_teacher' %}"
-               class="btn btn-success w-100 py-3">
-
-                👩‍🏫<br>
-                Register Teacher
-
-            </a>
-
-        </div>
-
-
-        <div class="col-md-3">
-
-            <a href="{% url 'add_allocation' %}"
-               class="btn btn-success w-100 py-3">
-
-                📚<br>
-                Allocate Subjects
-
-            </a>
-
-        </div>
-
-
-        <div class="col-md-3">
-
-            <a href="{% url 'students_owing' %}"
-               class="btn btn-success w-100 py-3">
-
-                💰<br>
-                Billing
-
-            </a>
-
-        </div>
-
-
-    </div>
-
-</div>
-
-
-<!-- PENDING APPROVAL -->
-
-{% if pending_approval %}
-
-<div class="section-card">
-
-    <h3>
-
-        Awaiting Your Approval
-
-        <span style="
-            background:#d9822b;
-            color:#fff;
-            border-radius:10px;
-            padding:2px 8px;
-            font-size:12px;
-        ">
-
-            {{ pending_approval|length }}
-
-        </span>
-
-    </h3>
-
-
-    <table>
-
-        <tr>
-
-            <th>Subject</th>
-            <th>Class</th>
-            <th>Term</th>
-            <th>Action</th>
-
-        </tr>
-
-
-        {% for a in pending_approval %}
-
-        <tr>
-
-            <td>
-                {{ a.subject }}
-            </td>
-
-            <td>
-                {{ a.school_class }}
-            </td>
-
-            <td>
-                {{ a.term }}
-            </td>
-
-            <td>
-
-                <a href="{% url 'approve_allocation' a.id %}"
-                   onclick="return confirm('Approve these results?')">
-
-                    Approve
-
-                </a>
-
-            </td>
-
-        </tr>
-
-        {% endfor %}
-
-    </table>
-
-</div>
-
-{% endif %}
-
-
-<!-- APPROVED / READY TO PUBLISH -->
-
-{% if pending_publish %}
-
-<div class="section-card">
-
-    <h3>
-
-        Approved, Ready to Publish
-
-        <span style="
-            background:#d9822b;
-            color:#fff;
-            border-radius:10px;
-            padding:2px 8px;
-            font-size:12px;
-        ">
-
-            {{ pending_publish|length }}
-
-        </span>
-
-    </h3>
-
-
-    <table>
-
-        <tr>
-
-            <th>Subject</th>
-            <th>Class</th>
-            <th>Term</th>
-            <th>Action</th>
-
-        </tr>
-
-
-        {% for a in pending_publish %}
-
-        <tr>
-
-            <td>
-                {{ a.subject }}
-            </td>
-
-            <td>
-                {{ a.school_class }}
-            </td>
-
-            <td>
-                {{ a.term }}
-            </td>
-
-            <td>
-
-                <a href="{% url 'publish_allocation' a.id %}"
-                   onclick="return confirm('Publish these results? Students will be able to see them.')">
-
-                    Publish
-
-                </a>
-
-            </td>
-
-        </tr>
-
-        {% endfor %}
-
-    </table>
-
-</div>
-
-{% endif %}
-
-
-<!-- RECENT ACTIVITIES -->
-
-{% if recent_activities %}
-
-<div class="section-card">
-
-    <h3>
-        Latest Activities
-    </h3>
-
-
-    <ul style="
-        list-style:none;
-        padding:0;
-        margin:0;
-    ">
-
-        {% for activity in recent_activities %}
-
-        <li style="
-            padding:8px 0;
-            border-bottom:1px solid #eee;
-            font-size:13px;
-        ">
-
-            {{ activity.description }}
-
-            <span style="
-                color:#999;
-                float:right;
-            ">
-
-                {{ activity.created_at|timesince }} ago
-
-            </span>
-
-        </li>
-
-        {% endfor %}
-
-    </ul>
-
-</div>
-
-{% endif %}
 
 {% endif %}
 
@@ -941,8 +1178,7 @@
 
     <div class="stat-card">
 
-        <div class="stat-number"
-             style="
+        <div class="stat-number" style="
                 font-size:16px;
                 color:
                 {% if latest_result_published %}
@@ -953,9 +1189,9 @@
              ">
 
             {% if latest_result_published %}
-                Published
+            Published
             {% else %}
-                Not Yet
+            Not Yet
             {% endif %}
 
         </div>
@@ -972,9 +1208,9 @@
         <div class="stat-number">
 
             {% if student_attendance_percentage is not None %}
-                {{ student_attendance_percentage }}%
+            {{ student_attendance_percentage }}%
             {% else %}
-                —
+            —
             {% endif %}
 
         </div>
@@ -988,8 +1224,7 @@
 
     <div class="stat-card">
 
-        <div class="stat-number"
-             style="
+        <div class="stat-number" style="
                 font-size:16px;
                 color:
                 {% if my_balance > 0 %}
@@ -1004,7 +1239,7 @@
         </div>
 
         <div class="stat-label">
-            Current Balance
+            Total Account Arrears
         </div>
 
     </div>
@@ -1019,22 +1254,19 @@ STUDENT PROFILE
 
 <div class="section-card" id="student-profile">
 
-<h3 class="mb-4">
-   👤 My Profile
-</h3>
+    <h3 class="mb-4">
+        👤 My Profile
+    </h3>
 
-<div class="row g-4 align-items-start">
+    <div class="row g-4 align-items-start">
 
-   <!-- STUDENT PASSPORT -->
+        <!-- STUDENT PASSPORT -->
 
-   <div class="col-md-3 text-center">
+        <div class="col-md-3 text-center">
 
-       {% if request.user.student_profile.passport %}
+            {% if request.user.student_profile.passport %}
 
-           <img
-               src="{{ request.user.student_profile.passport.url }}"
-               alt="Student Passport"
-               style="
+            <img src="{{ request.user.student_profile.passport.url }}" alt="Student Passport" style="
                    width:150px;
                    height:180px;
                    object-fit:cover;
@@ -1042,12 +1274,11 @@ STUDENT PROFILE
                    border:1px solid #ddd;
                    padding:4px;
                    background:#fff;
-               "
-           >
+               ">
 
-       {% else %}
+            {% else %}
 
-           <div style="
+            <div style="
                width:150px;
                height:180px;
                margin:0 auto;
@@ -1062,155 +1293,155 @@ STUDENT PROFILE
                font-size:13px;
            ">
 
-               No Passport Photo
+                No Passport Photo
 
-           </div>
+            </div>
 
-       {% endif %}
+            {% endif %}
 
-       <div class="mt-2">
+            <div class="mt-2">
 
-           <strong>
-               Passport Photograph
-           </strong>
+                <strong>
+                    Passport Photograph
+                </strong>
 
-       </div>
+            </div>
 
-   </div>
+        </div>
 
 
-   <!-- STUDENT INFORMATION -->
+        <!-- STUDENT INFORMATION -->
 
-   <div class="col-md-9">
+        <div class="col-md-9">
 
-       <div class="row g-3">
+            <div class="row g-3">
 
-           <div class="col-md-6">
+                <div class="col-md-6">
 
-               <strong>
-                   Full Name
-               </strong>
+                    <strong>
+                        Full Name
+                    </strong>
 
-               <p class="text-muted mb-0">
-                   {{ request.user.get_full_name|default:request.user.username }}
-               </p>
+                    <p class="text-muted mb-0">
+                        {{ request.user.get_full_name|default:request.user.username }}
+                    </p>
 
-           </div>
+                </div>
 
 
-           <div class="col-md-6">
+                <div class="col-md-6">
 
-               <strong>
-                   Admission Number
-               </strong>
+                    <strong>
+                        Admission Number
+                    </strong>
 
-               <p class="text-muted mb-0">
-                   {{ request.user.student_profile.admission_number }}
-               </p>
+                    <p class="text-muted mb-0">
+                        {{ request.user.student_profile.admission_number }}
+                    </p>
 
-           </div>
+                </div>
 
 
-           <div class="col-md-6">
+                <div class="col-md-6">
 
-               <strong>
-                   Class
-               </strong>
+                    <strong>
+                        Class
+                    </strong>
 
-               <p class="text-muted mb-0">
-                   {{ request.user.student_profile.school_class }}
-               </p>
+                    <p class="text-muted mb-0">
+                        {{ request.user.student_profile.school_class }}
+                    </p>
 
-           </div>
+                </div>
 
 
-           <div class="col-md-6">
+                <div class="col-md-6">
 
-               <strong>
-                   Date of Birth
-               </strong>
+                    <strong>
+                        Date of Birth
+                    </strong>
 
-               <p class="text-muted mb-0">
+                    <p class="text-muted mb-0">
 
-                   {% if request.user.student_profile.date_of_birth %}
+                        {% if request.user.student_profile.date_of_birth %}
 
-                       {{ request.user.student_profile.date_of_birth|date:"F d, Y" }}
+                        {{ request.user.student_profile.date_of_birth|date:"F d, Y" }}
 
-                   {% else %}
+                        {% else %}
 
-                       Not provided
+                        Not provided
 
-                   {% endif %}
+                        {% endif %}
 
-               </p>
+                    </p>
 
-           </div>
+                </div>
 
 
-           <div class="col-md-6">
+                <div class="col-md-6">
 
-               <strong>
-                   Gender
-               </strong>
+                    <strong>
+                        Gender
+                    </strong>
 
-               <p class="text-muted mb-0">
+                    <p class="text-muted mb-0">
 
-                   {{ request.user.student_profile.get_gender_display|default:"Not provided" }}
+                        {{ request.user.student_profile.get_gender_display|default:"Not provided" }}
 
-               </p>
+                    </p>
 
-           </div>
+                </div>
 
 
-           <div class="col-md-6">
+                <div class="col-md-6">
 
-               <strong>
-                   Nationality
-               </strong>
+                    <strong>
+                        Nationality
+                    </strong>
 
-               <p class="text-muted mb-0">
+                    <p class="text-muted mb-0">
 
-                   {{ request.user.student_profile.nationality|default:"Not provided" }}
+                        {{ request.user.student_profile.nationality|default:"Not provided" }}
 
-               </p>
+                    </p>
 
-           </div>
+                </div>
 
 
-           <div class="col-md-6">
+                <div class="col-md-6">
 
-               <strong>
-                   Guardian
-               </strong>
+                    <strong>
+                        Guardian
+                    </strong>
 
-               <p class="text-muted mb-0">
+                    <p class="text-muted mb-0">
 
-                   {{ request.user.student_profile.guardian_name|default:"Not provided" }}
+                        {{ request.user.student_profile.guardian_name|default:"Not provided" }}
 
-               </p>
+                    </p>
 
-           </div>
+                </div>
 
 
-           <div class="col-md-6">
+                <div class="col-md-6">
 
-               <strong>
-                   Guardian Phone
-               </strong>
+                    <strong>
+                        Guardian Phone
+                    </strong>
 
-               <p class="text-muted mb-0">
+                    <p class="text-muted mb-0">
 
-                   {{ request.user.student_profile.guardian_phone|default:"Not provided" }}
+                        {{ request.user.student_profile.guardian_phone|default:"Not provided" }}
 
-               </p>
+                    </p>
 
-           </div>
+                </div>
 
-       </div>
+            </div>
 
-   </div>
+        </div>
 
-</div>
+    </div>
 
 </div>
 
@@ -1250,8 +1481,7 @@ STUDENT PROFILE
 
             <div class="stat-card">
 
-                <div class="stat-number"
-                     style="
+                <div class="stat-number" style="
                         font-size:16px;
                         color:
                         {% if latest_result_published %}
@@ -1262,9 +1492,9 @@ STUDENT PROFILE
                      ">
 
                     {% if latest_result_published %}
-                        Published
+                    Published
                     {% else %}
-                        Not Yet
+                    Not Yet
                     {% endif %}
 
                 </div>
@@ -1283,8 +1513,7 @@ STUDENT PROFILE
 
     <div class="mt-3">
 
-        <a href="{% url 'select_report_term' my_student_id %}"
-           style="
+        <a href="{% url 'select_report_term' my_student_id %}" style="
                 border:1px solid #1a5c1a;
                 color:#1a5c1a;
                 padding:8px 14px;
@@ -1317,15 +1546,12 @@ STUDENT PROFILE
 
     <div class="row g-3">
 
-
         <div class="col-md-4">
 
             <div class="stat-card text-center">
 
                 <div class="stat-number">
-
                     {{ student_attendance_present }}
-
                 </div>
 
                 <div class="stat-label">
@@ -1342,9 +1568,7 @@ STUDENT PROFILE
             <div class="stat-card text-center">
 
                 <div class="stat-number">
-
                     {{ student_attendance_marked }}
-
                 </div>
 
                 <div class="stat-label">
@@ -1361,9 +1585,7 @@ STUDENT PROFILE
             <div class="stat-card text-center">
 
                 <div class="stat-number">
-
                     {{ student_attendance_percentage }}%
-
                 </div>
 
                 <div class="stat-label">
@@ -1373,7 +1595,6 @@ STUDENT PROFILE
             </div>
 
         </div>
-
 
     </div>
 
@@ -1391,6 +1612,18 @@ STUDENT PROFILE
         </strong>
 
         {{ current_term }}
+
+    </div>
+
+
+    <div class="mt-3">
+
+        <a
+            href="{% url 'student_attendance_history' %}"
+            class="btn btn-primary"
+        >
+            View Attendance History
+        </a>
 
     </div>
 
@@ -1414,80 +1647,232 @@ STUDENT PROFILE
 
 
 <!-- =========================================================
-     STUDENT FEES
+STUDENT FEES / ACCOUNT
 ========================================================= -->
 
 {% if my_fee_amount is not None %}
 
 <div class="section-card" id="student-fees">
 
-    <details>
+<h3>
+   💰 My School Fee Account
+</h3>
 
-        <summary style="
-            cursor:pointer;
-            font-weight:600;
-            color:#16401c;
-            font-size:16px;
-        ">
+<div class="row g-3 mt-2">
 
-            💰 My Fees ({{ my_fee_term }}) — click to view
+   <!-- CURRENT TERM -->
 
-        </summary>
+   <div class="col-md-4">
 
+       <div class="stat-card">
 
-        <div style="margin-top:12px;">
+           <div class="stat-number">
+               ₦{{ my_term_charged|default:0|floatformat:2|intcomma }}
+           </div>
 
+           <div class="stat-label">
+               Current Term Charges
+           </div>
 
-            <p>
+       </div>
 
-                <strong>
-                    Amount Due:
-                </strong>
-
-                ₦{{ my_fee_amount|intcomma }}
-
-            </p>
+   </div>
 
 
-            <p>
+   <div class="col-md-4">
 
-                <strong>
-                    Total Paid:
-                </strong>
+       <div class="stat-card">
 
-                ₦{{ my_total_paid|intcomma }}
+           <div class="stat-number">
+               ₦{{ my_term_paid|default:0|floatformat:2|intcomma }}
+           </div>
 
-            </p>
+           <div class="stat-label">
+               Current Term Paid
+           </div>
 
+       </div>
 
-            <p>
-
-                <strong>
-                    Balance:
-                </strong>
-
-
-                <span style="
-                    color:
-                    {% if my_balance > 0 %}
-                        #b83232
-                    {% else %}
-                        #1a5c1a
-                    {% endif %};
-
-                    font-weight:600;
-                ">
-
-                    ₦{{ my_balance|intcomma }}
-
-                </span>
-
-            </p>
+   </div>
 
 
-        </div>
+   <div class="col-md-4">
 
-    </details>
+       <div class="stat-card">
+
+           <div
+               class="stat-number"
+               style="
+                   color:
+                   {% if my_current_term_balance > 0 %}
+                       #b83232
+                   {% else %}
+                       #1a5c1a
+                   {% endif %};
+               "
+           >
+               ₦{{ my_current_term_balance|default:0|floatformat:2|intcomma }}
+           </div>
+
+           <div class="stat-label">
+               Current Term Balance
+           </div>
+
+       </div>
+
+   </div>
+
+</div>
+
+
+<!-- ACCOUNT POSITION -->
+
+<div
+   style="
+       margin-top:20px;
+       padding:18px;
+       background:#fff8f8;
+       border:1px solid #f0caca;
+       border-left:5px solid #b83232;
+       border-radius:6px;
+   "
+>
+
+   <div
+       style="
+           display:flex;
+           justify-content:space-between;
+           align-items:center;
+           gap:15px;
+           flex-wrap:wrap;
+       "
+   >
+
+       <div>
+
+           <div
+               style="
+                   font-size:13px;
+                   color:#777;
+                   margin-bottom:4px;
+               "
+           >
+               Total Account Arrears
+           </div>
+
+           <div
+               style="
+                   font-size:26px;
+                   font-weight:700;
+                   color:
+                   {% if my_account_arrears > 0 %}
+                       #b83232
+                   {% else %}
+                       #1a5c1a
+                   {% endif %};
+               "
+           >
+
+               ₦{{ my_account_arrears|default:0|floatformat:2|intcomma }}
+
+           </div>
+
+           <div
+               style="
+                   font-size:13px;
+                   color:#777;
+                   margin-top:4px;
+               "
+           >
+
+               {% if my_account_arrears > 0 %}
+
+                   This includes current and previous outstanding balances.
+
+               {% else %}
+
+                   Your school fee account is fully settled.
+
+               {% endif %}
+
+           </div>
+
+       </div>
+
+
+       <div>
+
+           <a
+               href="{% url 'student_account_statement' my_student_id %}"
+               class="btn btn-primary"
+           >
+               View Full Account Statement
+           </a>
+
+       </div>
+
+   </div>
+
+</div>
+
+
+<!-- CURRENT TERM INFORMATION -->
+
+<div style="margin-top:15px;">
+
+   <details>
+
+       <summary
+           style="
+               cursor:pointer;
+               font-weight:600;
+               color:#16401c;
+           "
+       >
+
+           Current Term Details ({{ my_fee_term }})
+
+       </summary>
+
+
+       <div style="margin-top:12px;">
+
+           <p>
+               <strong>Charges:</strong>
+               ₦{{ my_term_charged|default:0|floatformat:2|intcomma }}
+           </p>
+
+           <p>
+               <strong>Paid:</strong>
+               ₦{{ my_term_paid|default:0|floatformat:2|intcomma }}
+           </p>
+
+           <p>
+               <strong>Current Term Balance:</strong>
+
+               <span
+                   style="
+                       color:
+                       {% if my_current_term_balance > 0 %}
+                           #b83232
+                       {% else %}
+                           #1a5c1a
+                       {% endif %};
+                       font-weight:600;
+                   "
+               >
+
+                   ₦{{ my_current_term_balance|default:0|floatformat:2|intcomma }}
+
+               </span>
+
+           </p>
+
+       </div>
+
+   </details>
+
+</div>
 
 </div>
 
@@ -1511,8 +1896,7 @@ STUDENT PROFILE
     </p>
 
 
-    <a href="{% url 'my_payment_history' %}"
-       style="
+    <a href="{% url 'my_payment_history' %}" style="
             border:1px solid #1a5c1a;
             color:#1a5c1a;
             padding:8px 14px;
@@ -1619,6 +2003,7 @@ STUDENT PROFILE
 
 {% endif %}
 
+
 <!-- =========================================================
 STUDENT'S OWN BIRTHDAY
 ========================================================= -->
@@ -1627,31 +2012,31 @@ STUDENT'S OWN BIRTHDAY
 
 <div class="section-card" id="student-birthday">
 
-<div class="d-flex justify-content-between align-items-center">
+    <div class="d-flex justify-content-between align-items-center">
 
-   <div>
+        <div>
 
-       <h3 class="mb-1">
-           🎂 My Birthday
-       </h3>
+            <h3 class="mb-1">
+                🎂 My Birthday
+            </h3>
 
-       <p class="mb-0 text-muted">
-           Your date of birth
-       </p>
+            <p class="mb-0 text-muted">
+                Your date of birth
+            </p>
 
-   </div>
+        </div>
 
-   <div style="
+        <div style="
        font-size:18px;
        font-weight:600;
        color:#16401c;
    ">
 
-       {{ my_birthday|date:"F j, Y" }}
+            {{ my_birthday|date:"F j, Y" }}
 
-   </div>
+        </div>
 
-</div>
+    </div>
 
 </div>
 
@@ -1969,6 +2354,5 @@ STUDENT'S OWN BIRTHDAY
 </div>
 
 {% endif %}
-
 
 {% endblock %}

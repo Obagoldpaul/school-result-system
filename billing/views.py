@@ -4,6 +4,10 @@ from django.template.loader import get_template
 from django.http import HttpResponse, JsonResponse
 from weasyprint import HTML
 from accounts.decorators import management_required
+from accounts.permissions import (
+    can_manage_billing,
+    is_student,
+)
 from accounts.utils import get_current_term
 from students.models import Student, SchoolClass
 from academics.models import (
@@ -18,17 +22,19 @@ from .forms import (
     OpeningBalanceForm,
     PaymentAllocationFormSet,
     StudentBillForm,
+    OpeningBalancePaymentForm,
 )
 from .models import (
     FeeCategory,
     FeeAssignment,
     Payment,
     OpeningBalance,
+    OpeningBalancePayment,
     PaymentAllocation,
     OptionalFeeEnrollment,
-    get_cumulative_balance,
     get_fee_assignments_for_student,
     get_student_fee_breakdown,
+    get_student_account_summary,
 )
 from django.db.models import Sum, Count
 from django.db.models import Q
@@ -38,6 +44,8 @@ from accounts.decorators import billing_required
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
 from django import forms
+from decimal import Decimal
+from academics.utils import get_term_order
 
 
 
@@ -1217,8 +1225,9 @@ def record_payment(request, student_id, term_id):
     ]
 
     fee_categories = FeeCategory.objects.filter(
-        id__in=fee_category_ids
-    )
+        id__in=fee_category_ids,
+        school=student.user.school,
+    ).order_by("name")
 
     # ---------------------------------------------------------
     # POST
@@ -1288,11 +1297,22 @@ def record_payment(request, student_id, term_id):
             else:
 
                 valid_allocations = True
+                allocated_by_category = {}
 
                 for allocation in allocation_data:
+                    category_id = allocation["fee_category"].id
+                    allocated_by_category[category_id] = (
+                        allocated_by_category.get(category_id, 0)
+                        + allocation["amount"]
+                    )
 
-                    category = allocation["fee_category"]
-                    amount = allocation["amount"]
+                for category_id, amount in allocated_by_category.items():
+
+                    category = next(
+                        allocation["fee_category"]
+                        for allocation in allocation_data
+                        if allocation["fee_category"].id == category_id
+                    )
 
                     category_balance = 0
 
@@ -1360,6 +1380,11 @@ def record_payment(request, student_id, term_id):
         form = PaymentForm()
 
         allocation_formset = PaymentAllocationFormSet(
+            initial=[
+                {"fee_category": item["fee_category"].id}
+                for item in fee_breakdown
+                if item["balance"] > 0
+            ],
             form_kwargs={
                 "fee_categories": fee_categories,
                 "fee_breakdown": fee_breakdown,
@@ -1441,18 +1466,58 @@ def students_owing(request):
             session__school=school,
         )
 
+        account_terms = Term.objects.filter(
+            session__school=school,
+        ).select_related("session").order_by("session_id")
+
         for student in students:
-            fee_amount, total_paid, balance = get_cumulative_balance(
-                student,
-                term,
+            # Keep this page in sync with the allocation-based student bill.
+            # The old cumulative helper subtracts raw Payment amounts, which
+            # can include legacy/unallocated payments and hide a balance that
+            # is still visible on the bill.
+            fee_breakdown = get_student_fee_breakdown(student, term)
+            fee_amount = sum(item["amount"] for item in fee_breakdown)
+            total_paid = sum(item["paid"] for item in fee_breakdown)
+            balance = sum(item["balance"] for item in fee_breakdown)
+
+            outstanding_terms = []
+            term_arrears = Decimal("0.00")
+            for account_term in sorted(
+                account_terms,
+                key=lambda item: (item.session_id, get_term_order(item)),
+            ):
+                account_breakdown = get_student_fee_breakdown(
+                    student,
+                    account_term,
+                )
+                account_balance = sum(
+                    (item["balance"] for item in account_breakdown),
+                    Decimal("0.00"),
+                )
+                if account_balance > 0:
+                    term_arrears += account_balance
+                    outstanding_terms.append({
+                        "term": account_term,
+                        "balance": account_balance,
+                    })
+
+            account_summary = get_student_account_summary(
+                student
             )
 
-            if balance is not None and balance > 0:
+            opening_arrears = account_summary["opening_arrears"]
+
+            account_arrears = account_summary["account_arrears"]
+
+            if account_arrears > 0:
                 rows.append({
                     "student": student,
                     "fee_amount": fee_amount,
                     "total_paid": total_paid,
                     "balance": balance,
+                    "account_arrears": account_arrears,
+                    "outstanding_terms": outstanding_terms,
+                    "opening_arrears": opening_arrears,
                 })
 
     return render(
@@ -1518,6 +1583,146 @@ def add_opening_balance(request):
         }
     )
 
+@login_required
+@billing_required
+def pay_opening_balance(request, balance_id):
+
+    # ---------------------------------------------------------
+    # GET OPENING BALANCE
+    # ---------------------------------------------------------
+
+    opening_balance_queryset = OpeningBalance.objects.select_related(
+        "student",
+        "student__user",
+    )
+
+    # ---------------------------------------------------------
+    # SCHOOL SECURITY
+    # ---------------------------------------------------------
+
+    if not request.user.is_superuser:
+
+        opening_balance_queryset = opening_balance_queryset.filter(
+            student__user__school=request.user.school
+        )
+
+    opening_balance = get_object_or_404(
+        opening_balance_queryset,
+        id=balance_id,
+    )
+
+    # ---------------------------------------------------------
+    # CALCULATE PAYMENT HISTORY
+    # ---------------------------------------------------------
+
+    total_paid = (
+        opening_balance.payments.aggregate(
+            total=Sum("amount")
+        )["total"]
+        or Decimal("0.00")
+    )
+
+    remaining_balance = (
+        opening_balance.amount - total_paid
+    )
+
+    # ---------------------------------------------------------
+    # PREVENT PAYMENT WHEN FULLY PAID
+    # ---------------------------------------------------------
+
+    if remaining_balance <= Decimal("0.00"):
+
+        messages.info(
+            request,
+            "This opening balance has already been fully paid."
+        )
+
+        return redirect(
+            "billing:opening_balance_list"
+        )
+
+    # ---------------------------------------------------------
+    # POST
+    # ---------------------------------------------------------
+
+    if request.method == "POST":
+
+        form = OpeningBalancePaymentForm(
+            request.POST,
+            opening_balance=opening_balance,
+        )
+
+        if form.is_valid():
+
+            with transaction.atomic():
+
+                payment = form.save(
+                    commit=False
+                )
+
+                payment.opening_balance = (
+                    opening_balance
+                )
+
+                payment.recorded_by = (
+                    request.user
+                )
+
+                payment.save()
+
+            messages.success(
+                request,
+                (
+                    f"Opening balance payment of "
+                    f"₦{payment.amount:,.2f} recorded successfully."
+                )
+            )
+
+            return render(
+                request,
+                "billing/opening_balance_payment_success.html",
+                {
+                    "payment": payment,
+                    "opening_balance": opening_balance,
+                },
+            )
+
+    else:
+
+        form = OpeningBalancePaymentForm(
+            opening_balance=opening_balance,
+        )
+
+    # ---------------------------------------------------------
+    # REFRESH PAYMENT TOTALS
+    # ---------------------------------------------------------
+
+    total_paid = (
+        opening_balance.payments.aggregate(
+            total=Sum("amount")
+        )["total"]
+        or Decimal("0.00")
+    )
+
+    remaining_balance = (
+        opening_balance.amount - total_paid
+    )
+
+    # ---------------------------------------------------------
+    # RENDER
+    # ---------------------------------------------------------
+
+    return render(
+        request,
+        "billing/pay_opening_balance.html",
+        {
+            "form": form,
+            "opening_balance": opening_balance,
+            "student": opening_balance.student,
+            "total_paid": total_paid,
+            "remaining_balance": remaining_balance,
+        },
+    )
 
 @login_required
 @billing_required
@@ -1528,6 +1733,8 @@ def opening_balance_list(request):
         "student__user"
     ).filter(
         student__user__school=request.user.school
+    ).annotate(
+        total_paid=Sum("payments__amount")
     )
 
     search = request.GET.get("search", "")
@@ -1538,6 +1745,22 @@ def opening_balance_list(request):
             Q(student__user__first_name__icontains=search)
             | Q(student__user__last_name__icontains=search)
             | Q(student__admission_number__icontains=search)
+        )
+
+    # ---------------------------------------------------------
+    # CALCULATE REMAINING BALANCE
+    # ---------------------------------------------------------
+
+    for balance in balances:
+
+        balance.total_paid = (
+            balance.total_paid
+            or Decimal("0.00")
+        )
+
+        balance.remaining_balance = (
+            balance.amount
+            - balance.total_paid
         )
 
     return render(
@@ -1653,6 +1876,40 @@ def students_by_class(request):
 
     return JsonResponse({
         "students": students
+    })
+    
+@login_required
+@billing_required
+def terms_by_session(request):
+
+    session_id = request.GET.get("session")
+
+    if not session_id:
+        return JsonResponse(
+            {"terms": []}
+        )
+
+    session = get_object_or_404(
+        AcademicSession,
+        id=session_id,
+        school=request.user.school,
+    )
+
+    terms_queryset = Term.objects.filter(
+        session=session
+    ).order_by("name")
+
+    terms = []
+
+    for term in terms_queryset:
+
+        terms.append({
+            "id": term.id,
+            "name": term.get_name_display(),
+        })
+
+    return JsonResponse({
+        "terms": terms
     })
 
 @login_required
@@ -2086,6 +2343,320 @@ def student_payment_history(request, student_id):
             "payments": payments,
             "total_paid": total_paid,
         }
+    )
+
+@login_required
+@billing_required
+def opening_balance_payment_history(request, balance_id):
+
+    opening_balance = get_object_or_404(
+        OpeningBalance.objects.select_related(
+            "student",
+            "student__user",
+        ),
+        id=balance_id,
+        student__user__school=request.user.school,
+    )
+
+    payments = (
+        opening_balance.payments
+        .select_related("recorded_by")
+        .order_by("-date_paid", "-id")
+    )
+
+    total_paid = (
+        payments.aggregate(
+            total=Sum("amount")
+        )["total"]
+        or Decimal("0.00")
+    )
+
+    remaining_balance = (
+        opening_balance.amount
+        - total_paid
+    )
+
+    return render(
+        request,
+        "billing/opening_balance_payment_history.html",
+        {
+            "opening_balance": opening_balance,
+            "student": opening_balance.student,
+            "payments": payments,
+            "total_paid": total_paid,
+            "remaining_balance": remaining_balance,
+        },
+    )
+
+@login_required
+@billing_required
+def opening_balance_payment_receipt(
+    request,
+    payment_id,
+):
+
+    payment = get_object_or_404(
+        OpeningBalancePayment.objects.select_related(
+            "opening_balance",
+            "opening_balance__student",
+            "opening_balance__student__user",
+            "recorded_by",
+        ),
+        id=payment_id,
+        opening_balance__student__user__school=request.user.school,
+    
+    )
+    total_paid = (
+        payment.opening_balance.payments.aggregate(
+            total=Sum("amount")
+        )["total"]
+        or Decimal("0.00")
+    )
+
+    remaining_balance = (
+        payment.opening_balance.amount
+        - total_paid
+    )
+    
+    context = {
+        "student": payment.opening_balance.student,
+        "payment": payment,
+        "opening_balance": payment.opening_balance,
+        "remaining_balance": remaining_balance,
+        "school_settings": SchoolSettings.load(
+            payment.opening_balance.student.user.school
+        ),
+    }
+
+    return render(
+        request,
+        "billing/opening_balance_payment_receipt.html",
+        context,
+    )
+
+@login_required
+@billing_required
+def opening_balance_payment_receipt_pdf(
+    request,
+    payment_id,
+):
+
+    payment = get_object_or_404(
+        OpeningBalancePayment.objects.select_related(
+            "opening_balance",
+            "opening_balance__student",
+            "opening_balance__student__user",
+            "recorded_by",
+        ),
+        id=payment_id,
+        opening_balance__student__user__school=request.user.school,
+    
+    )
+    total_paid = (
+        payment.opening_balance.payments.aggregate(
+            total=Sum("amount")
+        )["total"]
+        or Decimal("0.00")
+    )
+
+    remaining_balance = (
+        payment.opening_balance.amount
+        - total_paid
+    ) 
+
+    context = {
+        "student": payment.opening_balance.student,
+        "payment": payment,
+        "opening_balance": payment.opening_balance,
+        "remaining_balance": remaining_balance,
+        "school_settings": SchoolSettings.load(
+            payment.opening_balance.student.user.school
+        ),
+    }
+
+    template = get_template(
+        "billing/opening_balance_payment_receipt.html"
+    )
+
+    html_string = template.render(
+        context,
+        request=request,
+    )
+
+    response = HttpResponse(
+        content_type="application/pdf"
+    )
+
+    response["Content-Disposition"] = (
+        f'attachment; filename="'
+        f'opening_balance_receipt_'
+        f'{payment.receipt_number}.pdf"'
+    )
+
+    HTML(
+        string=html_string,
+        base_url=request.build_absolute_uri("/")
+    ).write_pdf(response)
+
+    return response
+
+
+@login_required
+def student_account_statement(request, student_id):
+    """
+    Read-only allocation-based account statement across all sessions.
+
+    Billing staff can view students in their school.
+    Students can only view their own account statement.
+    """
+
+    if is_student(request.user):
+
+        student = get_object_or_404(
+            Student,
+            id=student_id,
+            user=request.user,
+            user__school=request.user.school,
+        )
+
+    else:
+
+        if not can_manage_billing(request.user):
+            raise PermissionDenied(
+                "You do not have permission to access this account statement."
+            )
+
+        student = get_object_or_404(
+            Student,
+            id=student_id,
+            user__school=request.user.school,
+        )
+
+    # Deliberately derive paid amounts through get_student_fee_breakdown(),
+    # which sums PaymentAllocation records.  Raw Payment amounts are not used:
+    # legacy, unallocated payments must not reduce a category or term balance.
+    sessions = AcademicSession.objects.filter(
+        school=request.user.school,
+    ).order_by("id")
+    statement_sessions = []
+    total_charged = Decimal("0.00")
+    total_allocated = Decimal("0.00")
+
+    for session in sessions:
+        term_rows = []
+        for term in sorted(session.terms.all(), key=get_term_order):
+            breakdown = get_student_fee_breakdown(student, term)
+            charged = sum((item["amount"] for item in breakdown), Decimal("0.00"))
+            allocated = sum((item["paid"] for item in breakdown), Decimal("0.00"))
+            balance = sum((item["balance"] for item in breakdown), Decimal("0.00"))
+
+            # Do not add empty terms to a statement.  A paid allocation is
+            # included even if its matching fee assignment was later removed.
+            allocation_exists = PaymentAllocation.objects.filter(
+                payment__student=student,
+                payment__term=term,
+            ).exists()
+            if charged or allocated or allocation_exists:
+                term_rows.append({
+                    "term": term,
+                    "charged": charged,
+                    "allocated": allocated,
+                    "balance": balance,
+                    "breakdown": breakdown,
+                })
+                total_charged += charged
+                total_allocated += allocated
+
+        if term_rows:
+            statement_sessions.append({
+                "session": session,
+                "terms": term_rows,
+                "charged": sum((row["charged"] for row in term_rows), Decimal("0.00")),
+                "allocated": sum((row["allocated"] for row in term_rows), Decimal("0.00")),
+                "arrears": sum((row["balance"] for row in term_rows), Decimal("0.00")),
+            })
+
+    # ---------------------------------------------------------
+    # OPENING BALANCE
+    # ---------------------------------------------------------
+
+    opening_balance = OpeningBalance.objects.filter(
+        student=student
+    ).first()
+
+    opening_amount = (
+        opening_balance.amount
+        if opening_balance
+        else Decimal("0.00")
+    )
+
+    # ---------------------------------------------------------
+    # OPENING BALANCE PAYMENTS
+    # ---------------------------------------------------------
+
+    opening_paid = Decimal("0.00")
+
+    if opening_balance:
+
+        opening_paid = (
+            opening_balance.payments.aggregate(
+                total=Sum("amount")
+            )["total"]
+            or Decimal("0.00")
+        )
+
+    # ---------------------------------------------------------
+    # OPENING BALANCE REMAINING
+    # ---------------------------------------------------------
+
+    opening_arrears = (
+        opening_amount - opening_paid
+    )
+
+    # Prevent negative balance in case of legacy/incorrect data.
+
+    if opening_arrears < Decimal("0.00"):
+
+        opening_arrears = Decimal("0.00")
+
+    # ---------------------------------------------------------
+    # TERM ARREARS
+    # ---------------------------------------------------------
+
+    term_arrears = sum(
+        (
+            session_row["arrears"]
+            for session_row in statement_sessions
+        ),
+        Decimal("0.00"),
+    )
+
+    # ---------------------------------------------------------
+    # TOTAL ACCOUNT ARREARS
+    # ---------------------------------------------------------
+
+    account_arrears = (
+        term_arrears
+        + opening_arrears
+    )
+
+    return render(
+        request,
+        "billing/student_account_statement.html",
+        {
+            "student": student,
+            "statement_sessions": statement_sessions,
+            "total_charged": total_charged,
+            "total_allocated": total_allocated,
+            "term_arrears": term_arrears,
+
+            "opening_balance": opening_balance,
+            "opening_amount": opening_amount,
+            "opening_paid": opening_paid,
+            "opening_arrears": opening_arrears,
+
+            "account_arrears": account_arrears,
+        },
     )
     
 @login_required

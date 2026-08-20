@@ -4,231 +4,97 @@
 {% block title %}Record Payment{% endblock %}
 
 {% block content %}
-
-<h1>
-    Record Payment:
-    {{ student.user.get_full_name }}
-    ({{ term }})
-</h1>
-
-<!-- ========================================================= -->
-<!-- CURRENT BILL SUMMARY -->
-<!-- ========================================================= -->
-
-<h2>Current Bill</h2>
-
-<p>
-    <strong>Total Fees:</strong>
-    {% if fee_amount %}
-    ₦{{ fee_amount|intcomma }}
-    {% else %}
-    Not set
-    {% endif %}
-</p>
-
-<p>
-    <strong>Total Paid So Far:</strong>
-    ₦{{ total_paid|intcomma }}
-</p>
-
-<p>
-    <strong>Overall Balance:</strong>
-    {% if balance is not None %}
-    ₦{{ balance|intcomma }}
-    {% else %}
-    -
-    {% endif %}
-</p>
-
-
-<!-- ========================================================= -->
-<!-- FEE BREAKDOWN -->
-<!-- ========================================================= -->
-
-<h2>Fee Breakdown</h2>
-
-{% if fee_breakdown %}
-
-<table border="1" cellpadding="8" cellspacing="0">
-
-    <thead>
-
-        <tr>
-            <th>Fee Category</th>
-            <th>Type</th>
-            <th>Assigned</th>
-            <th>Paid</th>
-            <th>Outstanding</th>
-            <th>Status</th>
-        </tr>
-
-    </thead>
-
-    <tbody>
-
-        {% for item in fee_breakdown %}
-
-        <tr>
-
-            <td>
-                {{ item.fee_category.name }}
-            </td>
-
-            <td>
-                {{ item.category_type }}
-            </td>
-
-            <td>
-                ₦{{ item.amount|intcomma }}
-            </td>
-
-            <td>
-                ₦{{ item.paid|intcomma }}
-            </td>
-
-            <td>
-                ₦{{ item.balance|intcomma }}
-            </td>
-
-            <td>
-                {{ item.status }}
-            </td>
-
-        </tr>
-
-        {% endfor %}
-
-    </tbody>
-
-</table>
-
-{% else %}
-
-<p>
-    No fee categories have been assigned to this student
-    for this term.
-</p>
-
-{% endif %}
-
-
-<!-- ========================================================= -->
-<!-- PAYMENT FORM -->
-<!-- ========================================================= -->
-
-<h2>Payment Details</h2>
-
-<form method="POST">
-
-    {% csrf_token %}
-
-    {{ form.as_p }}
-
-
-    <!-- ===================================================== -->
-    <!-- PAYMENT ALLOCATION -->
-    <!-- ===================================================== -->
-
-    <h2>Allocate Payment</h2>
-
-    <p>
-        Enter how the payment should be distributed among
-        the student's outstanding fee categories.
-    </p>
-
-    {{ allocation_formset.management_form }}
-
-    {% if allocation_formset.non_form_errors %}
-
-    <div>
-
-        {% for error in allocation_formset.non_form_errors %}
-
-        <p>
-            <strong>{{ error }}</strong>
-        </p>
-
-        {% endfor %}
-
-    </div>
-
-    {% endif %}
-
-
-    {% for allocation_form in allocation_formset %}
-
-    <div style="
-        border: 1px solid #ddd;
-        padding: 15px;
-        margin-bottom: 15px;
-        border-radius: 6px;
-    ">
-
-        <p>
-            <strong>Fee Category</strong>
-        </p>
-
-        {{ allocation_form.fee_category }}
-
-        <div
-            class="fee-balance"
-            data-form-index="{{ forloop.counter0 }}"
-            style="
-                margin: 8px 0 15px;
-                padding: 8px;
-                background: #f5f5f5;
-                border-radius: 4px;
-            "
-        >
-            Select a fee category to see the outstanding balance.
+<div class="container py-4" style="max-width: 960px;">
+    <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
+        <div>
+            <h1 class="h3 mb-1">Record Payment</h1>
+            <p class="text-muted mb-0">
+                {{ student.user.get_full_name }} &middot; {{ student.admission_number }} &middot; {{ term }}
+            </p>
         </div>
-
-        <p>
-            <strong>Amount to Allocate</strong>
-        </p>
-
-        {{ allocation_form.amount }}
-
-        <p>
-            <strong>Note</strong>
-        </p>
-
-        {{ allocation_form.note }}
-
-        {% if allocation_form.DELETE %}
-            <div style="margin-top: 10px;">
-                {{ allocation_form.DELETE }}
-                <label for="{{ allocation_form.DELETE.id_for_label }}">
-                    Remove
-                </label>
-            </div>
-        {% endif %}
-
-        {% for error in allocation_form.errors.values %}
-            {% for error_message in error %}
-                <p style="color: red;">
-                    {{ error_message }}
-                </p>
-            {% endfor %}
-        {% endfor %}
-
+        <a class="btn btn-outline-secondary" href="{% url 'students_owing' %}">Back to Students Owing</a>
     </div>
 
-{% endfor %}
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <h2 class="h5 mb-3">Current Bill</h2>
+            <div class="row g-3">
+                <div class="col-md-4"><div class="text-muted small">Total fees</div><strong>&#8358;{{ fee_amount|default:0|intcomma }}</strong></div>
+                <div class="col-md-4"><div class="text-muted small">Already paid</div><strong>&#8358;{{ total_paid|default:0|intcomma }}</strong></div>
+                <div class="col-md-4"><div class="text-muted small">Outstanding</div><strong class="text-danger">&#8358;{{ balance|default:0|intcomma }}</strong></div>
+            </div>
+        </div>
+    </div>
 
+    <h2 class="h5">Fee Breakdown</h2>
+    {% if fee_breakdown %}
+    <div class="table-responsive mb-4">
+        <table class="table table-sm table-bordered align-middle">
+            <thead><tr><th>Fee Category</th><th>Type</th><th>Assigned</th><th>Paid</th><th>Outstanding</th><th>Status</th></tr></thead>
+            <tbody>
+                {% for item in fee_breakdown %}
+                <tr>
+                    <td>{{ item.fee_category.name }}</td>
+                    <td>{{ item.category_type }}</td>
+                    <td>&#8358;{{ item.amount|intcomma }}</td>
+                    <td>&#8358;{{ item.paid|intcomma }}</td>
+                    <td>&#8358;{{ item.balance|intcomma }}</td>
+                    <td>{{ item.status }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="alert alert-warning">No fee categories have been assigned to this student for this term.</div>
+    {% endif %}
 
-    <button type="submit">
-        Record Payment
-    </button>
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <h2 class="h5">Payment Details</h2>
+            <form method="POST">
+                {% csrf_token %}
+                {% if form.non_field_errors %}<div class="alert alert-danger">{{ form.non_field_errors }}</div>{% endif %}
+                <div class="row g-3 mb-4">
+                    <div class="col-md-4"><label class="form-label" for="{{ form.amount.id_for_label }}">Amount received</label>{{ form.amount }}{{ form.amount.errors }}</div>
+                    <div class="col-md-4"><label class="form-label" for="{{ form.payment_method.id_for_label }}">Payment method</label>{{ form.payment_method }}{{ form.payment_method.errors }}</div>
+                    <div class="col-md-4"><label class="form-label" for="{{ form.reference.id_for_label }}">Reference</label>{{ form.reference }}{{ form.reference.errors }}</div>
+                    <div class="col-12"><label class="form-label" for="{{ form.note.id_for_label }}">Note</label>{{ form.note }}{{ form.note.errors }}</div>
+                </div>
 
-</form>
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+                    <div>
+                        <h2 class="h5 mb-1">Allocate Payment</h2>
+                        <p class="text-muted mb-0">Enter the amount for each outstanding fee, or distribute it automatically.</p>
+                    </div>
+                    <button class="btn btn-outline-primary btn-sm" id="auto-allocate" type="button">Distribute automatically</button>
+                </div>
+                <div class="alert alert-light border mb-3" id="allocation-summary">Allocated: &#8358;0.00 &middot; Remaining: &#8358;0.00</div>
 
+                {{ allocation_formset.management_form }}
+                {% if allocation_formset.non_form_errors %}<div class="alert alert-danger">{{ allocation_formset.non_form_errors }}</div>{% endif %}
 
-<p>
-    <a href="{% url 'students_owing' %}">
-        Back to Students Owing
-    </a>
-</p>
+                {% for allocation_form in allocation_formset %}
+                <div class="border rounded p-3 mb-3 allocation-row">
+                    <div class="row g-3">
+                        <div class="col-md-4"><label class="form-label">Fee Category</label>{{ allocation_form.fee_category }}</div>
+                        <div class="col-md-4">
+                            <label class="form-label">Outstanding balance</label>
+                            <div class="fee-balance p-2 bg-light rounded" data-form-index="{{ forloop.counter0 }}">Select a fee category to see the outstanding balance.</div>
+                        </div>
+                        <div class="col-md-4"><label class="form-label">Amount to allocate</label>{{ allocation_form.amount }}</div>
+                        <div class="col-12"><label class="form-label">Note</label>{{ allocation_form.note }}</div>
+                        {% if allocation_form.DELETE %}<div class="col-12">{{ allocation_form.DELETE }} <label for="{{ allocation_form.DELETE.id_for_label }}">Do not use this fee row</label></div>{% endif %}
+                        {% for error in allocation_form.errors.values %}{% for error_message in error %}<div class="col-12 text-danger small">{{ error_message }}</div>{% endfor %}{% endfor %}
+                    </div>
+                </div>
+                {% endfor %}
+
+                <button class="btn btn-primary" type="submit">Record Payment</button>
+            </form>
+        </div>
+    </div>
+</div>
 
 <script>
     const feeBalances = {
@@ -238,59 +104,47 @@
     };
 
     document.addEventListener("DOMContentLoaded", function () {
+        const paymentAmount = document.getElementById("{{ form.amount.id_for_label }}");
+        const allocationSummary = document.getElementById("allocation-summary");
+        const currency = new Intl.NumberFormat("en-NG", {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        const numberValue = value => Number.parseFloat(value) || 0;
 
-        const categorySelects = document.querySelectorAll(
-            'select[name$="-fee_category"]'
-        );
+        function updateAllocationSummary() {
+            const allocated = Array.from(document.querySelectorAll(".allocation-amount"))
+                .reduce((total, input) => total + numberValue(input.value), 0);
+            const remaining = numberValue(paymentAmount.value) - allocated;
+            allocationSummary.textContent = `Allocated: ₦${currency.format(allocated)} · Remaining: ₦${currency.format(remaining)}`;
+            allocationSummary.classList.toggle("alert-danger", remaining < 0);
+        }
 
-        categorySelects.forEach(function (select) {
-
-            const container = select.closest("div");
-
-            const balanceBox = container.querySelector(
-                ".fee-balance"
-            );
-
-            if (!balanceBox) {
-                return;
-            }
-
+        document.querySelectorAll('select[name$="-fee_category"]').forEach(function (select) {
+            const balanceBox = select.closest(".allocation-row").querySelector(".fee-balance");
             function updateBalance() {
-
-                const categoryId = select.value;
-
-                if (!categoryId) {
-
-                    balanceBox.textContent =
-                        "Select a fee category to see the outstanding balance.";
-
-                    return;
-                }
-
-                const balance =
-                    feeBalances[categoryId] || "0";
-
-                balanceBox.textContent =
-                    "Outstanding: ₦" +
-                    Number(balance).toLocaleString(
-                        "en-NG",
-                        {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2
-                        }
-                    );
+                const balance = feeBalances[select.value];
+                balanceBox.textContent = balance === undefined
+                    ? "Select a fee category to see the outstanding balance."
+                    : `Outstanding: ₦${currency.format(numberValue(balance))}`;
             }
-
-            select.addEventListener(
-                "change",
-                updateBalance
-            );
-
+            select.addEventListener("change", updateBalance);
             updateBalance();
-
         });
 
+        document.querySelectorAll(".allocation-amount").forEach(input => input.addEventListener("input", updateAllocationSummary));
+        paymentAmount.addEventListener("input", updateAllocationSummary);
+
+        document.getElementById("auto-allocate").addEventListener("click", function () {
+            let remaining = numberValue(paymentAmount.value);
+            document.querySelectorAll(".allocation-row").forEach(function (row) {
+                const select = row.querySelector('select[name$="-fee_category"]');
+                const amountInput = row.querySelector(".allocation-amount");
+                const amount = Math.min(remaining, numberValue(feeBalances[select.value]));
+                amountInput.value = amount > 0 ? amount.toFixed(2) : "";
+                remaining -= amount;
+            });
+            updateAllocationSummary();
+        });
+
+        updateAllocationSummary();
     });
 </script>
-
 {% endblock %}

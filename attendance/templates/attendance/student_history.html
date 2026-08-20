@@ -1,0 +1,214 @@
+{% extends 'base.html' %}
+
+{% block title %}My Attendance History{% endblock %}
+
+{% block content %}
+
+<div class="container mt-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <div>
+            <h1>My Attendance History</h1>
+
+            <p class="text-muted mb-0">
+                {{ student.user.get_full_name }}
+            </p>
+        </div>
+
+        <a
+            href="{% url 'dashboard_home' %}#student-attendance"
+            class="btn btn-secondary"
+        >
+            ← Back to Dashboard
+        </a>
+
+    </div>
+
+
+    {% if records %}
+    {% if current_term %}
+
+    <div class="row g-3 mb-4">
+
+        <div class="col-md-12">
+
+            <div class="alert alert-light border">
+
+                <strong>Current Term:</strong>
+                {{ current_term }}
+
+            </div>
+
+        </div>
+
+
+        <div class="col-md-3">
+
+            <div class="card shadow-sm text-center">
+
+                <div class="card-body">
+
+                    <div class="fs-3 fw-bold text-success">
+                        {{ days_present }}
+                    </div>
+
+                    <div class="text-muted">
+                        Days Present
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="col-md-3">
+
+            <div class="card shadow-sm text-center">
+
+                <div class="card-body">
+
+                    <div class="fs-3 fw-bold text-danger">
+                        {{ days_absent }}
+                    </div>
+
+                    <div class="text-muted">
+                        Days Absent
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="col-md-3">
+
+            <div class="card shadow-sm text-center">
+
+                <div class="card-body">
+
+                    <div class="fs-3 fw-bold">
+                        {{ days_marked }}
+                    </div>
+
+                    <div class="text-muted">
+                        Days Marked
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="col-md-3">
+
+            <div class="card shadow-sm text-center">
+
+                <div class="card-body">
+
+                    <div class="fs-3 fw-bold text-primary">
+                        {{ attendance_percentage }}%
+                    </div>
+
+                    <div class="text-muted">
+                        Attendance Rate
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    {% endif %}
+
+    <div class="card shadow-sm">
+
+        <div class="card-body p-0">
+
+            <div class="table-responsive">
+
+                <table class="table table-hover mb-0">
+
+                    <thead>
+
+                        <tr>
+                            <th>#</th>
+                            <th>Date</th>
+                            <th>Day</th>
+                            <th>Status</th>
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                        {% for record in records %}
+
+                        <tr>
+
+                            <td>
+                                {{ forloop.counter }}
+                            </td>
+
+                            <td>
+                                {{ record.date|date:"d M Y" }}
+                            </td>
+
+                            <td>
+                                {{ record.date|date:"l" }}
+                            </td>
+
+                            <td>
+
+                                {% if record.is_present %}
+
+                                    <span class="badge bg-success">
+                                        Present
+                                    </span>
+
+                                {% else %}
+
+                                    <span class="badge bg-danger">
+                                        Absent
+                                    </span>
+
+                                {% endif %}
+
+                            </td>
+
+                        </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    {% else %}
+
+    <div class="alert alert-info">
+
+        No attendance records have been recorded yet.
+
+    </div>
+
+    {% endif %}
+
+</div>
+
+{% endblock %}

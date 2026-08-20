@@ -12,6 +12,14 @@ Payment History
 Payment History - {{ student.user.get_full_name }}
 </h2>
 
+{% if not is_student_portal %}
+<p>
+    <a class="btn btn-outline-primary btn-sm" href="{% url 'student_account_statement' student.id %}">
+        View Account Statement
+    </a>
+</p>
+{% endif %}
+
 <table class="table table-bordered">
 
 <tr>

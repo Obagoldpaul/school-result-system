@@ -1,53 +1,181 @@
+
 {% extends "base.html" %}
 
-{% block title %}Student Fee Bill{% endblock %}
+{% block title %}
+Student Fee Bill
+{% endblock %}
 
 {% block content %}
 
-<div class="container mt-4">
+<div class="container mt-4 mb-5">
 
-    <div class="card shadow">
+    <div class="card shadow-sm border-0">
 
-        <div class="card-header">
-            <h4 class="mb-0">
+        <!-- ================================================= -->
+        <!-- HEADER -->
+        <!-- ================================================= -->
+
+        <div class="card-header school-header py-3">
+
+            <h4 class="mb-0 text-white">
                 🧾 Student Fee Bill
             </h4>
+
         </div>
 
-        <div class="card-body">
 
-            <p class="text-muted">
-                Select a class first, then select the student whose bill
-                you want to view.
-            </p>
+        <div class="card-body p-4">
+
+            <!-- ================================================= -->
+            <!-- INTRODUCTION -->
+            <!-- ================================================= -->
+
+            <div class="mb-4">
+
+                <h5 class="mb-1">
+                    Select Student Bill
+                </h5>
+
+                <p class="text-muted mb-0">
+                    Select the academic session, term, class and student
+                    whose fee bill you want to view.
+                </p>
+
+            </div>
+
+
+            <!-- ================================================= -->
+            <!-- FORM ERRORS -->
+            <!-- ================================================= -->
+
+            {% if form.non_field_errors %}
+
+                <div class="alert alert-danger">
+
+                    {{ form.non_field_errors }}
+
+                </div>
+
+            {% endif %}
+
 
             <form method="POST">
 
                 {% csrf_token %}
 
+
+                <!-- ================================================= -->
+                <!-- ACADEMIC SESSION -->
+                <!-- ================================================= -->
+
                 <div class="mb-3">
 
-                    <label for="{{ form.school_class.id_for_label }}"
-                           class="form-label">
+                    <label
+                        for="{{ form.session.id_for_label }}"
+                        class="form-label fw-semibold"
+                    >
+                        Academic Session
+                    </label>
+
+                    {{ form.session }}
+
+                    {% if form.session.errors %}
+
+                        <div class="text-danger small mt-1">
+
+                            {{ form.session.errors }}
+
+                        </div>
+
+                    {% endif %}
+
+                </div>
+
+
+                <!-- ================================================= -->
+                <!-- TERM -->
+                <!-- ================================================= -->
+
+                <div class="mb-3">
+
+                    <label
+                        for="{{ form.term.id_for_label }}"
+                        class="form-label fw-semibold"
+                    >
+                        Term
+                    </label>
+
+                    <select
+                        name="{{ form.term.html_name }}"
+                        id="{{ form.term.id_for_label }}"
+                        class="form-select"
+                    >
+
+                        <option value="">
+                            Select academic session first
+                        </option>
+
+                    </select>
+
+                    {% if form.term.errors %}
+
+                        <div class="text-danger small mt-1">
+
+                            {{ form.term.errors }}
+
+                        </div>
+
+                    {% endif %}
+
+                </div>
+
+
+                <!-- ================================================= -->
+                <!-- CLASS -->
+                <!-- ================================================= -->
+
+                <div class="mb-3">
+
+                    <label
+                        for="{{ form.school_class.id_for_label }}"
+                        class="form-label fw-semibold"
+                    >
                         Class
                     </label>
 
                     {{ form.school_class }}
 
+                    {% if form.school_class.errors %}
+
+                        <div class="text-danger small mt-1">
+
+                            {{ form.school_class.errors }}
+
+                        </div>
+
+                    {% endif %}
+
                 </div>
 
 
-                <div class="mb-3">
+                <!-- ================================================= -->
+                <!-- STUDENT -->
+                <!-- ================================================= -->
 
-                    <label for="{{ form.student.id_for_label }}"
-                           class="form-label">
+                <div class="mb-4">
+
+                    <label
+                        for="{{ form.student.id_for_label }}"
+                        class="form-label fw-semibold"
+                    >
                         Student
                     </label>
 
                     <select
                         name="{{ form.student.html_name }}"
                         id="{{ form.student.id_for_label }}"
-                        class="form-select">
+                        class="form-select"
+                    >
 
                         <option value="">
                             Select a class first
@@ -55,35 +183,37 @@
 
                     </select>
 
-                </div>
+                    {% if form.student.errors %}
 
+                        <div class="text-danger small mt-1">
 
-                <div class="mb-3">
+                            {{ form.student.errors }}
 
-                    <label for="{{ form.term.id_for_label }}"
-                           class="form-label">
-                        Term
-                    </label>
+                        </div>
 
-                    {{ form.term }}
+                    {% endif %}
 
                 </div>
 
 
-                <div class="mt-4">
+                <!-- ================================================= -->
+                <!-- BUTTONS -->
+                <!-- ================================================= -->
 
-                    <button type="submit"
-                            class="btn btn-primary">
+                <div class="d-flex gap-2">
 
+                    <button
+                        type="submit"
+                        class="btn btn-primary px-4"
+                    >
                         🧾 View Fee Bill
-
                     </button>
 
-                    <a href="{% url 'billing_dashboard' %}"
-                       class="btn btn-secondary">
-
+                    <a
+                        href="{% url 'billing_dashboard' %}"
+                        class="btn btn-secondary px-4"
+                    >
                         Cancel
-
                     </a>
 
                 </div>
@@ -101,6 +231,14 @@
 
 document.addEventListener("DOMContentLoaded", function () {
 
+    const sessionSelect = document.getElementById(
+        "{{ form.session.id_for_label }}"
+    );
+
+    const termSelect = document.getElementById(
+        "{{ form.term.id_for_label }}"
+    );
+
     const classSelect = document.getElementById(
         "{{ form.school_class.id_for_label }}"
     );
@@ -110,41 +248,216 @@ document.addEventListener("DOMContentLoaded", function () {
     );
 
 
-    classSelect.addEventListener("change", function () {
+    // =========================================================
+    // SESSION → TERM
+    // =========================================================
 
-        const classId = this.value;
+    function loadTerms(sessionId) {
+
+        termSelect.innerHTML = "";
 
 
-        // Clear existing students
-        studentSelect.innerHTML = "";
-
-
-        if (!classId) {
+        if (!sessionId) {
 
             const option = document.createElement("option");
 
             option.value = "";
 
-            option.textContent = "Select a class first";
+            option.textContent =
+                "Select academic session first";
 
-            studentSelect.appendChild(option);
+            termSelect.appendChild(option);
 
             return;
         }
 
 
-        // Show loading message
-        const loadingOption = document.createElement("option");
+        // Loading message
+
+        const loadingOption =
+            document.createElement("option");
 
         loadingOption.value = "";
 
-        loadingOption.textContent = "Loading students...";
+        loadingOption.textContent =
+            "Loading terms...";
 
-        studentSelect.appendChild(loadingOption);
+        termSelect.appendChild(
+            loadingOption
+        );
 
 
         fetch(
-            "{% url 'students_by_class' %}?school_class=" + classId
+            "{% url 'terms_by_session' %}?session=" +
+            encodeURIComponent(sessionId)
+        )
+
+        .then(response => {
+
+            if (!response.ok) {
+
+                throw new Error(
+                    "Unable to load terms."
+                );
+
+            }
+
+            return response.json();
+
+        })
+
+        .then(data => {
+
+            termSelect.innerHTML = "";
+
+
+            // Default option
+
+            const defaultOption =
+                document.createElement("option");
+
+            defaultOption.value = "";
+
+            defaultOption.textContent =
+                "Select term";
+
+            termSelect.appendChild(
+                defaultOption
+            );
+
+
+            // No terms
+
+            if (
+                !data.terms ||
+                data.terms.length === 0
+            ) {
+
+                const emptyOption =
+                    document.createElement("option");
+
+                emptyOption.value = "";
+
+                emptyOption.textContent =
+                    "No terms found for this session";
+
+                termSelect.appendChild(
+                    emptyOption
+                );
+
+                return;
+            }
+
+
+            // Add terms
+
+            data.terms.forEach(function (term) {
+
+                const option =
+                    document.createElement("option");
+
+                option.value = term.id;
+
+                /*
+                 * The endpoint should return the display name
+                 * of the term, e.g.:
+                 *
+                 * First Term
+                 * Second Term
+                 * Third Term
+                 */
+
+                option.textContent = term.name;
+
+                termSelect.appendChild(
+                    option
+                );
+
+            });
+
+        })
+
+        .catch(error => {
+
+            console.error(error);
+
+            termSelect.innerHTML = "";
+
+
+            const errorOption =
+                document.createElement("option");
+
+            errorOption.value = "";
+
+            errorOption.textContent =
+                "Unable to load terms";
+
+            termSelect.appendChild(
+                errorOption
+            );
+
+        });
+
+    }
+
+
+    // Session changed
+
+    sessionSelect.addEventListener(
+        "change",
+        function () {
+
+            loadTerms(this.value);
+
+        }
+    );
+
+
+    // =========================================================
+    // CLASS → STUDENT
+    // =========================================================
+
+    function loadStudents(classId) {
+
+        studentSelect.innerHTML = "";
+
+
+        if (!classId) {
+
+            const option =
+                document.createElement("option");
+
+            option.value = "";
+
+            option.textContent =
+                "Select a class first";
+
+            studentSelect.appendChild(
+                option
+            );
+
+            return;
+        }
+
+
+        // Loading message
+
+        const loadingOption =
+            document.createElement("option");
+
+        loadingOption.value = "";
+
+        loadingOption.textContent =
+            "Loading students...";
+
+        studentSelect.appendChild(
+            loadingOption
+        );
+
+
+        fetch(
+            "{% url 'students_by_class' %}?school_class=" +
+            encodeURIComponent(classId)
         )
 
         .then(response => {
@@ -166,6 +479,8 @@ document.addEventListener("DOMContentLoaded", function () {
             studentSelect.innerHTML = "";
 
 
+            // Default option
+
             const defaultOption =
                 document.createElement("option");
 
@@ -179,7 +494,12 @@ document.addEventListener("DOMContentLoaded", function () {
             );
 
 
-            if (data.students.length === 0) {
+            // No students
+
+            if (
+                !data.students ||
+                data.students.length === 0
+            ) {
 
                 const emptyOption =
                     document.createElement("option");
@@ -196,6 +516,8 @@ document.addEventListener("DOMContentLoaded", function () {
                 return;
             }
 
+
+            // Add students
 
             data.students.forEach(function (student) {
 
@@ -224,6 +546,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
             studentSelect.innerHTML = "";
 
+
             const errorOption =
                 document.createElement("option");
 
@@ -238,7 +561,41 @@ document.addEventListener("DOMContentLoaded", function () {
 
         });
 
-    });
+    }
+
+
+    // Class changed
+
+    classSelect.addEventListener(
+        "change",
+        function () {
+
+            loadStudents(this.value);
+
+        }
+    );
+
+
+    // =========================================================
+    // INITIAL LOAD
+    // =========================================================
+
+    /*
+     * If the form is returned because of a validation error,
+     * reload the terms and students for the selected values.
+     */
+
+    if (sessionSelect.value) {
+
+        loadTerms(sessionSelect.value);
+
+    }
+
+    if (classSelect.value) {
+
+        loadStudents(classSelect.value);
+
+    }
 
 });
 
