@@ -1,0 +1,408 @@
+{% load humanize %}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <title>
+        Students Owing - {{ session.name }} - {{ term.get_name_display }}
+    </title>
+
+    <style>
+
+        @page {
+            size: A4 landscape;
+            margin: 15mm;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 12px;
+            color: #222;
+            margin: 0;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .school-name {
+            font-size: 22px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .report-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .report-info {
+            font-size: 13px;
+            color: #555;
+        }
+
+        .filters {
+            margin-bottom: 15px;
+            padding: 8px 10px;
+            border: 1px solid #ddd;
+            background: #f8f9fa;
+        }
+
+        .filters strong {
+            margin-right: 5px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        th,
+        td {
+            border: 1px solid #999;
+            padding: 7px 6px;
+            vertical-align: middle;
+        }
+
+        th {
+            background: #e9f5ec;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        td.amount {
+            text-align: right;
+            white-space: nowrap;
+        }
+
+        td.center {
+            text-align: center;
+        }
+
+        .student-name {
+            font-weight: bold;
+        }
+
+        .owing {
+            font-weight: bold;
+        }
+
+        .term-item {
+            margin-bottom: 3px;
+        }
+
+        .opening {
+            margin-top: 4px;
+            font-weight: bold;
+        }
+
+        .total {
+            font-weight: bold;
+        }
+
+        .summary {
+            margin-top: 15px;
+            font-size: 13px;
+        }
+
+        .footer {
+            margin-top: 25px;
+            font-size: 10px;
+            color: #666;
+            text-align: center;
+        }
+
+        @media print {
+
+            .no-print {
+                display: none !important;
+            }
+
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+
+    <!-- ================================================== -->
+    <!-- HEADER -->
+    <!-- ================================================== -->
+
+    <div class="header">
+
+        <div class="school-name">
+            {{ school.name }}
+        </div>
+
+        <div class="report-title">
+            STUDENTS OWING REPORT
+        </div>
+
+        <div class="report-info">
+
+            Academic Session:
+            <strong>{{ session.name }}</strong>
+
+            &nbsp; | &nbsp;
+
+            Term:
+            <strong>{{ term.get_name_display }}</strong>
+
+        </div>
+
+    </div>
+
+
+    <!-- ================================================== -->
+    <!-- FILTER INFORMATION -->
+    <!-- ================================================== -->
+
+    <div class="filters">
+
+        <strong>Class:</strong>
+
+        {% if selected_class %}
+            {{ selected_class.name }}
+        {% else %}
+            All Classes
+        {% endif %}
+
+    </div>
+
+
+    <!-- ================================================== -->
+    <!-- TABLE -->
+    <!-- ================================================== -->
+
+    <table>
+
+        <thead>
+
+            <tr>
+
+                <th>
+                    S/N
+                </th>
+
+                <th>
+                    Admission No.
+                </th>
+
+                <th>
+                    Student
+                </th>
+
+                <th>
+                    Class
+                </th>
+
+                <th>
+                    Term Fee
+                </th>
+
+                <th>
+                    Term Paid
+                </th>
+
+                <th>
+                    Term Balance
+                </th>
+
+                <th>
+                    Outstanding Term(s)
+                </th>
+
+                <th>
+                    Account Arrears
+                </th>
+
+            </tr>
+
+        </thead>
+
+
+        <tbody>
+
+            {% for row in rows %}
+
+            <tr>
+
+                <td class="center">
+                    {{ forloop.counter }}
+                </td>
+
+
+                <td>
+                    {{ row.student.admission_number }}
+                </td>
+
+
+                <td class="student-name">
+                    {{ row.student.user.get_full_name }}
+                </td>
+
+
+                <td>
+                    {{ row.student.school_class }}
+                </td>
+
+
+                <td class="amount">
+                    ₦{{ row.fee_amount|intcomma }}
+                </td>
+
+
+                <td class="amount">
+                    ₦{{ row.total_paid|intcomma }}
+                </td>
+
+
+                <td class="amount owing">
+
+                    ₦{{ row.balance|intcomma }}
+
+                </td>
+
+
+                <td>
+
+                    {% for owing in row.outstanding_terms %}
+
+                    <div class="term-item">
+
+                        {{ owing.term.session.name }}
+                        -
+                        {{ owing.term.get_name_display }}
+
+                        :
+
+                        <strong>
+                            ₦{{ owing.balance|intcomma }}
+                        </strong>
+
+                    </div>
+
+                    {% endfor %}
+
+
+                    {% if row.opening_arrears %}
+
+                    <div class="opening">
+
+                        Opening Balance:
+
+                        ₦{{ row.opening_arrears|intcomma }}
+
+                    </div>
+
+                    {% endif %}
+
+                </td>
+
+
+                <td class="amount total">
+
+                    ₦{{ row.account_arrears|intcomma }}
+
+                </td>
+
+            </tr>
+
+            {% empty %}
+
+            <tr>
+
+                <td colspan="9" class="center">
+
+                    No students owing for this selection.
+
+                </td>
+
+            </tr>
+
+            {% endfor %}
+
+        </tbody>
+
+    </table>
+
+
+    <!-- ================================================== -->
+    <!-- SUMMARY -->
+    <!-- ================================================== -->
+
+    <div class="summary">
+
+        <strong>
+            Total Students Owing:
+        </strong>
+
+        {{ rows|length }}
+
+    </div>
+
+
+    <!-- ================================================== -->
+    <!-- FOOTER -->
+    <!-- ================================================== -->
+
+    <div class="footer">
+
+        Generated from Paul SchoolHub
+
+    </div>
+
+
+    <!-- ================================================== -->
+    <!-- PRINT BUTTON -->
+    <!-- ================================================== -->
+
+    <div
+        class="no-print"
+        style="text-align:center; margin-top:20px;"
+    >
+
+        <button
+            onclick="window.print()"
+            style="
+                padding: 10px 20px;
+                font-size: 14px;
+                cursor: pointer;
+            "
+        >
+            🖨 Print
+        </button>
+
+        <button
+            onclick="window.close()"
+            style="
+                padding: 10px 20px;
+                font-size: 14px;
+                cursor: pointer;
+                margin-left: 5px;
+            "
+        >
+            Close
+        </button>
+
+    </div>
+
+
+</body>
+
+</html>

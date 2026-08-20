@@ -5,6 +5,11 @@ urlpatterns = [
     path("", views.billing_dashboard, name="billing_dashboard"),
     path('pay/<int:student_id>/<int:term_id>/', views.record_payment, name='record_payment'),
     path('owing/', views.students_owing, name='students_owing'),
+    path(
+        "students-owing/print/",
+        views.students_owing_print,
+        name="students_owing_print",
+    ),
     path('opening-balance/', views.add_opening_balance, name='add_opening_balance'),
     path("opening-balances/", views.opening_balance_list, name="opening_balance_list",),
     path('bill/', views.select_student_bill, name='select_student_bill'),

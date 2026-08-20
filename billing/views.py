@@ -1676,6 +1676,182 @@ def students_owing(request):
         },
     )
 
+@login_required
+@billing_required
+def students_owing_print(request):
+
+    class_id = request.GET.get("class")
+    session_id = request.GET.get("session")
+    term_id = request.GET.get("term")
+
+    school = request.user.school
+
+    # ---------------------------------------------------------
+    # VALIDATE SESSION
+    # ---------------------------------------------------------
+
+    session = get_object_or_404(
+        AcademicSession,
+        id=session_id,
+        school=school,
+    )
+
+    # ---------------------------------------------------------
+    # VALIDATE TERM
+    # ---------------------------------------------------------
+
+    term = get_object_or_404(
+        Term,
+        id=term_id,
+        session=session,
+        session__school=school,
+    )
+
+    # ---------------------------------------------------------
+    # STUDENTS
+    # ---------------------------------------------------------
+
+    students = Student.objects.filter(
+        user__school=school,
+        is_active=True,
+    ).select_related(
+        "user",
+        "school_class",
+    )
+
+    # ---------------------------------------------------------
+    # FILTER BY CLASS
+    # ---------------------------------------------------------
+
+    selected_class = None
+
+    if class_id:
+
+        selected_class = get_object_or_404(
+            SchoolClass,
+            id=class_id,
+            school=school,
+        )
+
+        students = students.filter(
+            school_class=selected_class,
+        )
+
+    # ---------------------------------------------------------
+    # ACCOUNT TERMS
+    # ---------------------------------------------------------
+
+    account_terms = Term.objects.filter(
+        session__school=school,
+    ).select_related(
+        "session",
+    )
+
+    # ---------------------------------------------------------
+    # BUILD PRINT ROWS
+    # ---------------------------------------------------------
+
+    rows = []
+
+    for student in students:
+
+        fee_breakdown = get_student_fee_breakdown(
+            student,
+            term,
+        )
+
+        fee_amount = sum(
+            item["amount"]
+            for item in fee_breakdown
+        )
+
+        total_paid = sum(
+            item["paid"]
+            for item in fee_breakdown
+        )
+
+        balance = sum(
+            item["balance"]
+            for item in fee_breakdown
+        )
+
+        # -----------------------------------------------------
+        # ACCOUNT ARREARS
+        # -----------------------------------------------------
+
+        outstanding_terms = []
+
+        for account_term in sorted(
+            account_terms,
+            key=lambda item: (
+                item.session_id,
+                get_term_order(item),
+            ),
+        ):
+
+            account_breakdown = get_student_fee_breakdown(
+                student,
+                account_term,
+            )
+
+            account_balance = sum(
+                (
+                    item["balance"]
+                    for item in account_breakdown
+                ),
+                Decimal("0.00"),
+            )
+
+            if account_balance > 0:
+
+                outstanding_terms.append({
+                    "term": account_term,
+                    "balance": account_balance,
+                })
+
+        account_summary = get_student_account_summary(
+            student
+        )
+
+        opening_arrears = account_summary[
+            "opening_arrears"
+        ]
+
+        account_arrears = account_summary[
+            "account_arrears"
+        ]
+
+        # -----------------------------------------------------
+        # ONLY INCLUDE STUDENTS WHO OWE
+        # -----------------------------------------------------
+
+        if account_arrears > 0:
+
+            rows.append({
+                "student": student,
+                "fee_amount": fee_amount,
+                "total_paid": total_paid,
+                "balance": balance,
+                "account_arrears": account_arrears,
+                "outstanding_terms": outstanding_terms,
+                "opening_arrears": opening_arrears,
+            })
+
+    # ---------------------------------------------------------
+    # RENDER PRINT PAGE
+    # ---------------------------------------------------------
+
+    return render(
+        request,
+        "billing/students_owing_print.html",
+        {
+            "rows": rows,
+            "school": school,
+            "session": session,
+            "term": term,
+            "selected_class": selected_class,
+        },
+    )
 
 @login_required
 @billing_required

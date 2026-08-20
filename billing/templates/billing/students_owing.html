@@ -224,14 +224,33 @@
         </div>
 
 
-        {% if selected_class %}
+        <div class="d-flex gap-2">
 
-        <a href="{% url 'class_bill_pdf' selected_class term.id %}"
-           class="btn btn-outline-success btn-sm">
-            🖨 Print Class Bills
-        </a>
-
-        {% endif %}
+            <!-- PRINT STUDENTS OWING -->
+        
+            <a
+                href="{% url 'students_owing_print' %}?session={{ selected_session }}&term={{ term.id }}{% if selected_class %}&class={{ selected_class }}{% endif %}"
+                target="_blank"
+                class="btn btn-outline-primary btn-sm"
+            >
+                🖨 Print Students Owing
+            </a>
+        
+        
+            <!-- PRINT CLASS BILLS -->
+        
+            {% if selected_class %}
+        
+            <a
+                href="{% url 'class_bill_pdf' selected_class term.id %}"
+                class="btn btn-outline-success btn-sm"
+            >
+                🖨 Print Class Bills
+            </a>
+        
+            {% endif %}
+        
+        </div>
 
     </div>
 
