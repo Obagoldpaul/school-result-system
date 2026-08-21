@@ -3,7 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 import datetime
 
-from accounts.decorators import staff_required
+from accounts.decorators import staff_required, feature_required
 from accounts.permissions import is_management
 from accounts.utils import get_teacher
 from students.models import Student, SchoolClass
@@ -251,6 +251,7 @@ def mark_attendance(request, class_id):
 
 @staff_required
 @login_required
+@feature_required("ADVANCED_ATTENDANCE")
 def class_attendance_summary(request):
     class_id = request.GET.get("class")
     start_str = request.GET.get("start")
@@ -276,6 +277,12 @@ def class_attendance_summary(request):
 
     rows = []
     selected_class = None
+    
+    total_students = 0
+    students_marked = 0
+    total_present_records = 0
+    total_absent_records = 0
+    overall_percentage = None
 
     # ---------------------------------------------------------
     # CURRENT TERM
@@ -413,19 +420,19 @@ def class_attendance_summary(request):
             # CLASS ATTENDANCE TOTALS
             # ---------------------------------------------------------
             
-            total_records = (
-                total_present_records
-                + total_absent_records
-            )
+        total_records = (
+            total_present_records
+            + total_absent_records
+        )
 
-            overall_percentage = (
-                round(
-                    (total_present_records / total_records) * 100,
-                    1,
-                )
-                if total_records
-                else None
+        overall_percentage = (
+            round(
+                 (total_present_records / total_records) * 100,
+                1,
             )
+            if total_records
+            else None
+        )
 
     return render(
         request,
