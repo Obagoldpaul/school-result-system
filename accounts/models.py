@@ -14,6 +14,7 @@ class User(AbstractUser):
     )
 
     class Role(models.TextChoices):
+        PLATFORM_ADMIN = "PLATFORM_ADMIN", "Platform Administrator"
         ADMIN = "ADMIN", "Admin"
         PROPRIETORESS = "PROPRIETORESS", "Proprietoress"
         PRINCIPAL = "PRINCIPAL", "Principal"
