@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.db.models import Count
-from accounts.decorators import management_required
+from accounts.decorators import management_required, feature_required
 from .forms import AnnouncementForm
 from .models import (
     Announcement,
@@ -12,6 +12,7 @@ from .models import (
 
 @management_required
 @login_required
+@feature_required("ANNOUNCEMENTS")
 def post_announcement(request):
     if request.method == 'POST':
         form = AnnouncementForm(request.POST, request.FILES)
@@ -37,6 +38,7 @@ def post_announcement(request):
 
 
 @login_required
+@feature_required("ANNOUNCEMENTS")
 def announcement_list(request):
 
     announcements = get_announcements_for_user(request.user)
@@ -66,6 +68,7 @@ def announcement_list(request):
 
 
 @login_required
+@feature_required("ANNOUNCEMENTS")
 def announcement_detail(request, announcement_id):
 
     announcement = get_object_or_404(
@@ -108,6 +111,7 @@ def announcement_detail(request, announcement_id):
 
 @management_required
 @login_required
+@feature_required("ANNOUNCEMENTS")
 def delete_announcement(request, announcement_id):
 
     announcement = get_object_or_404(
@@ -124,6 +128,7 @@ def delete_announcement(request, announcement_id):
 
 @management_required
 @login_required
+@feature_required("ANNOUNCEMENTS")
 def toggle_announcement_pin(request, announcement_id):
 
     announcement = get_object_or_404(
@@ -141,6 +146,7 @@ def toggle_announcement_pin(request, announcement_id):
 
 @management_required
 @login_required
+@feature_required("ANNOUNCEMENTS")
 def announcement_readers(request, announcement_id):
 
     announcement = get_object_or_404(
