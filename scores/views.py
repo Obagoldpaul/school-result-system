@@ -6,7 +6,7 @@ from weasyprint import HTML
 
 from django.contrib import messages
 from .exceptions import ScoreValidationError
-from accounts.decorators import staff_required
+from accounts.decorators import staff_required, feature_required
 from accounts.utils import get_teacher, get_student, get_current_term
 from allocations.models import SubjectAllocation
 from students.models import Student, SchoolClass
@@ -419,6 +419,7 @@ def report_card(request, student_id, term_id):
 
 
 @login_required
+@feature_required("ADVANCED_REPORTING")
 def report_card_pdf(request, student_id, term_id):
     student = get_object_or_404(Student, id=student_id)
     term = get_object_or_404(Term, id=term_id)
