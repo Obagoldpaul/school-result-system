@@ -8,7 +8,7 @@ from accounts.permissions import is_management
 
 from .services import build_dashboard
 from django.db import IntegrityError
-
+from students.models import Student, SchoolClass, Department
 
 @login_required
 def home(request):
@@ -55,11 +55,20 @@ def academic_management(request):
         else Term.objects.none()
     )
 
+    # ---------------------------------------------------------
+    # DEPARTMENTS
+    # ---------------------------------------------------------
+
+    departments = Department.objects.filter(
+        school=school
+    ).order_by("name")
+
     context = {
         "current_session": current_session,
         "selected_session": selected_session,
         "sessions": sessions,
         "terms": terms,
+        "departments": departments,
     }
 
     return render(
@@ -228,6 +237,104 @@ def set_current_term(request, term_id):
     messages.success(
         request,
         f"{term.get_name_display()} is now the current term."
+    )
+
+    return redirect("academic_management")
+
+@login_required
+def create_department(request):
+    if not is_management(request.user):
+        messages.error(
+            request,
+            "You do not have permission to manage departments."
+        )
+        return redirect("dashboard_home")
+
+    if request.method == "POST":
+
+        name = request.POST.get("name", "").strip()
+
+        if not name:
+            messages.error(
+                request,
+                "Department name is required."
+            )
+            return redirect("academic_management")
+
+        school = request.user.school
+
+        if Department.objects.filter(
+            school=school,
+            name__iexact=name,
+        ).exists():
+
+            messages.error(
+                request,
+                f"The department '{name}' already exists."
+            )
+            return redirect("academic_management")
+
+        Department.objects.create(
+            school=school,
+            name=name,
+        )
+
+        messages.success(
+            request,
+            f"Department '{name}' was created successfully."
+        )
+
+    return redirect("academic_management")
+
+@login_required
+def edit_department(request, department_id):
+    if not is_management(request.user):
+        messages.error(
+            request,
+            "You do not have permission to manage departments."
+        )
+        return redirect("dashboard_home")
+
+    department = get_object_or_404(
+        Department,
+        id=department_id,
+        school=request.user.school,
+    )
+
+    if request.method != "POST":
+        return redirect("academic_management")
+
+    name = request.POST.get("name", "").strip()
+
+    if not name:
+        messages.error(
+            request,
+            "Department name is required."
+        )
+        return redirect("academic_management")
+
+    # Prevent duplicate department names within this school.
+    if Department.objects.filter(
+        school=request.user.school,
+        name__iexact=name,
+    ).exclude(
+        id=department.id
+    ).exists():
+
+        messages.error(
+            request,
+            f"The department '{name}' already exists."
+        )
+        return redirect("academic_management")
+
+    old_name = department.name
+
+    department.name = name
+    department.save()
+
+    messages.success(
+        request,
+        f"Department '{old_name}' was renamed to '{name}'."
     )
 
     return redirect("academic_management")
