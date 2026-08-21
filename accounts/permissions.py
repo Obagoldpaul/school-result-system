@@ -1,5 +1,10 @@
 from allocations.models import SubjectAllocation
 
+from functools import wraps
+from django.contrib import messages
+from django.shortcuts import redirect
+
+from schools.utils import school_has_feature
 
 # ----------------------------
 # Role Checks
@@ -278,3 +283,46 @@ def can_edit_principal_remark(user):
     """
 
     return is_management(user)
+
+def feature_required(feature_code):
+    """
+    Restrict access to a view based on the school's
+    active subscription package.
+
+    Platform administrators bypass school feature restrictions.
+    """
+
+    def decorator(view_func):
+
+        @wraps(view_func)
+        def wrapper(request, *args, **kwargs):
+
+            if not request.user.is_authenticated:
+                return redirect("login")
+
+            # Platform administrators have access to all features.
+            if is_platform_admin(request.user):
+                return view_func(request, *args, **kwargs)
+
+            school = getattr(request.user, "school", None)
+
+            if not school:
+                messages.error(
+                    request,
+                    "Your account is not linked to a school."
+                )
+                return redirect("dashboard_home")
+
+            if not school_has_feature(school, feature_code):
+                messages.error(
+                    request,
+                    "This feature is not available on your school's "
+                    "current subscription package."
+                )
+                return redirect("dashboard_home")
+
+            return view_func(request, *args, **kwargs)
+
+        return wrapper
+
+    return decorator

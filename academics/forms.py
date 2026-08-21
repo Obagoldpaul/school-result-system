@@ -4,6 +4,54 @@ from .models import SchoolSettings
 
 
 class SchoolSettingsForm(forms.ModelForm):
+
+    def __init__(self, *args, school=None, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.school = school
+
+        subscription = None
+
+        if school:
+            try:
+                subscription = school.subscription
+            except school.subscription.RelatedObjectDoesNotExist:
+                subscription = None
+
+        package_name = (
+            subscription.package.name
+            if subscription and subscription.is_active
+            else None
+        )
+
+        # -------------------------------------------------
+        # PACKAGE-BASED BRANDING ACCESS
+        # -------------------------------------------------
+
+        if package_name == "BASIC":
+            # Basic gets no custom branding.
+            for field_name in [
+                "school_logo",
+                "principal_signature",
+                "primary_color",
+                "secondary_color",
+                "report_card_heading",
+                "school_motto",
+            ]:
+                self.fields.pop(field_name, None)
+
+        elif package_name == "STANDARD":
+            # Standard gets report-card heading only.
+            for field_name in [
+                "school_logo",
+                "principal_signature",
+                "primary_color",
+                "secondary_color",
+                "school_motto",
+            ]:
+                self.fields.pop(field_name, None)
+
+        # Premium keeps all branding fields.
     class Meta:
         model = SchoolSettings
         fields = [

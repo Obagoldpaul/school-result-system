@@ -37,6 +37,7 @@ def school_settings(request):
             request.POST,
             request.FILES,
             instance=settings,
+            school=request.user.school,
         )
 
         if form.is_valid():
@@ -55,7 +56,10 @@ def school_settings(request):
             return redirect("school_settings")
 
     else:
-        form = SchoolSettingsForm(instance=settings)
+        form = SchoolSettingsForm(
+            instance=settings,
+            school=request.user.school,
+        )
 
     return render(
         request,

@@ -9,11 +9,35 @@ from accounts.permissions import is_management
 from .services import build_dashboard
 from django.db import IntegrityError
 from students.models import Student, SchoolClass, Department
+from schools.utils import school_has_feature
 
 @login_required
 def home(request):
+
+    # Students must have the Student Portal feature
+    # in their school's subscription package.
+    if hasattr(request.user, "student_profile"):
+
+        school = getattr(request.user, "school", None)
+
+        if not school or not school_has_feature(
+            school,
+            "STUDENT_PORTAL"
+        ):
+            from django.core.exceptions import PermissionDenied
+
+            raise PermissionDenied(
+                "The Student Portal is not available "
+                "on your school's current subscription package."
+            )
+
     context = build_dashboard(request.user)
-    return render(request, "dashboard/home.html", context)
+
+    return render(
+        request,
+        "dashboard/home.html",
+        context
+    )
 
 @login_required
 def academic_management(request):

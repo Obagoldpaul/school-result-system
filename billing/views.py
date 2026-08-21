@@ -5,6 +5,7 @@ from django.http import HttpResponse, JsonResponse
 from weasyprint import HTML
 from accounts.decorators import management_required
 from accounts.permissions import (
+    feature_required,
     can_manage_billing,
     is_student,
 )
@@ -40,7 +41,7 @@ from django.db.models import Sum, Count
 from django.db.models import Q
 from django.db import models
 from django.contrib import messages
-from accounts.decorators import billing_required
+from accounts.decorators import billing_required, feature_required
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
 from django import forms
@@ -51,6 +52,7 @@ from academics.utils import get_term_order
 
 @login_required
 @billing_required
+@feature_required("BILLING")
 def billing_dashboard(request):
 
     school = request.user.school
@@ -2574,6 +2576,7 @@ def payment_receipt_pdf(request, payment_id):
     return response
 
 @login_required
+@feature_required("STUDENT_PORTAL")
 def my_payment_receipt_pdf(request, payment_id):
     """
     Student-facing payment receipt.
@@ -3011,6 +3014,7 @@ def select_student_account_statement(request):
     )
     
 @login_required
+@feature_required("STUDENT_PORTAL")
 def my_payment_history(request):
     """
     Student-facing payment history.

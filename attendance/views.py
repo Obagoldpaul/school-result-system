@@ -454,6 +454,7 @@ def class_attendance_summary(request):
     )
     
 @login_required
+@feature_required("STUDENT_PORTAL")
 def student_attendance_history(request):
 
     student = getattr(

@@ -127,9 +127,10 @@ class SubscriptionPackage(models.Model):
 
 
 class SchoolSubscription(models.Model):
-    """
-    Connects a school to its current subscription package.
-    """
+
+    class BillingCycle(models.TextChoices):
+        TERMLY = "TERMLY", "Termly"
+        YEARLY = "YEARLY", "Yearly"
 
     school = models.OneToOneField(
         School,
@@ -141,6 +142,12 @@ class SchoolSubscription(models.Model):
         SubscriptionPackage,
         on_delete=models.PROTECT,
         related_name="subscriptions"
+    )
+
+    billing_cycle = models.CharField(
+        max_length=10,
+        choices=BillingCycle.choices,
+        default=BillingCycle.TERMLY,
     )
 
     start_date = models.DateField()

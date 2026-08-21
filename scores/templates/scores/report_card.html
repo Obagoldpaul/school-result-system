@@ -8,9 +8,34 @@
 
     {% include "scores/report/styles.html" %}
 
+    <style>
+        .report-actions {
+            text-align: center;
+            margin: 20px 0;
+        }
+    
+        .report-actions button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+    
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+        }
+    </style>
 </head>
 
 <body>
+    <div class="report-actions no-print">
+        <button type="button" onclick="window.print()">
+            🖨️ Print Report Card
+        </button>
+    </div>
 
 {% include "scores/report/header.html" %}
 

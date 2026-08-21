@@ -36,3 +36,4 @@ def school_has_feature(school, feature_code):
         code=feature_code,
         is_active=True
     ).exists()
+    

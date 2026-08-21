@@ -21,6 +21,8 @@ urlpatterns = [
     path('attendance/', include('attendance.urls')),
     path('announcements/', include('announcements.urls')),
     path("maintenance/", include("maintenance.urls")),
+    
+    path('platform/', include('schools.urls')),
 ]
 
 from django.views.static import serve
