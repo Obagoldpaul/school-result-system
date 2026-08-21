@@ -4,6 +4,11 @@ from allocations.models import SubjectAllocation
 # ----------------------------
 # Role Checks
 # ----------------------------
+def is_platform_admin(user):
+    return (
+        user.is_authenticated
+        and user.role == user.Role.PLATFORM_ADMIN
+    )
 
 def is_admin(user):
     return (
