@@ -16,9 +16,6 @@ class User(AbstractUser):
     class Role(models.TextChoices):
         PLATFORM_ADMIN = "PLATFORM_ADMIN", "Platform Administrator"
         ADMIN = "ADMIN", "Admin"
-        PROPRIETORESS = "PROPRIETORESS", "Proprietoress"
-        PRINCIPAL = "PRINCIPAL", "Principal"
-        BURSAR = "BURSAR", "Bursar"
         TEACHER = "TEACHER", "Teacher"
         STUDENT = "STUDENT", "Student"
 
@@ -26,6 +23,15 @@ class User(AbstractUser):
         max_length=20,
         choices=Role.choices,
         default=Role.TEACHER,
+    )
+    
+    school_role = models.ForeignKey(
+        "schools.SchoolRole",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="users",
+        help_text="Custom role assigned to this user within their school.",
     )
 
     phone_number = models.CharField(max_length=20, blank=True, null=True)

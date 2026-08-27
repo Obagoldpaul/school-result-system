@@ -1,0 +1,322 @@
+{% extends "base.html" %}
+
+{% block title %}
+    {{ school.name }} | School Management
+{% endblock %}
+
+{% block content %}
+
+<div class="container-fluid">
+
+    <!-- HEADER -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <div>
+            <h1>{{ school.name }}</h1>
+
+            <p class="text-muted mb-0">
+                School Code: <strong>{{ school.code }}</strong>
+            </p>
+        </div>
+
+        <a
+            href="{% url 'manage_schools' %}"
+            class="btn btn-outline-secondary"
+        >
+            ← Back to Schools
+        </a>
+
+    </div>
+
+
+    <!-- SCHOOL STATUS -->
+    <div class="card shadow-sm mb-4">
+
+        <div class="card-body">
+
+            <div class="d-flex justify-content-between align-items-center">
+
+                <div>
+
+                    <h5 class="mb-1">
+                        School Status
+                    </h5>
+
+                    <p class="text-muted mb-0">
+                        Current access status for this school.
+                    </p>
+
+                </div>
+
+                {% if school.is_active %}
+
+                    <span class="badge bg-success fs-6">
+                        Active
+                    </span>
+
+                {% else %}
+
+                    <span class="badge bg-secondary fs-6">
+                        Inactive
+                    </span>
+
+                {% endif %}
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- SCHOOL INFORMATION -->
+    <div class="row g-4 mb-4">
+
+        <div class="col-lg-6">
+
+            <div class="card shadow-sm h-100">
+
+                <div class="card-body">
+
+                    <h5 class="card-title">
+                        School Information
+                    </h5>
+
+                    <hr>
+
+                    <p>
+                        <strong>Name:</strong>
+                        {{ school.name }}
+                    </p>
+
+                    <p>
+                        <strong>Code:</strong>
+                        {{ school.code }}
+                    </p>
+
+                    <p>
+                        <strong>Email:</strong>
+                        {{ school.email|default:"—" }}
+                    </p>
+
+                    <p>
+                        <strong>Phone:</strong>
+                        {{ school.phone|default:"—" }}
+                    </p>
+
+                    <p class="mb-0">
+                        <strong>Address:</strong>
+                        {{ school.address|default:"—" }}
+                    </p>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- SUBSCRIPTION -->
+        <div class="col-lg-6">
+
+            <div class="card shadow-sm h-100">
+
+                <div class="card-body">
+
+                    <div class="d-flex justify-content-between">
+
+                        <h5 class="card-title">
+                            Subscription
+                        </h5>
+
+                        <a
+                            href="{% url 'edit_subscription' school.id %}"
+                            class="btn btn-sm btn-outline-primary"
+                        >
+                            Edit
+                        </a>
+
+                    </div>
+
+                    <hr>
+
+                    {% if school.subscription %}
+
+                        <p>
+                            <strong>Package:</strong>
+                            {{ school.subscription.package }}
+                        </p>
+
+                        <p>
+                            <strong>Billing:</strong>
+                            {{ school.subscription.get_billing_cycle_display }}
+                        </p>
+
+                        <p>
+                            <strong>Start Date:</strong>
+                            {{ school.subscription.start_date }}
+                        </p>
+
+                        <p class="mb-0">
+                            <strong>Status:</strong>
+
+                            {% if school.subscription.is_active %}
+
+                                <span class="badge bg-success">
+                                    Active
+                                </span>
+
+                            {% else %}
+
+                                <span class="badge bg-secondary">
+                                    Inactive
+                                </span>
+
+                            {% endif %}
+
+                        </p>
+
+                    {% else %}
+
+                        <p class="text-muted mb-0">
+                            This school does not currently have a subscription.
+                        </p>
+
+                    {% endif %}
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- USER STATISTICS -->
+<div class="card shadow-sm mb-4">
+
+    <div class="card-body">
+
+        <h5 class="card-title">
+            Users
+        </h5>
+
+        <p class="text-muted">
+            Users currently registered under this school.
+        </p>
+
+        <div class="row g-3">
+
+            <!-- TOTAL -->
+            <div class="col-md-3">
+
+                <div class="border rounded p-3 text-center">
+
+                    <div class="text-muted">
+                        Total
+                    </div>
+
+                    <h3 class="mb-0">
+                        {{ total_users }}
+                    </h3>
+
+                </div>
+
+            </div>
+
+
+            <!-- STUDENTS -->
+            <div class="col-md-3">
+
+                <div class="border rounded p-3 text-center">
+
+                    <div class="text-muted">
+                        Students
+                    </div>
+
+                    <h3 class="mb-0">
+                        {{ total_students }}
+                    </h3>
+
+                </div>
+
+            </div>
+
+
+            <!-- TEACHERS -->
+            <div class="col-md-3">
+
+                <div class="border rounded p-3 text-center">
+
+                    <div class="text-muted">
+                        Teachers
+                    </div>
+
+                    <h3 class="mb-0">
+                        {{ total_teachers }}
+                    </h3>
+
+                </div>
+
+            </div>
+
+
+            <!-- ADMIN / MANAGEMENT -->
+            <div class="col-md-3">
+
+                <div class="border rounded p-3 text-center">
+
+                    <div class="text-muted">
+                        Management
+                    </div>
+
+                    <h3 class="mb-0">
+                        {{ total_admins }}
+                    </h3>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+    <!-- ACTIONS -->
+    <div class="card shadow-sm">
+
+        <div class="card-body">
+
+            <h5 class="card-title">
+                School Management
+            </h5>
+
+            <div class="d-flex gap-2 flex-wrap">
+
+                <a
+                    href="{% url 'edit_subscription' school.id %}"
+                    class="btn btn-primary"
+                >
+                    Manage Subscription
+                </a>
+
+                <a
+                    href="{% url 'manage_schools' %}"
+                    class="btn btn-outline-secondary"
+                >
+                    Back to Schools
+                </a>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

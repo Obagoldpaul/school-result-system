@@ -4,7 +4,10 @@ from django.core.exceptions import PermissionDenied
 import datetime
 
 from accounts.decorators import staff_required, feature_required
-from accounts.permissions import is_management
+from accounts.permissions import (
+    is_management,
+    school_permission_required,
+)
 from accounts.utils import get_teacher
 from students.models import Student, SchoolClass
 from .models import AttendanceRecord
@@ -13,6 +16,7 @@ from accounts.utils import get_current_term
 
 @staff_required
 @login_required
+@school_permission_required("attendance.mark")
 def select_class_for_attendance(request):
     teacher = get_teacher(request.user)
 
@@ -44,6 +48,7 @@ def select_class_for_attendance(request):
 
 @staff_required
 @login_required
+@school_permission_required("attendance.mark")
 def mark_attendance(request, class_id):
 
     school_class = get_object_or_404(
@@ -251,6 +256,7 @@ def mark_attendance(request, class_id):
 
 @staff_required
 @login_required
+@school_permission_required("attendance.view")
 @feature_required("ADVANCED_ATTENDANCE")
 def class_attendance_summary(request):
     class_id = request.GET.get("class")

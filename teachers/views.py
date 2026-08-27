@@ -6,8 +6,11 @@ from students.models import SchoolClass
 from .forms import TeacherRegistrationForm
 from .models import Teacher
 from accounts.decorators import staff_required, management_required
+from accounts.permissions import school_permission_required
+
 
 @management_required
+@school_permission_required("teachers.add")
 @login_required
 def register_teacher(request):
 
@@ -46,6 +49,7 @@ def register_teacher(request):
 
 
 @staff_required
+@school_permission_required("teachers.view")
 @login_required
 def teacher_list(request):
 
@@ -114,6 +118,7 @@ def teacher_list(request):
 
 
 @management_required
+@school_permission_required("teachers.change")
 @login_required
 def edit_teacher(request, teacher_id):
     teacher = get_object_or_404(Teacher, id=teacher_id, user__school=request.user.school,)
@@ -204,6 +209,7 @@ def edit_teacher(request, teacher_id):
     )
     
 @staff_required
+@school_permission_required("teachers.view")
 @login_required
 def teacher_profile(request, teacher_id):
 
@@ -222,6 +228,7 @@ def teacher_profile(request, teacher_id):
     )
     
 @management_required
+@school_permission_required("teachers.change")
 @login_required
 def deactivate_teacher(request, teacher_id):
 
@@ -238,6 +245,7 @@ def deactivate_teacher(request, teacher_id):
 
 
 @management_required
+@school_permission_required("teachers.change")
 @login_required
 def activate_teacher(request, teacher_id):
 
@@ -253,6 +261,7 @@ def activate_teacher(request, teacher_id):
     return redirect("teacher_list")
 
 @staff_required
+@school_permission_required("teachers.view")
 @login_required
 def print_teacher_profile(request, teacher_id):
 

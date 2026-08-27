@@ -1,7 +1,11 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.db.models import Count
-from accounts.decorators import management_required, feature_required
+from accounts.decorators import (
+    management_required,
+    feature_required,
+)
+from accounts.permissions import school_permission_required
 from .forms import AnnouncementForm
 from .models import (
     Announcement,
@@ -12,6 +16,7 @@ from .models import (
 
 @management_required
 @login_required
+@school_permission_required("announcements.create")
 @feature_required("ANNOUNCEMENTS")
 def post_announcement(request):
     if request.method == 'POST':
@@ -38,6 +43,7 @@ def post_announcement(request):
 
 
 @login_required
+@school_permission_required("announcements.view")
 @feature_required("ANNOUNCEMENTS")
 def announcement_list(request):
 
@@ -68,6 +74,7 @@ def announcement_list(request):
 
 
 @login_required
+@school_permission_required("announcements.view")
 @feature_required("ANNOUNCEMENTS")
 def announcement_detail(request, announcement_id):
 
@@ -111,6 +118,7 @@ def announcement_detail(request, announcement_id):
 
 @management_required
 @login_required
+@school_permission_required("announcements.delete")
 @feature_required("ANNOUNCEMENTS")
 def delete_announcement(request, announcement_id):
 
@@ -128,6 +136,7 @@ def delete_announcement(request, announcement_id):
 
 @management_required
 @login_required
+@school_permission_required("announcements.change")
 @feature_required("ANNOUNCEMENTS")
 def toggle_announcement_pin(request, announcement_id):
 
@@ -146,6 +155,7 @@ def toggle_announcement_pin(request, announcement_id):
 
 @management_required
 @login_required
+@school_permission_required("announcements.view")
 @feature_required("ANNOUNCEMENTS")
 def announcement_readers(request, announcement_id):
 

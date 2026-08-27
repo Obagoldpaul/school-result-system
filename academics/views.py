@@ -3,22 +3,18 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, render
 from django.core.exceptions import PermissionDenied
 
-from accounts.permissions import is_management
+from accounts.permissions import school_permission_required
 
 from .forms import SchoolSettingsForm
 from .models import SchoolSettings
 
 
 @login_required
+@school_permission_required("school_settings.manage")
 def school_settings(request):
     """
     View and edit settings belonging only to the logged-in user's school.
     """
-
-    if not is_management(request.user):
-        raise PermissionDenied(
-            "Only management can edit school settings."
-        )
 
     if not request.user.school:
         raise PermissionDenied(

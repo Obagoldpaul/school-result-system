@@ -6,14 +6,45 @@ from django.urls import reverse
 from academics.models import AcademicSession, Term
 from accounts.models import User
 from billing.models import FeeAssignment, FeeCategory, Payment, PaymentAllocation
-from schools.models import School
+from schools.models import School, SchoolRole, Permission
 from students.models import SchoolClass, Student
+from datetime import date
 
+from schools.models import (
+    Feature,
+    SubscriptionPackage,
+    SchoolSubscription,
+)
 
 class BillingConsistencyTests(TestCase):
     def setUp(self):
         self.school = School.objects.create(name="School One", code="SCH1")
         self.other_school = School.objects.create(name="School Two", code="SCH2")
+        
+        billing_feature = Feature.objects.create(
+            code="BILLING",
+            name="Billing",
+            is_active=True,
+        )
+
+        self.package = SubscriptionPackage.objects.create(
+            name=SubscriptionPackage.PackageType.STANDARD,
+            description="Test package",
+            price=Decimal("0.00"),
+            is_active=True,
+        )
+
+        self.package.features.add(
+            billing_feature
+        )
+
+        SchoolSubscription.objects.create(
+            school=self.school,
+            package=self.package,
+            billing_cycle=SchoolSubscription.BillingCycle.TERMLY,
+            start_date=date.today(),
+            is_active=True,
+        )
         self.school_class = SchoolClass.objects.create(
             school=self.school,
             name="Primary 1",
@@ -43,6 +74,64 @@ class BillingConsistencyTests(TestCase):
             school=self.school,
             role=User.Role.BURSAR,
         )
+        
+        billing_permissions = [
+            {
+                "code": "billing.view",
+                "name": "View Billing",
+            },
+            {
+                "code": "billing.manage",
+                "name": "Manage Billing",
+            },
+            {
+                "code": "billing.record_payment",
+                "name": "Record Payments",
+            },
+            {
+                "code": "billing.edit_payment",
+                "name": "Edit Payments",
+            },
+            {
+                "code": "billing.delete_payment",
+                "name": "Delete Payments",
+            },
+            {
+                "code": "billing.view_reports",
+                "name": "View Billing Reports",
+            },
+        ]
+
+        for permission_data in billing_permissions:
+            Permission.objects.create(
+                code=permission_data["code"],
+                name=permission_data["name"],
+                module="Billing",
+                is_active=True,
+            )
+
+
+        self.bursar_role = SchoolRole.objects.create(
+            school=self.school,
+            name="Bursar",
+        )
+
+        self.bursar_role.permissions.set(
+            Permission.objects.filter(
+                code__in=[
+                    "billing.view",
+                    "billing.manage",
+                    "billing.record_payment",
+                    "billing.edit_payment",
+                    "billing.delete_payment",
+                    "billing.view_reports",
+                ]
+            )
+        )
+
+        self.bursar.school_role = self.bursar_role
+        self.bursar.save(update_fields=["school_role"])
+        
         self.category = FeeCategory.objects.create(
             school=self.school,
             name="Tuition",

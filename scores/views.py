@@ -15,14 +15,18 @@ from .models import Score, ReportCardExtra
 from .reports import get_class_results
 from .forms import ReportCardExtraForm
 from . import services
-from accounts import permissions
+from accounts.permissions import (
+    school_permission_required,
+    user_has_permission,
+    can_edit_report_extra,
+)
 from django.core.exceptions import PermissionDenied
-from accounts import permissions
 
 
 
 @staff_required
 @login_required
+@school_permission_required("scores.view")
 def select_allocation(request):
     school = request.user.school
 
@@ -139,6 +143,7 @@ def select_allocation(request):
 
 @staff_required
 @login_required
+@school_permission_required("scores.enter")
 def enter_scores(request, allocation_id):
     allocation = get_object_or_404(
         SubjectAllocation,
@@ -195,6 +200,7 @@ def _redirect_with_query(request):
 
 @staff_required
 @login_required
+@school_permission_required("scores.submit")
 def submit_allocation(request, allocation_id):
     allocation = get_object_or_404(
         SubjectAllocation, 
@@ -217,6 +223,7 @@ def submit_allocation(request, allocation_id):
 
 @staff_required
 @login_required
+@school_permission_required("scores.review")
 def review_allocation(request, allocation_id):
     allocation = get_object_or_404(
         SubjectAllocation, 
@@ -246,6 +253,7 @@ def review_allocation(request, allocation_id):
 
 @staff_required
 @login_required
+@school_permission_required("scores.approve")
 def approve_allocation(request, allocation_id):
     allocation = get_object_or_404(
         SubjectAllocation,
@@ -268,6 +276,7 @@ def approve_allocation(request, allocation_id):
 
 @staff_required
 @login_required
+@school_permission_required("scores.publish")
 def publish_allocation(request, allocation_id):
     allocation = get_object_or_404(
         SubjectAllocation,
@@ -290,6 +299,7 @@ def publish_allocation(request, allocation_id):
 
 @login_required
 @staff_required
+@school_permission_required("scores.view")
 def class_results(request):
     school = request.user.school
 
@@ -358,15 +368,34 @@ def edit_report_extra(request, student_id, term_id):
         id=term_id,
         session__school=request.user.school,
     )
-
-    if not permissions.can_edit_report_extra(
+    
+    
+    if not  can_edit_report_extra(
         request.user,
         student,
     ):
         raise PermissionDenied(
             "You do not have permission to edit this student's report details."
         )
-
+        
+    has_teacher_remark_permission = user_has_permission(
+        request.user,
+        "reports.teacher_remark",
+    )
+    
+    has_principal_remark_permission = user_has_permission(
+            request.user,
+            "reports.principal_remark",
+    )
+    
+    if not (
+        has_teacher_remark_permission
+        or has_principal_remark_permission
+    ):
+        raise PermissionDenied(
+            "You do not have permission to edit report-card details."
+        )
+    
     extra, created = ReportCardExtra.objects.get_or_create(
         student=student,
         term=term,
@@ -406,6 +435,7 @@ def edit_report_extra(request, student_id, term_id):
 
 
 @login_required
+@school_permission_required("reports.view")
 def report_card(request, student_id, term_id):
     student = get_object_or_404(Student, id=student_id)
     term = get_object_or_404(Term, id=term_id)
@@ -420,6 +450,7 @@ def report_card(request, student_id, term_id):
 
 @login_required
 @feature_required("ADVANCED_REPORTING")
+@school_permission_required("reports.view")
 def report_card_pdf(request, student_id, term_id):
     student = get_object_or_404(Student, id=student_id)
     term = get_object_or_404(Term, id=term_id)

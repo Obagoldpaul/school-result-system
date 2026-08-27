@@ -1,5 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
+from accounts.permissions import school_permission_required
 
 from .forms import (
     SubjectForm,
@@ -15,6 +16,7 @@ from django.contrib import messages
 
 @staff_required
 @login_required
+@school_permission_required("subjects.manage")
 def add_subject(request):
 
     if request.method == 'POST':
@@ -43,6 +45,7 @@ def add_subject(request):
 
 @staff_required
 @login_required
+@school_permission_required("subjects.manage")
 def edit_subject(request, subject_id):
 
     subject = get_object_or_404(
@@ -80,6 +83,7 @@ def edit_subject(request, subject_id):
 
 @staff_required
 @login_required
+@school_permission_required("subjects.manage")
 def deactivate_subject(request, subject_id):
 
     subject = get_object_or_404(
@@ -97,6 +101,7 @@ def deactivate_subject(request, subject_id):
 
 @staff_required
 @login_required
+@school_permission_required("subjects.manage")
 def activate_subject(request, subject_id):
 
     subject = get_object_or_404(
@@ -114,6 +119,7 @@ def activate_subject(request, subject_id):
 
 @staff_required
 @login_required
+@school_permission_required("subjects.view")
 def subject_list(request):
 
     subjects = Subject.objects.filter(
@@ -132,6 +138,7 @@ def subject_list(request):
 
 @staff_required
 @login_required
+@school_permission_required("subjects.assign")
 def assign_subject_to_class(request):
 
     if request.method == 'POST':
@@ -160,6 +167,7 @@ def assign_subject_to_class(request):
 
 @staff_required
 @login_required
+@school_permission_required("subjects.view")
 def class_subject_list(request):
 
     school = request.user.school
@@ -260,6 +268,7 @@ def class_subject_list(request):
 
 @staff_required
 @login_required
+@school_permission_required("subjects.assign")
 def unassign_subject_from_class(request, assignment_id):
 
     assignment = get_object_or_404(
@@ -282,6 +291,7 @@ def unassign_subject_from_class(request, assignment_id):
 
 @staff_required
 @login_required
+@school_permission_required("subjects.view")
 def inactive_subject_list(request):
 
     subjects = Subject.objects.filter(
@@ -299,6 +309,7 @@ def inactive_subject_list(request):
     
 @staff_required
 @login_required
+@school_permission_required("subjects.assign")
 def bulk_assign_subjects(request):
 
     school = request.user.school

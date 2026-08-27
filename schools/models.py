@@ -33,6 +33,45 @@ class Feature(models.Model):
         return self.name
 
 
+class PlatformSettings(models.Model):
+    """
+    Global branding and settings for the Paul SchoolHub platform.
+    This is separate from individual school branding.
+    """
+
+    platform_name = models.CharField(
+        max_length=200,
+        default="Paul SchoolHub",
+    )
+
+    platform_logo = models.ImageField(
+        upload_to="platform/",
+        blank=True,
+        null=True,
+    )
+
+    platform_primary_color = models.CharField(
+        max_length=7,
+        default="#16401C",
+    )
+
+    platform_secondary_color = models.CharField(
+        max_length=7,
+        default="#F0F2F0",
+    )
+
+    platform_footer = models.CharField(
+        max_length=300,
+        default="Powered by Paul Media",
+    )
+
+    updated_at = models.DateTimeField(
+        auto_now=True,
+    )
+
+    def __str__(self):
+        return self.platform_name
+
 class School(models.Model):
     """
     Represents a school using Paul SchoolHub.
@@ -40,6 +79,18 @@ class School(models.Model):
     Each school will eventually have its own students, teachers,
     classes, subjects, billing records, results, etc.
     """
+    
+    class SchoolType(models.TextChoices):
+        PRIMARY = "PRIMARY", "Primary"
+        SECONDARY = "SECONDARY", "Secondary"
+        PRIMARY_SECONDARY = "PRIMARY_SECONDARY", "Primary & Secondary"
+
+    school_type = models.CharField(
+        max_length=20,
+        choices=SchoolType.choices,
+        default=SchoolType.SECONDARY,
+        help_text="The academic level(s) offered by this school.",
+    )
 
     name = models.CharField(
         max_length=200
@@ -85,6 +136,123 @@ class School(models.Model):
     def __str__(self):
         return self.name
 
+class Permission(models.Model):
+    """
+    Represents a specific action that a school user can perform.
+
+    Permissions are assigned to SchoolRole objects rather than directly
+    to individual users.
+    """
+
+    code = models.CharField(
+        max_length=100,
+        unique=True,
+        help_text="Unique internal permission code.",
+    )
+
+    name = models.CharField(
+        max_length=150,
+        help_text="Human-readable permission name.",
+    )
+
+    description = models.TextField(
+        blank=True,
+    )
+
+    module = models.CharField(
+        max_length=50,
+        help_text="Module this permission belongs to, e.g. Students, Billing, Scores.",
+    )
+
+    is_active = models.BooleanField(
+        default=True,
+    )
+
+    class Meta:
+        ordering = ["module", "name"]
+
+    def __str__(self):
+        return self.name
+
+class SchoolRole(models.Model):
+    """
+    A configurable role belonging to one specific school.
+
+    SchoolRole is a custom permission profile built on top of
+    one of the three school-level system roles:
+
+        ADMIN
+        TEACHER
+        STUDENT
+
+    Examples:
+
+        ADMIN     → Principal
+        ADMIN     → Vice Principal
+        ADMIN     → Bursar
+        ADMIN     → Examination Officer
+
+        TEACHER   → Mathematics Teacher
+        TEACHER   → Class Teacher
+        TEACHER   → Senior Teacher
+
+        STUDENT   → Student
+    """
+
+    class BaseRole(models.TextChoices):
+        ADMIN = "ADMIN", "Admin"
+        TEACHER = "TEACHER", "Teacher"
+        STUDENT = "STUDENT", "Student"
+
+    school = models.ForeignKey(
+        School,
+        on_delete=models.CASCADE,
+        related_name="roles",
+    )
+
+    name = models.CharField(
+        max_length=100,
+    )
+
+    base_role = models.CharField(
+        max_length=20,
+        choices=BaseRole.choices,
+    )
+
+    description = models.TextField(
+        blank=True,
+    )
+
+    permissions = models.ManyToManyField(
+        "Permission",
+        blank=True,
+        related_name="school_roles",
+    )
+
+    is_active = models.BooleanField(
+        default=True,
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+    )
+
+    updated_at = models.DateTimeField(
+        auto_now=True,
+    )
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["school", "name"],
+                name="unique_school_role_name",
+            )
+        ]
+
+        ordering = ["name"]
+
+    def __str__(self):
+        return f"{self.school.name} - {self.name}"
 
 class SubscriptionPackage(models.Model):
     """

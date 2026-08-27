@@ -1,0 +1,224 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container py-4">
+
+    <div class="mb-4">
+
+        <h2>
+            Edit Role
+        </h2>
+
+        <p class="text-muted mb-1">
+            {{ school.name }}
+        </p>
+
+        <p class="text-muted">
+            Update the settings for the
+            <strong>{{ role.name }}</strong> school role.
+        </p>
+
+    </div>
+
+
+    {% if messages %}
+
+        {% for message in messages %}
+
+            <div class="alert alert-{{ message.tags }}">
+                {{ message }}
+            </div>
+
+        {% endfor %}
+
+    {% endif %}
+
+
+    <div class="card shadow-sm">
+
+        <div class="card-body">
+
+            <form method="post">
+
+                {% csrf_token %}
+
+
+                <!-- ROLE NAME -->
+
+                <div class="mb-3">
+
+                    <label
+                        for="{{ form.name.id_for_label }}"
+                        class="form-label"
+                    >
+                        Role Name
+                    </label>
+
+                    {{ form.name }}
+
+                    {% if form.name.errors %}
+
+                        <div class="text-danger small mt-1">
+
+                            {% for error in form.name.errors %}
+                                {{ error }}
+                            {% endfor %}
+
+                        </div>
+
+                    {% endif %}
+
+                    <small class="text-muted">
+                        Example: Principal, Vice Principal,
+                        Class Teacher, Mathematics Teacher.
+                    </small>
+
+                </div>
+
+
+                <!-- BASE ROLE -->
+
+                <div class="mb-3">
+
+                    <label
+                        for="{{ form.base_role.id_for_label }}"
+                        class="form-label"
+                    >
+                        Base Role
+                    </label>
+
+                    {{ form.base_role }}
+
+                    {% if form.base_role.errors %}
+
+                        <div class="text-danger small mt-1">
+
+                            {% for error in form.base_role.errors %}
+                                {{ error }}
+                            {% endfor %}
+
+                        </div>
+
+                    {% endif %}
+
+                    <small class="text-muted">
+                        This determines the fundamental account type.
+                        Permissions determine what users with this
+                        role can actually perform.
+                    </small>
+
+                </div>
+
+
+                <!-- DESCRIPTION -->
+
+                <div class="mb-3">
+
+                    <label
+                        for="{{ form.description.id_for_label }}"
+                        class="form-label"
+                    >
+                        Description
+                    </label>
+
+                    {{ form.description }}
+
+                    {% if form.description.errors %}
+
+                        <div class="text-danger small mt-1">
+
+                            {% for error in form.description.errors %}
+                                {{ error }}
+                            {% endfor %}
+
+                        </div>
+
+                    {% endif %}
+
+                </div>
+
+
+                <!-- PERMISSIONS -->
+
+                <div class="mb-4">
+
+                    <label class="form-label">
+                        Permissions
+                    </label>
+
+                    <div class="border rounded p-3">
+
+                        {{ form.permissions }}
+
+                    </div>
+
+                    {% if form.permissions.errors %}
+
+                        <div class="text-danger small mt-1">
+
+                            {% for error in form.permissions.errors %}
+                                {{ error }}
+                            {% endfor %}
+
+                        </div>
+
+                    {% endif %}
+
+                    <small class="text-muted">
+                        You can also manage these permissions
+                        from the Manage Permissions page.
+                    </small>
+
+                </div>
+
+
+                <!-- ACTIVE -->
+
+                <div class="mb-4">
+
+                    <div class="form-check">
+
+                        {{ form.is_active }}
+
+                        <label
+                            class="form-check-label"
+                            for="{{ form.is_active.id_for_label }}"
+                        >
+                            Role is active
+                        </label>
+
+                    </div>
+
+                </div>
+
+
+                <!-- BUTTONS -->
+
+                <div class="d-flex gap-2">
+
+                    <button
+                        type="submit"
+                        class="btn btn-primary"
+                    >
+                        Save Changes
+                    </button>
+
+                    <a
+                        href="{% url 'manage_school_roles' school.id %}"
+                        class="btn btn-secondary"
+                    >
+                        Cancel
+                    </a>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

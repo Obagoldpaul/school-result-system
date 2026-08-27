@@ -9,6 +9,7 @@ from accounts.permissions import (
     can_manage_billing,
     is_student,
 )
+from accounts.permissions import school_permission_required
 from accounts.utils import get_current_term
 from students.models import Student, SchoolClass
 from academics.models import (
@@ -49,8 +50,8 @@ from decimal import Decimal
 from academics.utils import get_term_order
 
 
-
 @login_required
+@school_permission_required("billing.view")
 @billing_required
 @feature_required("BILLING")
 def billing_dashboard(request):
@@ -249,7 +250,8 @@ def billing_dashboard(request):
     )
 
 @login_required
-@billing_required
+@school_permission_required("billing.view")
+@feature_required("BILLING")
 def fee_category_list(request):
 
     categories = FeeCategory.objects.annotate(
@@ -276,7 +278,8 @@ def fee_category_list(request):
 
 
 @login_required
-@billing_required
+@school_permission_required("billing.manage")
+@feature_required("BILLING")
 def add_fee_category(request):
 
     if request.method == "POST":
@@ -316,7 +319,8 @@ def add_fee_category(request):
 
 
 @login_required
-@billing_required
+@school_permission_required("billing.manage")
+@feature_required("BILLING")
 def edit_fee_category(request, category_id):
 
     category_queryset = FeeCategory.objects.all()
@@ -372,7 +376,8 @@ def edit_fee_category(request, category_id):
 
 
 @login_required
-@billing_required
+@school_permission_required("billing.manage")
+@feature_required("BILLING")
 def toggle_fee_category(request, category_id):
 
     category_queryset = FeeCategory.objects.all()
@@ -413,6 +418,7 @@ def toggle_fee_category(request, category_id):
     )
 
 @login_required
+@school_permission_required("billing.manage")
 @billing_required
 def add_fee_assignment(request):
 
@@ -510,6 +516,7 @@ def add_fee_assignment(request):
     )
     
 @login_required
+@school_permission_required("billing.manage")
 @billing_required
 def fee_assignment_student_search(request):
     """
@@ -601,6 +608,7 @@ def fee_assignment_student_search(request):
     })
 
 @login_required
+@school_permission_required("billing.manage")
 @billing_required
 def manage_optional_fee_students(request, assignment_id):
     """
@@ -835,6 +843,7 @@ def manage_optional_fee_students(request, assignment_id):
     )
 
 @login_required
+@school_permission_required("billing.view")
 @billing_required
 def fee_assignment_list(request):
     """
@@ -1026,6 +1035,7 @@ def fee_assignment_list(request):
     )
 
 @login_required
+@school_permission_required("billing.view")
 @billing_required
 def fee_assignment_terms(request):
 
@@ -1059,6 +1069,7 @@ def fee_assignment_terms(request):
     )
 
 @login_required
+@school_permission_required("billing.manage")
 @billing_required
 def edit_fee_assignment(request, assignment_id):
 
@@ -1179,7 +1190,8 @@ def edit_fee_assignment(request, assignment_id):
 
 
 @login_required
-@billing_required
+@school_permission_required("billing.record_payment")
+@feature_required("BILLING")
 def record_payment(request, student_id, term_id):
 
     student_queryset = Student.objects.all()
@@ -1435,6 +1447,7 @@ def record_payment(request, student_id, term_id):
 
 
 @login_required
+@school_permission_required("billing.view")
 @billing_required
 def students_owing(request):
 
@@ -1679,6 +1692,7 @@ def students_owing(request):
     )
 
 @login_required
+@school_permission_required("billing.view")
 @billing_required
 def students_owing_print(request):
 
@@ -1856,6 +1870,7 @@ def students_owing_print(request):
     )
 
 @login_required
+@school_permission_required("billing.manage")
 @billing_required
 def add_opening_balance(request):
 
@@ -1901,6 +1916,7 @@ def add_opening_balance(request):
     )
 
 @login_required
+@school_permission_required("billing.record_payment")
 @billing_required
 def pay_opening_balance(request, balance_id):
 
@@ -2042,6 +2058,7 @@ def pay_opening_balance(request, balance_id):
     )
 
 @login_required
+@school_permission_required("billing.view")
 @billing_required
 def opening_balance_list(request):
 
@@ -2124,6 +2141,7 @@ def _bill_context_for_student(student, term):
     }
 
 @login_required
+@school_permission_required("billing.view")
 @billing_required
 def select_student_bill(request):
 
@@ -2160,6 +2178,7 @@ def select_student_bill(request):
     )
 
 @login_required
+@school_permission_required("billing.view")
 @billing_required
 def students_by_class(request):
 
@@ -2196,6 +2215,7 @@ def students_by_class(request):
     })
     
 @login_required
+@school_permission_required("billing.view")
 @billing_required
 def terms_by_session(request):
 
@@ -2230,6 +2250,7 @@ def terms_by_session(request):
     })
 
 @login_required
+@school_permission_required("billing.view")
 @billing_required
 def student_bill(request, student_id, term_id):
 
@@ -2258,6 +2279,7 @@ def student_bill(request, student_id, term_id):
 
 
 @login_required
+@school_permission_required("billing.view")
 @billing_required
 def student_bill_pdf(request, student_id, term_id):
 
@@ -2305,6 +2327,7 @@ def student_bill_pdf(request, student_id, term_id):
 
 
 @login_required
+@school_permission_required("billing.view")
 @billing_required
 def class_bill_pdf(request, class_id, term_id):
 
@@ -2365,6 +2388,7 @@ def class_bill_pdf(request, class_id, term_id):
 
 
 @login_required
+@school_permission_required("billing.manage")
 @billing_required
 def edit_opening_balance(request, balance_id):
 
@@ -2424,6 +2448,7 @@ def edit_opening_balance(request, balance_id):
     )
     
 @login_required
+@school_permission_required("billing.manage")
 @billing_required
 def delete_opening_balance(request, balance_id):
 
@@ -2447,6 +2472,7 @@ def delete_opening_balance(request, balance_id):
 
 
 @login_required
+@school_permission_required("billing.view")
 @billing_required
 def payment_list(request):
 
@@ -2511,6 +2537,7 @@ def payment_list(request):
     )
     
 @login_required
+@school_permission_required("billing.view")
 @billing_required
 def payment_receipt(request, payment_id):
 
@@ -2535,6 +2562,7 @@ def payment_receipt(request, payment_id):
     
 
 @login_required
+@school_permission_required("billing.view")
 @billing_required
 def payment_receipt_pdf(request, payment_id):
 
@@ -2630,6 +2658,7 @@ def my_payment_receipt_pdf(request, payment_id):
     return response
 
 @login_required
+@school_permission_required("billing.view")
 @billing_required
 def student_payment_history(request, student_id):
 
@@ -2664,6 +2693,7 @@ def student_payment_history(request, student_id):
     )
 
 @login_required
+@school_permission_required("billing.view")
 @billing_required
 def opening_balance_payment_history(request, balance_id):
 
@@ -2707,6 +2737,7 @@ def opening_balance_payment_history(request, balance_id):
     )
 
 @login_required
+@school_permission_required("billing.view")
 @billing_required
 def opening_balance_payment_receipt(
     request,
@@ -2753,6 +2784,7 @@ def opening_balance_payment_receipt(
     )
 
 @login_required
+@school_permission_required("billing.view")
 @billing_required
 def opening_balance_payment_receipt_pdf(
     request,
@@ -2978,6 +3010,7 @@ def student_account_statement(request, student_id):
     )
     
 @login_required
+@school_permission_required("billing.view")
 @billing_required
 def select_student_account_statement(request):
 

@@ -77,12 +77,14 @@ TEMPLATES = [
         'context_processors': [
             'django.template.context_processors.request',
             'django.contrib.auth.context_processors.auth',
+            "schools.context_processors.platform_context",
             'django.contrib.messages.context_processors.messages',
             
             'accounts.context_processors.user_roles',
             'accounts.context_processors.announcements_preview',
             
             'core.context_processors.school_settings',
+            'schools.context_processors.platform_settings',
         ],
         },
     },

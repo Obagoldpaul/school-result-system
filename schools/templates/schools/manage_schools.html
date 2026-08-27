@@ -1,0 +1,274 @@
+{% extends "base.html" %}
+
+{% block title %}
+    Manage Schools | {{ platform_settings.platform_name|default:"Paul SchoolHub" }}
+{% endblock %}
+
+{% block content %}
+
+<div class="container-fluid">
+
+    <!-- HEADER -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <div>
+            <h1>Manage Schools</h1>
+
+            <p class="text-muted mb-0">
+                View and manage all schools registered on
+                {{ platform_settings.platform_name|default:"Paul SchoolHub" }}.
+            </p>
+        </div>
+
+        <a href="{% url 'create_school' %}" class="btn btn-primary">
+            + Add School
+        </a>
+
+    </div>
+
+
+    <!-- SUMMARY -->
+    <div class="row g-4 mb-4">
+
+        <div class="col-md-4">
+
+            <div class="card shadow-sm h-100">
+
+                <div class="card-body">
+
+                    <h6 class="text-muted">
+                        Total Schools
+                    </h6>
+
+                    <h2 class="mb-0">
+                        {{ schools_count }}
+                    </h2>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- SCHOOLS TABLE -->
+    <div class="card shadow-sm">
+
+        <div class="card-body">
+
+            <div class="d-flex justify-content-between align-items-center mb-3">
+
+                <div>
+                    <h5 class="card-title mb-1">
+                        Registered Schools
+                    </h5>
+
+                    <p class="text-muted mb-0">
+                        All schools currently registered on the platform.
+                    </p>
+                </div>
+
+            </div>
+
+
+            <div class="table-responsive">
+
+                <table class="table table-hover align-middle">
+
+                    <thead>
+
+                        <tr>
+
+                            <th>School</th>
+
+                            <th>Code</th>
+
+                            <th>Users</th>
+
+                            <th>Students</th>
+
+                            <th>Teachers</th>
+
+                            <th>Admins</th>
+
+                            <th>Package</th>
+
+                            <th>Billing</th>
+
+                            <th>Status</th>
+
+                            <th class="text-end">
+                                Action
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody>
+
+                        {% for school in schools %}
+
+                        <tr>
+
+                            <!-- SCHOOL -->
+                            <td>
+
+                                <strong>
+                                    {{ school.name }}
+                                </strong>
+
+                                {% if school.email %}
+
+                                <br>
+
+                                <small class="text-muted">
+                                    {{ school.email }}
+                                </small>
+
+                                {% endif %}
+
+                            </td>
+
+
+                            <!-- CODE -->
+                            <td>
+                                {{ school.code }}
+                            </td>
+
+
+                            <!-- USERS -->
+                            <td>
+                                <strong>
+                                    {{ school.total_users }}
+                                </strong>
+                            </td>
+
+
+                            <!-- STUDENTS -->
+                            <td>
+                                {{ school.total_students }}
+                            </td>
+
+
+                            <!-- TEACHERS -->
+                            <td>
+                                {{ school.total_teachers }}
+                            </td>
+
+
+                            <!-- ADMINS -->
+                            <td>
+                                {{ school.total_admins }}
+                            </td>
+
+
+                            <!-- PACKAGE -->
+                            <td>
+
+                                {% if school.subscription %}
+
+                                    {{ school.subscription.package }}
+
+                                {% else %}
+
+                                    <span class="text-muted">
+                                        No subscription
+                                    </span>
+
+                                {% endif %}
+
+                            </td>
+
+
+                            <!-- BILLING -->
+                            <td>
+
+                                {% if school.subscription %}
+
+                                    {{ school.subscription.get_billing_cycle_display }}
+
+                                {% else %}
+
+                                    —
+
+                                {% endif %}
+
+                            </td>
+
+
+                            <!-- STATUS -->
+                            <td>
+
+                                {% if school.is_active %}
+
+                                    <span class="badge bg-success">
+                                        Active
+                                    </span>
+
+                                {% else %}
+
+                                    <span class="badge bg-secondary">
+                                        Inactive
+                                    </span>
+
+                                {% endif %}
+
+                            </td>
+
+
+                            <!-- ACTION -->
+                            <td class="text-end">
+
+                                <a
+                                    href="{% url 'school_users' school.id %}"
+                                    class="btn btn-sm btn-outline-primary"
+                                >
+                                    Users
+                                </a>
+
+                                <a
+                                    href="{% url 'edit_subscription' school.id %}"
+                                    class="btn btn-sm btn-outline-primary"
+                                >
+                                    Manage
+                                </a>
+
+                            </td>
+
+                        </tr>
+
+
+                        {% empty %}
+
+                        <tr>
+
+                            <td
+                                colspan="10"
+                                class="text-center text-muted py-5"
+                            >
+
+                                No schools have been registered yet.
+
+                            </td>
+
+                        </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

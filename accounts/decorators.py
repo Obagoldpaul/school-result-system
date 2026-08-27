@@ -17,77 +17,205 @@ from .permissions import (
 )
 
 from .permissions import can_manage_billing
+from .utils import school_subscription_access_allowed
+
+
+def subscription_required(view_func):
+    """
+    Restrict school users whose subscription has expired.
+
+    Platform administrators are unrestricted because they operate
+    at the Paul SchoolHub platform level rather than under a school
+    subscription.
+    """
+
+    @wraps(view_func)
+    def wrapper(request, *args, **kwargs):
+
+        # ---------------------------------------------------------
+        # PLATFORM ADMINISTRATORS
+        # ---------------------------------------------------------
+
+        if is_platform_admin(request.user):
+            return view_func(request, *args, **kwargs)
+
+        # ---------------------------------------------------------
+        # SCHOOL USER
+        # ---------------------------------------------------------
+
+        school = getattr(request.user, "school", None)
+
+        if not school:
+            raise PermissionDenied(
+                "Your account is not associated with a school."
+            )
+
+        # ---------------------------------------------------------
+        # SUBSCRIPTION ACCESS
+        # ---------------------------------------------------------
+
+        if not school_subscription_access_allowed(school):
+            raise PermissionDenied(
+                "Your school's subscription has expired or is inactive. "
+                "Please contact your school administrator."
+            )
+
+        return view_func(request, *args, **kwargs)
+
+    return wrapper
+
+
+def platform_admin_required(view_func):
+    @wraps(view_func)
+    def wrapper(request, *args, **kwargs):
+        if not is_platform_admin(request.user):
+            raise PermissionDenied(
+                "Only Paul SchoolHub platform administrators can access this page."
+            )
+        return view_func(request, *args, **kwargs)
+
+    return wrapper
 
 def staff_required(view_func):
     @wraps(view_func)
     def wrapper(request, *args, **kwargs):
+
         if not is_staff_member(request.user):
-            raise PermissionDenied("You do not have permission to access this page.")
-        return view_func(request, *args, **kwargs)
+            raise PermissionDenied(
+                "You do not have permission to access this page."
+            )
+
+        return subscription_required(view_func)(
+            request,
+            *args,
+            **kwargs
+        )
+
     return wrapper
 
 
 def teacher_required(view_func):
     @wraps(view_func)
     def wrapper(request, *args, **kwargs):
+
         if not is_teacher(request.user):
-            raise PermissionDenied("Only teachers can access this page.")
-        return view_func(request, *args, **kwargs)
+            raise PermissionDenied(
+                "Only teachers can access this page."
+            )
+
+        return subscription_required(view_func)(
+            request,
+            *args,
+            **kwargs
+        )
+
     return wrapper
 
 
 def class_teacher_required(view_func):
     @wraps(view_func)
     def wrapper(request, *args, **kwargs):
+
         if not is_class_teacher(request.user):
-            raise PermissionDenied("Only class teachers can access this page.")
-        return view_func(request, *args, **kwargs)
+            raise PermissionDenied(
+                "Only class teachers can access this page."
+            )
+
+        return subscription_required(view_func)(
+            request,
+            *args,
+            **kwargs
+        )
+
     return wrapper
 
 
 def management_required(view_func):
     @wraps(view_func)
     def wrapper(request, *args, **kwargs):
+
         if not is_management(request.user):
-            raise PermissionDenied("Only school management can access this page.")
-        return view_func(request, *args, **kwargs)
+            raise PermissionDenied(
+                "Only school management can access this page."
+            )
+
+        return subscription_required(view_func)(
+            request,
+            *args,
+            **kwargs
+        )
+
     return wrapper
 
 
 def admin_required(view_func):
     @wraps(view_func)
     def wrapper(request, *args, **kwargs):
+
         if not is_admin(request.user):
-            raise PermissionDenied("Only administrators can access this page.")
-        return view_func(request, *args, **kwargs)
+            raise PermissionDenied(
+                "Only administrators can access this page."
+            )
+
+        return subscription_required(view_func)(
+            request,
+            *args,
+            **kwargs
+        )
+
     return wrapper
 
 
 def proprietoress_required(view_func):
     @wraps(view_func)
     def wrapper(request, *args, **kwargs):
+
         if not is_proprietoress(request.user):
             raise PermissionDenied(
                 "Only the proprietoress can access this page."
             )
-        return view_func(request, *args, **kwargs)
+
+        return subscription_required(view_func)(
+            request,
+            *args,
+            **kwargs
+        )
+
     return wrapper
     
 def principal_required(view_func):
     @wraps(view_func)
     def wrapper(request, *args, **kwargs):
+
         if not is_principal(request.user):
-            raise PermissionDenied("Only the principal can access this page.")
-        return view_func(request, *args, **kwargs)
+            raise PermissionDenied(
+                "Only the principal can access this page."
+            )
+
+        return subscription_required(view_func)(
+            request,
+            *args,
+            **kwargs
+        )
+
     return wrapper
 
 
 def student_required(view_func):
     @wraps(view_func)
     def wrapper(request, *args, **kwargs):
+
         if not is_student(request.user):
-            raise PermissionDenied("Only students can access this page.")
-        return view_func(request, *args, **kwargs)
+            raise PermissionDenied(
+                "Only students can access this page."
+            )
+
+        return subscription_required(view_func)(
+            request,
+            *args,
+            **kwargs
+        )
+
     return wrapper
 
 

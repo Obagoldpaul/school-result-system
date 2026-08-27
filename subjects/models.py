@@ -2,11 +2,22 @@ from django.db import models
 
 
 class Subject(models.Model):
+    
+    class SubjectLevel(models.TextChoices):
+        PRIMARY = "PRIMARY", "Primary"
+        SECONDARY = "SECONDARY", "Secondary"
 
     school = models.ForeignKey(
         'schools.School',
         on_delete=models.PROTECT,
         related_name="subjects",
+    )
+    
+    level = models.CharField(
+        max_length=10,
+        choices=SubjectLevel.choices,
+        default=SubjectLevel.SECONDARY,
+        help_text="Academic level this subject belongs to.",
     )
 
     name = models.CharField(
@@ -39,11 +50,11 @@ class Subject(models.Model):
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=['school', 'name'],
+                fields=['school', 'name', 'level'],
                 name='unique_subject_name_per_school'
             ),
             models.UniqueConstraint(
-                fields=['school', 'code'],
+                fields=['school', 'code', 'level'],
                 name='unique_subject_code_per_school'
             ),
         ]

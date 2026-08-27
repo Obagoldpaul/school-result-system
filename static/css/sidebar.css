@@ -277,3 +277,48 @@
     letter-spacing: 1px;
     color: rgba(255, 255, 255, 0.55);
 }
+
+/* =====================================================
+   PAUL SCHOOLHUB PLATFORM ADMIN SIDEBAR
+   ===================================================== */
+
+.platform-sidebar {
+    background: linear-gradient(
+        180deg,
+        #201E1E,
+        #8C1D27
+    );
+}
+
+.platform-sidebar .brand {
+    border-bottom-color: rgba(255, 200, 55, 0.35);
+}
+
+.platform-sidebar nav a:hover,
+.platform-sidebar nav details summary:hover {
+    background: #FFC837;
+    color: #201E1E;
+}
+
+.platform-sidebar nav a.active {
+    background: #FFC837;
+    color: #201E1E;
+}
+
+.platform-sidebar .logout-form {
+    border-top-color: rgba(255, 200, 55, 0.35);
+}
+
+.platform-sidebar .logout-form button:hover {
+    background: #8C1D27;
+    border-color: #FFC837;
+    color: #fff;
+}
+
+.platform-nav-heading {
+    padding: 10px 14px 6px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: rgba(255, 255, 255, 0.55);
+}

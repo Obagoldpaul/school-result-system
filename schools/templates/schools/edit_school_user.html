@@ -1,0 +1,257 @@
+{% extends "base.html" %}
+
+{% block title %}
+    Edit User | {{ school.name }}
+{% endblock %}
+
+{% block content %}
+
+<div class="container py-4">
+
+    <!-- HEADER -->
+    <div class="mb-4">
+
+        <h2 class="mb-1">
+            Edit User
+        </h2>
+
+        <p class="text-muted mb-0">
+            {{ school.name }}
+        </p>
+
+        <small class="text-muted">
+            Update the administrative account information below.
+        </small>
+
+    </div>
+
+
+    <!-- USER INFORMATION -->
+    <div class="card shadow-sm">
+
+        <div class="card-body">
+
+            <div class="mb-4">
+
+                <h5 class="mb-1">
+                    Administrative Account
+                </h5>
+
+                <small class="text-muted">
+                    Account Type:
+                    <strong>Admin</strong>
+                </small>
+
+            </div>
+
+
+            {% if form.non_field_errors %}
+
+                <div class="alert alert-danger">
+
+                    {% for error in form.non_field_errors %}
+                        <div>{{ error }}</div>
+                    {% endfor %}
+
+                </div>
+
+            {% endif %}
+
+
+            <form method="post">
+
+                {% csrf_token %}
+
+
+                <!-- ACCOUNT INFORMATION -->
+                <div class="row g-3">
+
+                    <div class="col-md-6">
+
+                        <label
+                            for="{{ form.username.id_for_label }}"
+                            class="form-label"
+                        >
+                            Username
+                        </label>
+
+                        {{ form.username }}
+
+                        {% for error in form.username.errors %}
+                            <div class="text-danger small mt-1">
+                                {{ error }}
+                            </div>
+                        {% endfor %}
+
+                    </div>
+
+
+                    <div class="col-md-6">
+
+                        <label
+                            for="{{ form.email.id_for_label }}"
+                            class="form-label"
+                        >
+                            Email
+                        </label>
+
+                        {{ form.email }}
+
+                        {% for error in form.email.errors %}
+                            <div class="text-danger small mt-1">
+                                {{ error }}
+                            </div>
+                        {% endfor %}
+
+                    </div>
+
+
+                    <div class="col-md-4">
+
+                        <label
+                            for="{{ form.first_name.id_for_label }}"
+                            class="form-label"
+                        >
+                            First Name
+                        </label>
+
+                        {{ form.first_name }}
+
+                        {% for error in form.first_name.errors %}
+                            <div class="text-danger small mt-1">
+                                {{ error }}
+                            </div>
+                        {% endfor %}
+
+                    </div>
+
+
+                    <div class="col-md-4">
+
+                        <label
+                            for="{{ form.other_name.id_for_label }}"
+                            class="form-label"
+                        >
+                            Other Name
+                        </label>
+
+                        {{ form.other_name }}
+
+                        {% for error in form.other_name.errors %}
+                            <div class="text-danger small mt-1">
+                                {{ error }}
+                            </div>
+                        {% endfor %}
+
+                    </div>
+
+
+                    <div class="col-md-4">
+
+                        <label
+                            for="{{ form.last_name.id_for_label }}"
+                            class="form-label"
+                        >
+                            Surname
+                        </label>
+
+                        {{ form.last_name }}
+
+                        {% for error in form.last_name.errors %}
+                            <div class="text-danger small mt-1">
+                                {{ error }}
+                            </div>
+                        {% endfor %}
+
+                    </div>
+
+
+                    <div class="col-md-6">
+
+                        <label
+                            for="{{ form.phone_number.id_for_label }}"
+                            class="form-label"
+                        >
+                            Phone Number
+                        </label>
+
+                        {{ form.phone_number }}
+
+                        {% for error in form.phone_number.errors %}
+                            <div class="text-danger small mt-1">
+                                {{ error }}
+                            </div>
+                        {% endfor %}
+
+                    </div>
+
+
+                    <div class="col-md-6 d-flex align-items-end">
+
+                        <div class="form-check mb-2">
+
+                            {{ form.is_active }}
+
+                            <label
+                                for="{{ form.is_active.id_for_label }}"
+                                class="form-check-label"
+                            >
+                                {{ form.is_active.label }}
+                            </label>
+
+                            {% for error in form.is_active.errors %}
+                                <div class="text-danger small mt-1">
+                                    {{ error }}
+                                </div>
+                            {% endfor %}
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- ACCOUNT TYPE / ROLE INFORMATION -->
+                <div class="alert alert-light border mt-4 mb-0">
+
+                    <strong>Account Type:</strong>
+                    Admin
+
+                    <br>
+
+                    <small class="text-muted">
+                        Account Type and School Role are managed separately.
+                    </small>
+
+                </div>
+
+
+                <!-- ACTIONS -->
+                <div class="d-flex justify-content-between mt-4">
+
+                    <a
+                        href="{% url 'school_users' school.id %}"
+                        class="btn btn-outline-secondary"
+                    >
+                        Cancel
+                    </a>
+
+                    <button
+                        type="submit"
+                        class="btn btn-primary"
+                    >
+                        Update User
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

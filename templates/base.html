@@ -3,6 +3,12 @@
 <html>
 
 <head>
+    <style>
+         :root {
+            --platform-primary: {{ platform_settings.platform_primary_color|default:"#FFC837" }};
+            --platform-secondary: {{ platform_settings.platform_secondary_color|default:"#F7F2EF" }};
+        }
+    </style>
     <title>{% block title %}School Management System{% endblock %}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -58,8 +64,21 @@
 
 <body>
     <div class="app-layout">
-        <div class="sidebar">
+        <div class="sidebar {% if is_platform_admin %}platform-sidebar{% endif %}">
             <div class="brand">
+
+                {% if is_platform_admin %}
+
+                {% if platform_settings.platform_logo %}
+                <img src="{{ platform_settings.platform_logo.url }}" alt="Paul SchoolHub">
+                {% endif %}
+
+                <span>
+                    {{ platform_settings.platform_name|default:"Paul SchoolHub" }}
+                </span>
+
+                {% else %}
+
                 {% if school_settings.school_logo %}
                 <img src="{{ school_settings.school_logo.url }}" alt="Logo">
                 {% endif %}
@@ -67,14 +86,52 @@
                 <span>
                     {{ school_settings.school_name|default:"School Management System" }}
                 </span>
+
+                {% endif %}
+
             </div>
             <nav>
-                <a href="{% url 'dashboard_home' %}">Dashboard</a>
+
+                {% if is_platform_admin %}
+
+                <div class="platform-nav-heading">
+                    PAUL SCHOOLHUB
+                </div>
+
+                <a href="{% url 'platform_dashboard' %}">
+                    Platform Dashboard
+                </a>
+
+                <a href="{% url 'manage_schools' %}">
+                    Manage Schools
+                </a>
+
+                <a href="{% url 'platform_settings' %}">
+                    Platform Settings
+                </a>
+
+                <a href="{% url 'maintenance_home' %}">
+                    Maintenance
+                </a>
+
+                <a href="/admin/">
+                    Django Admin
+                </a>
+
+                {% else %}
+
+                <a href="{% url 'dashboard_home' %}">
+                    Dashboard
+                </a>
 
                 {% if is_management %}
 
                 <a href="{% url 'class_results' %}">
                     Results
+                </a>
+
+                <a href="{% url 'select_allocation' %}">
+                    Enter Scores
                 </a>
 
                 <a href="{% url 'student_list' %}">
@@ -152,13 +209,7 @@
 
                 {% if is_admin %}
 
-                <a href="{% url 'maintenance_home' %}">
-                    Maintenance
-                </a>
-
-                <a href="/admin/">
-                    Admin
-                </a>
+            
 
                 {% endif %}
                 {% endif %}
@@ -263,6 +314,8 @@
 
                 {% endif %}
 
+                {% endif %}
+
             </nav>
 
             {% if request.user.is_authenticated %}
@@ -305,7 +358,24 @@
 
                 <small class="text-muted">
 
+                    {% if is_platform_admin %}
+
+                    <strong>
+                        {{ platform_settings.platform_name|default:"Paul SchoolHub" }}
+                    </strong>
+
+                    <br>
+
+                    {{ platform_settings.platform_footer|default:"Powered by Paul Media" }}
+
+                    <br>
+
+                    © 2026 Paul SchoolHub. All Rights Reserved.
+
+                    {% else %}
+
                     Powered by <strong>Paul Media</strong>
+
                     <br>
 
                     Licensed to:
@@ -316,6 +386,8 @@
                     <br>
 
                     © 2026 Paul SchoolHub. All Rights Reserved.
+
+                    {% endif %}
 
                 </small>
 

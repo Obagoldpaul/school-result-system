@@ -1,0 +1,367 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>
+        {{ platform_settings.platform_name|default:"Paul SchoolHub" }}
+        - Platform Login
+    </title>
+
+    <link rel="preconnect"
+          href="https://fonts.googleapis.com">
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+          rel="stylesheet">
+
+    <style>
+
+        :root {
+            --primary: {{ platform_settings.platform_primary_color|default:"#ffc837" }};
+            --secondary: {{ platform_settings.platform_secondary_color|default:"#f7f2ef" }};
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+
+            font-family: 'Inter', Arial, sans-serif;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    var(--secondary),
+                    #ffffff
+                );
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            padding: 30px 20px;
+        }
+
+        .login-card {
+            width: 100%;
+            max-width: 430px;
+
+            background: #ffffff;
+
+            border-radius: 16px;
+
+            overflow: hidden;
+
+            box-shadow:
+                0 10px 35px rgba(0, 0, 0, 0.12);
+        }
+
+        .login-header {
+            background: var(--primary);
+
+            color: #ffffff;
+
+            text-align: center;
+
+            padding: 35px 25px;
+        }
+
+        .platform-logo {
+            width: 90px;
+            height: 90px;
+
+            object-fit: contain;
+
+            background: #ffffff;
+
+            padding: 8px;
+
+            border-radius: 10px;
+
+            margin-bottom: 15px;
+        }
+
+        .platform-name {
+            margin: 0;
+
+            font-size: 25px;
+
+            font-weight: 700;
+        }
+
+        .platform-description {
+            margin-top: 8px;
+
+            font-size: 13px;
+
+            opacity: 0.9;
+        }
+
+        .login-body {
+            padding: 32px;
+        }
+
+        .login-title {
+            text-align: center;
+
+            font-size: 20px;
+
+            font-weight: 600;
+
+            margin-bottom: 25px;
+
+            color: #222;
+        }
+
+        .error-message {
+            background: #fde8e8;
+
+            color: #b42318;
+
+            border: 1px solid #f5c2c7;
+
+            border-radius: 7px;
+
+            padding: 11px 12px;
+
+            margin-bottom: 18px;
+
+            font-size: 13px;
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        .form-group label {
+            display: block;
+
+            margin-bottom: 7px;
+
+            font-size: 14px;
+
+            font-weight: 600;
+
+            color: #333;
+        }
+
+        .form-group input {
+            width: 100%;
+
+            padding: 12px 14px;
+
+            border: 1px solid #d5d5d5;
+
+            border-radius: 8px;
+
+            font-size: 15px;
+
+            outline: none;
+        }
+
+        .form-group input:focus {
+            border-color: var(--primary);
+        }
+
+        .login-button {
+            width: 100%;
+
+            border: none;
+
+            border-radius: 8px;
+
+            padding: 13px;
+
+            margin-top: 5px;
+
+            background: var(--primary);
+
+            color: #222;
+
+            font-size: 15px;
+
+            font-weight: 700;
+
+            cursor: pointer;
+        }
+
+        .login-button:hover {
+            opacity: 0.9;
+        }
+
+        .login-footer {
+            text-align: center;
+
+            padding: 18px;
+
+            background: #f8f8f8;
+
+            border-top: 1px solid #eeeeee;
+
+            color: #777;
+
+            font-size: 12px;
+        }
+
+        .login-footer strong {
+            color: #333;
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+<div class="login-card">
+
+
+    <!-- PLATFORM HEADER -->
+
+    <div class="login-header">
+
+        {% if platform_settings.platform_logo %}
+
+            <img
+                src="{{ platform_settings.platform_logo.url }}"
+                alt="Paul SchoolHub"
+                class="platform-logo"
+            >
+
+        {% endif %}
+
+
+        <h1 class="platform-name">
+
+            {{ platform_settings.platform_name|default:"Paul SchoolHub" }}
+
+        </h1>
+
+
+        <div class="platform-description">
+
+            Platform Administration
+
+        </div>
+
+    </div>
+
+
+    <!-- LOGIN -->
+
+    <div class="login-body">
+
+        <div class="login-title">
+
+            Sign in to Platform
+
+        </div>
+
+
+        {% if form.non_field_errors %}
+
+            {% for error in form.non_field_errors %}
+
+                <div class="error-message">
+
+                    {{ error }}
+
+                </div>
+
+            {% endfor %}
+
+        {% endif %}
+
+
+        <form method="POST">
+
+            {% csrf_token %}
+
+
+            <div class="form-group">
+
+                <label for="id_username">
+
+                    Username
+
+                </label>
+
+                <input
+                    type="text"
+                    name="username"
+                    id="id_username"
+                    autocomplete="username"
+                    required
+                >
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label for="id_password">
+
+                    Password
+
+                </label>
+
+                <input
+                    type="password"
+                    name="password"
+                    id="id_password"
+                    autocomplete="current-password"
+                    required
+                >
+
+            </div>
+
+
+            <button
+                type="submit"
+                class="login-button"
+            >
+
+                Log In
+
+            </button>
+
+        </form>
+
+    </div>
+
+
+    <!-- FOOTER -->
+
+    <div class="login-footer">
+
+        <strong>
+            {{ platform_settings.platform_name|default:"Paul SchoolHub" }}
+        </strong>
+
+        <br>
+
+        {{ platform_settings.platform_footer|default:"Powered by Paul Media" }}
+
+        <br>
+
+        © 2026 Paul SchoolHub. All Rights Reserved.
+
+    </div>
+
+
+</div>
+
+</body>
+
+</html>

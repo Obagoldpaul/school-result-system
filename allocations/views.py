@@ -10,12 +10,14 @@ from .forms import (
 from .models import SubjectAllocation
 
 from accounts.decorators import staff_required
+from accounts.permissions import school_permission_required
 from accounts.utils import get_current_term
 
 from students.models import SchoolClass
 from academics.models import Term
 
 
+@school_permission_required("subjects.assign")
 @staff_required
 @login_required
 def add_allocation(request):
@@ -37,6 +39,7 @@ def add_allocation(request):
         }
     )
     
+@school_permission_required("subjects.assign")
 @staff_required
 @login_required
 def bulk_add_allocation(request):
@@ -286,6 +289,7 @@ def bulk_add_allocation(request):
     )
 
 
+@school_permission_required("subjects.view")
 @staff_required
 @login_required
 def allocation_list(request):

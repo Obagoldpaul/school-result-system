@@ -1,0 +1,400 @@
+{% extends "base.html" %}
+
+{% block title %}
+    School Users | {{ school.name }}
+{% endblock %}
+
+{% block content %}
+
+<div class="container py-4">
+
+    <!-- HEADER -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <div>
+
+            <h2 class="mb-1">
+                School Users
+            </h2>
+
+            <p class="text-muted mb-0">
+                {{ school.name }}
+            </p>
+
+            <small class="text-muted">
+                Manage users and assign their school-specific roles.
+            </small>
+
+        </div>
+
+    </div>
+
+
+    <!-- SUMMARY CARDS -->
+    <div class="row g-3 mb-4">
+
+        <div class="col-md-3">
+
+            <div class="card shadow-sm h-100">
+
+                <div class="card-body">
+
+                    <small class="text-muted">
+                        Total Users
+                    </small>
+
+                    <h3 class="mb-0">
+                        {{ total_users }}
+                    </h3>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="col-md-3">
+
+            <div class="card shadow-sm h-100">
+
+                <div class="card-body">
+
+                    <small class="text-muted">
+                        Students
+                    </small>
+
+                    <h3 class="mb-0">
+                        {{ total_students }}
+                    </h3>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="col-md-3">
+
+            <div class="card shadow-sm h-100">
+
+                <div class="card-body">
+
+                    <small class="text-muted">
+                        Teachers
+                    </small>
+
+                    <h3 class="mb-0">
+                        {{ total_teachers }}
+                    </h3>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="col-md-3">
+
+            <div class="card shadow-sm h-100">
+
+                <div class="card-body">
+
+                    <small class="text-muted">
+                        Management
+                    </small>
+
+                    <h3 class="mb-0">
+                        {{ total_management }}
+                    </h3>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- USER STATUS -->
+    <div class="row g-3 mb-4">
+
+        <div class="col-md-6">
+
+            <div class="alert alert-success mb-0">
+
+                <strong>{{ active_users }}</strong>
+                active users
+
+            </div>
+
+        </div>
+
+
+        <div class="col-md-6">
+
+            <div class="alert alert-secondary mb-0">
+
+                <strong>{{ inactive_users }}</strong>
+                inactive users
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- USERS TABLE -->
+    <div class="card shadow-sm">
+
+        <div class="card-body">
+
+            <div class="d-flex justify-content-between align-items-center mb-3">
+
+                <div>
+            
+                    <h5 class="mb-1">
+                        Registered Users
+                    </h5>
+            
+                    <small class="text-muted">
+                        Users belonging to {{ school.name }}.
+                    </small>
+            
+                </div>
+            
+            
+                <div class="d-flex gap-2">
+            
+                    <a
+                        href="{% url 'create_school_user' school.id %}"
+                        class="btn btn-primary btn-sm"
+                    >
+                        + Create User
+                    </a>
+            
+                    <a
+                        href="{% url 'manage_school_roles' school.id %}"
+                        class="btn btn-outline-primary btn-sm"
+                    >
+                        Manage Roles
+                    </a>
+            
+                </div>
+            
+            </div>
+
+
+            {% if users %}
+
+                <div class="table-responsive">
+
+                    <table class="table table-hover align-middle">
+
+                        <thead>
+
+                            <tr>
+
+                                <th>
+                                    #
+                                </th>
+
+                                <th>
+                                    User
+                                </th>
+
+                                <th>
+                                    Username
+                                </th>
+
+                                <th>
+                                    Account Type
+                                </th>
+
+                                <th>
+                                    School Role
+                                </th>
+
+                                <th>
+                                    Status
+                                </th>
+
+                                <th>
+                                    Action
+                                </th>
+
+                            </tr>
+
+                        </thead>
+
+
+                        <tbody>
+
+                            {% for user in users %}
+
+                                <tr>
+
+                                    <!-- NUMBER -->
+                                    <td>
+                                        {{ forloop.counter }}
+                                    </td>
+
+
+                                    <!-- USER -->
+                                    <td>
+
+                                        <strong>
+                                            {{ user.get_full_name|default:user.username }}
+                                        </strong>
+
+                                        {% if user.email %}
+
+                                            <br>
+
+                                            <small class="text-muted">
+                                                {{ user.email }}
+                                            </small>
+
+                                        {% endif %}
+
+                                    </td>
+
+
+                                    <!-- USERNAME -->
+                                    <td>
+                                        {{ user.username }}
+                                    </td>
+
+
+                                    <!-- SYSTEM ACCOUNT TYPE -->
+                                    <td>
+
+                                        {% if user.role == "ADMIN" %}
+
+                                            <span class="badge bg-danger">
+                                                {{ user.get_role_display }}
+                                            </span>
+
+                                        {% elif user.role == "TEACHER" %}
+
+                                            <span class="badge bg-primary">
+                                                {{ user.get_role_display }}
+                                            </span>
+
+                                        {% elif user.role == "STUDENT" %}
+
+                                            <span class="badge bg-info text-dark">
+                                                {{ user.get_role_display }}
+                                            </span>
+
+                                        {% else %}
+
+                                            <span class="badge bg-secondary">
+                                                {{ user.get_role_display }}
+                                            </span>
+
+                                        {% endif %}
+
+                                    </td>
+
+
+                                    <!-- SCHOOL ROLE -->
+                                    <td>
+
+                                        {% if user.school_role %}
+
+                                            <span class="badge bg-dark">
+                                                {{ user.school_role.name }}
+                                            </span>
+
+                                        {% else %}
+
+                                            <span class="text-muted">
+                                                Not assigned
+                                            </span>
+
+                                        {% endif %}
+
+                                    </td>
+
+
+                                    <!-- STATUS -->
+                                    <td>
+
+                                        {% if user.is_active %}
+
+                                            <span class="badge bg-success">
+                                                Active
+                                            </span>
+
+                                        {% else %}
+
+                                            <span class="badge bg-secondary">
+                                                Inactive
+                                            </span>
+
+                                        {% endif %}
+
+                                    </td>
+
+
+                                    <!-- ACTION -->
+                                    <td>
+
+                                        {% if user.role == "ADMIN" %}
+                                    
+                                            <a
+                                                href="{% url 'edit_school_user' school.id user.id %}"
+                                                class="btn btn-outline-secondary btn-sm"
+                                            >
+                                                Edit
+                                            </a>
+                                    
+                                        {% endif %}
+                                    
+                                        <a
+                                            href="{% url 'assign_user_school_role' school.id user.id %}"
+                                            class="btn btn-outline-primary btn-sm"
+                                        >
+                                            Assign Role
+                                        </a>
+                                    
+                                    </td>
+
+                                </tr>
+
+                            {% endfor %}
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            {% else %}
+
+                <div class="text-center py-5">
+
+                    <h5>
+                        No users found
+                    </h5>
+
+                    <p class="text-muted mb-0">
+                        There are currently no users belonging to this school.
+                    </p>
+
+                </div>
+
+            {% endif %}
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

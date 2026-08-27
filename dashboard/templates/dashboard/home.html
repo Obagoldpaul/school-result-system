@@ -2109,8 +2109,12 @@ STUDENT'S OWN BIRTHDAY
 
     <h3>
 
-        My Teaching Assignments
-
+        {% if is_management %}
+            Score Entry & Results Management
+        {% else %}
+            My Teaching Assignments
+        {% endif %}
+    
         {% if my_draft_count > 0 %}
 
         <span style="

@@ -5,6 +5,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 
 from academics.models import AcademicSession, Term
 from accounts.permissions import is_management
+from accounts.permissions import school_permission_required
 
 from .services import build_dashboard
 from django.db import IntegrityError
@@ -40,13 +41,8 @@ def home(request):
     )
 
 @login_required
+@school_permission_required("academics.manage")
 def academic_management(request):
-    if not is_management(request.user):
-        messages.error(
-            request,
-            "You do not have permission to manage academic sessions and terms."
-        )
-        return redirect("dashboard_home")
 
     school = request.user.school
 
@@ -103,13 +99,8 @@ def academic_management(request):
     
 
 @login_required
+@school_permission_required("academics.manage")
 def create_academic_session(request):
-    if not is_management(request.user):
-        messages.error(
-            request,
-            "You do not have permission to manage academic sessions."
-        )
-        return redirect("dashboard_home")
 
     if request.method != "POST":
         return redirect("academic_management")
@@ -142,13 +133,8 @@ def create_academic_session(request):
 
 
 @login_required
+@school_permission_required("academics.manage")
 def set_current_session(request, session_id):
-    if not is_management(request.user):
-        messages.error(
-            request,
-            "You do not have permission to change the current academic session."
-        )
-        return redirect("dashboard_home")
 
     if request.method != "POST":
         return redirect("academic_management")
@@ -186,13 +172,8 @@ def set_current_session(request, session_id):
     return redirect("academic_management")
 
 @login_required
+@school_permission_required("academics.manage")
 def create_term(request):
-    if not is_management(request.user):
-        messages.error(
-            request,
-            "You do not have permission to manage academic terms."
-        )
-        return redirect("dashboard_home")
 
     if request.method != "POST":
         return redirect("academic_management")
@@ -238,13 +219,8 @@ def create_term(request):
     return redirect("academic_management")
 
 @login_required
+@school_permission_required("academics.manage")
 def set_current_term(request, term_id):
-    if not is_management(request.user):
-        messages.error(
-            request,
-            "You do not have permission to change the current term."
-        )
-        return redirect("dashboard_home")
 
     if request.method != "POST":
         return redirect("academic_management")
@@ -266,13 +242,8 @@ def set_current_term(request, term_id):
     return redirect("academic_management")
 
 @login_required
+@school_permission_required("academics.manage")
 def create_department(request):
-    if not is_management(request.user):
-        messages.error(
-            request,
-            "You do not have permission to manage departments."
-        )
-        return redirect("dashboard_home")
 
     if request.method == "POST":
 
@@ -311,13 +282,8 @@ def create_department(request):
     return redirect("academic_management")
 
 @login_required
+@school_permission_required("academics.manage")
 def edit_department(request, department_id):
-    if not is_management(request.user):
-        messages.error(
-            request,
-            "You do not have permission to manage departments."
-        )
-        return redirect("dashboard_home")
 
     department = get_object_or_404(
         Department,

@@ -1,38 +1,111 @@
 {% extends "base.html" %}
 
-{% block title %}Paul SchoolHub Platform Administration{% endblock %}
+{% block title %}
+{{ platform_settings.platform_name|default:"Paul SchoolHub" }} Platform Administration
+{% endblock %}
 
 {% block content %}
 
-<div class="container-fluid">
+<style>
+    .platform-page {
+        --platform-primary: {{platform_settings.platform_primary_color|default:"#201E1E"}};
+        --platform-secondary: {{platform_settings.platform_secondary_color|default:"#FFC837"}};
+        --platform-accent: #8C1D27;
+        --platform-light: #F7F2EF;
+    }
+
+    .platform-page h1,
+    .platform-page h2,
+    .platform-page h5 {
+        color: var(--platform-primary);
+    }
+
+    .platform-page .platform-primary-btn {
+        background-color: var(--platform-primary);
+        border-color: var(--platform-primary);
+        color: #fff;
+    }
+
+    .platform-page .platform-primary-btn:hover {
+        background-color: var(--platform-accent);
+        border-color: var(--platform-accent);
+        color: #fff;
+    }
+
+    .platform-page .platform-outline-btn {
+        border-color: var(--platform-primary);
+        color: var(--platform-primary);
+    }
+
+    .platform-page .platform-outline-btn:hover {
+        background-color: var(--platform-primary);
+        color: #fff;
+    }
+
+    .platform-page .platform-alert {
+        background-color: var(--platform-light);
+        border-color: var(--platform-secondary);
+        color: var(--platform-primary);
+    }
+
+    .platform-page .platform-card {
+        border-top: 4px solid var(--platform-secondary);
+    }
+</style>
+<div class="container-fluid platform-page">
 
     <div class="d-flex justify-content-between align-items-center mb-4">
 
         <div>
-            <h1>Paul SchoolHub</h1>
-    
+
+            {% if platform_settings.platform_logo %}
+            <img src="{{ platform_settings.platform_logo.url }}" alt="{{ platform_settings.platform_name }}"
+                style="height: 50px; max-width: 180px; object-fit: contain;" class="mb-2">
+            {% endif %}
+
+            <h1>
+                {{ platform_settings.platform_name|default:"Paul SchoolHub" }}
+            </h1>
+
             <p class="text-muted mb-0">
                 Platform Administration
             </p>
+
         </div>
-    
-        <a href="{% url 'create_school' %}" class="btn btn-primary">
-            + Add School
-        </a>
-    
+
+        <div class="d-flex gap-2">
+
+            <a href="{% url 'platform_settings' %}" class="btn platform-outline-btn">
+                Platform Settings
+            </a>
+
+            <a href="{% url 'create_school' %}" class="btn platform-primary-btn">
+                + Add School
+            </a>
+
+        </div>
+
     </div>
 
-    <div class="alert alert-primary">
+
+    <div class="alert platform-alert">
+
         <strong>Platform Administrator</strong>
+
         <br>
-        Welcome to the Paul SchoolHub platform administration area.
+
+        Welcome to the
+        {{ platform_settings.platform_name|default:"Paul SchoolHub" }}
+        platform administration area.
+
     </div>
+
 
     <div class="row g-4">
 
         <div class="col-md-4">
 
-            <div class="card shadow-sm h-100">
+            <div class="card shadow-sm h-100 platform-card">
 
                 <div class="card-body">
 
@@ -45,7 +118,8 @@
                     </h2>
 
                     <p class="text-muted">
-                        Manage schools using Paul SchoolHub.
+                        Manage schools using
+                        {{ platform_settings.platform_name|default:"Paul SchoolHub" }}.
                     </p>
 
                 </div>
@@ -57,7 +131,7 @@
 
         <div class="col-md-4">
 
-            <div class="card shadow-sm h-100">
+            <div class="card shadow-sm h-100 platform-card">
 
                 <div class="card-body">
 
@@ -82,7 +156,7 @@
 
         <div class="col-md-4">
 
-            <div class="card shadow-sm h-100">
+            <div class="card shadow-sm h-100 platform-card">
 
                 <div class="card-body">
 
@@ -104,7 +178,33 @@
 
         </div>
 
+        <div class="col-md-4">
+
+            <div class="card shadow-sm h-100 platform-card">
+        
+                <div class="card-body">
+        
+                    <h5 class="card-title">
+                        Maintenance
+                    </h5>
+        
+                    <p class="text-muted">
+                        Manage platform maintenance and database backups.
+                    </p>
+        
+                    <a href="{% url 'maintenance_home' %}"
+                       class="btn platform-outline-btn">
+                        Open Maintenance
+                    </a>
+        
+                </div>
+        
+            </div>
+        
+        </div>
+
     </div>
+
 
     <!-- ===================================================== -->
     <!-- SCHOOLS & SUBSCRIPTIONS -->
@@ -117,6 +217,7 @@
             <div class="d-flex justify-content-between align-items-center mb-3">
 
                 <div>
+
                     <h5 class="card-title mb-1">
                         Schools & Subscriptions
                     </h5>
@@ -124,6 +225,7 @@
                     <p class="text-muted mb-0">
                         Manage subscription packages and billing cycles.
                     </p>
+
                 </div>
 
             </div>
@@ -138,6 +240,7 @@
                         <tr>
                             <th>School</th>
                             <th>Code</th>
+                            <th>Users</th>
                             <th>Package</th>
                             <th>Billing Cycle</th>
                             <th>Status</th>
@@ -145,6 +248,7 @@
                         </tr>
 
                     </thead>
+
 
                     <tbody>
 
@@ -163,6 +267,10 @@
                             </td>
 
                             <td>
+                                <strong>{{ school.user_count }}</strong>
+                            </td>
+
+                            <td>
                                 {{ school.subscription.package }}
                             </td>
 
@@ -172,30 +280,51 @@
 
                             <td>
 
-                                {% if school.subscription.is_active %}
-
-                                    <span class="badge bg-success">
-                                        Active
-                                    </span>
-
-                                {% else %}
-
-                                    <span class="badge bg-secondary">
-                                        Inactive
-                                    </span>
-
+                                {% if school.subscription_status == "ACTIVE" %}
+                            
+                                <span class="badge bg-success">
+                                    🟢 Active
+                                </span>
+                            
+                                {% elif school.subscription_status == "EXPIRING_SOON" %}
+                            
+                                <span class="badge bg-warning text-dark">
+                                    🟠 Expiring Soon
+                                </span>
+                            
+                                {% elif school.subscription_status == "EXPIRED" %}
+                            
+                                <span class="badge bg-danger">
+                                    🔴 Expired
+                                </span>
+                            
                                 {% endif %}
-
+                            
                             </td>
 
                             <td class="text-end">
 
-                                <a
-                                    href="{% url 'edit_subscription' school.id %}"
-                                    class="btn btn-sm btn-outline-primary"
-                                >
+                                <a href="{% url 'edit_subscription' school.id %}"
+                                    class="btn btn-sm btn-outline-primary">
                                     Manage Subscription
                                 </a>
+
+                                <form method="POST" action="{% url 'toggle_school_status' school.id %}"
+                                    style="display: inline;">
+                                    {% csrf_token %}
+
+                                    {% if school.is_active %}
+                                    <button type="submit" class="btn btn-sm btn-outline-danger"
+                                        onclick="return confirm('Deactivate {{ school.name }}?');">
+                                        Deactivate
+                                    </button>
+                                    {% else %}
+                                    <button type="submit" class="btn btn-sm btn-outline-success"
+                                        onclick="return confirm('Activate {{ school.name }}?');">
+                                        Activate
+                                    </button>
+                                    {% endif %}
+                                </form>
 
                             </td>
 
@@ -205,10 +334,7 @@
 
                         <tr>
 
-                            <td
-                                colspan="6"
-                                class="text-center text-muted py-4"
-                            >
+                            <td colspan="7" class="text-center text-muted py-4">
                                 No schools have been registered yet.
                             </td>
 

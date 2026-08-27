@@ -540,35 +540,62 @@ def build_dashboard(user):
         # SUBJECT ALLOCATION WORKFLOW
         # --------------------------------------------------
 
+        management_allocations = (
+            SubjectAllocation.objects
+            .filter(
+                school_class__school=school,
+            )
+            .select_related(
+                "teacher",
+                "subject",
+                "school_class",
+                "term",
+            )
+        )
+
         context.update({
 
+            # All allocations available to management
+            "my_allocations":
+                management_allocations,
+
+            "my_draft_count":
+                management_allocations.filter(
+                    status=SubjectAllocation.Status.DRAFT
+                ).count(),
+
+            "my_submitted_count":
+                management_allocations.filter(
+                    status=SubjectAllocation.Status.SUBMITTED
+                ).count(),
+
+            "my_approved_count":
+                management_allocations.filter(
+                    status=SubjectAllocation.Status.APPROVED
+                ).count(),
+
             "pending_submission_count":
-                SubjectAllocation.objects.filter(
-                    school_class__school=school,
+                management_allocations.filter(
                     status=SubjectAllocation.Status.DRAFT,
                 ).count(),
 
             "pending_review":
-                SubjectAllocation.objects.filter(
-                    school_class__school=school,
+                management_allocations.filter(
                     status=SubjectAllocation.Status.SUBMITTED,
                 ),
 
             "pending_approval":
-                SubjectAllocation.objects.filter(
-                    school_class__school=school,
+                management_allocations.filter(
                     status=SubjectAllocation.Status.REVIEWED,
                 ),
 
             "pending_publish":
-                SubjectAllocation.objects.filter(
-                    school_class__school=school,
+                management_allocations.filter(
                     status=SubjectAllocation.Status.APPROVED,
                 ),
 
             "published_count":
-                SubjectAllocation.objects.filter(
-                    school_class__school=school,
+                management_allocations.filter(
                     status=SubjectAllocation.Status.PUBLISHED,
                 ).count(),
 

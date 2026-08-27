@@ -386,6 +386,26 @@ class Payment(models.Model):
             )
 
             super().save(update_fields=["receipt_number"])
+    
+    class Meta:
+        permissions = [
+            (
+                "record_payment",
+                "Can record student payments",
+            ),
+            (
+                "edit_payment",
+                "Can edit student payments",
+            ),
+            (
+                "view_payment_history",
+                "Can view student payment history",
+            ),
+            (
+                "view_student_owing",
+                "Can view students owing fees",
+            ),
+        ]
 
 class PaymentAllocation(models.Model):
     """

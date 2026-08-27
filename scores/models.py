@@ -56,10 +56,33 @@ class Score(models.Model):
 
     class Meta:
         unique_together = (
-            'student',
-            'subject',
-            'term',
+            "student",
+            "subject",
+            "term",
         )
+
+        permissions = [
+            (
+                "enter_score",
+                "Can enter student scores",
+            ),
+            (
+                "edit_score",
+                "Can edit student scores",
+            ),
+            (
+                "submit_score",
+                "Can submit student scores for approval",
+            ),
+            (
+                "approve_result",
+                "Can approve student results",
+            ),
+            (
+                "publish_result",
+                "Can publish student results",
+            ),
+        ]
 
     def clean(self):
         from django.core.exceptions import ValidationError

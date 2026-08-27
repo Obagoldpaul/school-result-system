@@ -2,6 +2,7 @@ from django import forms
 
 from .models import Score, ReportCardExtra
 from accounts.permissions import can_edit_principal_remark
+from accounts.permissions import user_has_permission
 
 
 class ScoreEntryForm(forms.ModelForm):
@@ -11,38 +12,35 @@ class ScoreEntryForm(forms.ModelForm):
 
 
 class ReportCardExtraForm(forms.ModelForm):
+
     class Meta:
         model = ReportCardExtra
         fields = [
-            'days_present',
-            'days_school_opened',
-            'teacher_remark',
-            'principal_remark',
-            'responsibility',
-            'leadership',
-            'hardworking',
-            'neatness',
+            "teacher_remark",
+            "principal_remark",
+            "responsibility",
+            "leadership",
+            "hardworking",
+            "neatness",
         ]
 
     def __init__(self, *args, user=None, **kwargs):
         super().__init__(*args, **kwargs)
 
-        if not can_edit_principal_remark(user):
-            self.fields.pop('principal_remark', None)
-
-    def clean(self):
-        cleaned_data = super().clean()
-
-        days_present = cleaned_data.get('days_present')
-        days_school_opened = cleaned_data.get('days_school_opened')
-
-        if (
-            days_present is not None
-            and days_school_opened is not None
-            and days_present > days_school_opened
+        if not user_has_permission(
+            user,
+            "reports.teacher_remark",
         ):
-            raise forms.ValidationError(
-                "Days present cannot be greater than days school opened."
+            self.fields.pop(
+                "teacher_remark",
+                None,
             )
 
-        return cleaned_data
+        if not user_has_permission(
+            user,
+            "reports.principal_remark",
+        ):
+            self.fields.pop(
+                "principal_remark",
+                None,
+            )

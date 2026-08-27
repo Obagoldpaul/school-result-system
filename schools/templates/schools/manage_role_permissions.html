@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container py-4">
+
+    <div class="mb-4">
+
+        <h2>
+            Manage Permissions
+        </h2>
+
+        <p class="text-muted mb-1">
+            {{ school.name }}
+        </p>
+
+        <h5 class="mt-2">
+            Role: {{ role.name }}
+        </h5>
+
+        {% if role.description %}
+            <p class="text-muted">
+                {{ role.description }}
+            </p>
+        {% endif %}
+
+    </div>
+
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+
+
+    <form method="post">
+
+        {% csrf_token %}
+
+
+        {% for module, permissions in grouped_permissions.items %}
+
+            <div class="card shadow-sm mb-4">
+
+                <div class="card-header">
+
+                    <h5 class="mb-0">
+                        {{ module }}
+                    </h5>
+
+                </div>
+
+
+                <div class="card-body">
+
+                    <div class="row">
+
+                        {% for permission in permissions %}
+
+                            <div class="col-md-6 col-lg-4 mb-3">
+
+                                <div class="form-check">
+
+                                    <input
+                                        class="form-check-input"
+                                        type="checkbox"
+                                        name="permissions"
+                                        value="{{ permission.id }}"
+                                        id="permission_{{ permission.id }}"
+
+                                        {% if permission.id in selected_permissions %}
+                                            checked
+                                        {% endif %}
+                                    >
+
+                                    <label
+                                        class="form-check-label"
+                                        for="permission_{{ permission.id }}"
+                                    >
+
+                                        <strong>
+                                            {{ permission.name }}
+                                        </strong>
+
+                                        {% if permission.description %}
+                                            <small class="d-block text-muted">
+                                                {{ permission.description }}
+                                            </small>
+                                        {% endif %}
+
+                                    </label>
+
+                                </div>
+
+                            </div>
+
+                        {% endfor %}
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        {% empty %}
+
+            <div class="alert alert-warning">
+
+                No active permissions have been created yet.
+
+            </div>
+
+        {% endfor %}
+
+
+        <div class="d-flex gap-2">
+
+            <button
+                type="submit"
+                class="btn btn-primary"
+            >
+                Save Permissions
+            </button>
+
+            <a
+                href="{% url 'manage_school_roles' school.id %}"
+                class="btn btn-secondary"
+            >
+                Back to Roles
+            </a>
+
+        </div>
+
+    </form>
+
+</div>
+
+{% endblock %}

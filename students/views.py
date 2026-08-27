@@ -4,10 +4,11 @@ from django.contrib.auth.decorators import login_required
 from .forms import StudentRegistrationForm, SchoolClassForm
 from .models import Student, SchoolClass, Department
 from accounts.decorators import staff_required, management_required
+from accounts.permissions import school_permission_required
 from django.db import models
 from subjects.models import Subject
 
-@management_required
+@school_permission_required("students.add")
 @login_required
 def register_student(request):
     if request.method == "POST":
@@ -38,6 +39,7 @@ def register_student(request):
         },
     )
 
+@school_permission_required("students.view")
 @login_required
 def student_list(request):
 
@@ -117,7 +119,7 @@ def student_list(request):
         },
     )
     
-@management_required
+@school_permission_required("classes.view")
 @login_required
 def class_management(request):
 
@@ -181,7 +183,7 @@ def class_management(request):
         },
     )
     
-@management_required
+@school_permission_required("classes.manage")
 @login_required
 def add_class(request):
     if request.method == "POST":
@@ -215,7 +217,7 @@ def add_class(request):
     )
 
 
-@management_required
+@school_permission_required("classes.manage")
 @login_required
 def edit_class(request, class_id):
     school_class = get_object_or_404(
@@ -257,7 +259,7 @@ def edit_class(request, class_id):
         }
     )
 
-@management_required
+@school_permission_required("students.change")
 @login_required
 def edit_student(request, student_id):
     student = get_object_or_404(
@@ -465,7 +467,7 @@ def edit_student(request, student_id):
         }
     )
     
-@management_required
+@school_permission_required("classes.promote")
 @login_required
 def promote_class(request):
 
@@ -548,6 +550,7 @@ def promote_class(request):
         }
     )
 
+@school_permission_required("students.view")
 @login_required
 def student_profile(request, student_id):
 
