@@ -7,6 +7,7 @@ from accounts.decorators import staff_required, management_required
 from accounts.permissions import school_permission_required
 from django.db import models
 from subjects.models import Subject
+from django.core.mail import send_mail
 
 @school_permission_required("students.add")
 @login_required
@@ -19,7 +20,31 @@ def register_student(request):
         )
 
         if form.is_valid():
-            form.save()
+            password = form.cleaned_data["password"]
+
+            student = form.save()
+
+            if student.user.email:
+                send_mail(
+                    subject="Your Paul SchoolHub Login Details",
+                    message=(
+                        f"Hello {student.user.get_full_name()},\n\n"
+                        f"Your student account has been created on "
+                        f"Paul SchoolHub for {request.user.school.name}.\n\n"
+                        f"Username: {student.user.username}\n"
+                        f"Password: {password}\n\n"
+                        f"You can now log in to your school portal using "
+                        f"these credentials.\n\n"
+                        f"Please keep your login details secure.\n\n"
+                        f"Regards,\n"
+                        f"{request.user.school.name}\n"
+                        f"Powered by Paul SchoolHub"
+                    ),
+                    from_email=None,
+                    recipient_list=[student.user.email],
+                    fail_silently=True,
+                )
+
             return redirect("student_list")
 
     else:

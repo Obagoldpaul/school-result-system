@@ -338,6 +338,8 @@ class StudentRegistrationForm(forms.ModelForm):
             classes = SchoolClass.objects.filter(
                 school=user.school
             )
+            
+            self.fields["school_class"].queryset = classes
 
             section_order = [
                 SchoolClass.Section.PRE_PRIMARY,

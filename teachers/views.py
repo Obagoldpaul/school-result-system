@@ -7,6 +7,7 @@ from .forms import TeacherRegistrationForm
 from .models import Teacher
 from accounts.decorators import staff_required, management_required
 from accounts.permissions import school_permission_required
+from django.core.mail import send_mail
 
 
 @management_required
@@ -24,9 +25,36 @@ def register_teacher(request):
 
         if form.is_valid():
 
-            form.save(
+            # Get the plain-text password before it is hashed.
+            password = form.cleaned_data["password"]
+
+            # Create the teacher and user account.
+            teacher = form.save(
                 user=request.user
             )
+
+            # Send login credentials if an email address was provided.
+            if teacher.user.email:
+                send_mail(
+                    subject="Your Paul SchoolHub Login Details",
+                    message=(
+                        f"Hello {teacher.user.get_full_name()},\n\n"
+                        f"Your teacher account has been created on "
+                        f"Paul SchoolHub for "
+                        f"{request.user.school.name}.\n\n"
+                        f"Username: {teacher.user.username}\n"
+                        f"Password: {password}\n\n"
+                        f"You can now log in to your school portal "
+                        f"using these credentials.\n\n"
+                        f"Please keep your login details secure.\n\n"
+                        f"Regards,\n"
+                        f"{request.user.school.name}\n"
+                        f"Powered by Paul SchoolHub"
+                    ),
+                    from_email=None,
+                    recipient_list=[teacher.user.email],
+                    fail_silently=True,
+                )
 
             return redirect(
                 "teacher_list"
@@ -34,8 +62,9 @@ def register_teacher(request):
 
     else:
 
-        form = TeacherRegistrationForm(user=request.user,)
-
+        form = TeacherRegistrationForm(
+            user=request.user,
+        )
 
     return render(
         request,
@@ -156,6 +185,14 @@ def edit_teacher(request, teacher_id):
             'years_of_experience'
         ) or 0
         teacher.employment_date = request.POST.get('employment_date') or None
+        
+        # ==========================
+        # PAYMENT INFORMATION
+        # ==========================
+
+        teacher.bank_name = request.POST.get('bank_name', '')
+        teacher.account_name = request.POST.get('account_name', '')
+        teacher.account_number = request.POST.get('account_number', '')
 
         # ==========================
         # SCHOOL RESPONSIBILITY

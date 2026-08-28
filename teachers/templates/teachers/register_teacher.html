@@ -45,7 +45,12 @@ Register Teacher
 
                     <div class="col-md-3 mb-3">
 
-                        {{ form.passport.label_tag }}
+                        <label for="{{ form.passport.id_for_label }}">
+                            {{ form.passport.label }}
+                            {% if form.passport.field.required %}
+                                <span class="text-danger">*</span>
+                            {% endif %}
+                        </label>
 
                         <div class="mb-2">
 
@@ -72,23 +77,49 @@ Register Teacher
 
 
                     <div class="col-md-3 mb-3">
-                        {{ form.last_name.label_tag }}
+
+                        <label for="{{ form.last_name.id_for_label }}">
+                            {{ form.last_name.label }}
+                            {% if form.last_name.field.required %}
+                                <span class="text-danger">*</span>
+                            {% endif %}
+                        </label>
+
                         {{ form.last_name }}
                         {{ form.last_name.errors }}
+
                     </div>
 
 
 
                     <div class="col-md-3 mb-3">
-                        {{ form.first_name.label_tag }}
+
+                        <label for="{{ form.first_name.id_for_label }}">
+                            {{ form.first_name.label }}
+                            {% if form.first_name.field.required %}
+                                <span class="text-danger">*</span>
+                            {% endif %}
+                        </label>
+
                         {{ form.first_name }}
+                        {{ form.first_name.errors }}
+
                     </div>
 
 
 
                     <div class="col-md-3 mb-3">
-                        {{ form.other_name.label_tag }}
+
+                        <label for="{{ form.other_name.id_for_label }}">
+                            {{ form.other_name.label }}
+                            {% if form.other_name.field.required %}
+                                <span class="text-danger">*</span>
+                            {% endif %}
+                        </label>
+
                         {{ form.other_name }}
+                        {{ form.other_name.errors }}
+
                     </div>
 
 
@@ -100,22 +131,47 @@ Register Teacher
 
 
                     <div class="col-md-4 mb-3">
-                        {{ form.username.label_tag }}
+
+                        <label for="{{ form.username.id_for_label }}">
+                            {{ form.username.label }}
+                            {% if form.username.field.required %}
+                                <span class="text-danger">*</span>
+                            {% endif %}
+                        </label>
+
                         {{ form.username }}
                         {{ form.username.errors }}
+
                     </div>
 
 
                     <div class="col-md-4 mb-3">
-                        {{ form.password.label_tag }}
+
+                        <label for="{{ form.password.id_for_label }}">
+                            {{ form.password.label }}
+                            {% if form.password.field.required %}
+                                <span class="text-danger">*</span>
+                            {% endif %}
+                        </label>
+
                         {{ form.password }}
                         {{ form.password.errors }}
+
                     </div>
 
 
                     <div class="col-md-4 mb-3">
-                        {{ form.email.label_tag }}
+
+                        <label for="{{ form.email.id_for_label }}">
+                            {{ form.email.label }}
+                            {% if form.email.field.required %}
+                                <span class="text-danger">*</span>
+                            {% endif %}
+                        </label>
+
                         {{ form.email }}
+                        {{ form.email.errors }}
+
                     </div>
 
 
@@ -127,20 +183,47 @@ Register Teacher
 
 
                     <div class="col-md-4 mb-3">
-                        {{ form.phone_number.label_tag }}
+
+                        <label for="{{ form.phone_number.id_for_label }}">
+                            {{ form.phone_number.label }}
+                            {% if form.phone_number.field.required %}
+                                <span class="text-danger">*</span>
+                            {% endif %}
+                        </label>
+
                         {{ form.phone_number }}
+                        {{ form.phone_number.errors }}
+
                     </div>
 
 
                     <div class="col-md-4 mb-3">
-                        {{ form.date_of_birth.label_tag }}
+
+                        <label for="{{ form.date_of_birth.id_for_label }}">
+                            {{ form.date_of_birth.label }}
+                            {% if form.date_of_birth.field.required %}
+                                <span class="text-danger">*</span>
+                            {% endif %}
+                        </label>
+
                         {{ form.date_of_birth }}
+                        {{ form.date_of_birth.errors }}
+
                     </div>
 
 
                     <div class="col-md-4 mb-3">
-                        {{ form.gender.label_tag }}
+
+                        <label for="{{ form.gender.id_for_label }}">
+                            {{ form.gender.label }}
+                            {% if form.gender.field.required %}
+                                <span class="text-danger">*</span>
+                            {% endif %}
+                        </label>
+
                         {{ form.gender }}
+                        {{ form.gender.errors }}
+
                     </div>
 
 
@@ -161,21 +244,47 @@ Register Teacher
 
 
                     <div class="col-md-4 mb-3">
-                        {{ form.staff_id.label_tag }}
+
+                        <label for="{{ form.staff_id.id_for_label }}">
+                            {{ form.staff_id.label }}
+                            {% if form.staff_id.field.required %}
+                                <span class="text-danger">*</span>
+                            {% endif %}
+                        </label>
+
                         {{ form.staff_id }}
                         {{ form.staff_id.errors }}
+
                     </div>
 
 
                     <div class="col-md-4 mb-3">
-                        {{ form.qualification.label_tag }}
+
+                        <label for="{{ form.qualification.id_for_label }}">
+                            {{ form.qualification.label }}
+                            {% if form.qualification.field.required %}
+                                <span class="text-danger">*</span>
+                            {% endif %}
+                        </label>
+
                         {{ form.qualification }}
+                        {{ form.qualification.errors }}
+
                     </div>
 
 
                     <div class="col-md-4 mb-3">
-                        {{ form.years_of_experience.label_tag }}
+
+                        <label for="{{ form.years_of_experience.id_for_label }}">
+                            {{ form.years_of_experience.label }}
+                            {% if form.years_of_experience.field.required %}
+                                <span class="text-danger">*</span>
+                            {% endif %}
+                        </label>
+
                         {{ form.years_of_experience }}
+                        {{ form.years_of_experience.errors }}
+
                     </div>
 
 
@@ -187,20 +296,86 @@ Register Teacher
 
 
                     <div class="col-md-6 mb-3">
-                        {{ form.certificate.label_tag }}
+
+                        <label for="{{ form.certificate.id_for_label }}">
+                            {{ form.certificate.label }}
+                            {% if form.certificate.field.required %}
+                                <span class="text-danger">*</span>
+                            {% endif %}
+                        </label>
+
                         {{ form.certificate }}
+                        {{ form.certificate.errors }}
+
                     </div>
 
 
                     <div class="col-md-6 mb-3">
-                        {{ form.employment_date.label_tag }}
+
+                        <label for="{{ form.employment_date.id_for_label }}">
+                            {{ form.employment_date.label }}
+                            {% if form.employment_date.field.required %}
+                                <span class="text-danger">*</span>
+                            {% endif %}
+                        </label>
+
                         {{ form.employment_date }}
+                        {{ form.employment_date.errors }}
+
                     </div>
 
 
                 </div>
 
-
+                <!-- ========================== -->
+                <!-- PAYMENT INFORMATION -->
+                <!-- ========================== -->
+            
+                <h5 class="border-bottom pb-2 mt-4 mb-3">
+                    Payment Information
+                </h5>
+            
+                <div class="row">
+            
+                    <div class="col-md-4 mb-3">
+                        <label for="{{ form.bank_name.id_for_label }}">
+                            {{ form.bank_name.label }}
+                            {% if form.bank_name.field.required %}
+                                <span class="text-danger">*</span>
+                            {% endif %}
+                        </label>
+            
+                        {{ form.bank_name }}
+                        {{ form.bank_name.errors }}
+                    </div>
+            
+            
+                    <div class="col-md-4 mb-3">
+                        <label for="{{ form.account_name.id_for_label }}">
+                            {{ form.account_name.label }}
+                            {% if form.account_name.field.required %}
+                                <span class="text-danger">*</span>
+                            {% endif %}
+                        </label>
+            
+                        {{ form.account_name }}
+                        {{ form.account_name.errors }}
+                    </div>
+            
+            
+                    <div class="col-md-4 mb-3">
+                        <label for="{{ form.account_number.id_for_label }}">
+                            {{ form.account_number.label }}
+                            {% if form.account_number.field.required %}
+                                <span class="text-danger">*</span>
+                            {% endif %}
+                        </label>
+            
+                        {{ form.account_number }}
+                        {{ form.account_number.errors }}
+                    </div>
+            
+                </div>
 
 
                 <!-- ADDRESS INFORMATION -->
@@ -208,32 +383,56 @@ Register Teacher
                 <h5 class="border-bottom pb-2 mt-4 mb-3">
                     Address Information
                 </h5>
-                
-                
+
+
                 <div class="row">
-                
+
+
                     <div class="col-md-4 mb-3">
-                        {{ form.state_of_origin.label_tag }}
+
+                        <label for="{{ form.state_of_origin.id_for_label }}">
+                            {{ form.state_of_origin.label }}
+                            {% if form.state_of_origin.field.required %}
+                                <span class="text-danger">*</span>
+                            {% endif %}
+                        </label>
+
                         {{ form.state_of_origin }}
                         {{ form.state_of_origin.errors }}
+
                     </div>
-                
-                
+
+
                     <div class="col-md-4 mb-3">
-                        {{ form.local_government.label_tag }}
+
+                        <label for="{{ form.local_government.id_for_label }}">
+                            {{ form.local_government.label }}
+                            {% if form.local_government.field.required %}
+                                <span class="text-danger">*</span>
+                            {% endif %}
+                        </label>
+
                         {{ form.local_government }}
                         {{ form.local_government.errors }}
+
                     </div>
-                
+
+
                 </div>
-                
-                
+
+
                 <div class="mb-3">
-                
-                    {{ form.home_address.label_tag }}
+
+                    <label for="{{ form.home_address.id_for_label }}">
+                        {{ form.home_address.label }}
+                        {% if form.home_address.field.required %}
+                            <span class="text-danger">*</span>
+                        {% endif %}
+                    </label>
+
                     {{ form.home_address }}
                     {{ form.home_address.errors }}
-                
+
                 </div>
 
 
@@ -251,9 +450,15 @@ Register Teacher
 
                     <div class="col-md-6 mb-3">
 
-                        {{ form.is_class_teacher.label_tag }}
+                        <label for="{{ form.is_class_teacher.id_for_label }}">
+                            {{ form.is_class_teacher.label }}
+                            {% if form.is_class_teacher.field.required %}
+                                <span class="text-danger">*</span>
+                            {% endif %}
+                        </label>
 
                         {{ form.is_class_teacher }}
+                        {{ form.is_class_teacher.errors }}
 
                     </div>
 
@@ -261,10 +466,14 @@ Register Teacher
 
                     <div class="col-md-6 mb-3">
 
-                        {{ form.assigned_class.label_tag }}
+                        <label for="{{ form.assigned_class.id_for_label }}">
+                            {{ form.assigned_class.label }}
+                            {% if form.assigned_class.field.required %}
+                                <span class="text-danger">*</span>
+                            {% endif %}
+                        </label>
 
                         {{ form.assigned_class }}
-
                         {{ form.assigned_class.errors }}
 
                     </div>

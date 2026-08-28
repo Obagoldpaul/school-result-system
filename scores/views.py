@@ -571,7 +571,6 @@ def report_card(request, student_id, term_id):
 
 @login_required
 @feature_required("ADVANCED_REPORTING")
-@school_permission_required("reports.view")
 def report_card_pdf(request, student_id, term_id):
     student = get_object_or_404(Student, id=student_id)
     term = get_object_or_404(Term, id=term_id)
