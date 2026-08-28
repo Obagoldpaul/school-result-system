@@ -24,10 +24,61 @@
     </a>
 </p>
 
+<!-- SUBJECT LEVEL FILTER -->
+<form method="get" class="mb-4">
+
+    <label for="level" class="form-label">
+        Filter by School Level
+    </label>
+
+    <div class="d-flex gap-2 align-items-center">
+
+        <select
+            name="level"
+            id="level"
+            class="form-select"
+            style="max-width: 250px;"
+        >
+
+            <option value="">
+                All Levels
+            </option>
+
+            {% for level in available_levels %}
+
+                <option
+                    value="{{ level }}"
+                    {% if selected_level == level %}selected{% endif %}
+                >
+                    {{ level|title }}
+                </option>
+
+            {% endfor %}
+
+        </select>
+
+        <button type="submit" class="btn btn-primary">
+            Filter
+        </button>
+
+        {% if selected_level %}
+            <a
+                href="{% url 'subject_list' %}"
+                class="btn btn-outline-secondary"
+            >
+                Clear
+            </a>
+        {% endif %}
+
+    </div>
+
+</form>
+
 <table>
     <tr>
         <th>Name</th>
         <th>Code</th>
+        <th>Level</th>
         <th>Type</th>
         <th>Parent Subject</th>
         <th>Action</th>
@@ -42,6 +93,10 @@
 
         <td>
             {{ subject.code|default:"-" }}
+        </td>
+
+        <td>
+            {{ subject.get_level_display }}
         </td>
 
         <td>
@@ -85,7 +140,7 @@
     {% empty %}
 
     <tr>
-        <td colspan="5">
+        <td colspan="6">
             No active subjects found.
         </td>
     </tr>

@@ -30,20 +30,22 @@
 
     <form method="GET" class="results-filter">
 
+        <!-- CLASS -->
+    
         <div class="filter-field">
-
+    
             <label for="class">
                 Class
             </label>
-
+    
             <select name="class" id="class">
-
+    
                 <option value="">
                     -- Select Class --
                 </option>
-
+    
                 {% for c in classes %}
-
+    
                 <option
                     value="{{ c.id }}"
                     {% if selected_class and c.id == selected_class.id %}
@@ -52,52 +54,102 @@
                 >
                     {{ c.name }}
                 </option>
-
+    
                 {% endfor %}
-
+    
             </select>
-
+    
         </div>
-
-
+    
+    
+        <!-- ACADEMIC SESSION -->
+    
         <div class="filter-field">
-
-            <label for="term">
-                Academic Term
+    
+            <label for="session">
+                Academic Session
             </label>
-
-            <select name="term" id="term">
-
+    
+            <select name="session" id="session">
+    
                 <option value="">
-                    -- Select Term --
+                    -- Select Academic Session --
                 </option>
-
-                {% for t in terms %}
-
+    
+                {% for s in sessions %}
+    
                 <option
-                    value="{{ t.id }}"
-                    {% if selected_term and t.id == selected_term.id %}
+                    value="{{ s.id }}"
+                    {% if selected_session and s.id == selected_session.id %}
                         selected
                     {% endif %}
                 >
-                    {{ t }}
+                    {{ s.name }}
                 </option>
-
+    
                 {% endfor %}
-
+    
             </select>
-
+    
         </div>
-
-
+    
+    
+        <!-- ACADEMIC TERM -->
+    
+        <div class="filter-field">
+    
+            <label for="term">
+                Academic Term
+            </label>
+    
+            <select
+                name="term"
+                id="term"
+                {% if not selected_session %}disabled{% endif %}
+            >
+    
+                {% if selected_session %}
+    
+                    <option value="">
+                        -- Select Academic Term --
+                    </option>
+    
+                    {% for t in terms %}
+    
+                    <option
+                        value="{{ t.id }}"
+                        {% if selected_term and t.id == selected_term.id %}
+                            selected
+                        {% endif %}
+                    >
+                        {{ t.get_name_display }}
+                    </option>
+    
+                    {% endfor %}
+    
+                {% else %}
+    
+                    <option value="">
+                        -- Select Academic Session First --
+                    </option>
+    
+                {% endif %}
+    
+            </select>
+    
+        </div>
+    
+    
+        <!-- ACTION -->
+    
         <div class="filter-action">
-
+    
             <button type="submit" class="primary-btn">
                 View Results
             </button>
-
+    
         </div>
-
+    
     </form>
 
 </div>
@@ -414,7 +466,7 @@
 
 .results-filter {
     display: grid;
-    grid-template-columns: 1fr 1fr auto;
+    grid-template-columns: 1fr 1fr 1fr auto;
     gap: 18px;
     align-items: end;
 }

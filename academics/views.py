@@ -44,6 +44,25 @@ def school_settings(request):
 
             settings.save()
 
+            # -------------------------------------------------
+            # KEEP BASIC SCHOOL INFORMATION IN SCHOOL MODEL
+            # -------------------------------------------------
+
+            school = request.user.school
+
+            school.name = form.cleaned_data["school_name"]
+            school.address = form.cleaned_data["school_address"]
+            school.phone = form.cleaned_data["school_phone"]
+            school.email = form.cleaned_data["school_email"]
+
+            if "school_logo" in form.cleaned_data:
+                uploaded_logo = form.cleaned_data["school_logo"]
+
+                if uploaded_logo:
+                    school.logo = uploaded_logo
+
+            school.save()
+
             messages.success(
                 request,
                 "School settings updated successfully.",

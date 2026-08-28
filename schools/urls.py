@@ -28,6 +28,12 @@ urlpatterns = [
     ),
     
     path(
+        "schools/<int:school_id>/edit/",
+        views.edit_school,
+        name="edit_school",
+    ),
+    
+    path(
         "platform/schools/<int:school_id>/users/create/",
         views.create_school_user,
         name="create_school_user",

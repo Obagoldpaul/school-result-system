@@ -226,7 +226,111 @@ class SchoolRegistrationForm(forms.Form):
                 )
 
         return cleaned_data
-    
+
+
+class EditSchoolForm(forms.ModelForm):
+    """
+    Form used by Platform Administrators to edit the basic
+    information of an existing school.
+
+    This form does not change:
+        - Subscription
+        - School administrator accounts
+        - Users
+        - Academic structure
+
+    Changing school_type here only updates the school's
+    recorded school type. It does not automatically create
+    or remove classes or subjects.
+    """
+
+    class Meta:
+        model = School
+        fields = [
+            "name",
+            "code",
+            "school_type",
+            "email",
+            "phone",
+            "address",
+            "logo",
+        ]
+
+        widgets = {
+            "name": forms.TextInput(
+                attrs={
+                    "class": "form-control",
+                    "placeholder": "e.g. Great Goshenland Blossom School",
+                }
+            ),
+
+            "code": forms.TextInput(
+                attrs={
+                    "class": "form-control",
+                    "placeholder": "e.g. GGBS",
+                }
+            ),
+
+            "school_type": forms.Select(
+                attrs={
+                    "class": "form-select",
+                }
+            ),
+
+            "email": forms.EmailInput(
+                attrs={
+                    "class": "form-control",
+                    "placeholder": "school@example.com",
+                }
+            ),
+
+            "phone": forms.TextInput(
+                attrs={
+                    "class": "form-control",
+                    "placeholder": "e.g. 08012345678",
+                }
+            ),
+
+            "address": forms.Textarea(
+                attrs={
+                    "class": "form-control",
+                    "rows": 3,
+                    "placeholder": "School address",
+                }
+            ),
+
+            "logo": forms.ClearableFileInput(
+                attrs={
+                    "class": "form-control",
+                }
+            ),
+        }
+
+        labels = {
+            "name": "School Name",
+            "code": "School Code",
+            "school_type": "School Type",
+            "email": "Email",
+            "phone": "Phone",
+            "address": "Address",
+            "logo": "School Logo",
+        }
+
+    def clean_code(self):
+        code = self.cleaned_data["code"].strip().upper()
+
+        existing_school = School.objects.filter(
+            code__iexact=code
+        ).exclude(
+            pk=self.instance.pk
+        ).exists()
+
+        if existing_school:
+            raise forms.ValidationError(
+                "A school with this code already exists."
+            )
+
+        return code
 
 class SchoolSubscriptionForm(forms.ModelForm):
     """

@@ -43,7 +43,6 @@ def post_announcement(request):
 
 
 @login_required
-@school_permission_required("announcements.view")
 @feature_required("ANNOUNCEMENTS")
 def announcement_list(request):
 
@@ -74,7 +73,6 @@ def announcement_list(request):
 
 
 @login_required
-@school_permission_required("announcements.view")
 @feature_required("ANNOUNCEMENTS")
 def announcement_detail(request, announcement_id):
 

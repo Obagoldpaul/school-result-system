@@ -15,6 +15,7 @@ from accounts.decorators import platform_admin_required
 
 from .forms import (
     SchoolRegistrationForm,
+    EditSchoolForm,
     SchoolSubscriptionForm,
     PlatformSettingsForm,
     AssignSchoolRoleForm,
@@ -832,6 +833,62 @@ def school_detail(request, school_id):
         request,
         "schools/school_detail.html",
         context,
+    )
+    
+@login_required
+@platform_admin_required
+def edit_school(request, school_id):
+    """
+    Allow Platform Administrators to edit the basic information
+    of an existing school.
+
+    This view does not change:
+        - Subscription
+        - School users
+        - Academic structure
+    """
+
+    school = get_object_or_404(
+        School,
+        id=school_id,
+    )
+
+    if request.method == "POST":
+
+        form = EditSchoolForm(
+            request.POST,
+            request.FILES,
+            instance=school,
+        )
+
+        if form.is_valid():
+
+            form.save()
+
+            messages.success(
+                request,
+                f"{school.name}'s information was updated successfully."
+            )
+
+            return redirect(
+                "school_detail",
+                school_id=school.id,
+            )
+
+    else:
+
+        form = EditSchoolForm(
+            instance=school,
+        )
+
+    return render(
+        request,
+        "schools/edit_school.html",
+        {
+            "school": school,
+            "form": form,
+            "is_platform_admin": True,
+        },
     )
 
 @login_required

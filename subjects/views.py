@@ -122,16 +122,57 @@ def activate_subject(request, subject_id):
 @school_permission_required("subjects.view")
 def subject_list(request):
 
+    school = request.user.school
+
     subjects = Subject.objects.filter(
-        school=request.user.school,
+        school=school,
         is_active=True,
     )
+
+    # --------------------------------------------------
+    # FILTER BY SUBJECT LEVEL
+    # --------------------------------------------------
+
+    selected_level = request.GET.get("level")
+
+    if selected_level in [
+        Subject.SubjectLevel.PRIMARY,
+        Subject.SubjectLevel.SECONDARY,
+    ]:
+        subjects = subjects.filter(
+            level=selected_level
+        )
+
+    # --------------------------------------------------
+    # AVAILABLE LEVELS FOR THIS SCHOOL
+    # --------------------------------------------------
+
+    if school.school_type == school.SchoolType.PRIMARY:
+
+        available_levels = [
+            Subject.SubjectLevel.PRIMARY
+        ]
+
+    elif school.school_type == school.SchoolType.SECONDARY:
+
+        available_levels = [
+            Subject.SubjectLevel.SECONDARY
+        ]
+
+    else:
+
+        available_levels = [
+            Subject.SubjectLevel.PRIMARY,
+            Subject.SubjectLevel.SECONDARY,
+        ]
 
     return render(
         request,
         'subjects/subject_list.html',
         {
-            'subjects': subjects
+            'subjects': subjects,
+            'available_levels': available_levels,
+            'selected_level': selected_level,
         }
     )
 
@@ -358,5 +399,9 @@ def bulk_assign_subjects(request):
         'subjects/bulk_assign_subjects.html',
         {
             'form': form,
+            'subject_levels': {
+                str(subject.id): subject.level
+                for subject in form.fields["subjects"].queryset
+            },
         }
     )

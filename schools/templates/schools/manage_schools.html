@@ -224,19 +224,26 @@
                             <td class="text-end">
 
                                 <a
+                                    href="{% url 'school_detail' school.id %}"
+                                    class="btn btn-sm btn-outline-secondary"
+                                >
+                                    View
+                                </a>
+                            
+                                <a
                                     href="{% url 'school_users' school.id %}"
                                     class="btn btn-sm btn-outline-primary"
                                 >
                                     Users
                                 </a>
-
+                            
                                 <a
                                     href="{% url 'edit_subscription' school.id %}"
                                     class="btn btn-sm btn-outline-primary"
                                 >
                                     Manage
                                 </a>
-
+                            
                             </td>
 
                         </tr>

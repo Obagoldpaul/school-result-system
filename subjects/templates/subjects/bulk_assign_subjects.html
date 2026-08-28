@@ -29,7 +29,29 @@
                 Class
             </label>
 
-            {{ form.school_class }}
+            <select
+                name="school_class"
+                id="id_school_class"
+                class="form-select"
+                required
+            >
+                <option value="">---------</option>
+
+                {% for school_class in form.school_class.field.queryset %}
+
+                    <option
+                        value="{{ school_class.id }}"
+                        data-section="{{ school_class.section }}"
+                        {% if form.school_class.value|stringformat:"s" == school_class.id|stringformat:"s" %}
+                            selected
+                        {% endif %}
+                    >
+                        {{ school_class.name }}
+                    </option>
+
+                {% endfor %}
+
+            </select>
 
             {% if form.school_class.errors %}
                 <div class="text-danger">
@@ -65,7 +87,10 @@
 
             {% for checkbox in form.subjects %}
 
-                <div class="form-check mb-2">
+                <div
+                    class="form-check mb-2 subject-option"
+                    data-subject-id="{{ checkbox.data.value }}"
+                >
 
                     {{ checkbox.tag }}
 
@@ -79,13 +104,13 @@
                 </div>
 
             {% empty %}
-
+        
                 <p class="text-muted">
                     No active subjects have been created for this school.
                 </p>
-
+        
             {% endfor %}
-
+        
         </div>
 
 
@@ -118,25 +143,152 @@
 
 <script>
 
-function toggleSubjects() {
-
-    const checkboxes = document.querySelectorAll(
-        'input[name="subjects"]'
-    );
-
-    if (!checkboxes.length) {
-        return;
+    const subjectLevels = {{ subject_levels|safe }};
+    
+    function getSubjectLevelForClass(classSection) {
+    
+        if (
+            classSection === "PRE_PRIMARY" ||
+            classSection === "PRIMARY"
+        ) {
+            return "PRIMARY";
+        }
+    
+        if (
+            classSection === "JUNIOR_SECONDARY" ||
+            classSection === "SENIOR_SECONDARY"
+        ) {
+            return "SECONDARY";
+        }
+    
+        return null;
     }
-
-    const allChecked = Array.from(checkboxes).every(
-        checkbox => checkbox.checked
+    
+    
+    function filterSubjects() {
+    
+        const classSelect = document.getElementById(
+            "id_school_class"
+        );
+    
+        if (!classSelect) {
+            return;
+        }
+    
+        const selectedOption =
+            classSelect.options[classSelect.selectedIndex];
+    
+        if (!selectedOption || !selectedOption.value) {
+    
+            document.querySelectorAll(
+                ".subject-option"
+            ).forEach(option => {
+    
+                option.style.display = "";
+    
+            });
+    
+            return;
+        }
+    
+        /*
+         * We need the section of the selected class.
+         *
+         * The section is supplied through the option's
+         * data-section attribute.
+         */
+    
+        const section =
+            selectedOption.dataset.section;
+    
+        const allowedLevel =
+            getSubjectLevelForClass(section);
+    
+        document.querySelectorAll(
+            ".subject-option"
+        ).forEach(option => {
+    
+            const subjectId =
+                option.dataset.subjectId;
+    
+            const subjectLevel =
+                subjectLevels[subjectId];
+    
+            const checkbox =
+                option.querySelector(
+                    'input[type="checkbox"]'
+                );
+    
+            if (
+                allowedLevel &&
+                subjectLevel === allowedLevel
+            ) {
+    
+                option.style.display = "";
+    
+            } else {
+    
+                option.style.display = "none";
+    
+                if (checkbox) {
+                    checkbox.checked = false;
+                }
+            }
+        });
+    }
+    
+    
+    function toggleSubjects() {
+    
+        const visibleCheckboxes =
+            Array.from(
+                document.querySelectorAll(
+                    '.subject-option input[type="checkbox"]'
+                )
+            )
+            .filter(
+                checkbox =>
+                    checkbox.closest(".subject-option").style.display !== "none"
+            );
+    
+        if (!visibleCheckboxes.length) {
+            return;
+        }
+    
+        const allChecked =
+            visibleCheckboxes.every(
+                checkbox => checkbox.checked
+            );
+    
+        visibleCheckboxes.forEach(
+            checkbox => checkbox.checked = !allChecked
+        );
+    }
+    
+    
+    document.addEventListener(
+        "DOMContentLoaded",
+        function () {
+    
+            const classSelect =
+                document.getElementById(
+                    "id_school_class"
+                );
+    
+            if (!classSelect) {
+                return;
+            }
+    
+            classSelect.addEventListener(
+                "change",
+                filterSubjects
+            );
+    
+            filterSubjects();
+    
+        }
     );
-
-    checkboxes.forEach(
-        checkbox => checkbox.checked = !allChecked
-    );
-}
-
-</script>
+    
+    </script>
 
 {% endblock %}

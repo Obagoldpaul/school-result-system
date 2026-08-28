@@ -1,6 +1,7 @@
 from django import forms
 
 from .models import SchoolSettings
+from schools.models import School
 
 
 class SchoolSettingsForm(forms.ModelForm):
@@ -25,11 +26,23 @@ class SchoolSettingsForm(forms.ModelForm):
         )
 
         # -------------------------------------------------
+        # USE THE MAIN SCHOOL RECORD AS SOURCE OF TRUTH
+        # -------------------------------------------------
+
+        if school:
+            self.initial["school_name"] = school.name
+            self.initial["school_address"] = school.address
+            self.initial["school_phone"] = school.phone
+            self.initial["school_email"] = school.email
+
+            if school.logo:
+                self.initial["school_logo"] = school.logo
+
+        # -------------------------------------------------
         # PACKAGE-BASED BRANDING ACCESS
         # -------------------------------------------------
 
         if package_name == "BASIC":
-            # Basic gets no custom branding.
             for field_name in [
                 "school_logo",
                 "principal_signature",
@@ -41,7 +54,6 @@ class SchoolSettingsForm(forms.ModelForm):
                 self.fields.pop(field_name, None)
 
         elif package_name == "STANDARD":
-            # Standard gets report-card heading only.
             for field_name in [
                 "school_logo",
                 "principal_signature",
@@ -52,6 +64,7 @@ class SchoolSettingsForm(forms.ModelForm):
                 self.fields.pop(field_name, None)
 
         # Premium keeps all branding fields.
+
     class Meta:
         model = SchoolSettings
         fields = [

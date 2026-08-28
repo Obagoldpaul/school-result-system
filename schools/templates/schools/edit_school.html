@@ -1,0 +1,258 @@
+{% extends "base.html" %}
+
+{% block title %}
+    Edit {{ school.name }} | School Management
+{% endblock %}
+
+{% block content %}
+
+<div class="container-fluid">
+
+    <!-- HEADER -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <div>
+            <h1>Edit School Information</h1>
+
+            <p class="text-muted mb-0">
+                Update the basic information for
+                <strong>{{ school.name }}</strong>.
+            </p>
+        </div>
+
+        <a
+            href="{% url 'school_detail' school.id %}"
+            class="btn btn-outline-secondary"
+        >
+            ← Back to School
+        </a>
+
+    </div>
+
+
+    <!-- EDIT SCHOOL FORM -->
+    <div class="card shadow-sm">
+
+        <div class="card-body">
+
+            <h5 class="card-title">
+                School Information
+            </h5>
+
+            <p class="text-muted">
+                Update the school's name, code, school type,
+                contact information, address, or logo.
+            </p>
+
+            <hr>
+
+            <form method="post" enctype="multipart/form-data">
+
+                {% csrf_token %}
+
+                <!-- FORM ERRORS -->
+                {% if form.non_field_errors %}
+                    <div class="alert alert-danger">
+                        {{ form.non_field_errors }}
+                    </div>
+                {% endif %}
+
+
+                <!-- SCHOOL NAME -->
+                <div class="mb-3">
+
+                    <label
+                        for="{{ form.name.id_for_label }}"
+                        class="form-label"
+                    >
+                        {{ form.name.label }}
+                    </label>
+
+                    {{ form.name }}
+
+                    {% if form.name.errors %}
+                        <div class="text-danger small mt-1">
+                            {{ form.name.errors }}
+                        </div>
+                    {% endif %}
+
+                </div>
+
+
+                <!-- SCHOOL CODE -->
+                <div class="mb-3">
+
+                    <label
+                        for="{{ form.code.id_for_label }}"
+                        class="form-label"
+                    >
+                        {{ form.code.label }}
+                    </label>
+
+                    {{ form.code }}
+
+                    {% if form.code.errors %}
+                        <div class="text-danger small mt-1">
+                            {{ form.code.errors }}
+                        </div>
+                    {% endif %}
+
+                </div>
+
+
+                <!-- SCHOOL TYPE -->
+                <div class="mb-3">
+
+                    <label
+                        for="{{ form.school_type.id_for_label }}"
+                        class="form-label"
+                    >
+                        {{ form.school_type.label }}
+                    </label>
+
+                    {{ form.school_type }}
+
+                    {% if form.school_type.errors %}
+                        <div class="text-danger small mt-1">
+                            {{ form.school_type.errors }}
+                        </div>
+                    {% endif %}
+
+                    <div class="form-text">
+                        Changing the school type updates the school's
+                        recorded type only. It does not automatically
+                        change existing classes or subjects.
+                    </div>
+
+                </div>
+
+
+                <!-- EMAIL -->
+                <div class="mb-3">
+
+                    <label
+                        for="{{ form.email.id_for_label }}"
+                        class="form-label"
+                    >
+                        {{ form.email.label }}
+                    </label>
+
+                    {{ form.email }}
+
+                    {% if form.email.errors %}
+                        <div class="text-danger small mt-1">
+                            {{ form.email.errors }}
+                        </div>
+                    {% endif %}
+
+                </div>
+
+
+                <!-- PHONE -->
+                <div class="mb-3">
+
+                    <label
+                        for="{{ form.phone.id_for_label }}"
+                        class="form-label"
+                    >
+                        {{ form.phone.label }}
+                    </label>
+
+                    {{ form.phone }}
+
+                    {% if form.phone.errors %}
+                        <div class="text-danger small mt-1">
+                            {{ form.phone.errors }}
+                        </div>
+                    {% endif %}
+
+                </div>
+
+
+                <!-- ADDRESS -->
+                <div class="mb-3">
+
+                    <label
+                        for="{{ form.address.id_for_label }}"
+                        class="form-label"
+                    >
+                        {{ form.address.label }}
+                    </label>
+
+                    {{ form.address }}
+
+                    {% if form.address.errors %}
+                        <div class="text-danger small mt-1">
+                            {{ form.address.errors }}
+                        </div>
+                    {% endif %}
+
+                </div>
+
+
+                <!-- LOGO -->
+                <div class="mb-4">
+
+                    <label
+                        for="{{ form.logo.id_for_label }}"
+                        class="form-label"
+                    >
+                        {{ form.logo.label }}
+                    </label>
+
+                    {{ form.logo }}
+
+                    {% if form.logo.errors %}
+                        <div class="text-danger small mt-1">
+                            {{ form.logo.errors }}
+                        </div>
+                    {% endif %}
+
+                    {% if school.logo %}
+                        <div class="mt-2">
+
+                            <small class="text-muted d-block mb-2">
+                                Current Logo
+                            </small>
+
+                            <img
+                                src="{{ school.logo.url }}"
+                                alt="{{ school.name }} logo"
+                                style="max-height: 100px; max-width: 200px;"
+                                class="img-thumbnail"
+                            >
+
+                        </div>
+                    {% endif %}
+
+                </div>
+
+
+                <!-- ACTIONS -->
+                <div class="d-flex gap-2">
+
+                    <button
+                        type="submit"
+                        class="btn btn-primary"
+                    >
+                        Save Changes
+                    </button>
+
+                    <a
+                        href="{% url 'school_detail' school.id %}"
+                        class="btn btn-outline-secondary"
+                    >
+                        Cancel
+                    </a>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

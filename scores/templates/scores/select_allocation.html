@@ -4,35 +4,98 @@
 <h1>Select Class & Subject to Enter Scores</h1>
 
 <form method="GET" style="margin-bottom: 15px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+
     <select name="class">
         <option value="">-- All Classes --</option>
         {% for c in classes %}
-        <option value="{{ c.id }}" {% if selected_class == c.id|stringformat:"s" %}selected{% endif %}>{{ c.name }}</option>
+        <option value="{{ c.id }}"
+            {% if selected_class == c.id|stringformat:"s" %}selected{% endif %}>
+            {{ c.name }}
+        </option>
         {% endfor %}
     </select>
 
-    <select name="term">
-        {% for t in terms %}
-        <option value="{{ t.id }}" {% if selected_term == t.id|stringformat:"s" %}selected{% endif %}>{{ t }}</option>
+
+    <select name="session">
+
+        <option value="">
+            -- Select Academic Session --
+        </option>
+
+        {% for s in sessions %}
+        <option value="{{ s.id }}"
+            {% if selected_session and s.id == selected_session.id %}
+                selected
+            {% endif %}>
+            {{ s.name }}
+        </option>
         {% endfor %}
+
     </select>
+
+
+    <select name="term">
+
+        {% if selected_session %}
+
+            <option value="">
+                -- All Terms --
+            </option>
+
+            {% for t in terms %}
+            <option value="{{ t.id }}"
+                {% if selected_term == t.id|stringformat:"s" %}
+                    selected
+                {% endif %}>
+                {{ t.get_name_display }}
+            </option>
+            {% endfor %}
+
+        {% else %}
+
+            <option value="">
+                -- Select Academic Session First --
+            </option>
+
+        {% endif %}
+
+    </select>
+
 
     <select name="subject">
         <option value="">-- All Subjects --</option>
+
         {% for s in subjects %}
-        <option value="{{ s.id }}" {% if selected_subject == s.id|stringformat:"s" %}selected{% endif %}>{{ s.name }}</option>
+        <option value="{{ s.id }}"
+            {% if selected_subject == s.id|stringformat:"s" %}
+                selected
+            {% endif %}>
+            {{ s.name }}
+        </option>
         {% endfor %}
     </select>
+
 
     <select name="status">
         <option value="">-- All Statuses --</option>
+
         {% for value, label in status_choices %}
-        <option value="{{ value }}" {% if selected_status == value %}selected{% endif %}>{{ label }}</option>
+        <option value="{{ value }}"
+            {% if selected_status == value %}
+                selected
+            {% endif %}>
+            {{ label }}
+        </option>
         {% endfor %}
     </select>
 
+
     <button type="submit">Filter</button>
-    <a href="{% url 'select_allocation' %}">Clear</a>
+
+    <a href="{% url 'select_allocation' %}">
+        Clear
+    </a>
+
 </form>
 
 {% for group in grouped %}

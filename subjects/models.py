@@ -89,6 +89,41 @@ class ClassSubject(models.Model):
                 "The class and subject must belong to the same school."
             )
 
+        # --------------------------------------------------
+        # CLASS SECTION → SUBJECT LEVEL VALIDATION
+        # --------------------------------------------------
+
+        if self.school_class_id and self.subject_id:
+
+            section = self.school_class.section
+            subject_level = self.subject.level
+
+            primary_sections = [
+                self.school_class.Section.PRE_PRIMARY,
+                self.school_class.Section.PRIMARY,
+            ]
+
+            secondary_sections = [
+                self.school_class.Section.JUNIOR_SECONDARY,
+                self.school_class.Section.SENIOR_SECONDARY,
+            ]
+
+            if (
+                section in primary_sections
+                and subject_level != Subject.SubjectLevel.PRIMARY
+            ):
+                raise ValidationError(
+                    "Primary and Pre-Primary classes can only be assigned Primary subjects."
+                )
+
+            if (
+                section in secondary_sections
+                and subject_level != Subject.SubjectLevel.SECONDARY
+            ):
+                raise ValidationError(
+                    "Junior and Senior Secondary classes can only be assigned Secondary subjects."
+                )
+
     def save(self, *args, **kwargs):
         self.full_clean()
         super().save(*args, **kwargs)

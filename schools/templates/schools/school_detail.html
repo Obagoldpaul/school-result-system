@@ -78,9 +78,20 @@
 
                 <div class="card-body">
 
-                    <h5 class="card-title">
-                        School Information
-                    </h5>
+                    <div class="d-flex justify-content-between align-items-center">
+
+                        <h5 class="card-title mb-0">
+                            School Information
+                        </h5>
+                    
+                        <a
+                            href="{% url 'edit_school' school.id %}"
+                            class="btn btn-sm btn-outline-primary"
+                        >
+                            Edit School Information
+                        </a>
+                    
+                    </div>
 
                     <hr>
 
@@ -92,6 +103,11 @@
                     <p>
                         <strong>Code:</strong>
                         {{ school.code }}
+                    </p>
+
+                    <p>
+                        <strong>School Type:</strong>
+                        {{ school.get_school_type_display }}
                     </p>
 
                     <p>
