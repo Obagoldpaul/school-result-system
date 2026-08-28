@@ -10,7 +10,7 @@
 
     <hr>
 
-    <a href="#"
+    <a href="{% url 'create_backup' %}"
        class="btn btn-success mb-3">
 
         + Create Backup
@@ -29,6 +29,8 @@
 
                 <th>Size</th>
 
+                <th>Actions</th>
+
             </tr>
 
         </thead>
@@ -45,13 +47,39 @@
 
                 <td>{{ backup.size }} bytes</td>
 
+                <td>
+
+                    <a
+                        href="{% url 'download_backup' backup.id %}"
+                        class="btn btn-primary btn-sm">
+                        Download
+                    </a>
+
+                    <form
+                        method="POST"
+                        action="{% url 'delete_backup' backup.id %}"
+                        style="display:inline;"
+                        onsubmit="return confirm('Are you sure you want to permanently delete this backup?');">
+
+                        {% csrf_token %}
+
+                        <button
+                            type="submit"
+                            class="btn btn-danger btn-sm">
+                            Delete
+                        </button>
+
+                    </form>
+
+                </td>
+
             </tr>
 
             {% empty %}
 
             <tr>
 
-                <td colspan="3">
+                <td colspan="4">
 
                     No backups available.
 

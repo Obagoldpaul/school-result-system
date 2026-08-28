@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <title>Teacher Payment Account List</title>
+
+    <style>
+
+        @page {
+            size: A4 landscape;
+            margin: 15mm;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            color: #201e1e;
+        }
+
+        .school-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .school-name {
+            font-size: 22px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .document-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-top: 5px;
+            margin-bottom: 5px;
+        }
+
+        .generated-date {
+            font-size: 11px;
+            color: #666;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th,
+        td {
+            border: 1px solid #999;
+            padding: 8px;
+            font-size: 11px;
+        }
+
+        th {
+            font-weight: bold;
+            text-align: center;
+            background: #f2f2f2;
+        }
+
+        td {
+            vertical-align: middle;
+        }
+
+        .center {
+            text-align: center;
+        }
+
+        .footer {
+            margin-top: 25px;
+            font-size: 10px;
+            color: #666;
+            text-align: center;
+        }
+
+        @media print {
+
+            body {
+                margin: 0;
+            }
+
+            .no-print {
+                display: none;
+            }
+
+        }
+
+    </style>
+
+</head>
+
+
+<body onload="window.print()">
+
+
+    <!-- SCHOOL HEADER -->
+
+    <div class="school-header">
+
+        <div class="school-name">
+
+            {{ school_settings.school_name }}
+
+        </div>
+
+        <div class="document-title">
+
+            TEACHER PAYMENT ACCOUNT LIST
+
+        </div>
+
+        <div class="generated-date">
+
+            Generated: {% now "d F Y, h:i A" %}
+
+        </div>
+
+    </div>
+
+
+
+    <!-- PAYMENT ACCOUNT TABLE -->
+
+    <table>
+
+        <thead>
+
+            <tr>
+
+                <th style="width: 5%;">
+                    S/N
+                </th>
+
+                <th style="width: 12%;">
+                    Staff ID
+                </th>
+
+                <th style="width: 20%;">
+                    Teacher
+                </th>
+
+                <th style="width: 18%;">
+                    Bank Name
+                </th>
+
+                <th style="width: 22%;">
+                    Account Name
+                </th>
+
+                <th style="width: 18%;">
+                    Account Number
+                </th>
+
+            </tr>
+
+        </thead>
+
+
+        <tbody>
+
+            {% for teacher in teachers %}
+
+            <tr>
+
+                <td class="center">
+                    {{ forloop.counter }}
+                </td>
+
+                <td>
+                    {{ teacher.staff_id }}
+                </td>
+
+                <td>
+                    {{ teacher.user.get_full_name }}
+                </td>
+
+                <td>
+                    {{ teacher.bank_name|default:"-" }}
+                </td>
+
+                <td>
+                    {{ teacher.account_name|default:"-" }}
+                </td>
+
+                <td>
+                    {{ teacher.account_number|default:"-" }}
+                </td>
+
+            </tr>
+
+            {% empty %}
+
+            <tr>
+
+                <td colspan="6" class="center">
+                    No teacher payment accounts found.
+                </td>
+
+            </tr>
+
+            {% endfor %}
+
+        </tbody>
+
+    </table>
+
+
+
+    <div class="footer">
+
+        Teacher Payment Account List —
+        {{ school_settings.school_name }}
+
+    </div>
+
+
+</body>
+
+</html>

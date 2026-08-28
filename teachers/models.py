@@ -98,6 +98,24 @@ class Teacher(models.Model):
         null=True
     )
 
+    # ==========================
+    # PAYMENT INFORMATION
+    # ==========================
+
+    bank_name = models.CharField(
+        max_length=100,
+        blank=True
+    )
+
+    account_name = models.CharField(
+        max_length=150,
+        blank=True
+    )
+
+    account_number = models.CharField(
+        max_length=20,
+        blank=True
+    )
 
 
     # ==========================

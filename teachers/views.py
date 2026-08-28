@@ -278,3 +278,41 @@ def print_teacher_profile(request, teacher_id):
             "teacher": teacher,
         },
     )
+
+@staff_required
+@school_permission_required("teachers.view")
+@login_required
+def teacher_payment_accounts(request):
+
+    teachers = Teacher.objects.filter(
+        user__school=request.user.school
+    ).select_related("user")
+
+    return render(
+        request,
+        "teachers/teacher_payment_accounts.html",
+        {
+            "teachers": teachers,
+        },
+    )
+
+@staff_required
+@school_permission_required("teachers.view")
+@login_required
+def print_teacher_payment_accounts(request):
+
+    teachers = Teacher.objects.filter(
+        user__school=request.user.school
+    ).select_related(
+        "user"
+    ).order_by(
+        "staff_id"
+    )
+
+    return render(
+        request,
+        "teachers/print_teacher_payment_accounts.html",
+        {
+            "teachers": teachers,
+        },
+    )

@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+
+{% block title %}
+Teacher Payment Accounts
+{% endblock %}
+
+{% block content %}
+
+<div class="container-fluid px-4 mt-4">
+
+    <div class="card shadow-lg border-0">
+
+        <div class="card-header school-header d-flex justify-content-between align-items-center">
+
+            <h3 class="text-white mb-0">
+                Teacher Payment Accounts
+            </h3>
+
+            <div>
+
+                <a
+                    href="{% url 'print_teacher_payment_accounts' %}"
+                    class="btn btn-light">
+                    🖨 Print List
+                </a>
+
+            </div>
+
+        </div>
+
+
+        <div class="card-body">
+
+            <div class="table-responsive">
+
+                <table class="table table-hover table-bordered align-middle">
+
+                    <thead class="table-success">
+
+                        <tr>
+
+                            <th>Staff ID</th>
+
+                            <th>Teacher</th>
+
+                            <th>Bank Name</th>
+
+                            <th>Account Name</th>
+
+                            <th>Account Number</th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody>
+
+                        {% for teacher in teachers %}
+
+                        <tr>
+
+                            <td>
+                                {{ teacher.staff_id }}
+                            </td>
+
+                            <td>
+                                <strong>
+                                    {{ teacher.user.get_full_name }}
+                                </strong>
+                            </td>
+
+                            <td>
+                                {{ teacher.bank_name|default:"-" }}
+                            </td>
+
+                            <td>
+                                {{ teacher.account_name|default:"-" }}
+                            </td>
+
+                            <td>
+                                {{ teacher.account_number|default:"-" }}
+                            </td>
+
+                        </tr>
+
+                        {% empty %}
+
+                        <tr>
+
+                            <td
+                                colspan="5"
+                                class="text-center text-muted">
+
+                                No teacher payment accounts found.
+
+                            </td>
+
+                        </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<style>
+
+@media print {
+
+    .school-header {
+        background: none !important;
+        color: black !important;
+    }
+
+    .school-header h3 {
+        color: black !important;
+    }
+
+    .school-header button {
+        display: none !important;
+    }
+
+    body {
+        background: white !important;
+    }
+
+    .card {
+        box-shadow: none !important;
+        border: none !important;
+    }
+
+}
+
+</style>
+
+{% endblock %}

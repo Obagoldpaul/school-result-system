@@ -115,6 +115,11 @@ class TeacherRegistrationForm(forms.ModelForm):
             "certificate",
             "years_of_experience",
             "employment_date",
+            
+            # Payment
+            "bank_name",
+            "account_name",
+            "account_number",
 
             # Responsibility
             "is_class_teacher",
@@ -192,6 +197,27 @@ class TeacherRegistrationForm(forms.ModelForm):
             "years_of_experience": forms.NumberInput(
                 attrs={
                     "class": "form-control"
+                }
+            ),
+            
+            "bank_name": forms.TextInput(
+                attrs={
+                    "class": "form-control",
+                    "placeholder": "Bank name"
+                }
+            ),
+
+            "account_name": forms.TextInput(
+                attrs={
+                    "class": "form-control",
+                    "placeholder": "Account name"
+                }
+            ),
+
+            "account_number": forms.TextInput(
+                attrs={
+                    "class": "form-control",
+                    "placeholder": "Account number"
                 }
             ),
 

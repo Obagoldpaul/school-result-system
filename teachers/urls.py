@@ -13,6 +13,18 @@ urlpatterns = [
     path("activate/<int:teacher_id>/", views.activate_teacher, name="activate_teacher"),
 
     path("print/<int:teacher_id>/", views.print_teacher_profile, name="print_teacher_profile"),
+    
+    path(
+        "payment-accounts/",
+        views.teacher_payment_accounts,
+        name="teacher_payment_accounts",
+    ),
+    
+    path(
+        "payment-accounts/print/",
+        views.print_teacher_payment_accounts,
+        name="print_teacher_payment_accounts",
+    ),
 
     path("", views.teacher_list, name="teacher_list"),
 ]

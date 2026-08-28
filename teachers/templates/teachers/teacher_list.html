@@ -15,12 +15,21 @@ Teacher Management
             <h3 class="text-white mb-0">
                 Teacher Management
             </h3>
-
-            <a href="{% url 'register_teacher' %}"
-               class="btn btn-light">
-                + Register Teacher
-            </a>
-
+        
+            <div class="d-flex gap-2">
+        
+                <a href="{% url 'teacher_payment_accounts' %}"
+                   class="btn btn-light">
+                    💳 Payment Accounts
+                </a>
+        
+                <a href="{% url 'register_teacher' %}"
+                   class="btn btn-light">
+                    + Register Teacher
+                </a>
+        
+            </div>
+        
         </div>
 
         <div class="card-body">
