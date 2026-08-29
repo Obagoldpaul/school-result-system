@@ -23,6 +23,12 @@ urlpatterns = [
     ),
     
     path(
+        "backups/download-pre-restore/<str:filename>/",
+        views.download_pre_restore_backup,
+        name="download_pre_restore_backup",
+    ),
+    
+    path(
         "backups/delete/<int:backup_id>/",
         views.delete_backup,
         name="delete_backup",

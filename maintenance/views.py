@@ -316,6 +316,42 @@ def download_backup(request, backup_id):
         as_attachment=True,
         filename=backup.filename,
     )
+    
+@login_required
+@platform_admin_required
+def download_pre_restore_backup(request, filename):
+
+    if (
+        not filename.startswith("schoolhub_pre_restore_")
+        or not filename.endswith(".sql")
+        or os.path.basename(filename) != filename
+    ):
+        messages.error(
+            request,
+            "Invalid pre-restore backup file.",
+        )
+
+        return redirect("backup_list")
+
+    backup_path = os.path.join(
+        settings.MEDIA_ROOT,
+        "backups",
+        filename,
+    )
+
+    if not os.path.isfile(backup_path):
+        messages.error(
+            request,
+            "Pre-restore safety backup file could not be found.",
+        )
+
+        return redirect("backup_list")
+
+    return FileResponse(
+        open(backup_path, "rb"),
+        as_attachment=True,
+        filename=filename,
+    )
 
 @login_required
 @platform_admin_required
