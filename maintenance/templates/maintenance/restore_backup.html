@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+
+{% block title %}Restore Database{% endblock %}
+
+{% block content %}
+
+<div class="container mt-4">
+
+    <div class="card border-danger">
+
+        <div class="card-header bg-danger text-white">
+            <h2 class="mb-0">⚠️ Restore Database</h2>
+        </div>
+
+        <div class="card-body">
+
+            <h4>Are you sure you want to continue?</h4>
+
+            <p>
+                You are about to replace the current database with:
+            </p>
+
+            <p>
+                <strong>{{ backup.filename }}</strong>
+            </p>
+
+            <div class="alert alert-warning">
+
+                <strong>Warning:</strong>
+
+                This is a destructive operation. The current database
+                contents will be replaced by the selected backup.
+
+            </div>
+
+            <div class="alert alert-info">
+
+                Before the restore begins, the system will automatically
+                create a fresh pre-restore safety backup of the current
+                database.
+
+                If the restore fails, that safety backup will remain
+                available for recovery.
+
+            </div>
+
+            <p>
+                This may replace current:
+            </p>
+
+            <ul>
+                <li>Students</li>
+                <li>Teachers</li>
+                <li>Classes and subjects</li>
+                <li>Attendance records</li>
+                <li>Scores and results</li>
+                <li>Payments and billing records</li>
+                <li>Users and permissions</li>
+                <li>School settings and other database data</li>
+            </ul>
+
+            <form
+                method="POST"
+                action="{% url 'restore_backup' backup.id %}">
+
+                {% csrf_token %}
+
+                <div class="form-check mb-3">
+
+                    <input
+                        class="form-check-input"
+                        type="checkbox"
+                        id="confirm_restore"
+                        name="confirm_restore"
+                        required>
+
+                    <label
+                        class="form-check-label"
+                        for="confirm_restore">
+
+                        I understand that this operation will replace
+                        the current database.
+
+                    </label>
+
+                </div>
+
+                <button
+                    type="submit"
+                    class="btn btn-danger">
+
+                    Yes, Restore Database
+
+                </button>
+
+                <a
+                    href="{% url 'backup_list' %}"
+                    class="btn btn-secondary">
+
+                    Cancel
+
+                </a>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}
