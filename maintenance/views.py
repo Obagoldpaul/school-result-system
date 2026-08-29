@@ -112,6 +112,7 @@ def create_database_backup(pre_restore=False):
         backup = DatabaseBackup.objects.create(
             filename=filename,
             size=size,
+            is_pre_restore=pre_restore,
         )
 
         return backup
