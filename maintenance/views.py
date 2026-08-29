@@ -27,6 +27,26 @@ def maintenance_home(request):
 @platform_admin_required
 def create_backup(request):
 
+    try:
+
+        create_database_backup()
+
+        messages.success(
+            request,
+            "Database backup created successfully.",
+        )
+
+    except Exception as e:
+
+        messages.error(
+            request,
+            f"Database backup failed: {e}",
+        )
+
+    return redirect("backup_list")
+
+def create_database_backup(pre_restore=False):
+
     backup_dir = os.path.join(
         settings.MEDIA_ROOT,
         "backups",
@@ -41,9 +61,14 @@ def create_backup(request):
         "%Y%m%d_%H%M%S"
     )
 
-    filename = (
-        f"schoolhub_backup_{timestamp}.sql"
-    )
+    if pre_restore:
+        filename = (
+            f"schoolhub_pre_restore_{timestamp}.sql"
+        )
+    else:
+        filename = (
+            f"schoolhub_backup_{timestamp}.sql"
+        )
 
     filepath = os.path.join(
         backup_dir,
@@ -84,27 +109,19 @@ def create_backup(request):
 
         size = os.path.getsize(filepath)
 
-        DatabaseBackup.objects.create(
+        backup = DatabaseBackup.objects.create(
             filename=filename,
             size=size,
         )
 
-        messages.success(
-            request,
-            "Database backup created successfully.",
-        )
+        return backup
 
-    except Exception as e:
+    except Exception:
 
         if os.path.exists(filepath):
             os.remove(filepath)
 
-        messages.error(
-            request,
-            f"Database backup failed: {e}",
-        )
-
-    return redirect("backup_list")
+        raise
 
 @login_required
 @platform_admin_required
