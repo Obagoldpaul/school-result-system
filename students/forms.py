@@ -2,6 +2,12 @@ from django import forms
 from django.contrib.auth import get_user_model
 
 from .models import Student, SchoolClass, Department
+from core.choices import (
+    NIGERIAN_STATES,
+    NIGERIAN_LGAS,
+    NATIONALITY_CHOICES,
+    RELIGION_CHOICES,
+)
 
 User = get_user_model()
 
@@ -129,6 +135,46 @@ class StudentRegistrationForm(forms.ModelForm):
             }
         )
     )
+    
+    state_of_origin = forms.ChoiceField(
+        choices=NIGERIAN_STATES,
+        required=False,
+        widget=forms.Select(
+            attrs={
+                "class": "form-select"
+            }
+        )
+    )
+
+    local_government = forms.ChoiceField(
+        choices=[],
+        required=False,
+        widget=forms.Select(
+            attrs={
+                "class": "form-select"
+            }
+        )
+    )
+
+    nationality = forms.ChoiceField(
+        choices=NATIONALITY_CHOICES,
+        required=False,
+        widget=forms.Select(
+            attrs={
+                "class": "form-select"
+            }
+        )
+    )
+
+    religion = forms.ChoiceField(
+        choices=RELIGION_CHOICES,
+        required=False,
+        widget=forms.Select(
+            attrs={
+                "class": "form-select"
+            }
+        )
+    )
 
     class Meta:
 
@@ -223,30 +269,6 @@ class StudentRegistrationForm(forms.ModelForm):
                 }
             ),
 
-            "state_of_origin": forms.TextInput(
-                attrs={
-                    "class": "form-control"
-                }
-            ),
-
-            "local_government": forms.TextInput(
-                attrs={
-                    "class": "form-control"
-                }
-            ),
-
-            "nationality": forms.TextInput(
-                attrs={
-                    "class": "form-control"
-                }
-            ),
-
-            "religion": forms.TextInput(
-                attrs={
-                    "class": "form-control"
-                }
-            ),
-
             "home_address": forms.Textarea(
                 attrs={
                     "class": "form-control",
@@ -332,6 +354,24 @@ class StudentRegistrationForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
 
         self.user = user
+        
+        selected_state = None
+
+        if self.data:
+            selected_state = self.data.get("state_of_origin")
+        elif self.instance and self.instance.pk:
+            selected_state = self.instance.state_of_origin
+
+        if selected_state:
+            lgas = NIGERIAN_LGAS.get(
+                selected_state,
+                []
+            )
+
+            self.fields["local_government"].choices = [
+                (lga, lga)
+                for lga in lgas
+            ]
 
         if user and user.school:
 

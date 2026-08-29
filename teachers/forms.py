@@ -4,6 +4,12 @@ from django.contrib.auth import get_user_model
 from .models import Teacher
 from students.models import SchoolClass
 
+from core.choices import (
+    NIGERIAN_STATES,
+    NATIONALITY_CHOICES,
+    RELIGION_CHOICES,
+    NIGERIAN_LGAS,
+)
 
 User = get_user_model()
 
@@ -92,6 +98,46 @@ class TeacherRegistrationForm(forms.ModelForm):
             }
         )
     )
+    
+    nationality = forms.ChoiceField(
+        choices=NATIONALITY_CHOICES,
+        required=False,
+        widget=forms.Select(
+            attrs={
+                "class": "form-select"
+            }
+        )
+    )
+
+    religion = forms.ChoiceField(
+        choices=RELIGION_CHOICES,
+        required=False,
+        widget=forms.Select(
+            attrs={
+                "class": "form-select"
+            }
+        )
+    )
+
+    state_of_origin = forms.ChoiceField(
+        choices=NIGERIAN_STATES,
+        required=False,
+        widget=forms.Select(
+            attrs={
+                "class": "form-select"
+            }
+        )
+    )
+
+    local_government = forms.ChoiceField(
+        choices=[],
+        required=False,
+        widget=forms.Select(
+            attrs={
+                "class": "form-select"
+            }
+        )
+    )
 
 
     class Meta:
@@ -108,6 +154,8 @@ class TeacherRegistrationForm(forms.ModelForm):
             "home_address",
             "state_of_origin",
             "local_government",
+            "nationality",
+            "religion",
 
             # Professional
             "staff_id",
@@ -159,18 +207,6 @@ class TeacherRegistrationForm(forms.ModelForm):
                 attrs={
                     "class": "form-control",
                     "placeholder": "Phone number"
-                }
-            ),
-
-            "state_of_origin": forms.TextInput(
-                attrs={
-                    "class": "form-control"
-                }
-            ),
-
-            "local_government": forms.TextInput(
-                attrs={
-                    "class": "form-control"
                 }
             ),
 
@@ -232,6 +268,22 @@ class TeacherRegistrationForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
 
         self.user = user
+
+        selected_state = None
+
+        if self.data:
+            selected_state = self.data.get("state_of_origin")
+
+        if selected_state:
+            lgas = NIGERIAN_LGAS.get(
+                selected_state,
+                []
+            )
+
+            self.fields["local_government"].choices = [
+                (lga, lga)
+                for lga in lgas
+            ]
 
         if user and user.school:
             self.fields["assigned_class"].queryset = SchoolClass.objects.filter(

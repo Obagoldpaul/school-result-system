@@ -606,12 +606,25 @@ Register Student
 
 </div>
 
+{{ nigerian_lgas|json_script:"nigerian-lgas-data" }}
 
 <script>
 
     document.addEventListener(
         "DOMContentLoaded",
         function () {
+
+            const stateSelect = document.getElementById(
+                "id_state_of_origin"
+            );
+
+            const lgaSelect = document.getElementById(
+                "id_local_government"
+            );
+
+            const lgaDataElement = document.getElementById(
+                "nigerian-lgas-data"
+            );
 
             const passportInput = document.getElementById(
                 "id_passport"
@@ -621,6 +634,76 @@ Register Student
                 "passportPreview"
             );
 
+
+            /*
+             * STATE → LGA
+             */
+
+            if (
+                stateSelect &&
+                lgaSelect &&
+                lgaDataElement
+            ) {
+
+                const nigerianLgas = JSON.parse(
+                    lgaDataElement.textContent
+                );
+
+
+                function populateLgas() {
+
+                    const selectedState = stateSelect.value;
+
+                    lgaSelect.innerHTML = "";
+
+
+                    if (!selectedState) {
+
+                        return;
+
+                    }
+
+
+                    const lgas = nigerianLgas[selectedState] || [];
+
+
+                    lgas.forEach(
+                        function (lga) {
+
+                            const option = document.createElement(
+                                "option"
+                            );
+
+                            option.value = lga;
+                            option.textContent = lga;
+
+                            lgaSelect.appendChild(option);
+
+                        }
+                    );
+
+                }
+
+
+                stateSelect.addEventListener(
+                    "change",
+                    populateLgas
+                );
+
+
+                /*
+                 * Keep the LGA empty initially.
+                 * It will be populated after a state is selected.
+                 */
+
+                lgaSelect.innerHTML = "";
+
+            }
+
+
+            /*
+             * PASSPORT PREVIEW
+             */
 
             if (passportInput) {
 

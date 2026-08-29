@@ -9,6 +9,14 @@ from django.db import models
 from subjects.models import Subject
 from django.core.mail import send_mail
 
+
+from core.choices import (
+    NIGERIAN_STATES,
+    NIGERIAN_LGAS,
+    NATIONALITY_CHOICES,
+    RELIGION_CHOICES,
+)
+
 @school_permission_required("students.add")
 @login_required
 def register_student(request):
@@ -61,6 +69,7 @@ def register_student(request):
         {
             "form": form,
             "student_list_url": "/students/",
+            "nigerian_lgas": NIGERIAN_LGAS,
         },
     )
 
@@ -489,6 +498,10 @@ def edit_student(request, student_id):
             'departments': departments,
             'electives': electives,
             'blood_groups': Student.BLOOD_GROUPS,
+            'nigerian_states': NIGERIAN_STATES,
+            'nigerian_lgas': NIGERIAN_LGAS,
+            'nationality_choices': NATIONALITY_CHOICES,
+            'religion_choices': RELIGION_CHOICES,
         }
     )
     

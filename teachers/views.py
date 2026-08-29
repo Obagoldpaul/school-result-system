@@ -9,6 +9,12 @@ from accounts.decorators import staff_required, management_required
 from accounts.permissions import school_permission_required
 from django.core.mail import send_mail
 
+from core.choices import (
+    NIGERIAN_STATES,
+    NIGERIAN_LGAS,
+    NATIONALITY_CHOICES,
+    RELIGION_CHOICES,
+)
 
 @management_required
 @school_permission_required("teachers.add")
@@ -71,6 +77,7 @@ def register_teacher(request):
         "teachers/register_teacher.html",
         {
             "form": form,
+            "nigerian_lgas": NIGERIAN_LGAS,
         },
     )
 
@@ -242,6 +249,10 @@ def edit_teacher(request, teacher_id):
         {
             'teacher': teacher,
             'classes': classes,
+            'nigerian_states': NIGERIAN_STATES,
+            'nigerian_lgas': NIGERIAN_LGAS,
+            'nationality_choices': NATIONALITY_CHOICES,
+            'religion_choices': RELIGION_CHOICES,
         }
     )
     

@@ -226,6 +226,35 @@ Register Teacher
 
                     </div>
 
+                    <div class="col-md-4 mb-3">
+
+                        <label for="{{ form.nationality.id_for_label }}">
+                            {{ form.nationality.label }}
+                            {% if form.nationality.field.required %}
+                                <span class="text-danger">*</span>
+                            {% endif %}
+                        </label>
+                    
+                        {{ form.nationality }}
+                        {{ form.nationality.errors }}
+                    
+                    </div>
+                    
+                    
+                    <div class="col-md-4 mb-3">
+                    
+                        <label for="{{ form.religion.id_for_label }}">
+                            {{ form.religion.label }}
+                            {% if form.religion.field.required %}
+                                <span class="text-danger">*</span>
+                            {% endif %}
+                        </label>
+                    
+                        {{ form.religion }}
+                        {{ form.religion.errors }}
+                    
+                    </div>
+
 
                 </div>
 
@@ -420,6 +449,8 @@ Register Teacher
 
                 </div>
 
+                {{ nigerian_lgas|json_script:"nigerian-lgas-data" }}
+
 
                 <div class="mb-3">
 
@@ -544,6 +575,105 @@ if (passportInput) {
 }
 
 </script>
+
+<script>
+
+    document.addEventListener(
+        "DOMContentLoaded",
+        function () {
+    
+            const stateSelect = document.getElementById(
+                "id_state_of_origin"
+            );
+    
+            const lgaSelect = document.getElementById(
+                "id_local_government"
+            );
+    
+            const lgaDataElement = document.getElementById(
+                "nigerian-lgas-data"
+            );
+    
+    
+            if (
+                !stateSelect ||
+                !lgaSelect ||
+                !lgaDataElement
+            ) {
+                return;
+            }
+    
+    
+            const nigerianLgas = JSON.parse(
+                lgaDataElement.textContent
+            );
+    
+    
+            function populateLgas() {
+    
+                const selectedState = stateSelect.value;
+    
+                lgaSelect.innerHTML = "";
+    
+    
+                const placeholder = document.createElement(
+                    "option"
+                );
+    
+                placeholder.value = "";
+                placeholder.textContent =
+                    "-- Select Local Government --";
+    
+                lgaSelect.appendChild(
+                    placeholder
+                );
+    
+    
+                if (!selectedState) {
+                    return;
+                }
+    
+    
+                const lgas =
+                    nigerianLgas[selectedState] || [];
+    
+    
+                lgas.forEach(
+                    function (lga) {
+    
+                        const option =
+                            document.createElement("option");
+    
+                        option.value = lga;
+                        option.textContent = lga;
+    
+                        lgaSelect.appendChild(
+                            option
+                        );
+    
+                    }
+                );
+    
+            }
+    
+    
+            stateSelect.addEventListener(
+                "change",
+                populateLgas
+            );
+    
+    
+            /*
+             * Keep the LGA empty initially.
+             * It will populate after a state is selected.
+             */
+    
+            lgaSelect.innerHTML = "";
+    
+        }
+    );
+    
+    </script>
 
 
 

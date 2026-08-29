@@ -103,38 +103,79 @@
 
             <div class="form-group">
                 <label>Nationality</label>
-                <input
-                    type="text"
-                    name="nationality"
-                    value="{{ student.nationality }}"
-                >
+            
+                <select name="nationality">
+            
+                    {% for value, label in nationality_choices %}
+            
+                    <option
+                        value="{{ value }}"
+                        {% if student.nationality == value %}
+                            selected
+                        {% endif %}
+                    >
+                        {{ label }}
+                    </option>
+            
+                    {% endfor %}
+            
+                </select>
             </div>
 
             <div class="form-group">
                 <label>State of Origin</label>
-                <input
-                    type="text"
-                    name="state_of_origin"
-                    value="{{ student.state_of_origin }}"
-                >
+            
+                <select name="state_of_origin" id="id_state_of_origin">
+            
+                    <option value="">-- Select State --</option>
+            
+                    {% for state in nigerian_states %}
+            
+                    <option
+                        value="{{ state.0 }}"
+                        {% if student.state_of_origin == state.0 %}
+                            selected
+                        {% endif %}
+                    >
+                        {{ state.1 }}
+                    </option>
+            
+                    {% endfor %}
+            
+                </select>
             </div>
-
+            
             <div class="form-group">
                 <label>Local Government</label>
-                <input
-                    type="text"
-                    name="local_government"
-                    value="{{ student.local_government }}"
-                >
+            
+                <select name="local_government" id="id_local_government">
+            
+                    <option value="">-- Select Local Government --</option>
+            
+                </select>
             </div>
+            
+            {{ nigerian_lgas|json_script:"nigerian-lgas-data" }}
 
             <div class="form-group">
                 <label>Religion</label>
-                <input
-                    type="text"
-                    name="religion"
-                    value="{{ student.religion }}"
-                >
+            
+                <select name="religion">
+            
+                    {% for value, label in religion_choices %}
+            
+                    <option
+                        value="{{ value }}"
+                        {% if student.religion == value %}
+                            selected
+                        {% endif %}
+                    >
+                        {{ label }}
+                    </option>
+            
+                    {% endfor %}
+            
+                </select>
             </div>
 
         </div>
@@ -579,6 +620,86 @@
         </a>
 
     </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+        
+            const stateSelect = document.getElementById(
+                "id_state_of_origin"
+            );
+        
+            const lgaSelect = document.getElementById(
+                "id_local_government"
+            );
+        
+            const lgaDataElement = document.getElementById(
+                "nigerian-lgas-data"
+            );
+        
+            if (
+                !stateSelect ||
+                !lgaSelect ||
+                !lgaDataElement
+            ) {
+                return;
+            }
+        
+            const nigerianLgas = JSON.parse(
+                lgaDataElement.textContent
+            );
+        
+            const existingLga = "{{ student.local_government|escapejs }}";
+        
+            function populateLgas() {
+        
+                const selectedState = stateSelect.value;
+        
+                lgaSelect.innerHTML = "";
+        
+                const placeholder = document.createElement("option");
+        
+                placeholder.value = "";
+                placeholder.textContent =
+                    "-- Select Local Government --";
+        
+                lgaSelect.appendChild(placeholder);
+        
+                if (!selectedState) {
+                    return;
+                }
+        
+                const lgas = nigerianLgas[selectedState] || [];
+        
+                lgas.forEach(function (lga) {
+        
+                    const option = document.createElement("option");
+        
+                    option.value = lga;
+                    option.textContent = lga;
+        
+                    if (lga === existingLga) {
+                        option.selected = true;
+                    }
+        
+                    lgaSelect.appendChild(option);
+        
+                });
+        
+            }
+        
+            stateSelect.addEventListener(
+                "change",
+                populateLgas
+            );
+        
+            /*
+             * Populate immediately so the student's
+             * existing LGA is displayed when editing.
+             */
+            populateLgas();
+        
+        });
+        </script>
 
 </form>
 

@@ -63,6 +63,16 @@ class Teacher(models.Model):
         max_length=100,
         blank=True
     )
+    
+    nationality = models.CharField(
+        max_length=100,
+        blank=True,
+    )
+
+    religion = models.CharField(
+        max_length=100,
+        blank=True,
+    )
 
 
 
