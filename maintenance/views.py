@@ -190,6 +190,8 @@ def restore_database_backup(backup):
         database["USER"],
         "-d",
         database["NAME"],
+        "-v",
+        "ON_ERROR_STOP=1",
         "-f",
         backup_path,
     ]
