@@ -55,6 +55,12 @@
                         Download
                     </a>
 
+                    <a
+                        href="{% url 'restore_backup' backup.id %}"
+                        class="btn btn-warning btn-sm">
+                        Restore
+                    </a>
+
                     <form
                         method="POST"
                         action="{% url 'delete_backup' backup.id %}"

@@ -218,6 +218,75 @@ def restore_database_backup(backup):
 
 @login_required
 @platform_admin_required
+def restore_backup(request, backup_id):
+
+    backup = get_object_or_404(
+        DatabaseBackup,
+        id=backup_id,
+    )
+
+    if request.method == "GET":
+        return render(
+            request,
+            "maintenance/restore_backup.html",
+            {
+                "backup": backup,
+            },
+        )
+
+    if request.method == "POST":
+
+        if request.POST.get("confirm_restore") != "on":
+
+            messages.error(
+                request,
+                "You must confirm the database restore before continuing.",
+            )
+
+            return redirect(
+                "restore_backup",
+                backup_id=backup.id,
+            )
+
+        try:
+
+            restore_database_backup(backup)
+
+            messages.success(
+                request,
+                (
+                    f"Database restored successfully from "
+                    f"{backup.filename}."
+                ),
+            )
+
+        except FileNotFoundError as e:
+
+            messages.error(
+                request,
+                str(e),
+            )
+
+        except RuntimeError as e:
+
+            messages.error(
+                request,
+                str(e),
+            )
+
+        except Exception as e:
+
+            messages.error(
+                request,
+                f"Database restore failed: {e}",
+            )
+
+        return redirect("backup_list")
+
+    return redirect("backup_list")
+
+@login_required
+@platform_admin_required
 def download_backup(request, backup_id):
 
     backup = get_object_or_404(

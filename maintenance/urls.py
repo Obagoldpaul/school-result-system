@@ -17,6 +17,12 @@ urlpatterns = [
     ),
     
     path(
+        "backups/restore/<int:backup_id>/",
+        views.restore_backup,
+        name="restore_backup",
+    ),
+    
+    path(
         "backups/delete/<int:backup_id>/",
         views.delete_backup,
         name="delete_backup",
