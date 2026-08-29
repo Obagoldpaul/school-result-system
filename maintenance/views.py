@@ -323,11 +323,39 @@ def backup_list(request):
 
     backups = DatabaseBackup.objects.all()
 
+    backup_dir = os.path.join(
+        settings.MEDIA_ROOT,
+        "backups",
+    )
+
+    pre_restore_backups = []
+
+    if os.path.isdir(backup_dir):
+
+        for filename in os.listdir(backup_dir):
+
+            if filename.startswith(
+                "schoolhub_pre_restore_"
+            ) and filename.endswith(".sql"):
+
+                filepath = os.path.join(
+                    backup_dir,
+                    filename,
+                )
+
+                pre_restore_backups.append(
+                    {
+                        "filename": filename,
+                        "size": os.path.getsize(filepath),
+                    }
+                )
+
     return render(
         request,
         "maintenance/backup_list.html",
         {
-            "backups": backups
+            "backups": backups,
+            "pre_restore_backups": pre_restore_backups,
         }
     )
     
