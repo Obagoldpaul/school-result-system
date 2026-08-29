@@ -52,9 +52,7 @@ def create_backup(request):
 
     database = connection.settings_dict
 
-    pg_dump_path = (
-        r"C:\Program Files\PostgreSQL\16\bin\pg_dump.exe"
-    )
+    pg_dump_path = settings.PG_DUMP_PATH
 
     command = [
         pg_dump_path,

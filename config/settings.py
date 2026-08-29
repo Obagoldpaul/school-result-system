@@ -107,6 +107,17 @@ DATABASES = {
     }
 }
 
+# ==========================
+# POSTGRESQL TOOLS
+# ==========================
+
+PG_DUMP_PATH = (
+    r"C:\Program Files\PostgreSQL\16\bin\pg_dump.exe"
+)
+
+PSQL_PATH = (
+    r"C:\Program Files\PostgreSQL\16\bin\psql.exe"
+)
 
 # Password validation
 # https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
