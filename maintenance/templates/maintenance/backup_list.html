@@ -99,6 +99,78 @@
 
     </table>
 
+    {% if pre_restore_backups %}
+
+    <hr class="my-4">
+
+    <h3>Pre-Restore Safety Backups</h3>
+
+    <div class="alert alert-warning">
+
+        <strong>Safety backups:</strong>
+
+        These backups were automatically created immediately before
+        a database restore. They are stored separately from the
+        normal backup records and should be retained for recovery.
+
+    </div>
+
+    <table class="table table-bordered">
+
+        <thead>
+
+            <tr>
+
+                <th>Filename</th>
+
+                <th>Size</th>
+
+                <th>Actions</th>
+
+            </tr>
+
+        </thead>
+
+        <tbody>
+
+            {% for backup in pre_restore_backups %}
+
+            <tr>
+
+                <td>
+                    <strong>{{ backup.filename }}</strong>
+                </td>
+
+                <td>
+                    {{ backup.size }} bytes
+                </td>
+
+                <td>
+
+                    <a
+                        href="#"
+                        class="btn btn-primary btn-sm disabled">
+
+                        Download
+
+                    </a>
+
+                    <span class="text-muted ms-2">
+                        Safety backup
+                    </span>
+
+                </td>
+
+            </tr>
+
+            {% endfor %}
+
+        </tbody>
+
+    </table>
+
+    {% endif %}
+
 </div>
 
 {% endblock %}
