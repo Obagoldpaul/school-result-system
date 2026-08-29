@@ -123,6 +123,99 @@ def create_database_backup(pre_restore=False):
 
         raise
 
+def restore_database_backup(backup):
+
+    backup_path = os.path.join(
+        settings.MEDIA_ROOT,
+        "backups",
+        backup.filename,
+    )
+
+    if not os.path.isfile(backup_path):
+        raise FileNotFoundError(
+            "The selected backup file could not be found."
+        )
+
+    # Create a safety backup before modifying the database.
+    safety_backup = create_database_backup(
+        pre_restore=True
+    )
+
+    database = connection.settings_dict
+
+    env = os.environ.copy()
+    env["PGPASSWORD"] = database["PASSWORD"]
+
+    # Recreate the public schema.
+    schema_command = [
+        settings.PSQL_PATH,
+        "-h",
+        database["HOST"],
+        "-p",
+        str(database["PORT"]),
+        "-U",
+        database["USER"],
+        "-d",
+        database["NAME"],
+        "-c",
+        "DROP SCHEMA public CASCADE; CREATE SCHEMA public;",
+    ]
+
+    try:
+
+        subprocess.run(
+            schema_command,
+            env=env,
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+
+    except subprocess.CalledProcessError as e:
+
+        raise RuntimeError(
+            "Database schema preparation failed. "
+            "The selected backup was not restored. "
+            f"PostgreSQL error: {e.stderr.strip()}"
+        ) from e
+
+    # Restore the selected plain-text SQL dump.
+    restore_command = [
+        settings.PSQL_PATH,
+        "-h",
+        database["HOST"],
+        "-p",
+        str(database["PORT"]),
+        "-U",
+        database["USER"],
+        "-d",
+        database["NAME"],
+        "-f",
+        backup_path,
+    ]
+
+    try:
+
+        subprocess.run(
+            restore_command,
+            env=env,
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+
+    except subprocess.CalledProcessError as e:
+
+        raise RuntimeError(
+            "Database restore failed after the existing database "
+            "schema was cleared. "
+            f"Your pre-restore safety backup is: "
+            f"{safety_backup.filename}. "
+            f"PostgreSQL error: {e.stderr.strip()}"
+        ) from e
+
+    return True
+
 @login_required
 @platform_admin_required
 def download_backup(request, backup_id):
