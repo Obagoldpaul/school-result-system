@@ -1,6 +1,6 @@
 from django import forms
 from django.contrib.auth import get_user_model
-
+import re
 from .models import Student, SchoolClass, Department
 from core.choices import (
     NIGERIAN_STATES,
@@ -10,6 +10,35 @@ from core.choices import (
 )
 
 User = get_user_model()
+
+def generate_admission_number(school):
+    prefix = f"{school.code.upper()}-STU-"
+
+    existing_numbers = Student.objects.filter(
+        user__school=school
+    ).values_list(
+        "admission_number",
+        flat=True
+    )
+
+    highest_number = 0
+
+    pattern = re.compile(
+        rf"^{re.escape(prefix)}(\d+)$"
+    )
+
+    for admission_number in existing_numbers:
+        match = pattern.match(admission_number or "")
+
+        if match:
+            number = int(match.group(1))
+
+            if number > highest_number:
+                highest_number = number
+
+    next_number = highest_number + 1
+
+    return f"{prefix}{next_number:03d}"
 
 class GroupedSchoolClassChoiceField(forms.ModelChoiceField):
 
@@ -184,7 +213,6 @@ class StudentRegistrationForm(forms.ModelForm):
             "school_class",
             "department",
 
-            "admission_number",
             "lin",
 
             "passport",
@@ -246,13 +274,6 @@ class StudentRegistrationForm(forms.ModelForm):
             "admission_status": forms.Select(
                 attrs={
                     "class": "form-select"
-                }
-            ),
-
-            "admission_number": forms.TextInput(
-                attrs={
-                    "class": "form-control",
-                    "placeholder": "Admission number"
                 }
             ),
 
@@ -430,24 +451,6 @@ class StudentRegistrationForm(forms.ModelForm):
             self.fields["department"].queryset = Department.objects.none()
 
 
-    def clean_admission_number(self):
-
-        admission_number = self.cleaned_data["admission_number"]
-
-        if not self.user or not self.user.school:
-            return admission_number
-
-        if Student.objects.filter(
-            admission_number=admission_number,
-            school_class__school=self.user.school,
-        ).exists():
-            raise forms.ValidationError(
-                "This admission number already exists in this school."
-            )
-
-        return admission_number
-
-
     def clean_lin(self):
 
         lin = self.cleaned_data.get("lin")
@@ -485,14 +488,15 @@ class StudentRegistrationForm(forms.ModelForm):
         student = super().save(commit=False)
 
         student.user = user
-        
-    
 
+        if self.user and self.user.school:
+            student.admission_number = generate_admission_number(
+                self.user.school
+            )
 
         if commit:
             student.save()
             self.save_m2m()
-
 
         return student
 

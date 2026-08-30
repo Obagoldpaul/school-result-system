@@ -342,10 +342,6 @@ def edit_student(request, student_id):
         else:
             student.department = None
 
-        student.admission_number = request.POST.get(
-            'admission_number', ''
-        ).strip()
-
         student.lin = request.POST.get('lin', '').strip() or None
 
         # -------------------------
