@@ -3,7 +3,7 @@ from django.conf import settings
 
 from django.db import models
 from django.core.exceptions import ValidationError
-
+from core.validators import validate_image_size
 
 class Department(models.Model):
 
@@ -108,7 +108,8 @@ class Student(models.Model):
     passport = models.ImageField(
         upload_to="students/passports/",
         blank=True,
-        null=True
+        null=True,
+        validators=[validate_image_size]
     )
 
     date_of_birth = models.DateField(

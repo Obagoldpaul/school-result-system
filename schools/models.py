@@ -1,4 +1,5 @@
 from django.db import models
+from core.validators import validate_image_size
 
 
 class Feature(models.Model):
@@ -118,7 +119,8 @@ class School(models.Model):
     logo = models.ImageField(
         upload_to="schools/logos/",
         blank=True,
-        null=True
+        null=True,
+        validators=[validate_image_size]
     )
 
     is_active = models.BooleanField(

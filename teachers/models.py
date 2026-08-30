@@ -1,7 +1,7 @@
 from django.db import models
 from django.conf import settings
 from django.core.exceptions import ValidationError
-
+from core.validators import validate_image_size, validate_document_size
 
 class Teacher(models.Model):
 
@@ -25,7 +25,8 @@ class Teacher(models.Model):
     passport = models.ImageField(
         upload_to="teachers/passports/",
         blank=True,
-        null=True
+        null=True,
+        validators=[validate_image_size]
     )
 
 
@@ -94,7 +95,8 @@ class Teacher(models.Model):
     certificate = models.FileField(
         upload_to="teachers/certificates/",
         blank=True,
-        null=True
+        null=True,
+        validators=[validate_document_size]
     )
 
 
