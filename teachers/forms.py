@@ -1,6 +1,6 @@
 from django import forms
 from django.contrib.auth import get_user_model
-
+import re
 from .models import Teacher
 from students.models import SchoolClass
 
@@ -12,6 +12,36 @@ from core.choices import (
 )
 
 User = get_user_model()
+
+
+def generate_staff_id(school):
+    prefix = f"{school.code.upper()}-STF-"
+
+    existing_ids = Teacher.objects.filter(
+        user__school=school
+    ).values_list(
+        "staff_id",
+        flat=True
+    )
+
+    highest_number = 0
+
+    pattern = re.compile(
+        rf"^{re.escape(prefix)}(\d+)$"
+    )
+
+    for staff_id in existing_ids:
+        match = pattern.match(staff_id or "")
+
+        if match:
+            number = int(match.group(1))
+
+            if number > highest_number:
+                highest_number = number
+
+    next_number = highest_number + 1
+
+    return f"{prefix}{next_number:03d}"
 
 
 class TeacherRegistrationForm(forms.ModelForm):
@@ -158,7 +188,6 @@ class TeacherRegistrationForm(forms.ModelForm):
             "religion",
 
             # Professional
-            "staff_id",
             "qualification",
             "certificate",
             "years_of_experience",
@@ -207,13 +236,6 @@ class TeacherRegistrationForm(forms.ModelForm):
                 attrs={
                     "class": "form-control",
                     "placeholder": "Phone number"
-                }
-            ),
-
-            "staff_id": forms.TextInput(
-                attrs={
-                    "class": "form-control",
-                    "placeholder": "Staff ID"
                 }
             ),
 
@@ -309,26 +331,6 @@ class TeacherRegistrationForm(forms.ModelForm):
 
 
 
-    def clean_staff_id(self):
-
-        staff_id = self.cleaned_data["staff_id"]
-
-        if not self.user or not self.user.school:
-            return staff_id
-
-        if Teacher.objects.filter(
-            staff_id=staff_id,
-            user__school=self.user.school,
-        ).exists():
-
-            raise forms.ValidationError(
-                "This staff ID already exists in this school."
-            )
-
-        return staff_id
-
-
-
     def save(self, commit=True, user=None):
 
         new_user = User(
@@ -361,6 +363,11 @@ class TeacherRegistrationForm(forms.ModelForm):
         )
 
         teacher.user = new_user
+
+        if user and user.school:
+            teacher.staff_id = generate_staff_id(
+                user.school
+            )
 
         if commit:
             teacher.save()

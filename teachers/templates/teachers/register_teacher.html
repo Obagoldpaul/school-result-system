@@ -274,21 +274,6 @@ Register Teacher
 
                     <div class="col-md-4 mb-3">
 
-                        <label for="{{ form.staff_id.id_for_label }}">
-                            {{ form.staff_id.label }}
-                            {% if form.staff_id.field.required %}
-                                <span class="text-danger">*</span>
-                            {% endif %}
-                        </label>
-
-                        {{ form.staff_id }}
-                        {{ form.staff_id.errors }}
-
-                    </div>
-
-
-                    <div class="col-md-4 mb-3">
-
                         <label for="{{ form.qualification.id_for_label }}">
                             {{ form.qualification.label }}
                             {% if form.qualification.field.required %}

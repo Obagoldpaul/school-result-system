@@ -186,7 +186,6 @@ def edit_teacher(request, teacher_id):
         # PROFESSIONAL INFORMATION
         # ==========================
 
-        teacher.staff_id = request.POST.get('staff_id', '')
         teacher.qualification = request.POST.get('qualification', '')
         teacher.years_of_experience = request.POST.get(
             'years_of_experience'

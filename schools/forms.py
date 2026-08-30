@@ -3,7 +3,7 @@ from django.contrib.auth import get_user_model
 from datetime import timedelta
 
 from dateutil.relativedelta import relativedelta
-
+import re
 from .models import (
     School,
     SchoolRole,
@@ -195,6 +195,11 @@ class SchoolRegistrationForm(forms.Form):
     def clean_school_code(self):
         code = self.cleaned_data["school_code"].strip().upper()
 
+        if not re.fullmatch(r"[A-Z0-9]+", code):
+            raise forms.ValidationError(
+                "School code must contain only letters and numbers."
+            )
+
         if School.objects.filter(code__iexact=code).exists():
             raise forms.ValidationError(
                 "A school with this code already exists."
@@ -318,6 +323,11 @@ class EditSchoolForm(forms.ModelForm):
 
     def clean_code(self):
         code = self.cleaned_data["code"].strip().upper()
+
+        if not re.fullmatch(r"[A-Z0-9]+", code):
+            raise forms.ValidationError(
+                "School code must contain only letters and numbers."
+            )
 
         existing_school = School.objects.filter(
             code__iexact=code
