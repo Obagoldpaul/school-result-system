@@ -3,7 +3,15 @@ from . import views
 
 urlpatterns = [
     path("", views.maintenance_home, name="maintenance_home"),
+    
+    path(
+        "status/",
+        views.maintenance_status,
+        name="maintenance_status",
+    ),
+    
     path("backups/", views.backup_list, name="backup_list"),
+    
     path(
         "backups/create/",
         views.create_backup,

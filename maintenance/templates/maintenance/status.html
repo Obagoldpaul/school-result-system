@@ -1,0 +1,168 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Maintenance | Paul SchoolHub</title>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family:
+                Arial,
+                sans-serif;
+            background: #f7f2ef;
+            color: #201e1e;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .maintenance-card {
+            width: 100%;
+            max-width: 620px;
+            background: #ffffff;
+            border-radius: 16px;
+            padding: 45px 35px;
+            text-align: center;
+            box-shadow:
+                0 10px 30px
+                rgba(0, 0, 0, 0.08);
+        }
+
+        .brand {
+            margin-bottom: 35px;
+        }
+
+        .brand-name {
+            font-size: 30px;
+            font-weight: 700;
+            color: #201e1e;
+        }
+
+        .brand-highlight {
+            color: #8c1d27;
+        }
+
+        .maintenance-icon {
+            font-size: 48px;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            margin-bottom: 15px;
+            font-size: 30px;
+        }
+
+        .message {
+            color: #555555;
+            font-size: 16px;
+            line-height: 1.7;
+            margin-bottom: 30px;
+        }
+
+        .status-badge {
+            display: inline-block;
+            background: #ffc837;
+            color: #201e1e;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .footer {
+            margin-top: 35px;
+            font-size: 13px;
+            color: #777777;
+        }
+
+        @media (max-width: 576px) {
+
+            .maintenance-card {
+                padding: 35px 25px;
+            }
+
+            .brand-name {
+                font-size: 25px;
+            }
+
+            h1 {
+                font-size: 26px;
+            }
+
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+    <main class="maintenance-card">
+
+        <div class="brand">
+
+            <div class="brand-name">
+
+                Paul
+                <span class="brand-highlight">
+                    SchoolHub
+                </span>
+
+            </div>
+
+        </div>
+
+        <div class="maintenance-icon">
+            🛠️
+        </div>
+
+        <h1>
+            We'll Be Back Soon
+        </h1>
+
+        <p class="message">
+
+            {{ message }}
+
+        </p>
+
+        <div class="status-badge">
+
+            System Maintenance
+
+        </div>
+
+        <div class="footer">
+
+            Powered by Paul Media
+
+            <br>
+
+            © 2026 Paul SchoolHub.
+            All Rights Reserved.
+
+        </div>
+
+    </main>
+
+</body>
+
+</html>

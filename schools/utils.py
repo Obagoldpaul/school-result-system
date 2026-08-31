@@ -143,18 +143,14 @@ def calculate_subscription_end_date(start_date, billing_cycle):
     Calculate a school's subscription end date.
 
     Termly:
-        Start Date + 3 calendar months + 14 days
+        Start Date + 4 calendar months
 
     Yearly:
         Start Date + 1 calendar year
     """
 
     if billing_cycle == SchoolSubscription.BillingCycle.TERMLY:
-        return (
-            start_date
-            + relativedelta(months=3)
-            + timedelta(days=14)
-        )
+        return start_date + relativedelta(months=4)
 
     if billing_cycle == SchoolSubscription.BillingCycle.YEARLY:
         return start_date + relativedelta(years=1)

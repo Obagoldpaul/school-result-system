@@ -3,7 +3,7 @@ from django.shortcuts import render
 
 from accounts.decorators import platform_admin_required
 
-from .models import DatabaseBackup
+from .models import DatabaseBackup, MaintenanceMode
 
 import os
 import subprocess
@@ -20,8 +20,65 @@ from django.shortcuts import get_object_or_404
 @login_required
 @platform_admin_required
 def maintenance_home(request):
-    return render(request, "maintenance/home.html")
+    maintenance = MaintenanceMode.get_solo()
 
+    if request.method == "POST":
+        action = request.POST.get("action")
+        message = request.POST.get("message", "").strip()
+
+        if action == "enable":
+            maintenance.is_enabled = True
+            maintenance.message = message
+            maintenance.save()
+
+            messages.success(
+                request,
+                "Maintenance mode has been enabled.",
+            )
+
+        elif action == "disable":
+            maintenance.is_enabled = False
+            maintenance.message = message
+            maintenance.save()
+
+            messages.success(
+                request,
+                "Maintenance mode has been disabled.",
+            )
+
+        else:
+            messages.error(
+                request,
+                "Invalid maintenance action.",
+            )
+
+        return redirect("maintenance_home")
+
+    return render(
+        request,
+        "maintenance/home.html",
+        {
+            "maintenance": maintenance,
+        },
+    )
+
+def maintenance_status(request):
+    maintenance = MaintenanceMode.get_solo()
+
+    message = (
+        maintenance.message
+        or "Paul SchoolHub is currently undergoing maintenance. "
+           "Please check back shortly."
+    )
+
+    return render(
+        request,
+        "maintenance/status.html",
+        {
+            "maintenance": maintenance,
+            "message": message,
+        },
+    )
 
 @login_required
 @platform_admin_required

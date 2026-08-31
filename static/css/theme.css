@@ -1,7 +1,13 @@
+/* =====================================================
+   PAUL SCHOOLHUB THEME
+   Centralized branding + UI theme variables
+===================================================== */
 
 
-
-/* SCHOOL COLOURS */
+/* =====================================================
+   SCHOOL / PLATFORM BRAND COLOURS
+   DO NOT REMOVE — used throughout the application
+===================================================== */
 
 :root {
 
@@ -17,11 +23,34 @@
 
     --school-white: #FFFFFF;
 
+
+    /* =================================================
+       LIGHT THEME UI COLOURS
+       These control general application surfaces.
+    ================================================= */
+
+    --theme-bg: #f0f2f0;
+
+    --theme-surface: #ffffff;
+
+    --theme-surface-alt: #f7faf7;
+
+    --theme-text: #222222;
+
+    --theme-text-muted: #666666;
+
+    --theme-border: #e0e4e0;
+
+    --theme-input-bg: #ffffff;
+
+    --theme-shadow: rgba(0, 0, 0, 0.08);
+
 }
 
 
-
-/* GENERAL SCHOOL BUTTONS */
+/* =====================================================
+   GENERAL SCHOOL BUTTONS
+===================================================== */
 
 .btn-school {
 
@@ -43,8 +72,9 @@
 }
 
 
-
-/* CARD HEADERS */
+/* =====================================================
+   CARD HEADERS
+===================================================== */
 
 .school-header {
 
@@ -55,8 +85,9 @@
 }
 
 
-
-/* PAGE HEADINGS */
+/* =====================================================
+   PAGE HEADINGS
+===================================================== */
 
 .school-title {
 
@@ -67,8 +98,9 @@
 }
 
 
-
-/* TABLE HEADER */
+/* =====================================================
+   TABLE HEADER
+===================================================== */
 
 .table-school {
 
@@ -79,8 +111,9 @@
 }
 
 
-
-/* LINKS */
+/* =====================================================
+   LINKS
+===================================================== */
 
 a {
 
@@ -96,8 +129,9 @@ a:hover {
 }
 
 
-
-/* SIDEBAR SUPPORT */
+/* =====================================================
+   SIDEBAR SUPPORT
+===================================================== */
 
 .sidebar {
 
@@ -120,8 +154,9 @@ a:hover {
 }
 
 
-
-/* GOLD ACCENT */
+/* =====================================================
+   GOLD ACCENT
+===================================================== */
 
 .school-accent {
 
@@ -130,8 +165,9 @@ a:hover {
 }
 
 
-
-/* MAROON ACCENT */
+/* =====================================================
+   MAROON ACCENT
+===================================================== */
 
 .school-ribbon {
 
@@ -141,10 +177,449 @@ a:hover {
 
 }
 
+
+/* =====================================================
+   SCHOOL HEADER TEXT
+===================================================== */
+
 .school-header h1,
 .school-header h2,
 .school-header h3,
 .school-header h4,
 .school-header h5 {
+
     color: white;
+
+}
+
+
+/* =====================================================
+   DARK THEME FOUNDATION
+   -----------------------------------------------------
+   This is intentionally NOT activated yet.
+
+   We will activate it in the next Step 24 change
+   after confirming this foundation is clean.
+===================================================== */
+
+[data-theme="dark"] {
+
+    --theme-bg: #121614;
+
+    --theme-surface: #1b211e;
+
+    --theme-surface-alt: #242c27;
+
+    --theme-text: #f1f5f2;
+
+    --theme-text-muted: #b7c0ba;
+
+    --theme-border: #39433d;
+
+    --theme-input-bg: #202722;
+
+    --theme-shadow: rgba(0, 0, 0, 0.35);
+
+}
+
+
+/* =====================================================
+   DARK THEME — BASIC GLOBAL SURFACES
+
+   These rules are deliberately limited to the
+   foundation. Forms, tables, dashboard cards,
+   navigation and messages will be handled separately.
+===================================================== */
+
+[data-theme="dark"] body {
+
+    background: var(--theme-bg);
+
+    color: var(--theme-text);
+
+}
+
+
+[data-theme="dark"] .main-area {
+
+    background: var(--theme-bg);
+
+}
+
+
+[data-theme="dark"] .content {
+
+    color: var(--theme-text);
+
+}
+
+
+[data-theme="dark"] footer {
+
+    background: var(--theme-surface);
+
+    color: var(--theme-text-muted);
+
+    border-top-color: var(--theme-border);
+
+}
+
+/* =====================================================
+   DARK THEME — FORMS
+===================================================== */
+
+[data-theme="dark"] input[type="text"],
+[data-theme="dark"] input[type="number"],
+[data-theme="dark"] input[type="password"],
+[data-theme="dark"] input[type="email"],
+[data-theme="dark"] input[type="date"],
+[data-theme="dark"] input[type="datetime-local"],
+[data-theme="dark"] input[type="time"],
+[data-theme="dark"] input[type="file"],
+[data-theme="dark"] select,
+[data-theme="dark"] textarea {
+    background-color: var(--theme-input-bg);
+    color: var(--theme-text);
+    border-color: var(--theme-border);
+}
+
+
+/* Placeholder text */
+
+[data-theme="dark"] input::placeholder,
+[data-theme="dark"] textarea::placeholder {
+    color: var(--theme-text-muted);
+    opacity: 1;
+}
+
+
+/* Focus state */
+
+[data-theme="dark"] input:focus,
+[data-theme="dark"] select:focus,
+[data-theme="dark"] textarea:focus {
+    background-color: var(--theme-input-bg);
+    color: var(--theme-text);
+    border-color: var(--school-green);
+    box-shadow: 0 0 0 3px rgba(21, 128, 61, 0.20);
+}
+
+
+/* Form labels */
+
+[data-theme="dark"] label {
+    color: var(--theme-text);
+}
+
+
+/* Help / muted text commonly used beside forms */
+
+[data-theme="dark"] .form-text,
+[data-theme="dark"] .text-muted {
+    color: var(--theme-text-muted) !important;
+}
+
+
+/* Disabled form controls */
+
+[data-theme="dark"] input:disabled,
+[data-theme="dark"] select:disabled,
+[data-theme="dark"] textarea:disabled {
+    background-color: var(--theme-surface-alt);
+    color: var(--theme-text-muted);
+    border-color: var(--theme-border);
+}
+
+/* =====================================================
+   DARK THEME — TABLES
+===================================================== */
+
+[data-theme="dark"] table {
+    background: var(--theme-surface);
+    color: var(--theme-text);
+    box-shadow: 0 1px 4px var(--theme-shadow);
+}
+
+
+[data-theme="dark"] th,
+[data-theme="dark"] td {
+    border-color: var(--theme-border);
+    color: var(--theme-text);
+}
+
+
+[data-theme="dark"] th {
+    background: var(--theme-surface-alt);
+    color: var(--theme-text);
+}
+
+
+[data-theme="dark"] tr:hover td {
+    background: var(--theme-surface-alt);
+}
+
+
+/* Links inside tables */
+
+[data-theme="dark"] table a {
+    color: var(--school-green-light);
+}
+
+
+[data-theme="dark"] table a:hover {
+    color: var(--school-white);
+}
+
+/* =====================================================
+   DARK THEME — TABLE ROW CONTRAST FIX
+===================================================== */
+
+[data-theme="dark"] table tbody tr,
+[data-theme="dark"] table tbody td {
+    background-color: var(--theme-surface) !important;
+    color: var(--theme-text) !important;
+}
+
+[data-theme="dark"] table tbody tr:hover,
+[data-theme="dark"] table tbody tr:hover td {
+    background-color: var(--theme-surface-alt) !important;
+    color: var(--theme-text) !important;
+}
+
+/* =====================================================
+   DARK THEME — FORM LABEL CONTRAST FIX
+===================================================== */
+
+[data-theme="dark"] label,
+[data-theme="dark"] .form-label {
+    color: var(--theme-text) !important;
+}
+
+/* =====================================================
+   DARK THEME — FORM CARD SURFACE
+===================================================== */
+
+[data-theme="dark"] .card-body {
+    background-color: var(--theme-surface);
+    color: var(--theme-text);
+}
+
+[data-theme="dark"] .card-body label {
+    color: var(--theme-text) !important;
+}
+
+/* =====================================================
+   DARK THEME — BOOTSTRAP FORM CONTROLS
+===================================================== */
+
+[data-theme="dark"] .form-control,
+[data-theme="dark"] .form-select {
+    background-color: var(--theme-input-bg);
+    color: var(--theme-text);
+    border-color: var(--theme-border);
+}
+
+[data-theme="dark"] .form-control::placeholder {
+    color: var(--theme-text-muted);
+    opacity: 1;
+}
+
+[data-theme="dark"] .form-control:focus,
+[data-theme="dark"] .form-select:focus {
+    background-color: var(--theme-input-bg);
+    color: var(--theme-text);
+    border-color: var(--school-green);
+    box-shadow: 0 0 0 3px rgba(21, 128, 61, 0.20);
+}
+
+[data-theme="dark"] .form-control:disabled,
+[data-theme="dark"] .form-control[readonly],
+[data-theme="dark"] .form-select:disabled {
+    background-color: var(--theme-surface-alt);
+    color: var(--theme-text-muted);
+    border-color: var(--theme-border);
+}
+
+/* =====================================================
+   DARK THEME — CARDS / DASHBOARD
+===================================================== */
+
+[data-theme="dark"] .stat-card,
+[data-theme="dark"] .workflow-card,
+[data-theme="dark"] .section-card,
+[data-theme="dark"] .billing-stat-card {
+    background-color: var(--theme-surface);
+    color: var(--theme-text);
+    box-shadow: 0 8px 20px var(--theme-shadow);
+}
+
+
+/* Dashboard card text */
+
+[data-theme="dark"] .stat-card p,
+[data-theme="dark"] .workflow-card .label,
+[data-theme="dark"] .billing-label {
+    color: var(--theme-text-muted);
+}
+
+
+/* Dashboard card headings */
+
+[data-theme="dark"] .section-card h3 {
+    color: var(--theme-text);
+}
+
+
+/* Billing dashboard title */
+
+[data-theme="dark"] .bursar-title {
+    color: var(--school-green-light);
+}
+
+[data-theme="dark"] .bursar-title span {
+    color: var(--theme-text-muted);
+}
+
+
+/* Dashboard card borders */
+
+[data-theme="dark"] .section-card,
+[data-theme="dark"] .stat-card,
+[data-theme="dark"] .workflow-card,
+[data-theme="dark"] .billing-stat-card {
+    border-color: var(--theme-border);
+}
+
+/* =====================================================
+   DARK THEME — NAVIGATION / TOPBAR
+===================================================== */
+
+[data-theme="dark"] .topbar {
+    background-color: var(--theme-surface);
+    border-bottom-color: var(--theme-border);
+    color: var(--theme-text);
+}
+
+[data-theme="dark"] .topbar .search-box input {
+    background-color: var(--theme-input-bg);
+    color: var(--theme-text);
+    border-color: var(--theme-border);
+}
+
+[data-theme="dark"] .topbar .search-box input::placeholder {
+    color: var(--theme-text-muted);
+    opacity: 1;
+}
+
+[data-theme="dark"] .topbar .notif-icon {
+    color: var(--theme-text);
+}
+
+[data-theme="dark"] .topbar .user-chip {
+    color: var(--theme-text);
+}
+
+[data-theme="dark"] .notif-dropdown {
+    background-color: var(--theme-surface);
+    color: var(--theme-text);
+    box-shadow: 0 4px 16px var(--theme-shadow);
+}
+
+[data-theme="dark"] .notif-dropdown .notif-item {
+    border-bottom-color: var(--theme-border);
+    color: var(--theme-text);
+}
+
+[data-theme="dark"] .notif-dropdown .notif-item strong {
+    color: var(--theme-text);
+}
+
+[data-theme="dark"] .notif-dropdown .notif-item span,
+[data-theme="dark"] .notif-dropdown .notif-empty {
+    color: var(--theme-text-muted);
+}
+
+/* =====================================================
+   DARK THEME — PLATFORM ADMIN CARDS
+===================================================== */
+
+[data-theme="dark"] .platform-page .card {
+    background-color: var(--theme-surface);
+    color: var(--theme-text);
+    border-color: var(--theme-border);
+}
+/* =====================================================
+   DARK THEME — PLATFORM ADMIN CONTRAST
+===================================================== */
+
+[data-theme="dark"] .platform-page h1,
+[data-theme="dark"] .platform-page h2,
+[data-theme="dark"] .platform-page h5 {
+    color: var(--theme-text);
+}
+
+[data-theme="dark"] .platform-page .platform-alert {
+    background-color: var(--theme-surface-alt);
+    border-color: var(--theme-border);
+    color: var(--theme-text);
+}
+
+/* =====================================================
+   DARK THEME — GLOBAL HEADING CONTRAST
+===================================================== */
+
+[data-theme="dark"] h1,
+[data-theme="dark"] h2,
+[data-theme="dark"] h3,
+[data-theme="dark"] h4,
+[data-theme="dark"] h5,
+[data-theme="dark"] h6 {
+    color: var(--theme-text);
+}
+
+/* =====================================================
+   DARK THEME — ALLOCATION FILTERS
+===================================================== */
+
+[data-theme="dark"] .allocation-filter .filter-field select {
+    background-color: var(--theme-input-bg);
+    color: var(--theme-text);
+    border-color: var(--theme-border);
+}
+
+[data-theme="dark"] .allocation-filter .filter-field select:focus {
+    background-color: var(--theme-input-bg);
+    color: var(--theme-text);
+    border-color: var(--school-green);
+    box-shadow: 0 0 0 3px rgba(21, 128, 61, 0.20);
+}
+
+/* =====================================================
+   DARK THEME — ALLOCATION CARDS
+===================================================== */
+
+[data-theme="dark"] .allocation-card {
+    background-color: var(--theme-surface);
+    color: var(--theme-text);
+    border-color: var(--theme-border);
+}
+
+/* =====================================================
+   DARK THEME — ALLOCATION TABLE HEADER
+===================================================== */
+
+[data-theme="dark"] .allocation-table th {
+    background-color: var(--theme-surface-alt);
+    color: var(--theme-text);
+    border-color: var(--theme-border);
+}
+
+/* =====================================================
+   DARK THEME — SELECTED TERM
+===================================================== */
+
+[data-theme="dark"] .selected-term {
+    background-color: var(--theme-surface-alt);
+    color: var(--theme-text);
+    border: 1px solid var(--theme-border);
 }

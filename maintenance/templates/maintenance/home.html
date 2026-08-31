@@ -10,6 +10,103 @@
 
     <hr>
 
+    <!-- Maintenance Mode -->
+
+    <div class="card shadow-sm mb-4">
+
+        <div class="card-body">
+
+            <h4>System Maintenance Mode</h4>
+
+            <p>
+                Control whether Paul SchoolHub is temporarily unavailable
+                to normal users.
+            </p>
+
+            <div class="mb-3">
+
+                <strong>Current Status:</strong>
+
+                {% if maintenance.is_enabled %}
+                    <span class="badge bg-danger">
+                        ON
+                    </span>
+                {% else %}
+                    <span class="badge bg-success">
+                        OFF
+                    </span>
+                {% endif %}
+
+            </div>
+
+            {% if maintenance.is_enabled %}
+                <div class="alert alert-warning">
+                    Maintenance mode is currently active.
+                    Normal users will be directed to the maintenance page
+                    once global maintenance protection is enabled.
+                </div>
+            {% else %}
+                <div class="alert alert-success">
+                    The system is currently operating normally.
+                </div>
+            {% endif %}
+
+            <form method="post">
+
+                {% csrf_token %}
+
+                <div class="mb-3">
+
+                    <label for="maintenance-message"
+                           class="form-label">
+                        Maintenance Message
+                    </label>
+
+                    <textarea
+                        id="maintenance-message"
+                        name="message"
+                        class="form-control"
+                        rows="4"
+                        placeholder="Optional message displayed to users during maintenance."
+                    >{{ maintenance.message }}</textarea>
+
+                </div>
+
+                {% if maintenance.is_enabled %}
+
+                    <button
+                        type="submit"
+                        name="action"
+                        value="disable"
+                        class="btn btn-success"
+                        onclick="return confirm('Are you sure you want to disable maintenance mode?');"
+                    >
+                        Disable Maintenance Mode
+                    </button>
+
+                {% else %}
+
+                    <button
+                        type="submit"
+                        name="action"
+                        value="enable"
+                        class="btn btn-danger"
+                        onclick="return confirm('Are you sure you want to enable maintenance mode?');"
+                    >
+                        Enable Maintenance Mode
+                    </button>
+
+                {% endif %}
+
+            </form>
+
+        </div>
+
+    </div>
+
+
+    <!-- Database Backups -->
+
     <div class="card shadow-sm">
 
         <div class="card-body">
