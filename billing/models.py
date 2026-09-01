@@ -542,6 +542,87 @@ def get_student_fee_breakdown(student, term):
 
     return breakdown
 
+def get_current_term_billing_summary(students, term):
+    """
+    Calculate current-term billing totals for a set of students.
+
+    Uses get_student_fee_breakdown() as the authoritative source
+    for each student's current-term charges, payments and balance.
+
+    Opening balances are intentionally excluded.
+    """
+
+    total_collected = (
+        Payment.objects
+        .filter(
+            student__in=students,
+            term=term,
+        )
+        .aggregate(
+            total=Sum("amount")
+        )["total"]
+        or Decimal("0.00")
+    )
+
+    students_owing = 0
+    outstanding = Decimal("0.00")
+
+    for student in students:
+
+        breakdown = get_student_fee_breakdown(
+            student,
+            term,
+        )
+
+        balance = sum(
+            (
+                item["balance"]
+                for item in breakdown
+            ),
+            Decimal("0.00"),
+        )
+
+        if balance > 0:
+            students_owing += 1
+            outstanding += balance
+
+    expected_revenue = Decimal("0.00")
+
+    for student in students:
+
+        breakdown = get_student_fee_breakdown(
+            student,
+            term,
+        )
+
+        expected_revenue += sum(
+            (
+                item["amount"]
+                for item in breakdown
+            ),
+            Decimal("0.00"),
+        )
+
+    collection_rate = (
+        (
+            total_collected
+            / expected_revenue
+        ) * 100
+        if expected_revenue > 0
+        else 0
+    )
+
+    return {
+        "total_collected": total_collected,
+        "students_owing": students_owing,
+        "outstanding": outstanding,
+        "expected_revenue": expected_revenue,
+        "collection_rate": round(
+            collection_rate,
+            2,
+        ),
+    }
+
 def get_student_account_summary(student):
     """
     Returns the student's complete account position

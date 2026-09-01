@@ -233,6 +233,11 @@ def can_manage_billing(user):
         or is_bursar(user)
     )
 
+def can_record_payment(user):
+    return user_has_permission(
+        user,
+        "billing.record_payment",
+    )
 # ----------------------------
 # Object Permissions
 # ----------------------------

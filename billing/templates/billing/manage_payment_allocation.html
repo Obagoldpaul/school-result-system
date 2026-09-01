@@ -1,0 +1,198 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}Manage Payment Allocation{% endblock %}
+
+{% block content %}
+
+<div class="container mt-4">
+
+    <div class="card shadow">
+
+        <div class="card-header school-header">
+            <h3 class="text-white mb-0">
+                Manage Payment Allocation
+            </h3>
+        </div>
+
+        <div class="card-body">
+
+            <!-- PAYMENT INFORMATION -->
+            <div class="row mb-4">
+
+                <div class="col-md-6">
+                    <p>
+                        <strong>Student:</strong>
+                        {{ payment.student.user.get_full_name }}
+                    </p>
+
+                    <p>
+                        <strong>Admission No.:</strong>
+                        {{ payment.student.admission_number }}
+                    </p>
+
+                    <p>
+                        <strong>Term:</strong>
+                        {{ payment.term }}
+                    </p>
+
+                    <p>
+                        <strong>Amount:</strong>
+                        ₦{{ payment.amount|intcomma }}
+                    </p>
+                </div>
+
+                <div class="col-md-6">
+                    <p>
+                        <strong>Payment Method:</strong>
+                        {{ payment.get_payment_method_display }}
+                    </p>
+
+                    <p>
+                        <strong>Receipt No.:</strong>
+                        {{ payment.receipt_number|default:"-" }}
+                    </p>
+
+                    <p>
+                        <strong>Date Paid:</strong>
+                        {{ payment.date_paid }}
+                    </p>
+
+                    <p>
+                        <strong>Recorded By:</strong>
+                        {{ payment.recorded_by }}
+                    </p>
+                </div>
+
+            </div>
+
+            <hr>
+
+            <!-- ALLOCATIONS -->
+            <h5 class="mb-3">
+                Current Allocations
+            </h5>
+
+            {% if allocation_formset.non_form_errors %}
+                <div class="alert alert-danger">
+                    {{ allocation_formset.non_form_errors }}
+                </div>
+            {% endif %}
+
+            <form method="post">
+
+                {% csrf_token %}
+
+                {{ allocation_formset.management_form }}
+
+                <div class="table-responsive">
+
+                    <table class="table table-bordered">
+
+                        <thead>
+                            <tr>
+                                <th>Fee Category</th>
+                                <th>Amount</th>
+                                <th>Note</th>
+                                <th>Delete</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+
+                            {% for allocation_form in allocation_formset %}
+
+                                <tr>
+
+                                    <td>
+                                        {{ allocation_form.fee_category }}
+
+                                        {% if allocation_form.fee_category.errors %}
+                                            <div class="text-danger small">
+                                                {{ allocation_form.fee_category.errors }}
+                                            </div>
+                                        {% endif %}
+                                    </td>
+
+                                    <td>
+                                        {{ allocation_form.amount }}
+
+                                        {% if allocation_form.amount.errors %}
+                                            <div class="text-danger small">
+                                                {{ allocation_form.amount.errors }}
+                                            </div>
+                                        {% endif %}
+                                    </td>
+
+                                    <td>
+                                        {{ allocation_form.note }}
+
+                                        {% if allocation_form.note.errors %}
+                                            <div class="text-danger small">
+                                                {{ allocation_form.note.errors }}
+                                            </div>
+                                        {% endif %}
+                                    </td>
+
+                                    <td class="text-center">
+                                        {{ allocation_form.DELETE }}
+                                    </td>
+
+                                </tr>
+
+                            {% endfor %}
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+                <!-- TOTALS -->
+                <div class="row mt-3">
+
+                    <div class="col-md-6">
+                        <strong>
+                            Total Allocated:
+                        </strong>
+
+                        ₦<span id="allocation-total">0.00</span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <strong>
+                            Payment Amount:
+                        </strong>
+
+                        ₦{{ payment.amount|intcomma }}
+                    </div>
+
+                </div>
+
+                <div class="mt-4">
+
+                    <button type="submit"
+                            class="btn btn-warning">
+
+                        Save Allocation
+
+                    </button>
+
+                    <a href="{% url 'payment_list' %}"
+                       class="btn btn-secondary">
+
+                        Cancel
+
+                    </a>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

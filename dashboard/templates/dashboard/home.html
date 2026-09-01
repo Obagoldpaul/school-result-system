@@ -189,6 +189,22 @@
             </a>
 
         </div>
+        {% if can_record_payment %}
+
+        <!-- RECORD PAYMENT -->
+        <div class="col-md-3">
+
+            <a
+                href="{% url 'students_owing' %}"
+                class="btn btn-success w-100 py-3"
+            >
+                💰<br>
+                Record Payment
+            </a>
+
+        </div>
+
+        {% endif %}
 
 
         <div class="col-md-3">

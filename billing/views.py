@@ -8,6 +8,7 @@ from accounts.permissions import (
     feature_required,
     can_manage_billing,
     is_student,
+    user_has_permission,
 )
 from accounts.permissions import school_permission_required
 from accounts.utils import get_current_term
@@ -159,14 +160,34 @@ def billing_dashboard(request):
 
             expected_revenue += student_expected
 
-        # ---------------------------------------------------------
+        # --------------------------------------------------
         # CURRENT TERM OUTSTANDING
-        # ---------------------------------------------------------
+        #
+        # Uses the same authoritative fee breakdown as
+        # the student billing system.
+        #
+        # This deliberately uses allocated payments rather
+        # than subtracting all raw Payment amounts.
+        # --------------------------------------------------
 
-        outstanding = max(
-            expected_revenue - current_term_collected,
-            0
-        )
+        outstanding = Decimal("0.00")
+
+        for student in students:
+
+            breakdown = get_student_fee_breakdown(
+                student,
+                current_term,
+            )
+
+            student_balance = sum(
+                (
+                    item["balance"]
+                    for item in breakdown
+                ),
+                Decimal("0.00"),
+            )
+
+            outstanding += student_balance
 
         # ---------------------------------------------------------
         # STUDENTS OWING
@@ -2533,6 +2554,336 @@ def payment_list(request):
             "selected_class": class_id or "",
             "selected_term": term_id or "",
             "selected_method": method or "",
+            "can_manage_payment_allocation": user_has_permission(
+                request.user,
+                "billing.manage",
+            )
+        },
+    )
+
+
+@login_required
+@school_permission_required("billing.manage")
+@feature_required("BILLING")
+def manage_payment_allocation(request, payment_id):
+
+    # ---------------------------------------------------------
+    # PAYMENT — STRICT SCHOOL ISOLATION
+    # ---------------------------------------------------------
+
+    payment = get_object_or_404(
+        Payment.objects.select_related(
+            "student",
+            "student__user",
+            "term",
+            "term__session",
+        ),
+        id=payment_id,
+        student__user__school=request.user.school,
+    )
+
+    student = payment.student
+    term = payment.term
+
+    # ---------------------------------------------------------
+    # CURRENT FEE BREAKDOWN
+    # ---------------------------------------------------------
+    # This includes the current payment's existing allocations.
+    # We will add those allocations back below so they remain
+    # available while this payment is being corrected.
+    # ---------------------------------------------------------
+
+    fee_breakdown = get_student_fee_breakdown(
+        student,
+        term,
+    )
+
+    existing_allocations = list(
+        PaymentAllocation.objects.filter(
+            payment=payment,
+            fee_category__school=request.user.school,
+        ).select_related(
+            "fee_category",
+        )
+    )
+
+    existing_by_category = {}
+
+    for allocation in existing_allocations:
+
+        category_id = allocation.fee_category_id
+
+        existing_by_category[category_id] = (
+            existing_by_category.get(
+                category_id,
+                Decimal("0.00"),
+            )
+            + allocation.amount
+        )
+
+    # ---------------------------------------------------------
+    # EDITABLE FEE BALANCES
+    # ---------------------------------------------------------
+    # Release this payment's existing allocations back into
+    # the available balance.
+    # ---------------------------------------------------------
+
+    editable_fee_breakdown = []
+
+    for item in fee_breakdown:
+
+        category_id = item["fee_category"].id
+
+        editable_balance = (
+            item["balance"]
+            + existing_by_category.get(
+                category_id,
+                Decimal("0.00"),
+            )
+        )
+
+        editable_item = item.copy()
+        editable_item["balance"] = editable_balance
+
+        editable_fee_breakdown.append(
+            editable_item
+        )
+
+    # ---------------------------------------------------------
+    # AVAILABLE FEE CATEGORIES
+    # ---------------------------------------------------------
+
+    fee_category_ids = [
+        item["fee_category"].id
+        for item in editable_fee_breakdown
+        if item["balance"] > 0
+    ]
+
+    fee_categories = FeeCategory.objects.filter(
+        id__in=fee_category_ids,
+        school=request.user.school,
+    ).order_by(
+        "name"
+    )
+
+    # ---------------------------------------------------------
+    # POST
+    # ---------------------------------------------------------
+
+    if request.method == "POST":
+
+        allocation_formset = PaymentAllocationFormSet(
+            request.POST,
+            form_kwargs={
+                "fee_categories": fee_categories,
+                "fee_breakdown": editable_fee_breakdown,
+            },
+        )
+
+        if allocation_formset.is_valid():
+
+            payment_amount = payment.amount
+
+            allocation_total = Decimal("0.00")
+
+            allocation_data = []
+
+            for allocation_form in allocation_formset:
+
+                if not allocation_form.cleaned_data:
+                    continue
+
+                if allocation_form.cleaned_data.get("DELETE"):
+                    continue
+
+                category = allocation_form.cleaned_data.get(
+                    "fee_category"
+                )
+
+                amount = allocation_form.cleaned_data.get(
+                    "amount"
+                )
+
+                if not category or not amount:
+                    continue
+
+                allocation_total += amount
+
+                allocation_data.append(
+                    {
+                        "fee_category": category,
+                        "amount": amount,
+                        "note": allocation_form.cleaned_data.get(
+                            "note",
+                            "",
+                        ),
+                    }
+                )
+
+            # -------------------------------------------------
+            # TOTAL MUST MATCH PAYMENT
+            # -------------------------------------------------
+
+            if allocation_total != payment_amount:
+
+                allocation_formset._non_form_errors.append(
+                    forms.ValidationError(
+                        "The allocation total must equal "
+                        "the payment amount."
+                    )
+                )
+
+            else:
+
+                valid_allocations = True
+                allocated_by_category = {}
+
+                for allocation in allocation_data:
+
+                    category_id = (
+                        allocation["fee_category"].id
+                    )
+
+                    allocated_by_category[category_id] = (
+                        allocated_by_category.get(
+                            category_id,
+                            Decimal("0.00"),
+                        )
+                        + allocation["amount"]
+                    )
+
+                # ---------------------------------------------
+                # CATEGORY BALANCE VALIDATION
+                # ---------------------------------------------
+
+                for category_id, amount in (
+                    allocated_by_category.items()
+                ):
+
+                    category = next(
+                        allocation["fee_category"]
+                        for allocation in allocation_data
+                        if allocation["fee_category"].id
+                        == category_id
+                    )
+
+                    category_balance = Decimal("0.00")
+
+                    for item in editable_fee_breakdown:
+
+                        if (
+                            item["fee_category"].id
+                            == category.id
+                        ):
+                            category_balance = item["balance"]
+                            break
+
+                    if amount > category_balance:
+
+                        valid_allocations = False
+
+                        allocation_formset._non_form_errors.append(
+                            forms.ValidationError(
+                                f"{category.name} has only "
+                                f"₦{category_balance:,.2f} "
+                                f"outstanding."
+                            )
+                        )
+
+                # ---------------------------------------------
+                # SAVE — ATOMIC REPLACEMENT
+                # ---------------------------------------------
+
+                if valid_allocations:
+
+                    with transaction.atomic():
+
+                        # Delete only the allocations belonging
+                        # to this payment.
+                        PaymentAllocation.objects.filter(
+                            payment=payment,
+                        ).delete()
+
+                        # Recreate the corrected allocations.
+                        for allocation in allocation_data:
+
+                            PaymentAllocation.objects.create(
+                                payment=payment,
+                                fee_category=allocation[
+                                    "fee_category"
+                                ],
+                                amount=allocation[
+                                    "amount"
+                                ],
+                                note=allocation[
+                                    "note"
+                                ],
+                            )
+
+                    messages.success(
+                        request,
+                        "Payment allocation updated successfully.",
+                    )
+
+                    return redirect(
+                        "payment_list"
+                    )
+
+    else:
+
+        # -----------------------------------------------------
+        # LOAD EXISTING ALLOCATIONS
+        # -----------------------------------------------------
+
+        if existing_allocations:
+
+            initial = [
+                {
+                    "fee_category": allocation.fee_category_id,
+                    "amount": allocation.amount,
+                    "note": allocation.note,
+                }
+                for allocation in existing_allocations
+            ]
+
+        else:
+
+            # Payment has no allocation yet.
+            # Provide one blank row so staff can create
+            # the allocation without needing an "Add Row"
+            # action.
+            initial = [{}]
+
+        allocation_formset = PaymentAllocationFormSet(
+            initial=initial,
+            form_kwargs={
+                "fee_categories": fee_categories,
+                "fee_breakdown": editable_fee_breakdown,
+            },
+        )
+
+    # ---------------------------------------------------------
+    # CURRENT ALLOCATION TOTAL
+    # ---------------------------------------------------------
+
+    total_allocated = sum(
+        (
+            allocation.amount
+            for allocation in existing_allocations
+        ),
+        Decimal("0.00"),
+    )
+
+    return render(
+        request,
+        "billing/manage_payment_allocation.html",
+        {
+            "payment": payment,
+            "student": student,
+            "term": term,
+            "allocation_formset": allocation_formset,
+            "total_allocated": total_allocated,
+            "payment_amount": payment.amount,
         },
     )
     

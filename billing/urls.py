@@ -24,6 +24,11 @@ urlpatterns = [
         name="pay_opening_balance",
     ),
     path("payments/", views.payment_list, name="payment_list",),
+    path(
+        "payment/<int:payment_id>/manage-allocation/",
+        views.manage_payment_allocation,
+        name="manage_payment_allocation",
+    ),
     path("payment/<int:payment_id>/receipt/", views.payment_receipt, name="payment_receipt",),
     path("payment/<int:payment_id>/receipt/pdf/", views.payment_receipt_pdf, name="payment_receipt_pdf",),
     path("student/<int:student_id>/payments/", views.student_payment_history, name="student_payment_history"),

@@ -978,6 +978,8 @@ def setup_new_school(school):
     It deliberately does NOT create ClassSubject records.
     Subject-to-class assignment remains the responsibility
     of the school's administrator.
+
+    Existing subjects are reused rather than duplicated.
     """
 
     # ---------------------------------------------------------
@@ -1027,24 +1029,163 @@ def setup_new_school(school):
     # ---------------------------------------------------------
     # STANDARD PRIMARY / PRE-PRIMARY SUBJECTS
     # ---------------------------------------------------------
+    #
+    # Combined subjects are parents.
+    # Existing component subjects are reused and linked
+    # to their appropriate parent.
+    #
+    # get_or_create() prevents duplicate subjects when
+    # the setup function is run again.
+    # ---------------------------------------------------------
 
     primary_subjects = [
-        ("English Language", "ENG"),
-        ("Mathematics", "MTH"),
-        ("Basic Science", "BSC"),
-        ("Basic Technology", "BT"),
-        ("Social Studies", "SOS"),
-        ("Cultural and Creative Arts", "CCA"),
-        ("Physical and Health Education", "PHE"),
-        ("Computer Studies", "ICT"),
-        ("Civic Education", "CE"),
-        ("Christian Religious Studies", "CRS"),
-        ("Islamic Religious Studies", "IRS"),
-        ("Agricultural Science", "AGS"),
-        ("Home Economics", "HE"),
-        ("French", "FR"),
-        ("Yoruba", "YRB"),
+        {
+            "name": "Citizenship Education",
+            "code": "CITE",
+            "components": [
+                ("Civic Education", "CE"),
+                ("Social Studies", "SOS"),
+            ],
+        },
+        {
+            "name": "Basic Science and Technology",
+            "code": "BST",
+            "components": [
+                ("Basic Science", "BSC"),
+                ("Basic Technology", "BT"),
+            ],
+        },
+        {
+            "name": "Pre-Vocational Studies",
+            "code": "PVS",
+            "components": [
+                ("Home Economics", "HE"),
+                ("Agricultural Science", "AGS"),
+            ],
+        },
+        {
+            "name": "Digital Technology",
+            "code": "DT",
+            "components": [],
+        },
+        {
+            "name": "Physical Health Education",
+            "code": "PHE",
+            "components": [],
+        },
+        {
+            "name": "Nigerian History",
+            "code": "NH",
+            "components": [],
+        },
+        {
+            "name": "Literacy",
+            "code": "LIT",
+            "components": [],
+        },
+        {
+            "name": "Numeracy",
+            "code": "NUM",
+            "components": [],
+        },
+        {
+            "name": "Cultural Studies",
+            "code": "CULT",
+            "components": [],
+        },
+        {
+            "name": "Practical Life",
+            "code": "PL",
+            "components": [
+                ("Social Norms", "SN"),
+                ("Health Habit", "HH"),
+            ],
+        },
+        {
+            "name": "Sensorial",
+            "code": "SEN",
+            "components": [
+                ("Expressive Art & Design", "EAD"),
+                ("Rhymes", "RHY"),
+            ],
+        },
+        {
+            "name": "Creative Art",
+            "code": "CA",
+            "components": [
+                ("Handwriting", "HW"),
+                ("Music", "MSC"),
+            ],
+        },
+        {
+            "name": "Literature",
+            "code": "LITENG",
+            "components": [],
+        },
+        {
+            "name": "Grammar",
+            "code": "GRAM",
+            "components": [],
+        },
+        {
+            "name": "Fine Art",
+            "code": "FA",
+            "components": [],
+        },
     ]
+
+    # ---------------------------------------------------------
+    # CREATE PRIMARY SUBJECTS
+    # ---------------------------------------------------------
+
+    if school.school_type in [
+        School.SchoolType.PRIMARY,
+        School.SchoolType.PRIMARY_SECONDARY,
+    ]:
+
+        for subject_data in primary_subjects:
+
+            # -------------------------------------------------
+            # CREATE / REUSE PARENT SUBJECT
+            # -------------------------------------------------
+
+            parent, _ = Subject.objects.get_or_create(
+                school=school,
+                name=subject_data["name"],
+                level=Subject.SubjectLevel.PRIMARY,
+                defaults={
+                    "code": subject_data["code"],
+                    "is_elective": False,
+                    "is_active": True,
+                    "parent": None,
+                },
+            )
+
+            # -------------------------------------------------
+            # CREATE / REUSE COMPONENT SUBJECTS
+            # -------------------------------------------------
+
+            for component_name, component_code in subject_data["components"]:
+
+                component, _ = Subject.objects.get_or_create(
+                    school=school,
+                    name=component_name,
+                    level=Subject.SubjectLevel.PRIMARY,
+                    defaults={
+                        "code": component_code,
+                        "is_elective": False,
+                        "is_active": True,
+                        "parent": parent,
+                    },
+                )
+
+                # If the component already existed without a
+                # parent, attach it to the appropriate parent.
+                if component.parent_id is None:
+                    component.parent = parent
+                    component.save(
+                        update_fields=["parent"]
+                    )
 
     # ---------------------------------------------------------
     # STANDARD SECONDARY SUBJECTS
@@ -1091,46 +1232,27 @@ def setup_new_school(school):
     ]
 
     # ---------------------------------------------------------
-    # CREATE SUBJECTS
+    # CREATE SECONDARY SUBJECTS
     # ---------------------------------------------------------
 
-    if school.school_type == School.SchoolType.PRIMARY:
+    if school.school_type in [
+        School.SchoolType.SECONDARY,
+        School.SchoolType.PRIMARY_SECONDARY,
+    ]:
 
-        subjects_to_create = [
-            (name, code, Subject.SubjectLevel.PRIMARY, False)
-            for name, code in primary_subjects
-        ]
+        for name, code in secondary_subjects:
 
-    elif school.school_type == School.SchoolType.SECONDARY:
-
-        subjects_to_create = [
-            (name, code, Subject.SubjectLevel.SECONDARY, False)
-            for name, code in secondary_subjects
-        ]
-
-    else:
-        # Primary & Secondary:
-        # Create the primary subjects first.
-        # Secondary subjects with the same name are skipped
-        # because Subject.name is unique per school.
-        subjects_to_create = [
-            (name, code, Subject.SubjectLevel.PRIMARY, False)
-            for name, code in primary_subjects
-        ]
-
-        subjects_to_create += [
-            (name, code, Subject.SubjectLevel.SECONDARY, False)
-            for name, code in secondary_subjects
-        ]
-
-    for name, code, level, is_elective in subjects_to_create:
-        Subject.objects.create(
-            school=school,
-            name=name,
-            code=code,
-            level=level,
-            is_elective=is_elective,
-        )
+            Subject.objects.get_or_create(
+                school=school,
+                name=name,
+                level=Subject.SubjectLevel.SECONDARY,
+                defaults={
+                    "code": code,
+                    "is_elective": False,
+                    "is_active": True,
+                    "parent": None,
+                },
+            )
 
 @login_required
 @platform_admin_required

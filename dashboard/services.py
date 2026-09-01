@@ -2,12 +2,14 @@ from students.models import Student, SchoolClass
 from teachers.models import Teacher
 from subjects.models import Subject
 from allocations.models import SubjectAllocation
-from accounts.permissions import can_manage_billing
-
+from accounts.permissions import (
+    can_manage_billing,
+    can_record_payment,
+)
 from billing.models import (
     Payment,
     PaymentAllocation,
-    get_cumulative_balance,
+    get_current_term_billing_summary,
     get_student_fee_breakdown,
     get_student_account_summary,
 )
@@ -111,6 +113,8 @@ def build_dashboard(user):
         "is_management": is_management_user(user),
 
         "can_manage_billing": can_manage_billing(user),
+        
+        "can_record_payment": can_record_payment(user),
 
         # --------------------------------------------------
         # BIRTHDAYS
@@ -227,63 +231,35 @@ def build_dashboard(user):
             )
 
             # --------------------------------------------------
-            # TOTAL COLLECTED
+            # CURRENT-TERM BILLING SUMMARY
             # --------------------------------------------------
 
-            total_collected = (
-                Payment.objects
-                .filter(
-                    student__user__school=school,
-                    term=billing_term,
-                )
-                .aggregate(
-                    total=Sum("amount")
-                )["total"] or 0
+            billing_summary = get_current_term_billing_summary(
+                students,
+                billing_term,
             )
-            
+
+            total_collected = billing_summary[
+                "total_collected"
+            ]
+
             current_term_collected = total_collected
 
-            students_owing = 0
-            outstanding = 0
+            students_owing = billing_summary[
+                "students_owing"
+            ]
 
-            # --------------------------------------------------
-            # STUDENT BALANCES
-            # --------------------------------------------------
+            outstanding = billing_summary[
+                "outstanding"
+            ]
 
-            for s in students:
+            expected_revenue = billing_summary[
+                "expected_revenue"
+            ]
 
-                (
-                    fee_amount,
-                    total_paid,
-                    balance,
-                ) = get_cumulative_balance(
-                    s,
-                    billing_term
-                )
-
-                if balance > 0:
-
-                    students_owing += 1
-
-                    outstanding += balance
-
-            # --------------------------------------------------
-            # EXPECTED REVENUE
-            # --------------------------------------------------
-
-            expected_revenue = (
-                total_collected
-                + outstanding
-            )
-
-            collection_rate = 0
-
-            if expected_revenue > 0:
-
-                collection_rate = (
-                    total_collected
-                    / expected_revenue
-                ) * 100
+            collection_rate = billing_summary[
+                "collection_rate"
+            ]
 
             # --------------------------------------------------
             # RECENT PAYMENTS
