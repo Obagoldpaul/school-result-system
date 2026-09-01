@@ -77,7 +77,7 @@ class UserPermissionTests(TestCase):
             username="school-a-bursar",
             password="testpass123",
             school=self.school_a,
-            role=User.Role.BURSAR,
+            role=User.Role.TEACHER,
             school_role=self.school_a_role,
         )
 
@@ -85,7 +85,7 @@ class UserPermissionTests(TestCase):
             username="school-b-bursar",
             password="testpass123",
             school=self.school_b,
-            role=User.Role.BURSAR,
+            role=User.Role.TEACHER,
             school_role=self.school_b_role,
         )
 

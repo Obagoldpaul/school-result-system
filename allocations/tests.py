@@ -367,16 +367,18 @@ class BulkSubjectAllocationFormTests(AllocationTestMixin, TestCase):
             "Primary 1",
         )
 
-        self.subject1 = self.create_subject(
-            self.school1,
-            "Mathematics",
-            "BULK-M001",
+        self.subject1 = Subject.objects.create(
+            school=self.school1,
+            name="Mathematics",
+            code="BULK-M001",
+            level=Subject.SubjectLevel.PRIMARY,
         )
 
-        self.subject2 = self.create_subject(
-            self.school2,
-            "Mathematics",
-            "BULK-M002",
+        self.subject2 = Subject.objects.create(
+            school=self.school2,
+            name="Mathematics",
+            code="BULK-M002",
+            level=Subject.SubjectLevel.PRIMARY,
         )
 
         ClassSubject.objects.create(

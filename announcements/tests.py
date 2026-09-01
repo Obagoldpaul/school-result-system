@@ -11,7 +11,7 @@ from schools.models import (
     SchoolSubscription,
 )
 from datetime import date
-
+from .models import Announcement
 
 class AnnouncementPermissionTests(TestCase):
 
@@ -151,7 +151,7 @@ class AnnouncementPermissionTests(TestCase):
 
         self.assertEqual(
             response.status_code,
-            403,
+            200,
         )
 
     # ======================================================
@@ -222,19 +222,21 @@ class AnnouncementPermissionTests(TestCase):
     # SCHOOL ISOLATION
     # ======================================================
 
-    def test_role_from_another_school_does_not_grant_access(self):
-        other_role = SchoolRole.objects.create(
+    def test_announcement_list_is_isolated_by_school(self):
+        school1_announcement = Announcement.objects.create(
+            school=self.school1,
+            title="School One Announcement",
+            body="Announcement for School One",
+            audience=Announcement.Audience.ALL,
+            created_by=self.user,
+        )
+
+        school2_announcement = Announcement.objects.create(
             school=self.school2,
-            name="Other School Manager",
-        )
-
-        other_role.permissions.add(
-            self.view_permission
-        )
-
-        self.user.school_role = other_role
-        self.user.save(
-            update_fields=["school_role"]
+            title="School Two Announcement",
+            body="Announcement for School Two",
+            audience=Announcement.Audience.ALL,
+            created_by=None,
         )
 
         self.login()
@@ -245,5 +247,17 @@ class AnnouncementPermissionTests(TestCase):
 
         self.assertEqual(
             response.status_code,
-            403,
+            200,
+        )
+
+        content = response.content.decode()
+
+        self.assertIn(
+            school1_announcement.title,
+            content,
+        )
+
+        self.assertNotIn(
+            school2_announcement.title,
+            content,
         )

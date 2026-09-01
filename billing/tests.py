@@ -72,7 +72,7 @@ class BillingConsistencyTests(TestCase):
         self.bursar = User.objects.create_user(
             username="bursar-one",
             school=self.school,
-            role=User.Role.BURSAR,
+            role=User.Role.TEACHER,
         )
         
         billing_permissions = [

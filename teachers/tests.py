@@ -2,7 +2,14 @@ from django.test import TestCase
 from django.urls import reverse
 
 from accounts.models import User
-from schools.models import School, SchoolRole, Permission
+from schools.models import (
+    School,
+    SchoolRole,
+    Permission,
+    SubscriptionPackage,
+    SchoolSubscription,
+)
+from django.utils import timezone
 from teachers.models import Teacher
 
 
@@ -12,6 +19,16 @@ class TeacherPermissionTests(TestCase):
         self.school = School.objects.create(
             name="Test School",
             code="TEST-001",
+        )
+        
+        self.package = SubscriptionPackage.objects.create(
+            name=SubscriptionPackage.PackageType.BASIC,
+        )
+
+        SchoolSubscription.objects.create(
+            school=self.school,
+            package=self.package,
+            start_date=timezone.now().date(),
         )
 
         self.view_permission = Permission.objects.create(
