@@ -15,10 +15,14 @@ class SchoolHubLoginView(LoginView):
     """
     Custom login view for Paul SchoolHub school users.
 
-    School users can log in through a school-specific URL:
+    School domains automatically identify the school.
 
-        /login/?school=GGBS
+    Direct school login using ?school=CODE remains supported when
+    no school domain has been resolved.
     """
+
+    template_name = "registration/login.html"
+
     def dispatch(self, request, *args, **kwargs):
 
         if request.user.is_authenticated:
@@ -29,12 +33,29 @@ class SchoolHubLoginView(LoginView):
 
         return super().dispatch(request, *args, **kwargs)
 
-        template_name = "registration/login.html"
-
     def get_school(self):
         """
-        Determine the school from the ?school=CODE parameter.
+        Determine the school for this login request.
+
+        A resolved school domain is authoritative and takes priority
+        over any ?school=CODE parameter.
+
+        If no school domain is resolved, the existing ?school=CODE
+        mechanism remains available.
         """
+
+        # ---------------------------------------------------------
+        # SCHOOL DOMAIN
+        # ---------------------------------------------------------
+
+        domain_school = getattr(self.request, "school", None)
+
+        if domain_school:
+            return domain_school
+
+        # ---------------------------------------------------------
+        # DIRECT SCHOOL LOGIN
+        # ---------------------------------------------------------
 
         school_code = self.request.GET.get("school")
 
@@ -108,7 +129,6 @@ class SchoolHubLoginView(LoginView):
             )
             return self.form_invalid(form)
 
-        
         # ---------------------------------------------------------
         # SUBSCRIPTION STATUS
         # ---------------------------------------------------------
@@ -120,7 +140,6 @@ class SchoolHubLoginView(LoginView):
                 "Please contact your school administrator."
             )
             return self.form_invalid(form)
-
 
         # ---------------------------------------------------------
         # SCHOOL MATCHING
@@ -136,7 +155,8 @@ class SchoolHubLoginView(LoginView):
             return self.form_invalid(form)
 
         return super().form_valid(form)
-
+    
+    
 @method_decorator(never_cache, name="dispatch")
 class PlatformLoginView(LoginView):
     """

@@ -7,6 +7,32 @@ from dateutil.relativedelta import relativedelta
 from .models import SchoolSubscription
 
 
+from .models import SchoolDomain
+
+
+def get_school_from_host(host):
+    """
+    Resolve an active school from an incoming hostname.
+
+    Returns:
+        School instance if the hostname belongs to an active school domain.
+        None otherwise.
+    """
+    hostname = host.split(":", 1)[0].strip().lower()
+
+    domain = (
+        SchoolDomain.objects
+        .select_related("school")
+        .filter(
+            domain__iexact=hostname,
+            is_active=True,
+            school__is_active=True,
+        )
+        .first()
+    )
+
+    return domain.school if domain else None
+
 def get_school_subscription(school):
     """
     Return the school's active subscription record.

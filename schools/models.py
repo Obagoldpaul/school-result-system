@@ -138,6 +138,49 @@ class School(models.Model):
     def __str__(self):
         return self.name
 
+class SchoolDomain(models.Model):
+    """
+    Maps a hostname/domain to a specific school.
+
+    The hostname is used to identify the school tenant for incoming
+    requests. A school may have more than one domain.
+    """
+
+    school = models.ForeignKey(
+        School,
+        on_delete=models.CASCADE,
+        related_name="domains",
+    )
+
+    domain = models.CharField(
+        max_length=255,
+        unique=True,
+        help_text="Domain or hostname assigned to this school.",
+    )
+
+    is_primary = models.BooleanField(
+        default=False,
+        help_text="Whether this is the school's primary domain.",
+    )
+
+    is_active = models.BooleanField(
+        default=True,
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+    )
+
+    updated_at = models.DateTimeField(
+        auto_now=True,
+    )
+
+    class Meta:
+        ordering = ["domain"]
+
+    def __str__(self):
+        return self.domain
+
 class Permission(models.Model):
     """
     Represents a specific action that a school user can perform.
