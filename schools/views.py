@@ -1020,10 +1020,12 @@ def setup_new_school(school):
         classes_to_create = primary_classes + secondary_classes
 
     for class_name, section in classes_to_create:
-        SchoolClass.objects.create(
+        SchoolClass.objects.get_or_create(
             school=school,
             name=class_name,
-            section=section,
+            defaults={
+                "section": section,
+            },
         )
 
     # ---------------------------------------------------------
@@ -1253,7 +1255,108 @@ def setup_new_school(school):
                     "parent": None,
                 },
             )
+    # ---------------------------------------------------------
+    # DEFAULT SCHOOL ROLES AND PERMISSIONS
+    # ---------------------------------------------------------
+    #
+    # Permission records are global and reused.
+    # SchoolRole records belong to this specific school.
+    #
+    # Default roles:
+    #   - Principal
+    #   - Bursar
+    #   - Class Teacher
+    #   - Teacher
+    #
+    # Other roles can be created manually by the school.
+    # ---------------------------------------------------------
 
+    default_roles = {
+        "Principal": {
+            "base_role": SchoolRole.BaseRole.ADMIN,
+            "permission_codes": None,  # All active permissions
+        },
+
+        "Bursar": {
+            "base_role": SchoolRole.BaseRole.ADMIN,
+            "permission_codes": [
+                "billing.delete_payment",
+                "billing.edit_payment",
+                "billing.manage",
+                "billing.record_payment",
+                "billing.view",
+                "billing.view_reports",
+            ],
+        },
+
+        "Class Teacher": {
+            "base_role": SchoolRole.BaseRole.TEACHER,
+            "permission_codes": [
+                "academics.view",
+                "attendance.manage",
+                "attendance.mark",
+                "attendance.view",
+                "class_management.view",
+                "classes.manage",
+                "classes.view",
+                "reports.teacher_remark",
+                "reports.view",
+                "scores.change",
+                "scores.enter",
+                "scores.submit",
+                "scores.view",
+                "students.change",
+                "students.view",
+                "subjects.view",
+                "teachers.view",
+            ],
+        },
+
+        "Teacher": {
+            "base_role": SchoolRole.BaseRole.TEACHER,
+            "permission_codes": [
+                "academics.view",
+                "attendance.mark",
+                "attendance.view",
+                "reports.teacher_remark",
+                "reports.view",
+                "scores.change",
+                "scores.enter",
+                "scores.submit",
+                "scores.view",
+                "students.view",
+                "subjects.view",
+            ],
+        },
+    }
+
+    for role_name, role_data in default_roles.items():
+
+        role, _ = SchoolRole.objects.get_or_create(
+            school=school,
+            name=role_name,
+            base_role=role_data["base_role"],
+            defaults={
+                "is_active": True,
+            },
+        )
+
+        role.is_active = True
+        role.save(update_fields=["is_active"])
+
+        if role_data["permission_codes"] is None:
+            permissions = Permission.objects.filter(
+                is_active=True,
+            )
+        else:
+            permissions = Permission.objects.filter(
+                code__in=role_data["permission_codes"],
+                is_active=True,
+            )
+
+        role.permissions.set(permissions)
+    
+    
 @login_required
 @platform_admin_required
 def create_school(request):
