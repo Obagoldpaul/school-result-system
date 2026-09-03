@@ -58,6 +58,12 @@ urlpatterns = [
     ),
     
     path(
+        "schools/<int:school_id>/users/<int:user_id>/send-setup-link/",
+        views.send_user_setup_link,
+        name="send_user_setup_link",
+    ),
+    
+    path(
         "schools/<int:school_id>/subscription/edit/",
         views.edit_subscription,
         name="edit_subscription",

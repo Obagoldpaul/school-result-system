@@ -10,6 +10,10 @@ from .utils import school_subscription_access_allowed
 from django.views.decorators.cache import never_cache
 from django.utils.decorators import method_decorator
 
+from django.contrib.auth.views import PasswordResetConfirmView
+from django.contrib.auth.tokens import default_token_generator
+from django.urls import reverse_lazy
+
 
 class SchoolHubLoginView(LoginView):
     """
@@ -219,3 +223,38 @@ class PlatformLoginView(LoginView):
             return self.form_invalid(form)
 
         return super().form_valid(form)
+
+class SetPasswordView(PasswordResetConfirmView):
+    """
+    Secure one-time password setup for newly created users.
+
+    The token is generated with Django's default password-reset
+    token generator. Once the user successfully sets a password,
+    the token becomes invalid.
+    """
+
+    template_name = "registration/set_password.html"
+    token_generator = default_token_generator
+    success_url = reverse_lazy("login")
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        # The password-reset confirmation view resolves the user
+        # from the secure UID/token before rendering the page.
+        school = getattr(self.user, "school", None)
+
+        context["school"] = school
+
+        return context
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+
+        messages.success(
+            self.request,
+            "Your password has been created successfully. "
+            "You can now log in.",
+        )
+
+        return response

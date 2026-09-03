@@ -42,3 +42,54 @@
         });
     });
 })();
+
+
+(function () {
+    const menuButton = document.getElementById("mobile-menu-toggle");
+    const sidebar = document.getElementById("school-sidebar");
+    const overlay = document.getElementById("sidebar-overlay");
+
+    if (!menuButton || !sidebar || !overlay) {
+        return;
+    }
+
+    function openSidebar() {
+        sidebar.classList.add("mobile-open");
+        overlay.classList.add("mobile-open");
+        menuButton.setAttribute("aria-expanded", "true");
+        document.body.style.overflow = "hidden";
+    }
+
+    function closeSidebar() {
+        sidebar.classList.remove("mobile-open");
+        overlay.classList.remove("mobile-open");
+        menuButton.setAttribute("aria-expanded", "false");
+        document.body.style.overflow = "";
+    }
+
+    menuButton.addEventListener("click", function () {
+        if (sidebar.classList.contains("mobile-open")) {
+            closeSidebar();
+        } else {
+            openSidebar();
+        }
+    });
+
+    overlay.addEventListener("click", closeSidebar);
+
+    sidebar.querySelectorAll("a").forEach(function (link) {
+        link.addEventListener("click", closeSidebar);
+    });
+
+    document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape") {
+            closeSidebar();
+        }
+    });
+
+    window.addEventListener("resize", function () {
+        if (window.innerWidth >= 768) {
+            closeSidebar();
+        }
+    });
+})();

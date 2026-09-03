@@ -3,6 +3,7 @@
 <html>
 
 <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
          :root {
             --platform-primary: {{ platform_settings.platform_primary_color|default:"#FFC837" }};
@@ -64,7 +65,10 @@
 
 <body>
     <div class="app-layout">
-        <div class="sidebar {% if is_platform_admin %}platform-sidebar{% endif %}">
+        <div
+            class="sidebar {% if is_platform_admin %}platform-sidebar{% endif %}"
+            id="school-sidebar"
+        >
             <div class="brand">
 
                 {% if is_platform_admin %}
@@ -326,7 +330,20 @@
             {% endif %}
         </div>
 
+        <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
         <div class="main-area">
+                <!-- Mobile sidebar toggle -->
+            <button
+                type="button"
+                class="mobile-menu-toggle"
+                id="mobile-menu-toggle"
+                aria-label="Open navigation menu"
+                aria-controls="school-sidebar"
+                aria-expanded="false"
+            >
+                ☰
+            </button>
             <div class="topbar">
                 <form method="GET" action="#" class="search-box">
                     <input type="text" placeholder="Search... (coming soon)" disabled>

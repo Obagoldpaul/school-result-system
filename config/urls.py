@@ -19,6 +19,13 @@ urlpatterns = [
         PlatformLoginView.as_view(),
         name="platform_login",
     ),
+    
+    path(
+        "set-password/<uidb64>/<token>/",
+        account_views.SetPasswordView.as_view(),
+        name="set_password",
+    ),
+    
     path('logout/', auth_views.LogoutView.as_view(next_page='login'), name='logout'),
 
     path('', include('dashboard.urls')),

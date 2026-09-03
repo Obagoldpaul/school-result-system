@@ -1,4 +1,9 @@
 from django.contrib import messages
+from django.contrib.auth.tokens import default_token_generator
+from django.core.mail import send_mail
+from django.utils.encoding import force_bytes
+from django.utils.http import urlsafe_base64_encode
+from django.urls import reverse
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 from django.db import transaction, models
@@ -8,6 +13,8 @@ from django.shortcuts import (
     redirect,
     render,
 )
+
+from django.views.decorators.http import require_POST
 from django.utils import timezone
 
 
@@ -762,6 +769,105 @@ def assign_user_school_role(request, school_id, user_id):
             "form": form,
             "is_platform_admin": True,
         },
+    )
+    
+@login_required
+@platform_admin_required
+@require_POST
+def send_user_setup_link(request, school_id, user_id):
+    """
+    Generate and send a fresh password-setup link for a user
+    who has not yet created a usable password.
+
+    Platform administrators only.
+    The user must belong to the specified school.
+    """
+
+    User = get_user_model()
+
+    school = get_object_or_404(
+        School,
+        id=school_id,
+    )
+
+    user = get_object_or_404(
+        User,
+        id=user_id,
+        school=school,
+    )
+
+    # Setup links are only for accounts that have not
+    # created a usable password yet.
+    if user.has_usable_password():
+        messages.error(
+            request,
+            f"{user.get_full_name() or user.username} "
+            "already has a password. Use password reset instead.",
+        )
+
+        return redirect(
+            "school_users",
+            school_id=school.id,
+        )
+
+    if not user.email:
+        messages.error(
+            request,
+            f"{user.get_full_name() or user.username} "
+            "does not have an email address.",
+        )
+
+        return redirect(
+            "school_users",
+            school_id=school.id,
+        )
+
+    # Generate a fresh one-time Django password setup token.
+    token = default_token_generator.make_token(user)
+
+    uid = urlsafe_base64_encode(
+        force_bytes(user.pk)
+    )
+
+    setup_url = request.build_absolute_uri(
+        reverse(
+            "set_password",
+            kwargs={
+                "uidb64": uid,
+                "token": token,
+            },
+        )
+    )
+
+    send_mail(
+        subject="Set Up Your Paul SchoolHub Password",
+        message=(
+            f"Hello {user.get_full_name() or user.username},\n\n"
+            f"A new password setup link has been generated for your "
+            f"Paul SchoolHub account at {school.name}.\n\n"
+            f"Set your password using this link:\n\n"
+            f"{setup_url}\n\n"
+            f"This link is valid for 72 hours and can only be used once.\n\n"
+            f"If you did not expect this email, please contact "
+            f"{school.name}.\n\n"
+            f"Regards,\n"
+            f"{school.name}\n"
+            f"Powered by Paul SchoolHub"
+        ),
+        from_email=None,
+        recipient_list=[user.email],
+        fail_silently=True,
+    )
+
+    messages.success(
+        request,
+        f"A new password setup link was sent to "
+        f"{user.get_full_name() or user.username}.",
+    )
+
+    return redirect(
+        "school_users",
+        school_id=school.id,
     )
 
 @login_required

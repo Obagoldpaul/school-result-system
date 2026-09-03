@@ -355,6 +355,30 @@
                                             </a>
                                     
                                         {% endif %}
+
+                                        {% if not user.has_usable_password %}
+
+                                            {% if user.email %}
+
+                                                <form
+                                                    method="post"
+                                                    action="{% url 'send_user_setup_link' school.id user.id %}"
+                                                    class="d-inline"
+                                                >
+                                                    {% csrf_token %}
+
+                                                    <button
+                                                        type="submit"
+                                                        class="btn btn-outline-success btn-sm"
+                                                    >
+                                                        Send Setup Link
+                                                    </button>
+
+                                                </form>
+
+                                            {% endif %}
+
+                                        {% endif %}
                                     
                                         <a
                                             href="{% url 'assign_user_school_role' school.id user.id %}"
