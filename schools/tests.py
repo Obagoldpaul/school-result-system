@@ -4,9 +4,15 @@ from django.core import mail
 from django.urls import reverse
 from django.test import TestCase
 
-from schools.models import School, SchoolRole
 from schools.views import setup_new_school
 from students.models import SchoolClass
+
+from schools.models import (
+    School,
+    SchoolRole,
+    SubscriptionPackage,
+    SchoolSubscription,
+)
 
 
 class SchoolProvisioningTests(TestCase):
@@ -290,3 +296,203 @@ class SendUserSetupLinkTests(TestCase):
 
         self.assertEqual(response.status_code, 405)
         self.assertEqual(len(mail.outbox), 0)
+        
+
+class CreateSchoolUserTests(TestCase):
+
+    @classmethod
+    def setUpTestData(cls):
+        call_command("seed_permissions")
+
+        cls.school = School.objects.create(
+            name="Create User Test School",
+            code="CREATEUSER",
+            school_type=School.SchoolType.PRIMARY_SECONDARY,
+            email="school@example.com",
+            phone="0000000000",
+            address="Temporary Test School",
+        )
+
+        User = get_user_model()
+
+        cls.platform_admin = User.objects.create_user(
+            username="create_user_platform_admin",
+            email="admin@example.com",
+            password="AdminPassword123!",
+            role=User.Role.PLATFORM_ADMIN,
+        )
+
+    def test_create_school_user_sends_setup_link(self):
+        self.client.force_login(self.platform_admin)
+
+        response = self.client.post(
+            reverse(
+                "create_school_user",
+                kwargs={"school_id": self.school.id},
+            ),
+            {
+                "username": "new_school_admin",
+                "first_name": "New",
+                "last_name": "Admin",
+                "email": "newadmin@example.com",
+            },
+        )
+
+        self.assertRedirects(
+            response,
+            reverse(
+                "school_users",
+                kwargs={"school_id": self.school.id},
+            ),
+        )
+
+        self.assertEqual(len(mail.outbox), 1)
+
+        email = mail.outbox[0]
+
+        self.assertEqual(
+            email.to,
+            ["newadmin@example.com"],
+        )
+
+        self.assertIn(
+            "Set Up Your Paul SchoolHub Password",
+            email.subject,
+        )
+
+        self.assertIn(
+            "/set-password/",
+            email.body,
+        )
+
+        self.assertIn(
+            self.school.name,
+            email.body,
+        )
+
+        user = get_user_model().objects.get(
+            username="new_school_admin"
+        )
+
+        self.assertEqual(
+            user.school,
+            self.school,
+        )
+
+        self.assertEqual(
+            user.role,
+            get_user_model().Role.ADMIN,
+        )
+
+        self.assertFalse(
+            user.has_usable_password()
+        )
+
+class CreateSchoolTests(TestCase):
+
+    @classmethod
+    def setUpTestData(cls):
+        call_command("seed_permissions")
+
+        cls.platform_admin = get_user_model().objects.create_user(
+            username="create_school_platform_admin",
+            email="platform@example.com",
+            password="AdminPassword123!",
+            role=get_user_model().Role.PLATFORM_ADMIN,
+        )
+
+        cls.package = SubscriptionPackage.objects.create(
+            name=SubscriptionPackage.PackageType.BASIC,
+            price=10000,
+            is_active=True,
+        )
+
+    def test_create_school_sends_first_admin_setup_link(self):
+        self.client.force_login(self.platform_admin)
+
+        response = self.client.post(
+            reverse("create_school"),
+            {
+                "school_name": "New Test College",
+                "school_code": "NEWCOLLEGE",
+                "school_type": School.SchoolType.PRIMARY_SECONDARY,
+                "email": "school@example.com",
+                "phone": "0000000000",
+                "address": "Temporary Test School",
+                "package": self.package.id,
+                "billing_cycle": SchoolSubscription.BillingCycle.YEARLY,
+                "admin_first_name": "First",
+                "admin_last_name": "Administrator",
+                "admin_username": "first_school_admin",
+                "admin_email": "firstadmin@example.com",
+            },
+        )
+
+        self.assertRedirects(
+            response,
+            reverse("platform_dashboard"),
+        )
+
+        self.assertEqual(len(mail.outbox), 1)
+
+        email = mail.outbox[0]
+
+        self.assertEqual(
+            email.to,
+            ["firstadmin@example.com"],
+        )
+
+        self.assertIn(
+            "Set Up Your Paul SchoolHub Password",
+            email.subject,
+        )
+
+        self.assertIn(
+            "/set-password/",
+            email.body,
+        )
+
+        school = School.objects.get(
+            code="NEWCOLLEGE"
+        )
+
+        self.assertIn(
+            school.name,
+            email.body,
+        )
+
+        administrator = get_user_model().objects.get(
+            username="first_school_admin"
+        )
+
+        self.assertEqual(
+            administrator.school,
+            school,
+        )
+
+        self.assertEqual(
+            administrator.role,
+            get_user_model().Role.ADMIN,
+        )
+
+        self.assertFalse(
+            administrator.has_usable_password()
+        )
+
+        subscription = SchoolSubscription.objects.get(
+            school=school
+        )
+
+        self.assertEqual(
+            subscription.package,
+            self.package,
+        )
+
+        self.assertEqual(
+            subscription.billing_cycle,
+            SchoolSubscription.BillingCycle.YEARLY,
+        )
+
+        self.assertTrue(
+            subscription.is_active
+        )

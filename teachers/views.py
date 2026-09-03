@@ -2,6 +2,11 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 
+from django.contrib.auth.tokens import default_token_generator
+from django.urls import reverse
+from django.utils.encoding import force_bytes
+from django.utils.http import urlsafe_base64_encode
+
 from students.models import SchoolClass
 from .forms import TeacherRegistrationForm
 from .models import Teacher
@@ -31,28 +36,44 @@ def register_teacher(request):
 
         if form.is_valid():
 
-            # Get the plain-text password before it is hashed.
-            password = form.cleaned_data["password"]
-
             # Create the teacher and user account.
             teacher = form.save(
                 user=request.user
             )
 
-            # Send login credentials if an email address was provided.
+            # Send a secure password setup link if an email address was provided.
             if teacher.user.email:
+                token = default_token_generator.make_token(
+                    teacher.user
+                )
+
+                uid = urlsafe_base64_encode(
+                    force_bytes(teacher.user.pk)
+                )
+
+                setup_url = request.build_absolute_uri(
+                    reverse(
+                        "set_password",
+                        kwargs={
+                            "uidb64": uid,
+                            "token": token,
+                        },
+                    )
+                )
+
                 send_mail(
-                    subject="Your Paul SchoolHub Login Details",
+                    subject="Set Up Your Paul SchoolHub Password",
                     message=(
                         f"Hello {teacher.user.get_full_name()},\n\n"
                         f"Your teacher account has been created on "
                         f"Paul SchoolHub for "
                         f"{request.user.school.name}.\n\n"
-                        f"Username: {teacher.user.username}\n"
-                        f"Password: {password}\n\n"
-                        f"You can now log in to your school portal "
-                        f"using these credentials.\n\n"
-                        f"Please keep your login details secure.\n\n"
+                        f"Set your password using this link:\n\n"
+                        f"{setup_url}\n\n"
+                        f"This link is valid for 72 hours and can only be "
+                        f"used once.\n\n"
+                        f"If you did not expect this email, please contact "
+                        f"{request.user.school.name}.\n\n"
                         f"Regards,\n"
                         f"{request.user.school.name}\n"
                         f"Powered by Paul SchoolHub"

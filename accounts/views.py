@@ -1,5 +1,4 @@
 from django.contrib import messages
-from django.contrib.auth.views import LoginView
 from django.shortcuts import get_object_or_404, redirect
 
 from schools.models import School, PlatformSettings
@@ -13,6 +12,13 @@ from django.utils.decorators import method_decorator
 from django.contrib.auth.views import PasswordResetConfirmView
 from django.contrib.auth.tokens import default_token_generator
 from django.urls import reverse_lazy
+
+from django.contrib.auth.forms import PasswordResetForm
+from django.contrib.auth.views import (
+    LoginView,
+    PasswordResetView,
+    PasswordResetConfirmView,
+)
 
 
 class SchoolHubLoginView(LoginView):
@@ -258,3 +264,31 @@ class SetPasswordView(PasswordResetConfirmView):
         )
 
         return response
+
+class PlatformPasswordResetForm(PasswordResetForm):
+    """
+    Password reset form for Paul SchoolHub.
+
+    Reset links always use the platform domain, regardless
+    of the school domain from which the request originated.
+    """
+
+    def save(self, **kwargs):
+        kwargs["domain_override"] = "paulschoolhub.com.ng"
+        kwargs["use_https"] = True
+
+        return super().save(**kwargs)
+
+class PasswordResetRequestView(PasswordResetView):
+    """
+    Start the password-reset process for a user.
+
+    Reset links always use the Paul SchoolHub platform domain,
+    regardless of the school domain used to request the reset.
+    """
+
+    template_name = "registration/password_reset.html"
+    email_template_name = "registration/password_reset_email.txt"
+    subject_template_name = "registration/password_reset_subject.txt"
+    success_url = reverse_lazy("password_reset_done")
+    form_class = PlatformPasswordResetForm

@@ -166,28 +166,6 @@ class SchoolRegistrationForm(forms.Form):
         ),
     )
 
-    admin_password = forms.CharField(
-        min_length=8,
-        label="Password",
-        widget=forms.PasswordInput(
-            attrs={
-                "class": "form-control",
-                "placeholder": "Minimum 8 characters",
-            }
-        ),
-    )
-
-    admin_password_confirm = forms.CharField(
-        min_length=8,
-        label="Confirm Password",
-        widget=forms.PasswordInput(
-            attrs={
-                "class": "form-control",
-                "placeholder": "Re-enter administrator password",
-            }
-        ),
-    )
-
     # ---------------------------------------------------------
     # VALIDATION
     # ---------------------------------------------------------
@@ -218,19 +196,7 @@ class SchoolRegistrationForm(forms.Form):
         return username
 
     def clean(self):
-        cleaned_data = super().clean()
-
-        password = cleaned_data.get("admin_password")
-        password_confirm = cleaned_data.get("admin_password_confirm")
-
-        if password and password_confirm:
-            if password != password_confirm:
-                self.add_error(
-                    "admin_password_confirm",
-                    "The passwords do not match."
-                )
-
-        return cleaned_data
+        return super().clean()
 
 
 class EditSchoolForm(forms.ModelForm):
@@ -576,27 +542,6 @@ class CreateSchoolUserForm(forms.ModelForm):
     through their existing modules.
     """
 
-    password = forms.CharField(
-        min_length=8,
-        label="Password",
-        widget=forms.PasswordInput(
-            attrs={
-                "class": "form-control",
-                "placeholder": "Minimum 8 characters",
-            }
-        ),
-    )
-
-    password_confirm = forms.CharField(
-        min_length=8,
-        label="Confirm Password",
-        widget=forms.PasswordInput(
-            attrs={
-                "class": "form-control",
-                "placeholder": "Re-enter password",
-            }
-        ),
-    )
 
     class Meta:
         model = User
@@ -671,19 +616,7 @@ class CreateSchoolUserForm(forms.ModelForm):
         return username
 
     def clean(self):
-        cleaned_data = super().clean()
-
-        password = cleaned_data.get("password")
-        password_confirm = cleaned_data.get("password_confirm")
-
-        if password and password_confirm:
-            if password != password_confirm:
-                self.add_error(
-                    "password_confirm",
-                    "The passwords do not match."
-                )
-
-        return cleaned_data
+        return super().clean()
 
     def save(self, commit=True):
         user = super().save(commit=False)
@@ -695,9 +628,7 @@ class CreateSchoolUserForm(forms.ModelForm):
         if self.school is not None:
             user.school = self.school
 
-        user.set_password(
-            self.cleaned_data["password"]
-        )
+        user.set_unusable_password()
 
         if commit:
             user.save()

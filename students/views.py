@@ -9,6 +9,11 @@ from django.db import models
 from subjects.models import Subject
 from django.core.mail import send_mail
 
+from django.contrib.auth.tokens import default_token_generator
+from django.urls import reverse
+from django.utils.encoding import force_bytes
+from django.utils.http import urlsafe_base64_encode
+
 
 from core.choices import (
     NIGERIAN_STATES,
@@ -28,22 +33,41 @@ def register_student(request):
         )
 
         if form.is_valid():
-            password = form.cleaned_data["password"]
-
             student = form.save()
 
+            # Send a secure password setup link if an email address was provided.
             if student.user.email:
+                token = default_token_generator.make_token(
+                    student.user
+                )
+
+                uid = urlsafe_base64_encode(
+                    force_bytes(student.user.pk)
+                )
+
+                setup_url = request.build_absolute_uri(
+                    reverse(
+                        "set_password",
+                        kwargs={
+                            "uidb64": uid,
+                            "token": token,
+                        },
+                    )
+                )
+
                 send_mail(
-                    subject="Your Paul SchoolHub Login Details",
+                    subject="Set Up Your Paul SchoolHub Password",
                     message=(
                         f"Hello {student.user.get_full_name()},\n\n"
                         f"Your student account has been created on "
-                        f"Paul SchoolHub for {request.user.school.name}.\n\n"
-                        f"Username: {student.user.username}\n"
-                        f"Password: {password}\n\n"
-                        f"You can now log in to your school portal using "
-                        f"these credentials.\n\n"
-                        f"Please keep your login details secure.\n\n"
+                        f"Paul SchoolHub for "
+                        f"{request.user.school.name}.\n\n"
+                        f"Set your password using this link:\n\n"
+                        f"{setup_url}\n\n"
+                        f"This link is valid for 72 hours and can only be "
+                        f"used once.\n\n"
+                        f"If you did not expect this email, please contact "
+                        f"{request.user.school.name}.\n\n"
                         f"Regards,\n"
                         f"{request.user.school.name}\n"
                         f"Powered by Paul SchoolHub"

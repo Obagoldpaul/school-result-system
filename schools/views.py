@@ -1,5 +1,6 @@
 from django.contrib import messages
 from django.contrib.auth.tokens import default_token_generator
+from django.urls import reverse
 from django.core.mail import send_mail
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
@@ -583,6 +584,45 @@ def create_school_user(request, school_id):
         if form.is_valid():
 
             user = form.save()
+
+            # Send a secure password setup link if an email address was provided.
+            if user.email:
+                token = default_token_generator.make_token(user)
+
+                uid = urlsafe_base64_encode(
+                    force_bytes(user.pk)
+                )
+
+                setup_url = request.build_absolute_uri(
+                    reverse(
+                        "set_password",
+                        kwargs={
+                            "uidb64": uid,
+                            "token": token,
+                        },
+                    )
+                )
+
+                send_mail(
+                    subject="Set Up Your Paul SchoolHub Password",
+                    message=(
+                        f"Hello {user.get_full_name() or user.username},\n\n"
+                        f"Your administrative account has been created on "
+                        f"Paul SchoolHub for {school.name}.\n\n"
+                        f"Set your password using this link:\n\n"
+                        f"{setup_url}\n\n"
+                        f"This link is valid for 72 hours and can only be "
+                        f"used once.\n\n"
+                        f"If you did not expect this email, please contact "
+                        f"{school.name}.\n\n"
+                        f"Regards,\n"
+                        f"{school.name}\n"
+                        f"Powered by Paul SchoolHub"
+                    ),
+                    from_email=None,
+                    recipient_list=[user.email],
+                    fail_silently=True,
+                )
 
             messages.success(
                 request,
@@ -1493,7 +1533,7 @@ def create_school(request):
                         phone=form.cleaned_data["phone"].strip(),
                         address=form.cleaned_data["address"].strip(),
                     )
-                    
+
                     # -------------------------------------------------
                     # CREATE DEFAULT ACADEMIC STRUCTURE
                     # -------------------------------------------------
@@ -1531,12 +1571,59 @@ def create_school(request):
                     administrator = User.objects.create_user(
                         username=form.cleaned_data["admin_username"],
                         email=form.cleaned_data["admin_email"],
-                        password=form.cleaned_data["admin_password"],
                         first_name=form.cleaned_data["admin_first_name"],
                         last_name=form.cleaned_data["admin_last_name"],
                         role=User.Role.ADMIN,
                         school=school,
                     )
+
+                    administrator.set_unusable_password()
+                    administrator.save()
+
+                    # -------------------------------------------------
+                    # SEND SECURE PASSWORD SETUP LINK
+                    # -------------------------------------------------
+
+                    if administrator.email:
+                        token = default_token_generator.make_token(
+                            administrator
+                        )
+
+                        uid = urlsafe_base64_encode(
+                            force_bytes(administrator.pk)
+                        )
+
+                        setup_url = request.build_absolute_uri(
+                            reverse(
+                                "set_password",
+                                kwargs={
+                                    "uidb64": uid,
+                                    "token": token,
+                                },
+                            )
+                        )
+
+                        send_mail(
+                            subject="Set Up Your Paul SchoolHub Password",
+                            message=(
+                                f"Hello "
+                                f"{administrator.get_full_name() or administrator.username},\n\n"
+                                f"Your administrative account has been created "
+                                f"on Paul SchoolHub for {school.name}.\n\n"
+                                f"Set your password using this link:\n\n"
+                                f"{setup_url}\n\n"
+                                f"This link is valid for 72 hours and can only "
+                                f"be used once.\n\n"
+                                f"If you did not expect this email, please contact "
+                                f"{school.name}.\n\n"
+                                f"Regards,\n"
+                                f"{school.name}\n"
+                                f"Powered by Paul SchoolHub"
+                            ),
+                            from_email=None,
+                            recipient_list=[administrator.email],
+                            fail_silently=True,
+                        )
 
                 messages.success(
                     request,

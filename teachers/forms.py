@@ -100,15 +100,6 @@ class TeacherRegistrationForm(forms.ModelForm):
         )
     )
 
-    password = forms.CharField(
-        widget=forms.PasswordInput(
-            attrs={
-                "class": "form-control",
-                "placeholder": "Password"
-            }
-        )
-    )
-
     date_of_birth = forms.DateField(
         required=False,
         widget=forms.DateInput(
@@ -351,9 +342,7 @@ class TeacherRegistrationForm(forms.ModelForm):
         if user and user.school:
             new_user.school = user.school
 
-        new_user.set_password(
-            self.cleaned_data["password"]
-        )
+        new_user.set_unusable_password()
 
         if commit:
             new_user.save()

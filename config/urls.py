@@ -26,6 +26,19 @@ urlpatterns = [
         name="set_password",
     ),
     
+    path(
+        "password-reset/",
+        account_views.PasswordResetRequestView.as_view(),
+        name="password_reset",
+    ),
+    path(
+        "password-reset/done/",
+        auth_views.PasswordResetDoneView.as_view(
+            template_name="registration/password_reset_done.html"
+        ),
+        name="password_reset_done",
+    ),
+    
     path('logout/', auth_views.LogoutView.as_view(next_page='login'), name='logout'),
 
     path('', include('dashboard.urls')),
