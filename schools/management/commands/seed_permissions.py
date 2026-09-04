@@ -305,6 +305,17 @@ PERMISSIONS = [
         "module": "School Settings",
         "description": "Change school configuration and settings.",
     },
+    
+    # =========================================================
+    # SUPPORT
+    # =========================================================
+
+    {
+        "code": "support.contact",
+        "name": "Contact Paul Media Support",
+        "module": "Support",
+        "description": "Contact Paul Media for school management support.",
+    },
 
     # =========================================================
     # USERS / STAFF

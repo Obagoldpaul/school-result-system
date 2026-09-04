@@ -35,7 +35,14 @@ class SchoolProvisioningTests(TestCase):
 
         self.assertEqual(
             SchoolClass.objects.filter(school=school).count(),
-            16,
+            15,
+        )
+        
+        self.assertFalse(
+            SchoolClass.objects.filter(
+                school=school,
+                name="BASIC 6",
+            ).exists()
         )
 
         self.assertEqual(
@@ -44,7 +51,7 @@ class SchoolProvisioningTests(TestCase):
         )
 
         expected_permissions = {
-            "Principal": 45,
+            "Principal": 46,
             "Bursar": 6,
             "Class Teacher": 17,
             "Teacher": 11,
@@ -92,7 +99,7 @@ class SchoolProvisioningTests(TestCase):
             school=school
         ).count()
 
-        self.assertEqual(first_class_count, 16)
+        self.assertEqual(first_class_count, 15)
         self.assertEqual(first_role_count, 4)
         self.assertEqual(second_class_count, first_class_count)
         self.assertEqual(second_role_count, first_role_count)

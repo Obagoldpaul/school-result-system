@@ -6,6 +6,7 @@ from .permissions import (
     is_student,
     is_management,
     can_manage_billing,
+     user_has_permission,
 )
 
 
@@ -23,6 +24,7 @@ def user_roles(request):
         "is_class_teacher": is_class_teacher(user),
         "is_student": is_student(user),
         "can_manage_billing": can_manage_billing(user),
+        "can_contact_support": user_has_permission(user, "support.contact"),
     }
 
 

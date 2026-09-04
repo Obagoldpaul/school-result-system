@@ -6,6 +6,8 @@ from django.urls import reverse
 
 from accounts.models import User
 from schools.models import School, SchoolRole, Permission
+from students.models import SchoolClass
+from students.forms import StudentRegistrationForm
 
 
 class StudentPermissionTests(TestCase):
@@ -245,3 +247,138 @@ class StudentPermissionTests(TestCase):
         )
 
         self.assertEqual(response.status_code, 403)
+    
+    def test_user_with_classes_manage_can_toggle_class_status(self):
+        self.role_a.permissions.add(
+            self.classes_manage,
+            self.classes_view,
+        )
+
+        school_class = SchoolClass.objects.create(
+            school=self.school_a,
+            name="JSS1",
+            section=SchoolClass.Section.JUNIOR_SECONDARY,
+            is_active=True,
+        )
+
+        self.client.force_login(self.user_a)
+
+        response = self.client.post(
+            reverse(
+                "toggle_class_status",
+                args=[school_class.id]
+            )
+        )
+
+        self.assertRedirects(
+            response,
+            reverse("class_management")
+        )
+
+        school_class.refresh_from_db()
+
+        self.assertFalse(school_class.is_active)
+
+        # Toggle back to active
+        response = self.client.post(
+            reverse(
+                "toggle_class_status",
+                args=[school_class.id]
+            )
+        )
+
+        self.assertRedirects(
+            response,
+            reverse("class_management")
+        )
+
+        school_class.refresh_from_db()
+
+        self.assertTrue(school_class.is_active)
+        
+    def test_toggle_class_status_rejects_get_request(self):
+        self.role_a.permissions.add(
+            self.classes_manage,
+            self.classes_view,
+        )
+
+        school_class = SchoolClass.objects.create(
+            school=self.school_a,
+            name="JSS1",
+            section=SchoolClass.Section.JUNIOR_SECONDARY,
+            is_active=True,
+        )
+
+        self.client.force_login(self.user_a)
+
+        response = self.client.get(
+            reverse(
+                "toggle_class_status",
+                args=[school_class.id]
+            )
+        )
+
+        self.assertEqual(response.status_code, 405)
+
+        school_class.refresh_from_db()
+
+        self.assertTrue(school_class.is_active)
+
+
+    def test_user_cannot_toggle_class_from_another_school(self):
+        self.role_a.permissions.add(self.classes_manage)
+
+        school_b_class = SchoolClass.objects.create(
+            school=self.school_b,
+            name="JSS1",
+            section=SchoolClass.Section.JUNIOR_SECONDARY,
+            is_active=True,
+        )
+
+        self.client.force_login(self.user_a)
+
+        response = self.client.post(
+            reverse(
+                "toggle_class_status",
+                args=[school_b_class.id]
+            )
+        )
+
+        self.assertEqual(response.status_code, 404)
+
+        school_b_class.refresh_from_db()
+
+        self.assertTrue(school_b_class.is_active)
+        
+    def test_inactive_class_is_excluded_from_student_registration(self):
+        active_class = SchoolClass.objects.create(
+            school=self.school_a,
+            name="JSS1",
+            section=SchoolClass.Section.JUNIOR_SECONDARY,
+            is_active=True,
+        )
+
+        inactive_class = SchoolClass.objects.create(
+            school=self.school_a,
+            name="JSS2",
+            section=SchoolClass.Section.JUNIOR_SECONDARY,
+            is_active=False,
+        )
+
+        form = StudentRegistrationForm(
+            user=self.user_a
+        )
+
+        available_classes = list(
+            form.fields["school_class"].queryset
+        )
+
+        self.assertIn(
+            active_class,
+            available_classes
+        )
+
+        self.assertNotIn(
+            inactive_class,
+            available_classes
+        )

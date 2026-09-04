@@ -50,6 +50,10 @@ class SchoolClass(models.Model):
         choices=Section.choices,
         default=Section.PRIMARY,
     )
+    
+    is_active = models.BooleanField(
+        default=True
+    )
 
     class Meta:
         unique_together = ('school', 'name')

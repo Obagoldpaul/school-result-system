@@ -116,19 +116,65 @@ Class Management
                                 <a
                                     href="{% url 'student_list' %}?class={{ school_class.id }}"
                                     class="btn btn-outline-primary">
-
+                            
                                     View Students
-
+                            
                                 </a>
-
+                            
                                 <a
                                     href="{% url 'edit_class' school_class.id %}"
                                     class="btn btn-outline-warning">
-
+                            
                                     ✏️ Edit Class
-
+                            
                                 </a>
-
+                            
+                                {% if school_class.is_active %}
+                            
+                                    <span class="badge bg-success py-2">
+                                        🟢 Active
+                                    </span>
+                            
+                                    <form
+                                        method="post"
+                                        action="{% url 'toggle_class_status' school_class.id %}">
+                            
+                                        {% csrf_token %}
+                            
+                                        <button
+                                            type="submit"
+                                            class="btn btn-outline-danger w-100">
+                            
+                                            Deactivate Class
+                            
+                                        </button>
+                            
+                                    </form>
+                            
+                                {% else %}
+                            
+                                    <span class="badge bg-secondary py-2">
+                                        🔴 Inactive
+                                    </span>
+                            
+                                    <form
+                                        method="post"
+                                        action="{% url 'toggle_class_status' school_class.id %}">
+                            
+                                        {% csrf_token %}
+                            
+                                        <button
+                                            type="submit"
+                                            class="btn btn-outline-success w-100">
+                            
+                                            Activate Class
+                            
+                                        </button>
+                            
+                                    </form>
+                            
+                                {% endif %}
+                            
                             </div>
 
                         </div>

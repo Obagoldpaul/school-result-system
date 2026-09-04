@@ -1143,7 +1143,6 @@ def setup_new_school(school):
         ("BASIC 3", SchoolClass.Section.PRIMARY),
         ("BASIC 4", SchoolClass.Section.PRIMARY),
         ("BASIC 5", SchoolClass.Section.PRIMARY),
-        ("BASIC 6", SchoolClass.Section.PRIMARY),
     ]
 
     secondary_classes = [

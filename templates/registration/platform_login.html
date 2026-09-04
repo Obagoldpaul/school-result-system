@@ -217,6 +217,50 @@
             color: #333;
         }
 
+        .password-input-wrapper {
+            position: relative;
+        }
+
+        .password-input-wrapper input {
+            padding-right: 48px;
+        }
+
+        .password-toggle {
+            position: absolute;
+            top: 50%;
+            right: 10px;
+
+            transform: translateY(-50%);
+
+            border: none;
+            background: transparent;
+
+            padding: 6px;
+
+            color: #666;
+
+            cursor: pointer;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .password-toggle:hover {
+            color: var(--primary);
+        }
+
+        .password-toggle:focus {
+            outline: 2px solid var(--primary);
+            outline-offset: 2px;
+            border-radius: 4px;
+        }
+
+        #password-toggle-icon {
+            font-size: 17px;
+            line-height: 1;
+        }
+
     </style>
 
 </head>
@@ -311,19 +355,33 @@
             <div class="form-group">
 
                 <label for="id_password">
-
+            
                     Password
-
+            
                 </label>
-
-                <input
-                    type="password"
-                    name="password"
-                    id="id_password"
-                    autocomplete="current-password"
-                    required
-                >
-
+            
+                <div class="password-input-wrapper">
+            
+                    <input
+                        type="password"
+                        name="password"
+                        id="id_password"
+                        autocomplete="current-password"
+                        required
+                    >
+            
+                    <button
+                        type="button"
+                        class="password-toggle"
+                        id="password-toggle"
+                        aria-label="Show password"
+                        title="Show password"
+                    >
+                        <span id="password-toggle-icon" aria-hidden="true">👁</span>
+                    </button>
+            
+                </div>
+            
             </div>
 
 
@@ -375,6 +433,30 @@
 
 
 </div>
+
+<script>
+    const passwordInput = document.getElementById("id_password");
+    const passwordToggle = document.getElementById("password-toggle");
+    const passwordToggleIcon = document.getElementById("password-toggle-icon");
+
+    passwordToggle.addEventListener("click", function () {
+        const isHidden = passwordInput.type === "password";
+
+        passwordInput.type = isHidden ? "text" : "password";
+
+        passwordToggleIcon.textContent = isHidden ? "🙈" : "👁";
+
+        passwordToggle.setAttribute(
+            "aria-label",
+            isHidden ? "Hide password" : "Show password"
+        );
+
+        passwordToggle.setAttribute(
+            "title",
+            isHidden ? "Hide password" : "Show password"
+        );
+    });
+</script>
 
 </body>
 

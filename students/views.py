@@ -14,6 +14,8 @@ from django.urls import reverse
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
 
+from django.views.decorators.http import require_POST
+
 
 from core.choices import (
     NIGERIAN_STATES,
@@ -316,6 +318,28 @@ def edit_class(request, class_id):
             "school_class": school_class,
         }
     )
+
+@require_POST
+@school_permission_required("classes.manage")
+@login_required
+def toggle_class_status(request, class_id):
+    school_class = get_object_or_404(
+        SchoolClass,
+        id=class_id,
+        school=request.user.school
+    )
+
+    school_class.is_active = not school_class.is_active
+    school_class.save(update_fields=["is_active"])
+
+    status = "activated" if school_class.is_active else "deactivated"
+
+    messages.success(
+        request,
+        f"{school_class.name} was {status} successfully."
+    )
+
+    return redirect("class_management")
 
 @school_permission_required("students.change")
 @login_required

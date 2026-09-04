@@ -388,7 +388,8 @@ class StudentRegistrationForm(forms.ModelForm):
         if user and user.school:
 
             classes = SchoolClass.objects.filter(
-                school=user.school
+                school=user.school,
+                is_active=True
             )
             
             self.fields["school_class"].queryset = classes
