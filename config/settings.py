@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 
 from pathlib import Path
 from decouple import config
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -138,10 +139,14 @@ DATABASES = {
 
 PG_DUMP_PATH = (
     r"C:\Program Files\PostgreSQL\16\bin\pg_dump.exe"
+    if os.name == "nt"
+    else "/usr/bin/pg_dump"
 )
 
 PSQL_PATH = (
     r"C:\Program Files\PostgreSQL\16\bin\psql.exe"
+    if os.name == "nt"
+    else "/usr/bin/psql"
 )
 
 # Password validation
