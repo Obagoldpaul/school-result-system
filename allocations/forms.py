@@ -36,6 +36,7 @@ class SubjectAllocationForm(forms.ModelForm):
 
             self.fields['school_class'].queryset = SchoolClass.objects.filter(
                 school=school,
+                is_active=True,
             )
 
             self.fields['term'].queryset = Term.objects.filter(
@@ -86,6 +87,7 @@ class BulkSubjectAllocationForm(forms.Form):
         self.fields['school_class'].queryset = (
             SchoolClass.objects.filter(
                 school=school,
+                is_active=True,
             )
             .order_by('name')
         )

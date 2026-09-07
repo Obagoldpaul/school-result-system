@@ -219,3 +219,85 @@ class AttendancePermissionTests(TestCase):
             response.status_code,
             404,
         )
+    
+    def test_inactive_class_excluded_from_attendance_class_selection(self):
+        self.role.permissions.add(
+            self.mark_permission
+        )
+
+        inactive_class = SchoolClass.objects.create(
+            school=self.school1,
+            name="Primary 2",
+            section=SchoolClass.Section.PRIMARY,
+            is_active=False,
+        )
+
+        self.login()
+
+        response = self.client.get(
+            reverse("select_class_for_attendance")
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, self.class1.name)
+        self.assertNotContains(response, inactive_class.name)
+
+
+    def test_active_class_remains_in_attendance_class_selection(self):
+        self.role.permissions.add(
+            self.mark_permission
+        )
+
+        self.login()
+
+        response = self.client.get(
+            reverse("select_class_for_attendance")
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, self.class1.name)
+
+
+    def test_inactive_class_cannot_access_mark_attendance(self):
+        self.role.permissions.add(
+            self.mark_permission
+        )
+
+        inactive_class = SchoolClass.objects.create(
+            school=self.school1,
+            name="Primary 2",
+            section=SchoolClass.Section.PRIMARY,
+            is_active=False,
+        )
+
+        self.login()
+
+        response = self.client.get(
+            reverse(
+                "mark_attendance",
+                kwargs={
+                    "class_id": inactive_class.id,
+                },
+            )
+        )
+
+        self.assertEqual(response.status_code, 404)
+
+
+    def test_active_class_can_access_mark_attendance(self):
+        self.role.permissions.add(
+            self.mark_permission
+        )
+
+        self.login()
+
+        response = self.client.get(
+            reverse(
+                "mark_attendance",
+                kwargs={
+                    "class_id": self.class1.id,
+                },
+            )
+        )
+
+        self.assertEqual(response.status_code, 200)

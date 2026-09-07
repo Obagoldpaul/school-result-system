@@ -123,6 +123,7 @@ def select_allocation(request):
         allocations = allocations.filter(
             school_class_id=class_id,
             school_class__school=school,
+            school_class__is_active=True,
         )
 
     if term_id:
@@ -150,7 +151,8 @@ def select_allocation(request):
     )
 
     classes = SchoolClass.objects.filter(
-        school=school
+        school=school,
+        is_active=True,
     )
 
     # ---------------------------------------------------------
@@ -224,6 +226,7 @@ def enter_scores(request, allocation_id):
         SubjectAllocation,
         id=allocation_id,
         school_class__school=request.user.school,
+        school_class__is_active=True,
         )
     services.check_allocation_ownership(request.user, allocation)
     can_edit = services.can_edit_allocation(request.user, allocation)

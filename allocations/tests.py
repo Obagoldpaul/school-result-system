@@ -201,6 +201,9 @@ class SubjectAllocationModelTests(AllocationTestMixin, TestCase):
                 school_class=self.class1,
                 term=self.term1,
             )
+    
+    
+    
 
 
 class SubjectAllocationFormTests(AllocationTestMixin, TestCase):
@@ -321,6 +324,30 @@ class SubjectAllocationFormTests(AllocationTestMixin, TestCase):
             self.term2,
             form.fields["term"].queryset,
         )
+    
+    def test_form_excludes_inactive_classes(self):
+        self.class1.is_active = False
+        self.class1.save(update_fields=["is_active"])
+
+        form = SubjectAllocationForm(
+            user=self.user1,
+        )
+
+        self.assertNotIn(
+            self.class1,
+            form.fields["school_class"].queryset,
+        )
+
+
+    def test_form_still_includes_active_classes(self):
+        form = SubjectAllocationForm(
+            user=self.user1,
+        )
+
+        self.assertIn(
+            self.class1,
+            form.fields["school_class"].queryset,
+        )     
 
 
 class BulkSubjectAllocationFormTests(AllocationTestMixin, TestCase):
@@ -461,6 +488,30 @@ class BulkSubjectAllocationFormTests(AllocationTestMixin, TestCase):
             self.subject2,
             subjects,
         )
+    
+    def test_bulk_form_excludes_inactive_classes(self):
+        self.class1.is_active = False
+        self.class1.save(update_fields=["is_active"])
+
+        form = BulkSubjectAllocationForm(
+            user=self.user1,
+        )
+
+        self.assertNotIn(
+            self.class1,
+            form.fields["school_class"].queryset,
+        )
+
+
+    def test_bulk_form_still_includes_active_classes(self):
+        form = BulkSubjectAllocationForm(
+            user=self.user1,
+        )
+
+        self.assertIn(
+            self.class1,
+            form.fields["school_class"].queryset,
+        )
 
 
 class AllocationViewSecurityTests(AllocationTestMixin, TestCase):
@@ -598,3 +649,4 @@ def test_allocation_list_only_shows_current_school_allocations(self):
         self.subject2.name,
         content,
     )
+

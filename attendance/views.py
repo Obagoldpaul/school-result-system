@@ -22,13 +22,15 @@ def select_class_for_attendance(request):
 
     if is_management(request.user):
         classes = SchoolClass.objects.filter(
-            school=request.user.school
+            school=request.user.school,
+            is_active=True,
         )
 
     elif teacher and teacher.is_class_teacher and teacher.assigned_class:
         classes = SchoolClass.objects.filter(
             id=teacher.assigned_class_id,
             school=request.user.school,
+            is_active=True,
         )
 
     else:
@@ -55,6 +57,7 @@ def mark_attendance(request, class_id):
         SchoolClass,
         id=class_id,
         school=request.user.school,
+        is_active=True,
     )
 
     teacher = get_teacher(request.user)
