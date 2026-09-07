@@ -2,9 +2,26 @@ from django import forms
 
 from .models import SchoolSettings
 from schools.models import School
+from core.utils.image_optimizer import optimize_image
 
 
 class SchoolSettingsForm(forms.ModelForm):
+    
+    def clean_school_logo(self):
+        logo = self.cleaned_data.get("school_logo")
+
+        if logo:
+            return optimize_image(logo)
+
+        return logo
+    
+    def clean_principal_signature(self):
+        signature = self.cleaned_data.get("principal_signature")
+
+        if signature:
+            return optimize_image(signature)
+
+        return signature
 
     def __init__(self, *args, school=None, **kwargs):
         super().__init__(*args, **kwargs)

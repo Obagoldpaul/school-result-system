@@ -6,8 +6,13 @@ from django.urls import reverse
 
 from accounts.models import User
 from schools.models import School, SchoolRole, Permission
-from students.models import SchoolClass
+from students.models import Student, SchoolClass
 from students.forms import StudentRegistrationForm
+
+from io import BytesIO
+
+from PIL import Image
+from django.core.files.uploadedfile import SimpleUploadedFile
 
 
 class StudentPermissionTests(TestCase):
@@ -382,3 +387,202 @@ class StudentPermissionTests(TestCase):
             inactive_class,
             available_classes
         )
+
+class StudentPassportOptimizationTests(TestCase):
+
+    def setUp(self):
+        self.school = School.objects.create(
+            name="Image Test School",
+            code="IMG-001",
+        )
+
+        self.role = SchoolRole.objects.create(
+            school=self.school,
+            name="Student Manager",
+        )
+
+        self.user = User.objects.create_user(
+            username="image_manager",
+            password="password123",
+            school=self.school,
+            role=User.Role.ADMIN,
+            school_role=self.role,
+        )
+        
+        self.school_class = SchoolClass.objects.create(
+            school=self.school,
+            name="JSS1",
+            section=SchoolClass.Section.JUNIOR_SECONDARY,
+            is_active=True,
+        )
+
+    def create_large_jpeg(self):
+        image = Image.new("RGB", (2400, 1800), "white")
+        output = BytesIO()
+
+        image.save(
+            output,
+            format="JPEG",
+            quality=95,
+        )
+
+        return SimpleUploadedFile(
+            "large-passport.jpg",
+            output.getvalue(),
+            content_type="image/jpeg",
+        )
+
+    def test_student_form_optimizes_passport_before_validation(self):
+        uploaded_file = self.create_large_jpeg()
+
+        form = StudentRegistrationForm(
+            data={
+                "username": "image_student",
+                "first_name": "Image",
+                "last_name": "Student",
+                "school_class": self.school_class.pk,
+                "admission_status": "ACTIVE",
+            },
+            files={
+                "passport": uploaded_file,
+            },
+            user=self.user,
+        )
+
+        self.assertTrue(form.is_valid(), form.errors)
+
+        optimized = form.cleaned_data["passport"]
+
+        optimized.seek(0)
+        image = Image.open(optimized)
+
+        self.assertLessEqual(image.width, 1600)
+        self.assertLessEqual(image.height, 1600)
+        self.assertLessEqual(
+            optimized.size,
+            2 * 1024 * 1024,
+        )
+        
+
+class StudentPassportEditOptimizationTests(TestCase):
+    def setUp(self):
+        self.school = School.objects.create(
+            name="Image Edit Test School",
+            code="IMG-EDIT-001",
+        )
+
+        self.role = SchoolRole.objects.create(
+            school=self.school,
+            name="Student Manager",
+        )
+        
+        self.students_change = Permission.objects.create(
+            code="students.change",
+            name="Edit Students",
+            module="Students",
+        )
+
+        self.role.permissions.add(self.students_change)
+
+        self.user = User.objects.create_user(
+            username="image_edit_manager",
+            password="password123",
+            school=self.school,
+            role=User.Role.ADMIN,
+            school_role=self.role,
+        )
+
+        self.school_class = SchoolClass.objects.create(
+            school=self.school,
+            name="JSS1",
+            section=SchoolClass.Section.JUNIOR_SECONDARY,
+            is_active=True,
+        )
+
+        self.student_user = User.objects.create_user(
+            username="edit_image_student",
+            password="password123",
+            school=self.school,
+        )
+
+        self.student = Student.objects.create(
+            user=self.student_user,
+            school_class=self.school_class,
+            admission_status="ACTIVE",
+            is_active=True,
+        )
+
+    def create_large_jpeg(self):
+        image = Image.new("RGB", (2400, 1800), "white")
+        output = BytesIO()
+
+        image.save(
+            output,
+            format="JPEG",
+            quality=95,
+        )
+
+        return SimpleUploadedFile(
+            "large-edit-passport.jpg",
+            output.getvalue(),
+            content_type="image/jpeg",
+        )
+
+    def test_student_edit_optimizes_passport_before_save(self):
+        self.client.force_login(self.user)
+
+        uploaded_file = self.create_large_jpeg()
+
+        response = self.client.post(
+            reverse(
+                "edit_student",
+                kwargs={"student_id": self.student.id},
+            ),
+            data={
+                "first_name": "Edited",
+                "other_name": "",
+                "last_name": "Student",
+                "email": "",
+                "phone_number": "",
+                "school_class": self.school_class.id,
+                "department": "",
+                "lin": "",
+                "date_of_birth": "",
+                "gender": "",
+                "state_of_origin": "",
+                "local_government": "",
+                "nationality": "Nigerian",
+                "religion": "Christianity",
+                "home_address": "",
+                "blood_group": "",
+                "genotype": "",
+                "medical_condition": "",
+                "guardian_name": "",
+                "guardian_relationship": "",
+                "guardian_phone": "",
+                "guardian_email": "",
+                "emergency_contact_name": "",
+                "emergency_contact_phone": "",
+                "admission_date": "",
+                "previous_school": "",
+                "admission_status": "ACTIVE",
+                "is_active": "on",
+                "passport": uploaded_file,
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+
+        self.student.refresh_from_db()
+
+        self.assertTrue(self.student.passport)
+
+        with self.student.passport.open("rb") as passport_file:
+            image = Image.open(passport_file)
+
+            self.assertLessEqual(image.width, 1600)
+            self.assertLessEqual(image.height, 1600)
+            self.assertLessEqual(
+                passport_file.size,
+                2 * 1024 * 1024,
+            )

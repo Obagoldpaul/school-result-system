@@ -1,5 +1,6 @@
 from django import forms
 from django.contrib.auth import get_user_model
+from core.utils.image_optimizer import optimize_image
 import re
 from .models import Student, SchoolClass, Department
 from core.choices import (
@@ -455,6 +456,14 @@ class StudentRegistrationForm(forms.ModelForm):
             )
 
         return lin
+    
+    def clean_passport(self):
+        passport = self.cleaned_data.get("passport")
+
+        if passport:
+            return optimize_image(passport)
+
+        return passport
 
 
     def save(self, commit=True):

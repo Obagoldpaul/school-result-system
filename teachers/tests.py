@@ -16,6 +16,11 @@ from django.test import TestCase
 from django.urls import reverse
 from django.core import mail
 
+from io import BytesIO
+
+from PIL import Image
+from django.core.files.uploadedfile import SimpleUploadedFile
+
 class TeacherPermissionTests(TestCase):
 
     def setUp(self):
@@ -257,3 +262,195 @@ class TeacherRegistrationTests(TestCase):
             "password123",
             email.body,
         )
+
+class TeacherPassportOptimizationTests(TestCase):
+
+    def setUp(self):
+        self.school = School.objects.create(
+            name="Image Test School",
+            code="IMG-001",
+        )
+
+        self.package = SubscriptionPackage.objects.create(
+            name=SubscriptionPackage.PackageType.BASIC,
+        )
+
+        SchoolSubscription.objects.create(
+            school=self.school,
+            package=self.package,
+            start_date=timezone.now().date(),
+        )
+
+        self.role = SchoolRole.objects.create(
+            school=self.school,
+            name="Teacher Manager",
+        )
+
+        self.user = User.objects.create_user(
+            username="image_manager",
+            password="password123",
+            school=self.school,
+            role=User.Role.ADMIN,
+            school_role=self.role,
+        )
+
+    def create_large_jpeg(self):
+        image = Image.new("RGB", (2400, 1800), "white")
+        output = BytesIO()
+
+        image.save(
+            output,
+            format="JPEG",
+            quality=95,
+        )
+
+        return SimpleUploadedFile(
+            "large-passport.jpg",
+            output.getvalue(),
+            content_type="image/jpeg",
+        )
+
+    def test_teacher_form_optimizes_passport_before_validation(self):
+        uploaded_file = self.create_large_jpeg()
+
+        from teachers.forms import TeacherRegistrationForm
+
+        form = TeacherRegistrationForm(
+            data={
+                "username": "image_teacher",
+                "first_name": "Image",
+                "last_name": "Teacher",
+                "years_of_experience": 5,
+            },
+            files={
+                "passport": uploaded_file,
+            },
+            user=self.user,
+        )
+
+        self.assertTrue(form.is_valid(), form.errors)
+
+        optimized = form.cleaned_data["passport"]
+
+        optimized.seek(0)
+        image = Image.open(optimized)
+
+        self.assertLessEqual(image.width, 1600)
+        self.assertLessEqual(image.height, 1600)
+        self.assertLessEqual(
+            optimized.size,
+            2 * 1024 * 1024,
+        )
+        
+class TeacherPassportEditOptimizationTests(TestCase):
+
+    def setUp(self):
+        self.school = School.objects.create(
+            name="Edit Image Test School",
+            code="EDIT-IMG-001",
+        )
+
+        self.package = SubscriptionPackage.objects.create(
+            name=SubscriptionPackage.PackageType.BASIC,
+        )
+
+        SchoolSubscription.objects.create(
+            school=self.school,
+            package=self.package,
+            start_date=timezone.now().date(),
+        )
+
+        self.permission = Permission.objects.create(
+            code="teachers.change",
+            name="Edit Teachers",
+            module="Teachers",
+            description="Edit teacher records.",
+            is_active=True,
+        )
+
+        self.role = SchoolRole.objects.create(
+            school=self.school,
+            name="Teacher Manager",
+        )
+
+        self.role.permissions.add(self.permission)
+
+        self.user = User.objects.create_user(
+            username="edit_image_manager",
+            password="password123",
+            first_name="Edit",
+            last_name="Manager",
+            school=self.school,
+            role=User.Role.ADMIN,
+            school_role=self.role,
+        )
+
+        self.teacher_user = User.objects.create_user(
+            username="edit_teacher",
+            password="password123",
+            first_name="Edit",
+            last_name="Teacher",
+            school=self.school,
+            role=User.Role.TEACHER,
+        )
+
+        self.teacher = Teacher.objects.create(
+            user=self.teacher_user,
+        )
+
+    def create_large_jpeg(self):
+        image = Image.new("RGB", (2400, 1800), "white")
+        output = BytesIO()
+
+        image.save(
+            output,
+            format="JPEG",
+            quality=95,
+        )
+
+        return SimpleUploadedFile(
+            "large-edit-passport.jpg",
+            output.getvalue(),
+            content_type="image/jpeg",
+        )
+
+    def test_teacher_edit_optimizes_passport_before_saving(self):
+        uploaded_file = self.create_large_jpeg()
+
+        self.client.login(
+            username="edit_image_manager",
+            password="password123",
+        )
+
+        response = self.client.post(
+            reverse(
+                "edit_teacher",
+                kwargs={"teacher_id": self.teacher.id},
+            ),
+            {
+                "username": "edit_teacher",
+                "first_name": "Edit",
+                "last_name": "Teacher",
+                "years_of_experience": 5,
+                "passport": uploaded_file,
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+
+        self.teacher.refresh_from_db()
+
+        self.assertTrue(self.teacher.passport)
+
+        with self.teacher.passport.open("rb") as image_file:
+            image = Image.open(image_file)
+
+            self.assertLessEqual(image.width, 1600)
+            self.assertLessEqual(image.height, 1600)
+
+            image_file.seek(0)
+
+            self.assertLessEqual(
+                len(image_file.read()),
+                2 * 1024 * 1024,
+            )

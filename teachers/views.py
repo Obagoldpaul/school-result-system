@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
-
+from core.utils.image_optimizer import optimize_image
 from django.contrib.auth.tokens import default_token_generator
 from django.urls import reverse
 from django.utils.encoding import force_bytes
@@ -252,7 +252,7 @@ def edit_teacher(request, teacher_id):
         # ==========================
 
         if request.FILES.get('passport'):
-            teacher.passport = request.FILES['passport']
+            teacher.passport = optimize_image(request.FILES['passport'])
 
         if request.FILES.get('certificate'):
             teacher.certificate = request.FILES['certificate']

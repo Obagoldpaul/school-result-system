@@ -13,6 +13,7 @@ from django.contrib.auth.tokens import default_token_generator
 from django.urls import reverse
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
+from core.utils.image_optimizer import optimize_image
 
 from django.views.decorators.http import require_POST
 
@@ -498,8 +499,8 @@ def edit_student(request, student_id):
         # -------------------------
 
         if request.FILES.get('passport'):
-            student.passport = request.FILES['passport']
-
+            student.passport = optimize_image(request.FILES['passport'])
+            
         student.save()
 
         # -------------------------
