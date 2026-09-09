@@ -1,4 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
+from django.urls import reverse
 from django.contrib.auth.decorators import login_required
 from accounts.permissions import school_permission_required
 
@@ -54,6 +55,9 @@ def edit_subject(request, subject_id):
         school=request.user.school,
     )
 
+    # Preserve the subject-level filter through the edit process.
+    selected_level = request.GET.get("level") or request.POST.get("level")
+
     if request.method == 'POST':
         form = SubjectForm(
             request.POST,
@@ -63,6 +67,12 @@ def edit_subject(request, subject_id):
 
         if form.is_valid():
             form.save()
+
+            if selected_level:
+                return redirect(
+                    f"{reverse('subject_list')}?level={selected_level}"
+                )
+
             return redirect('subject_list')
 
     else:
@@ -77,7 +87,12 @@ def edit_subject(request, subject_id):
         {
             'form': form,
             'subject': subject,
-            'subject_list_url': '/subjects/',
+            'subject_list_url': (
+                f"{reverse('subject_list')}?level={selected_level}"
+                if selected_level
+                else reverse('subject_list')
+            ),
+            'selected_level': selected_level,
         }
     )
 
@@ -142,6 +157,19 @@ def subject_list(request):
         subjects = subjects.filter(
             level=selected_level
         )
+        
+    
+    # --------------------------------------------------
+    # FILTER BY SUBJECT TYPE
+    # --------------------------------------------------
+
+    selected_type = request.GET.get("type")
+
+    if selected_type in ["ELECTIVE", "COMPULSORY"]:
+        if selected_type == "ELECTIVE":
+            subjects = subjects.filter(is_elective=True)
+        else:
+            subjects = subjects.filter(is_elective=False)
 
     # --------------------------------------------------
     # AVAILABLE LEVELS FOR THIS SCHOOL
@@ -173,6 +201,7 @@ def subject_list(request):
             'subjects': subjects,
             'available_levels': available_levels,
             'selected_level': selected_level,
+            'selected_type': selected_type,
         }
     )
 

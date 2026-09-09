@@ -42,6 +42,42 @@ def post_announcement(request):
     })
 
 
+@management_required
+@login_required
+@school_permission_required("announcements.change")
+@feature_required("ANNOUNCEMENTS")
+def edit_announcement(request, announcement_id):
+
+    announcement = get_object_or_404(
+        Announcement,
+        id=announcement_id,
+        school=request.user.school,
+    )
+
+    if request.method == 'POST':
+        form = AnnouncementForm(
+            request.POST,
+            request.FILES,
+            instance=announcement,
+        )
+
+        if form.is_valid():
+            form.save()
+            return redirect('announcement_list')
+
+    else:
+        form = AnnouncementForm(instance=announcement)
+
+    return render(
+        request,
+        'announcements/edit_announcement.html',
+        {
+            'form': form,
+            'announcement': announcement,
+            'announcement_list_url': '/announcements/',
+        }
+    )
+
 @login_required
 @feature_required("ANNOUNCEMENTS")
 def announcement_list(request):

@@ -44,3 +44,17 @@ class ReportCardExtraForm(forms.ModelForm):
                 "principal_remark",
                 None,
             )
+            
+class TeacherRemarkForm(forms.ModelForm):
+    class Meta:
+        model = ReportCardExtra
+        fields = ["teacher_remark"]
+        widgets = {
+            "teacher_remark": forms.Textarea(
+                attrs={
+                    "class": "form-control",
+                    "rows": 5,
+                    "placeholder": "Enter teacher's remark...",
+                }
+            ),
+        }

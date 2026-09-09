@@ -149,6 +149,14 @@
 
             {% if is_management %}
 
+            <a
+                href="{% url 'edit_announcement' a.id %}"
+                class="btn btn-sm btn-outline-secondary"
+            >
+                Edit
+            </a>
+
+
             <form
                 method="POST"
                 action="{% url 'toggle_announcement_pin' a.id %}"

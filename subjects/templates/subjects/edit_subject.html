@@ -4,6 +4,32 @@
 
 {% block content %}
 
-{% include 'partials/simple_form.html' with page_title="Edit Subject" submit_label="Save Changes" back_url=subject_list_url back_label="Back to Subjects" %}
+<h1>Edit Subject</h1>
+
+<form method="POST" enctype="multipart/form-data">
+    {% csrf_token %}
+
+    {% if selected_level %}
+        <input
+            type="hidden"
+            name="level"
+            value="{{ selected_level }}"
+        >
+    {% endif %}
+
+    {{ form.as_p }}
+
+    <button type="submit">
+        Save Changes
+    </button>
+</form>
+
+{% if subject_list_url %}
+    <p>
+        <a href="{{ subject_list_url }}">
+            Back to Subjects
+        </a>
+    </p>
+{% endif %}
 
 {% endblock %}

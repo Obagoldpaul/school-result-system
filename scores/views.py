@@ -381,9 +381,17 @@ def publish_allocation(request, allocation_id):
 def class_results(request):
     school = request.user.school
 
-    classes = SchoolClass.objects.filter(
-        school=school
-    )
+    teacher = get_teacher(request.user)
+
+    if teacher and teacher.is_class_teacher:
+        classes = SchoolClass.objects.filter(
+            id=teacher.assigned_class_id,
+            school=school,
+        )
+    else:
+        classes = SchoolClass.objects.filter(
+            school=school
+        )
 
     # -------------------------------------------------
     # ACADEMIC SESSIONS
@@ -437,6 +445,12 @@ def class_results(request):
     # -------------------------------------------------
 
     if class_id and session_id and term_id:
+
+        if teacher and teacher.is_class_teacher:
+            if teacher.assigned_class_id != int(class_id):
+                raise PermissionDenied(
+                    "You can only view results for your assigned class."
+                )
 
         selected_class = get_object_or_404(
             SchoolClass,
@@ -558,6 +572,67 @@ def edit_report_extra(request, student_id, term_id):
         }
     )
 
+@login_required
+@staff_required
+def edit_teacher_remark(request, student_id, term_id):
+    student = get_object_or_404(
+        Student,
+        id=student_id,
+        user__school=request.user.school,
+    )
+
+    term = get_object_or_404(
+        Term,
+        id=term_id,
+        session__school=request.user.school,
+    )
+
+    if not can_edit_report_extra(request.user, student):
+        raise PermissionDenied(
+            "You do not have permission to edit this student's report details."
+        )
+
+    if not user_has_permission(
+        request.user,
+        "reports.teacher_remark",
+    ):
+        raise PermissionDenied(
+            "You do not have permission to edit teacher remarks."
+        )
+
+    extra, created = ReportCardExtra.objects.get_or_create(
+        student=student,
+        term=term,
+    )
+
+    if request.method == "POST":
+        form = TeacherRemarkForm(
+            request.POST,
+            instance=extra,
+        )
+
+        if form.is_valid():
+            form.save()
+
+            return redirect(
+                "report_card",
+                student_id=student.id,
+                term_id=term.id,
+            )
+    else:
+        form = TeacherRemarkForm(
+            instance=extra,
+        )
+
+    return render(
+        request,
+        "scores/edit_teacher_remark.html",
+        {
+            "form": form,
+            "student": student,
+            "term": term,
+        },
+    )
 
 @login_required
 def report_card(request, student_id, term_id):

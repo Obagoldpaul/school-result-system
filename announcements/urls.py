@@ -9,6 +9,12 @@ urlpatterns = [
         views.post_announcement,
         name='post_announcement'
     ),
+    
+    path(
+        'edit/<int:announcement_id>/',
+        views.edit_announcement,
+        name='edit_announcement'
+    ),
 
     path(
         '<int:announcement_id>/',

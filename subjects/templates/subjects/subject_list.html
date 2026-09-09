@@ -24,51 +24,94 @@
     </a>
 </p>
 
-<!-- SUBJECT LEVEL FILTER -->
+<!-- SUBJECT FILTERS -->
 <form method="get" class="mb-4">
 
-    <label for="level" class="form-label">
-        Filter by School Level
-    </label>
+    <div class="row g-3 align-items-end">
 
-    <div class="d-flex gap-2 align-items-center">
+        <!-- SCHOOL LEVEL -->
+        <div class="col-md-4">
 
-        <select
-            name="level"
-            id="level"
-            class="form-select"
-            style="max-width: 250px;"
-        >
+            <label for="level" class="form-label">
+                Filter by School Level
+            </label>
 
-            <option value="">
-                All Levels
-            </option>
+            <select
+                name="level"
+                id="level"
+                class="form-select"
+            >
 
-            {% for level in available_levels %}
-
-                <option
-                    value="{{ level }}"
-                    {% if selected_level == level %}selected{% endif %}
-                >
-                    {{ level|title }}
+                <option value="">
+                    All Levels
                 </option>
 
-            {% endfor %}
+                {% for level in available_levels %}
 
-        </select>
+                    <option
+                        value="{{ level }}"
+                        {% if selected_level == level %}selected{% endif %}
+                    >
+                        {{ level|title }}
+                    </option>
 
-        <button type="submit" class="btn btn-primary">
-            Filter
-        </button>
+                {% endfor %}
 
-        {% if selected_level %}
-            <a
-                href="{% url 'subject_list' %}"
-                class="btn btn-outline-secondary"
+            </select>
+
+        </div>
+
+        <!-- SUBJECT TYPE -->
+        <div class="col-md-4">
+
+            <label for="type" class="form-label">
+                Filter by Subject Type
+            </label>
+
+            <select
+                name="type"
+                id="type"
+                class="form-select"
             >
-                Clear
-            </a>
-        {% endif %}
+
+                <option value="">
+                    All Types
+                </option>
+
+                <option
+                    value="COMPULSORY"
+                    {% if selected_type == "COMPULSORY" %}selected{% endif %}
+                >
+                    Compulsory
+                </option>
+
+                <option
+                    value="ELECTIVE"
+                    {% if selected_type == "ELECTIVE" %}selected{% endif %}
+                >
+                    Elective
+                </option>
+
+            </select>
+
+        </div>
+
+        <div class="col-md-4 d-flex gap-2">
+
+            <button type="submit" class="btn btn-primary">
+                Filter
+            </button>
+
+            {% if selected_level or selected_type %}
+                <a
+                    href="{% url 'subject_list' %}"
+                    class="btn btn-outline-secondary"
+                >
+                    Clear
+                </a>
+            {% endif %}
+
+        </div>
 
     </div>
 
@@ -117,7 +160,7 @@
 
         <td>
 
-            <a href="{% url 'edit_subject' subject.id %}">
+            <a href="{% url 'edit_subject' subject.id %}?level={{ selected_level }}&type={{ selected_type }}">
                 Edit
             </a>
 
