@@ -1138,6 +1138,8 @@ def setup_new_school(school):
         ("TODDLER", SchoolClass.Section.PRE_PRIMARY),
         ("PRESCHOOL 1", SchoolClass.Section.PRE_PRIMARY),
         ("PRESCHOOL 2", SchoolClass.Section.PRE_PRIMARY),
+        ("NURSERY 1", SchoolClass.Section.PRE_PRIMARY),
+        ("NURSERY 2", SchoolClass.Section.PRE_PRIMARY),
 
         ("BASIC 1", SchoolClass.Section.PRIMARY),
         ("BASIC 2", SchoolClass.Section.PRIMARY),
