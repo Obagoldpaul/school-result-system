@@ -9,6 +9,7 @@ from .models import (
     TimetablePeriod,
     TimetableRequirement,
     TeacherAvailability,
+    TimetableEntry,
 )
 
 
@@ -35,10 +36,23 @@ class TimetableForm(forms.ModelForm):
             }
         ),
     )
+    
+    days = forms.MultipleChoiceField(
+        choices=TimetableEntry.Day.choices,
+        widget=forms.CheckboxSelectMultiple,
+        initial=[
+            TimetableEntry.Day.MONDAY,
+            TimetableEntry.Day.TUESDAY,
+            TimetableEntry.Day.WEDNESDAY,
+            TimetableEntry.Day.THURSDAY,
+            TimetableEntry.Day.FRIDAY,
+        ],
+        required=True,
+    )
 
     class Meta:
         model = Timetable
-        fields = ["name"]
+        fields = ["name", "days"]
         widgets = {
             "name": forms.TextInput(
                 attrs={

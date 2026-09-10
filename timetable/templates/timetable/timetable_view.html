@@ -1,0 +1,245 @@
+{% extends "base.html" %}
+
+{% block title %}View Timetable{% endblock %}
+
+{% block content %}
+
+<div class="container-fluid">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <div>
+            <h1>View Timetable</h1>
+
+            <p class="text-muted mb-0">
+                {{ timetable.name }}
+            </p>
+        </div>
+
+        <div class="d-flex gap-2">
+
+            <a href="{% url 'timetable_requirements' timetable.id %}"
+               class="btn btn-primary">
+                Requirements
+            </a>
+
+            <a href="{% url 'timetable_list' %}"
+               class="btn btn-outline-secondary">
+                Back to Timetables
+            </a>
+
+        </div>
+
+    </div>
+
+
+    <div class="card shadow-sm mb-4">
+
+        <div class="card-body">
+
+            <h5 class="card-title">
+                {{ timetable.name }}
+            </h5>
+
+            <p class="mb-1">
+                <strong>Academic Session:</strong>
+                {{ timetable.term.session.name }}
+            </p>
+
+            <p class="mb-0">
+                <strong>Academic Term:</strong>
+                {{ timetable.term.get_name_display }}
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <div class="card shadow-sm">
+
+        <div class="card-body">
+
+            <form method="get" class="row g-3 mb-4">
+
+                <div class="col-md-4">
+
+                    <label for="section" class="form-label">
+                        Section
+                    </label>
+
+                    <select
+                        name="section"
+                        id="section"
+                        class="form-select"
+                    >
+                        <option value="">
+                            All Sections
+                        </option>
+
+                        {% for value, label in sections %}
+                            <option
+                                value="{{ value }}"
+                                {% if selected_section == value %}selected{% endif %}
+                            >
+                                {{ label }}
+                            </option>
+                        {% endfor %}
+
+                    </select>
+
+                </div>
+
+
+                <div class="col-md-4">
+
+                    <label for="class" class="form-label">
+                        Class
+                    </label>
+
+                    <select
+                        name="class"
+                        id="class"
+                        class="form-select"
+                    >
+                        <option value="">
+                            All Classes
+                        </option>
+
+                        {% for school_class in timetable_classes %}
+                            <option
+                                value="{{ school_class.id }}"
+                                {% if selected_class == school_class.id|stringformat:"s" %}selected{% endif %}
+                            >
+                                {{ school_class.name }}
+                            </option>
+                        {% endfor %}
+
+                    </select>
+
+                </div>
+
+
+                <div class="col-md-4 d-flex align-items-end gap-2">
+
+                    <button
+                        type="submit"
+                        class="btn btn-primary"
+                    >
+                        Apply Filters
+                    </button>
+
+                    <a
+                        href="{% url 'timetable_view' timetable.id %}"
+                        class="btn btn-outline-secondary"
+                    >
+                        Clear
+                    </a>
+
+                </div>
+
+            </form>
+
+            <div class="table-responsive">
+
+                <table class="table table-bordered align-middle text-center">
+            
+                    <thead>
+                        <tr>
+            
+                            <th>Day</th>
+            
+                            {% for period in periods %}
+                                <th>
+                                    {{ period.name }}
+            
+                                    <br>
+            
+                                    <small class="text-muted">
+                                        {{ period.start_time|time:"H:i" }}
+                                        -
+                                        {{ period.end_time|time:"H:i" }}
+                                    </small>
+                                </th>
+                            {% endfor %}
+            
+                        </tr>
+                    </thead>
+            
+            
+                    <tbody>
+            
+                        {% for row in grid %}
+            
+                            <tr>
+            
+                                <th class="text-start">
+                                    {{ row.day_label }}
+                                </th>
+            
+            
+                                {% for cell in row.cells %}
+            
+                                    <td>
+            
+                                        {% if cell.period.is_break %}
+            
+                                            <strong>Break</strong>
+            
+                                            {% elif cell.entry %}
+
+                                            {% for entry in cell.entry %}
+                                        
+                                                <div class="mb-2">
+                                        
+                                                    <strong>
+                                                        {{ entry.requirement.allocation.school_class.name }}
+                                                    </strong>
+                                        
+                                                    <br>
+                                        
+                                                    {{ entry.requirement.allocation.subject.name }}
+                                        
+                                                    <br>
+                                        
+                                                    <small class="text-muted">
+                                                        {{ entry.requirement.allocation.teacher.user.get_full_name|default:entry.requirement.allocation.teacher.user.username }}
+                                                    </small>
+                                        
+                                                </div>
+                                        
+                                                {% if not forloop.last %}
+                                                    <hr class="my-2">
+                                                {% endif %}
+                                        
+                                            {% endfor %}
+            
+                                        {% else %}
+            
+                                            <span class="text-muted">
+                                                —
+                                            </span>
+            
+                                        {% endif %}
+            
+                                    </td>
+            
+                                {% endfor %}
+            
+                            </tr>
+            
+                        {% endfor %}
+            
+                    </tbody>
+            
+                </table>
+            
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

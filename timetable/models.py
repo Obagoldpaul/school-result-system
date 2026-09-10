@@ -27,6 +27,11 @@ class Timetable(models.Model):
     name = models.CharField(
         max_length=150,
     )
+    
+    days = models.JSONField(
+        default=list,
+        help_text="Days of the week used by this timetable.",
+    )
 
     status = models.CharField(
         max_length=20,
@@ -315,12 +320,7 @@ class TimetableEntry(models.Model):
     )
 
     class Meta:
-        constraints = [
-            models.UniqueConstraint(
-                fields=["timetable", "day", "period"],
-                name="unique_timetable_day_period",
-            )
-        ]
+        constraints = []
 
         ordering = ["day", "period__period_number"]
 

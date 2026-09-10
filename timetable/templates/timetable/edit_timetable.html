@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+
+{% block title %}Configure Timetable{% endblock %}
+
+{% block content %}
+
+<div class="container-fluid">
+
+    <div class="mb-4">
+        <h1>Configure Timetable</h1>
+
+        <p class="text-muted mb-0">
+            Configure the timetable name and the days used by the school.
+        </p>
+    </div>
+
+
+    <div class="card shadow-sm">
+
+        <div class="card-body">
+
+            <h5 class="card-title mb-4">
+                {{ timetable.name }}
+            </h5>
+
+
+            <div class="mb-4">
+
+                <p class="mb-1">
+                    <strong>Academic Session:</strong>
+                    {{ timetable.term.session.name }}
+                </p>
+
+                <p class="mb-0">
+                    <strong>Academic Term:</strong>
+                    {{ timetable.term.get_name_display }}
+                </p>
+
+            </div>
+
+
+            <form method="post">
+
+                {% csrf_token %}
+
+                {% if form.non_field_errors %}
+                    <div class="alert alert-danger">
+                        {{ form.non_field_errors }}
+                    </div>
+                {% endif %}
+
+
+                <div class="mb-4">
+
+                    <label class="form-label">
+                        Timetable Name
+                    </label>
+
+                    {{ form.name }}
+
+                    {% if form.name.errors %}
+                        <div class="text-danger small mt-1">
+                            {{ form.name.errors }}
+                        </div>
+                    {% endif %}
+
+                </div>
+
+
+                <div class="mb-4">
+
+                    <label class="form-label">
+                        Days Used
+                    </label>
+
+                    <div>
+                        {{ form.days }}
+                    </div>
+
+                    {% if form.days.errors %}
+                        <div class="text-danger small mt-1">
+                            {{ form.days.errors }}
+                        </div>
+                    {% endif %}
+
+                    <small class="text-muted">
+                        Select the days on which the school runs its timetable.
+                    </small>
+
+                </div>
+
+
+                <div class="d-flex gap-2">
+
+                    <button type="submit"
+                            class="btn btn-primary">
+                        Save Configuration
+                    </button>
+
+                    <a href="{% url 'timetable_list' %}"
+                       class="btn btn-secondary">
+                        Cancel
+                    </a>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

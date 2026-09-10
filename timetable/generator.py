@@ -135,6 +135,7 @@ def _candidate_placements(
     lesson_periods,
     double_pairs,
     availability_cache,
+    days,
 ):
     """
     Build all placements that satisfy the timetable's structural
@@ -151,7 +152,7 @@ def _candidate_placements(
     candidates = []
 
     if unit["length"] == 1:
-        for day in DAYS:
+        for day in days:
             for period in lesson_periods:
                 cache_key = (
                     teacher.id,
@@ -179,7 +180,7 @@ def _candidate_placements(
                 )
 
     else:
-        for day in DAYS:
+        for day in days:
             for first, second in double_pairs:
                 cache_key = (
                     teacher.id,
@@ -548,6 +549,12 @@ def generate_timetable(timetable, school):
 
     if not active_requirements:
         return []
+    
+    if not timetable.days:
+        raise TimetableGenerationError(
+            "The timetable has no configured days. "
+            "Select at least one day before generating."
+        )
 
     units = _requirement_units(active_requirements)
 
@@ -575,6 +582,7 @@ def generate_timetable(timetable, school):
             lesson_periods,
             double_pairs,
             availability_cache,
+            timetable.days,
         )
 
         if not candidates:

@@ -6,6 +6,18 @@ from . import views
 urlpatterns = [
     path("create/", views.create_timetable, name="create_timetable"),
     path("", views.timetable_list, name="timetable_list"),
+    
+    path(
+        "<int:timetable_id>/edit/",
+        views.edit_timetable,
+        name="edit_timetable",
+    ),
+    
+    path(
+        "<int:timetable_id>/view/",
+        views.timetable_view,
+        name="timetable_view",
+    ),
 
     path(
         "<int:timetable_id>/periods/",
@@ -17,6 +29,18 @@ urlpatterns = [
         "<int:timetable_id>/requirements/",
         views.timetable_requirements,
         name="timetable_requirements",
+    ),
+    
+    path(
+        "<int:timetable_id>/requirements/sync/",
+        views.sync_timetable_requirements_view,
+        name="sync_timetable_requirements",
+    ),
+    
+    path(
+        "<int:timetable_id>/generate/",
+        views.generate_timetable_view,
+        name="generate_timetable",
     ),
     
     path(

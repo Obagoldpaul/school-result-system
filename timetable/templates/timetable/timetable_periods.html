@@ -16,10 +16,19 @@
             </p>
         </div>
 
-        <a href="{% url 'timetable_list' %}"
-           class="btn btn-secondary">
-            Back to Timetables
-        </a>
+        <div class="d-flex gap-2">
+
+            <a href="{% url 'timetable_requirements' timetable.id %}"
+               class="btn btn-primary">
+                Requirements
+            </a>
+        
+            <a href="{% url 'timetable_list' %}"
+               class="btn btn-secondary">
+                Back to Timetables
+            </a>
+        
+        </div>
 
     </div>
 

@@ -294,12 +294,29 @@ PERMISSIONS = [
     # =========================================================
 
     {
+        "code": "timetable.view",
+        "name": "View Timetables",
+        "module": "Timetable",
+        "description": "View school timetables and generated schedules.",
+    },
+    {
         "code": "timetable.create",
         "name": "Create Timetables",
         "module": "Timetable",
         "description": "Create and configure school timetables.",
     },
-
+    {
+        "code": "timetable.generate",
+        "name": "Generate Timetables",
+        "module": "Timetable",
+        "description": "Generate and regenerate school timetables.",
+    },
+    {
+        "code": "timetable.publish",
+        "name": "Publish Timetables",
+        "module": "Timetable",
+        "description": "Publish approved timetables for use by the school.",
+    },
     # =========================================================
     # SCHOOL SETTINGS
     # =========================================================

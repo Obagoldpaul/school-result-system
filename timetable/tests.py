@@ -1,14 +1,23 @@
 from datetime import time
+from django.utils import timezone
 from .availability import teacher_is_available
 from .generator import TimetableGenerationError, generate_timetable
 
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.test import TestCase
+from django.urls import reverse
+from .services import sync_timetable_requirements
 
 from academics.models import AcademicSession, Term
 from allocations.models import SubjectAllocation
-from schools.models import School
+from schools.models import (
+    School,
+    SchoolRole,
+    Permission,
+    SchoolSubscription, 
+    SubscriptionPackage,
+)
 from students.models import SchoolClass
 from subjects.models import Subject
 from teachers.models import Teacher
@@ -148,6 +157,14 @@ class TimetableModelValidationTests(TestCase):
             school=cls.school,
             term=cls.term,
             name="First Term Timetable",
+            days=[
+                TimetableEntry.Day.MONDAY,
+                TimetableEntry.Day.TUESDAY,
+                TimetableEntry.Day.WEDNESDAY,
+                TimetableEntry.Day.THURSDAY,
+                TimetableEntry.Day.FRIDAY,
+                TimetableEntry.Day.SATURDAY,
+            ],
             created_by=cls.user,
         )
 
@@ -155,6 +172,14 @@ class TimetableModelValidationTests(TestCase):
             school=cls.other_school,
             term=cls.other_term,
             name="Other School Timetable",
+            days=[
+                TimetableEntry.Day.MONDAY,
+                TimetableEntry.Day.TUESDAY,
+                TimetableEntry.Day.WEDNESDAY,
+                TimetableEntry.Day.THURSDAY,
+                TimetableEntry.Day.FRIDAY,
+                TimetableEntry.Day.SATURDAY,
+            ],
             created_by=cls.other_user,
         )
 
@@ -378,6 +403,211 @@ class TimetableModelValidationTests(TestCase):
         entry.full_clean()
         
 
+class TimetableRequirementSyncTests(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.school = School.objects.create(
+            name="Requirement Sync School",
+            code="RSS",
+            school_type=School.SchoolType.PRIMARY_SECONDARY,
+        )
+
+        cls.user = User.objects.create_user(
+            username="requirement_sync_user",
+            password="testpass123",
+        )
+        cls.user.school = cls.school
+        cls.user.save()
+
+        cls.session = AcademicSession.objects.create(
+            school=cls.school,
+            name="2026/2027",
+            is_current=True,
+        )
+
+        cls.term = Term.objects.create(
+            session=cls.session,
+            name=Term.TermName.FIRST,
+        )
+
+        cls.school_class = SchoolClass.objects.create(
+            school=cls.school,
+            name="JSS 1",
+            section=SchoolClass.Section.JUNIOR_SECONDARY,
+            is_active=True,
+        )
+
+        cls.subject = Subject.objects.create(
+            school=cls.school,
+            name="Mathematics",
+            code="RSMATH",
+            level=Subject.SubjectLevel.SECONDARY,
+        )
+
+        cls.teacher_user = User.objects.create_user(
+            username="requirement_sync_teacher",
+            password="testpass123",
+        )
+        cls.teacher_user.school = cls.school
+        cls.teacher_user.save()
+
+        cls.teacher = Teacher.objects.create(
+            user=cls.teacher_user,
+        )
+
+        cls.timetable = Timetable.objects.create(
+            school=cls.school,
+            term=cls.term,
+            name="Requirement Sync Timetable",
+            days=[
+                TimetableEntry.Day.MONDAY,
+                TimetableEntry.Day.TUESDAY,
+                TimetableEntry.Day.WEDNESDAY,
+                TimetableEntry.Day.THURSDAY,
+                TimetableEntry.Day.FRIDAY,
+            ],
+            created_by=cls.user,
+        )
+
+    def test_sync_creates_missing_requirement_with_defaults(self):
+        allocation = SubjectAllocation.objects.create(
+            teacher=self.teacher,
+            subject=self.subject,
+            school_class=self.school_class,
+            term=self.term,
+        )
+
+        created_count = sync_timetable_requirements(self.timetable)
+
+        self.assertEqual(created_count, 1)
+
+        requirement = TimetableRequirement.objects.get(
+            timetable=self.timetable,
+            allocation=allocation,
+        )
+
+        self.assertEqual(requirement.lessons_per_week, 1)
+        self.assertEqual(requirement.double_periods, 0)
+
+    def test_sync_does_not_modify_existing_requirement(self):
+        allocation = SubjectAllocation.objects.create(
+            teacher=self.teacher,
+            subject=self.subject,
+            school_class=self.school_class,
+            term=self.term,
+        )
+
+        requirement = TimetableRequirement.objects.create(
+            timetable=self.timetable,
+            allocation=allocation,
+            lessons_per_week=4,
+            double_periods=1,
+        )
+
+        created_count = sync_timetable_requirements(self.timetable)
+
+        requirement.refresh_from_db()
+
+        self.assertEqual(created_count, 0)
+        self.assertEqual(requirement.lessons_per_week, 4)
+        self.assertEqual(requirement.double_periods, 1)
+
+    def test_sync_excludes_inactive_classes(self):
+        inactive_class = SchoolClass.objects.create(
+            school=self.school,
+            name="JSS 2",
+            section=SchoolClass.Section.JUNIOR_SECONDARY,
+            is_active=False,
+        )
+
+        allocation = SubjectAllocation.objects.create(
+            teacher=self.teacher,
+            subject=self.subject,
+            school_class=inactive_class,
+            term=self.term,
+        )
+
+        created_count = sync_timetable_requirements(self.timetable)
+
+        self.assertEqual(created_count, 0)
+
+        self.assertFalse(
+            TimetableRequirement.objects.filter(
+                timetable=self.timetable,
+                allocation=allocation,
+            ).exists()
+        )
+
+    def test_sync_only_creates_requirements_for_matching_school_and_term(self):
+        other_session = AcademicSession.objects.create(
+            school=self.school,
+            name="2027/2028",
+            is_current=False,
+        )
+
+        other_term = Term.objects.create(
+            session=other_session,
+            name=Term.TermName.FIRST,
+        )
+
+        allocation = SubjectAllocation.objects.create(
+            teacher=self.teacher,
+            subject=self.subject,
+            school_class=self.school_class,
+            term=other_term,
+        )
+
+        created_count = sync_timetable_requirements(self.timetable)
+
+        self.assertEqual(created_count, 0)
+
+        self.assertFalse(
+            TimetableRequirement.objects.filter(
+                timetable=self.timetable,
+                allocation=allocation,
+            ).exists()
+        )
+
+    def test_sync_creates_multiple_missing_requirements(self):
+        second_subject = Subject.objects.create(
+            school=self.school,
+            name="English",
+            code="RSENG",
+            level=Subject.SubjectLevel.SECONDARY,
+        )
+
+        first_allocation = SubjectAllocation.objects.create(
+            teacher=self.teacher,
+            subject=self.subject,
+            school_class=self.school_class,
+            term=self.term,
+        )
+
+        second_allocation = SubjectAllocation.objects.create(
+            teacher=self.teacher,
+            subject=second_subject,
+            school_class=self.school_class,
+            term=self.term,
+        )
+
+        created_count = sync_timetable_requirements(self.timetable)
+
+        self.assertEqual(created_count, 2)
+
+        self.assertTrue(
+            TimetableRequirement.objects.filter(
+                timetable=self.timetable,
+                allocation=first_allocation,
+            ).exists()
+        )
+
+        self.assertTrue(
+            TimetableRequirement.objects.filter(
+                timetable=self.timetable,
+                allocation=second_allocation,
+            ).exists()
+        )
+
 class TimetableFormTests(TestCase):
     @classmethod
     def setUpTestData(cls):
@@ -488,6 +718,14 @@ class TimetableFormTests(TestCase):
             school=cls.school,
             term=cls.term,
             name="First Term Timetable",
+            days=[
+                TimetableEntry.Day.MONDAY,
+                TimetableEntry.Day.TUESDAY,
+                TimetableEntry.Day.WEDNESDAY,
+                TimetableEntry.Day.THURSDAY,
+                TimetableEntry.Day.FRIDAY,
+                TimetableEntry.Day.SATURDAY,
+            ],
             created_by=cls.user,
         )
 
@@ -496,7 +734,7 @@ class TimetableFormTests(TestCase):
 
         self.assertEqual(
             list(form.fields.keys()),
-            ["name", "session", "term"],
+            ["name", "days", "session", "term"],
         )
 
     def test_requirement_form_without_timetable_has_no_allocations(self):
@@ -1154,6 +1392,14 @@ class TimetableGeneratorTests(TestCase):
             school=self.school,
             term=self.term,
             name=name,
+            days=[
+                TimetableEntry.Day.MONDAY,
+                TimetableEntry.Day.TUESDAY,
+                TimetableEntry.Day.WEDNESDAY,
+                TimetableEntry.Day.THURSDAY,
+                TimetableEntry.Day.FRIDAY,
+                TimetableEntry.Day.SATURDAY,
+            ],
             created_by=self.user,
         )
 
@@ -1277,6 +1523,49 @@ class TimetableGeneratorTests(TestCase):
             ).count(),
             1,
         )
+        
+    def test_generator_uses_only_configured_timetable_days(self):
+        timetable = self.create_timetable()
+        timetable.days = [
+            TimetableEntry.Day.MONDAY,
+            TimetableEntry.Day.TUESDAY,
+        ]
+        timetable.save()
+
+        self.create_standard_periods(timetable)
+        self.create_availability(
+            self.teacher,
+            day=TeacherAvailability.Day.MONDAY,
+        )
+        self.create_availability(
+            self.teacher,
+            day=TeacherAvailability.Day.TUESDAY,
+        )
+
+        requirement = self.create_requirement(
+            timetable,
+            lessons_per_week=2,
+        )
+
+        generate_timetable(
+            timetable,
+            self.school,
+        )
+
+        entries = TimetableEntry.objects.filter(
+            timetable=timetable,
+            requirement=requirement,
+        )
+
+        self.assertEqual(entries.count(), 2)
+
+        configured_days = {
+            TimetableEntry.Day.MONDAY,
+            TimetableEntry.Day.TUESDAY,
+        }
+
+        for entry in entries:
+            self.assertIn(entry.day, configured_days)
 
     def test_generated_entry_count_matches_required_lesson_frequency(self):
         timetable = self.create_timetable()
@@ -1751,4 +2040,284 @@ class TimetableGeneratorTests(TestCase):
         self.assertEqual(
             timetable.entries.count(),
             1,
+        )
+
+class TimetableViewTests(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.school = School.objects.create(
+            name="Timetable View Test School",
+            code="TVTS",
+            school_type=School.SchoolType.PRIMARY_SECONDARY,
+        )
+        
+        cls.package = SubscriptionPackage.objects.create(
+            name=SubscriptionPackage.PackageType.BASIC,
+        )
+
+        SchoolSubscription.objects.create(
+            school=cls.school,
+            package=cls.package,
+            start_date=timezone.now().date(),
+        )
+
+        cls.user = User.objects.create_superuser(
+            username="timetable_view_user",
+            password="testpass123",
+            email="timetableview@example.com",
+        )
+        
+        cls.user.school = cls.school
+        cls.user.save()
+
+        cls.role = SchoolRole.objects.create(
+            school=cls.school,
+            name="Timetable Test Administrator",
+            base_role=SchoolRole.BaseRole.ADMIN,
+        )
+
+        cls.permission = Permission.objects.create(
+            code="timetable.view",
+            name="View Timetable",
+            description="View school timetables.",
+            module="Timetable",
+            is_active=True,
+        )
+
+        cls.role.permissions.add(cls.permission)
+
+        cls.user.school_role = cls.role
+        cls.user.save()
+
+        cls.session = AcademicSession.objects.create(
+            school=cls.school,
+            name="2026/2027",
+            is_current=True,
+        )
+
+        cls.term = Term.objects.create(
+            session=cls.session,
+            name=Term.TermName.FIRST,
+        )
+
+        cls.school_class = SchoolClass.objects.create(
+            school=cls.school,
+            name="JSS 1",
+            section=SchoolClass.Section.JUNIOR_SECONDARY,
+        )
+
+        cls.subject = Subject.objects.create(
+            school=cls.school,
+            name="Mathematics",
+            code="MATH",
+            level=Subject.SubjectLevel.SECONDARY,
+        )
+
+        cls.teacher_user = User.objects.create_user(
+            username="timetable_view_teacher",
+            password="testpass123",
+        )
+        cls.teacher_user.school = cls.school
+        cls.teacher_user.save()
+
+        cls.teacher = Teacher.objects.create(
+            user=cls.teacher_user,
+        )
+
+        cls.allocation = SubjectAllocation.objects.create(
+            teacher=cls.teacher,
+            subject=cls.subject,
+            school_class=cls.school_class,
+            term=cls.term,
+        )
+
+        cls.timetable = Timetable.objects.create(
+            school=cls.school,
+            term=cls.term,
+            name="View Test Timetable",
+            days=[
+                TimetableEntry.Day.MONDAY,
+                TimetableEntry.Day.TUESDAY,
+            ],
+            created_by=cls.user,
+        )
+
+    def test_timetable_view_uses_days_as_rows_and_periods_as_columns(self):
+        self.client.force_login(self.user)
+
+        period_one = TimetablePeriod.objects.create(
+            timetable=self.timetable,
+            name="Period 1",
+            period_number=1,
+            start_time=time(8, 0),
+            end_time=time(9, 0),
+        )
+
+        period_two = TimetablePeriod.objects.create(
+            timetable=self.timetable,
+            name="Period 2",
+            period_number=2,
+            start_time=time(9, 0),
+            end_time=time(10, 0),
+        )
+
+        requirement = TimetableRequirement.objects.create(
+            timetable=self.timetable,
+            allocation=self.allocation,
+            lessons_per_week=1,
+        )
+
+        monday_entry = TimetableEntry.objects.create(
+            timetable=self.timetable,
+            requirement=requirement,
+            day=TimetableEntry.Day.MONDAY,
+            period=period_one,
+        )
+
+        response = self.client.get(
+            reverse(
+                "timetable_view",
+                args=[self.timetable.id],
+            )
+        )
+
+        self.assertEqual(response.status_code, 200)
+
+        self.assertEqual(
+            response.context["grid"][0]["day"],
+            TimetableEntry.Day.MONDAY,
+        )
+
+        self.assertEqual(
+            response.context["grid"][1]["day"],
+            TimetableEntry.Day.TUESDAY,
+        )
+
+        self.assertEqual(
+            response.context["grid"][0]["cells"][0]["period"],
+            period_one,
+        )
+
+        self.assertEqual(
+            response.context["grid"][0]["cells"][1]["period"],
+            period_two,
+        )
+
+        self.assertEqual(
+            response.context["grid"][0]["cells"][0]["entry"],
+            [monday_entry],
+        )
+
+        self.assertIsNone(
+            response.context["grid"][1]["cells"][0]["entry"],
+        )
+
+        self.assertEqual(
+            len(response.context["grid"]),
+            2,
+        )
+
+        self.assertEqual(
+            len(response.context["grid"][0]["cells"]),
+            2,
+        )
+        
+    def test_timetable_view_filters_by_section_and_class(self):
+        self.client.force_login(self.user)
+
+        period = TimetablePeriod.objects.create(
+            timetable=self.timetable,
+            name="Period 1",
+            period_number=1,
+            start_time=time(8, 0),
+            end_time=time(9, 0),
+        )
+
+        second_class = SchoolClass.objects.create(
+            school=self.school,
+            name="SS 1",
+            section=SchoolClass.Section.SENIOR_SECONDARY,
+        )
+
+        second_subject = Subject.objects.create(
+            school=self.school,
+            name="English",
+            code="ENG",
+            level=Subject.SubjectLevel.SECONDARY,
+        )
+
+        second_allocation = SubjectAllocation.objects.create(
+            teacher=self.teacher,
+            subject=second_subject,
+            school_class=second_class,
+            term=self.term,
+        )
+
+        first_requirement = TimetableRequirement.objects.create(
+            timetable=self.timetable,
+            allocation=self.allocation,
+            lessons_per_week=1,
+        )
+
+        second_requirement = TimetableRequirement.objects.create(
+            timetable=self.timetable,
+            allocation=second_allocation,
+            lessons_per_week=1,
+        )
+
+        first_entry = TimetableEntry.objects.create(
+            timetable=self.timetable,
+            requirement=first_requirement,
+            day=TimetableEntry.Day.MONDAY,
+            period=period,
+        )
+
+        second_entry = TimetableEntry.objects.create(
+            timetable=self.timetable,
+            requirement=second_requirement,
+            day=TimetableEntry.Day.TUESDAY,
+            period=period,
+        )
+
+        response = self.client.get(
+            reverse(
+                "timetable_view",
+                args=[self.timetable.id],
+            ),
+            {
+                "section": SchoolClass.Section.JUNIOR_SECONDARY,
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+
+        self.assertEqual(
+            response.context["grid"][0]["cells"][0]["entry"],
+            [first_entry],
+        )
+
+        self.assertIsNone(
+            response.context["grid"][1]["cells"][0]["entry"],
+        )
+
+        response = self.client.get(
+            reverse(
+                "timetable_view",
+                args=[self.timetable.id],
+            ),
+            {
+                "section": SchoolClass.Section.SENIOR_SECONDARY,
+                "class": second_class.id,
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+
+        self.assertIsNone(
+            response.context["grid"][0]["cells"][0]["entry"],
+        )
+
+        self.assertEqual(
+            response.context["grid"][1]["cells"][0]["entry"],
+            [second_entry],
         )

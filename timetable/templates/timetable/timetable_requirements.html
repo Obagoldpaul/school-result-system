@@ -24,11 +24,38 @@
                 Periods
             </a>
 
+            <form method="post"
+                action="{% url 'sync_timetable_requirements' timetable.id %}"
+                class="d-inline">
+                {% csrf_token %}
+
+                <button type="submit"
+                        class="btn btn-outline-primary">
+                    Prepare / Sync Requirements
+                </button>
+            </form>
+        
+            <form method="post"
+                  action="{% url 'generate_timetable' timetable.id %}"
+                  class="d-inline">
+                {% csrf_token %}
+        
+                <button type="submit"
+                        class="btn btn-primary">
+                    Generate Timetable
+                </button>
+            </form>
+
+            <a href="{% url 'timetable_view' timetable.id %}"
+                class="btn btn-success">
+                View Timetable
+            </a>
+        
             <a href="{% url 'timetable_list' %}"
                class="btn btn-outline-secondary">
                 Back to Timetables
             </a>
-
+        
         </div>
 
     </div>

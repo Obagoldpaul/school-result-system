@@ -128,6 +128,30 @@
                 
                 </div>
 
+                <div class="mb-4">
+
+                    <label class="form-label">
+                        Days Used
+                    </label>
+                
+                    <div>
+                        {{ form.days }}
+                    </div>
+                
+                    {% if form.days.errors %}
+                
+                    <div class="text-danger small mt-1">
+                        {{ form.days.errors }}
+                    </div>
+                
+                    {% endif %}
+                
+                    <small class="text-muted">
+                        Select the days on which the school runs its timetable.
+                    </small>
+                
+                </div>
+
                 <div class="d-flex justify-content-end gap-2">
 
                     <a href="{% url 'dashboard_home' %}"

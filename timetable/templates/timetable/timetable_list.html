@@ -92,9 +92,14 @@
                             </td>
 
                             <td>
+                                <a href="{% url 'edit_timetable' timetable.id %}"
+                                    class="btn btn-sm btn-outline-secondary">
+                                    Configure
+                                </a>
+
                                 <a href="{% url 'timetable_periods' timetable.id %}"
-                                   class="btn btn-sm btn-outline-primary">
-                                    View / Configure
+                                    class="btn btn-sm btn-outline-primary">
+                                    Periods
                                 </a>
                             </td>
 
