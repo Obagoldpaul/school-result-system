@@ -53,6 +53,7 @@ urlpatterns = [
     path('attendance/', include('attendance.urls')),
     path('announcements/', include('announcements.urls')),
     path("maintenance/", include("maintenance.urls")),
+    path('timetable/', include('timetable.urls')),
     
     path('platform/', include('schools.urls')),
 ]

@@ -288,6 +288,17 @@ PERMISSIONS = [
         "module": "Academics",
         "description": "Create and manage academic sessions and terms.",
     },
+    
+    # =========================================================
+    # TIMETABLE
+    # =========================================================
+
+    {
+        "code": "timetable.create",
+        "name": "Create Timetables",
+        "module": "Timetable",
+        "description": "Create and configure school timetables.",
+    },
 
     # =========================================================
     # SCHOOL SETTINGS

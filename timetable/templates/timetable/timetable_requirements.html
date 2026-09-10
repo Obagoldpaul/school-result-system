@@ -1,0 +1,242 @@
+{% extends "base.html" %}
+
+{% block title %}Timetable Requirements{% endblock %}
+
+{% block content %}
+
+<div class="container-fluid">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <div>
+            <h1>Timetable Requirements</h1>
+
+            <p class="text-muted mb-0">
+                Configure how often each subject allocation should appear
+                in the timetable.
+            </p>
+        </div>
+
+        <div class="d-flex gap-2">
+
+            <a href="{% url 'timetable_periods' timetable.id %}"
+               class="btn btn-secondary">
+                Periods
+            </a>
+
+            <a href="{% url 'timetable_list' %}"
+               class="btn btn-outline-secondary">
+                Back to Timetables
+            </a>
+
+        </div>
+
+    </div>
+
+
+    <div class="card shadow-sm mb-4">
+
+        <div class="card-body">
+
+            <h5 class="card-title">
+                {{ timetable.name }}
+            </h5>
+
+            <p class="mb-1">
+                <strong>Academic Session:</strong>
+                {{ timetable.term.session.name }}
+            </p>
+
+            <p class="mb-0">
+                <strong>Academic Term:</strong>
+                {{ timetable.term.get_name_display }}
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <div class="card shadow-sm mb-4">
+
+        <div class="card-body">
+
+            <h5 class="card-title mb-4">
+                Add Requirement
+            </h5>
+
+            <form method="post">
+
+                {% csrf_token %}
+
+                {% if form.non_field_errors %}
+                    <div class="alert alert-danger">
+                        {{ form.non_field_errors }}
+                    </div>
+                {% endif %}
+
+                <div class="mb-3">
+                    <label for="{{ form.allocation.id_for_label }}"
+                           class="form-label">
+                        Allocation
+                    </label>
+
+                    {{ form.allocation }}
+
+                    {% for error in form.allocation.errors %}
+                        <div class="text-danger small mt-1">
+                            {{ error }}
+                        </div>
+                    {% endfor %}
+                </div>
+
+
+                <div class="row">
+
+                    <div class="col-md-6 mb-3">
+
+                        <label for="{{ form.lessons_per_week.id_for_label }}"
+                               class="form-label">
+                            Lessons per week
+                        </label>
+
+                        {{ form.lessons_per_week }}
+
+                        {% for error in form.lessons_per_week.errors %}
+                            <div class="text-danger small mt-1">
+                                {{ error }}
+                            </div>
+                        {% endfor %}
+
+                    </div>
+
+
+                    <div class="col-md-6 mb-3">
+
+                        <label for="{{ form.double_periods.id_for_label }}"
+                               class="form-label">
+                            Double periods per week
+                        </label>
+
+                        {{ form.double_periods }}
+
+                        {% for error in form.double_periods.errors %}
+                            <div class="text-danger small mt-1">
+                                {{ error }}
+                            </div>
+                        {% endfor %}
+
+                    </div>
+
+                </div>
+
+
+                <button type="submit"
+                        class="btn btn-primary">
+                    Add Requirement
+                </button>
+
+            </form>
+
+        </div>
+
+    </div>
+
+
+    <div class="card shadow-sm">
+
+        <div class="card-body">
+
+            <h5 class="card-title mb-4">
+                Configured Requirements
+            </h5>
+
+            {% if requirements %}
+
+                <div class="table-responsive">
+
+                    <table class="table table-hover align-middle">
+
+                        <thead>
+                            <tr>
+                                <th>Class</th>
+                                <th>Subject</th>
+                                <th>Teacher</th>
+                                <th>Lessons/week</th>
+                                <th>Double periods/week</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+
+                            {% for requirement in requirements %}
+
+                                <tr>
+
+                                    <td>
+                                        {{ requirement.allocation.school_class.name }}
+                                    </td>
+
+                                    <td>
+                                        <strong>
+                                            {{ requirement.allocation.subject.name }}
+                                        </strong>
+                                    </td>
+
+                                    <td>
+                                        {{ requirement.allocation.teacher.user.get_full_name|default:requirement.allocation.teacher.user.username }}
+                                    </td>
+
+                                    <td>
+                                        {{ requirement.lessons_per_week }}
+                                    </td>
+
+                                    <td>
+                                        {{ requirement.double_periods }}
+                                    </td>
+
+                                    <td>
+                                        <a href="{% url 'edit_timetable_requirement' timetable.id requirement.id %}"
+                                           class="btn btn-sm btn-outline-primary">
+                                            Edit
+                                        </a>
+                                    
+                                        <a href="{% url 'delete_timetable_requirement' timetable.id requirement.id %}"
+                                           class="btn btn-sm btn-outline-danger">
+                                            Delete
+                                        </a>
+                                    </td>
+
+                                </tr>
+
+                            {% endfor %}
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            {% else %}
+
+                <div class="text-center py-5">
+
+                    <h5>No requirements configured</h5>
+
+                    <p class="text-muted mb-0">
+                        Add subject allocations and configure their
+                        weekly lesson frequency.
+                    </p>
+
+                </div>
+
+            {% endif %}
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

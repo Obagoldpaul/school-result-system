@@ -1,0 +1,230 @@
+{% extends "base.html" %}
+
+{% block title %}Create Timetable{% endblock %}
+
+{% block content %}
+
+<div class="container-fluid">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <div>
+            <h1>Create Timetable</h1>
+
+            <p class="text-muted mb-0">
+                Create a timetable for an academic term.
+            </p>
+        </div>
+
+        <a href="{% url 'dashboard_home' %}"
+           class="btn btn-secondary">
+            Back to Dashboard
+        </a>
+
+    </div>
+
+
+    <div class="card shadow-sm">
+
+        <div class="card-body">
+
+            <h5 class="card-title mb-4">
+                Timetable Details
+            </h5>
+
+
+            <form method="post">
+
+                {% csrf_token %}
+
+
+                {% if form.non_field_errors %}
+
+                <div class="alert alert-danger">
+
+                    {{ form.non_field_errors }}
+
+                </div>
+
+                {% endif %}
+
+
+                <div class="mb-3">
+
+                    <label for="{{ form.name.id_for_label }}"
+                           class="form-label">
+
+                        Timetable Name
+
+                    </label>
+
+                    {{ form.name }}
+
+                    {% if form.name.errors %}
+
+                    <div class="text-danger small mt-1">
+
+                        {{ form.name.errors }}
+
+                    </div>
+
+                    {% endif %}
+
+                    <small class="text-muted">
+                        Enter a name such as "First Term Timetable".
+                    </small>
+
+                </div>
+
+
+                <div class="mb-3">
+
+                    <label for="{{ form.session.id_for_label }}"
+                           class="form-label">
+                
+                        Academic Session
+                
+                    </label>
+                
+                    {{ form.session }}
+                
+                    {% if form.session.errors %}
+                
+                    <div class="text-danger small mt-1">
+                        {{ form.session.errors }}
+                    </div>
+                
+                    {% endif %}
+                
+                    <small class="text-muted">
+                        Select the academic session for this timetable.
+                    </small>
+                
+                </div>
+                
+                
+                <div class="mb-4">
+                
+                    <label for="{{ form.term.id_for_label }}"
+                           class="form-label">
+                
+                        Academic Term
+                
+                    </label>
+                
+                    {{ form.term }}
+                
+                    {% if form.term.errors %}
+                
+                    <div class="text-danger small mt-1">
+                        {{ form.term.errors }}
+                    </div>
+                
+                    {% endif %}
+                
+                    <small class="text-muted">
+                        Select a term from the academic session above.
+                    </small>
+                
+                </div>
+
+                <div class="d-flex justify-content-end gap-2">
+
+                    <a href="{% url 'dashboard_home' %}"
+                       class="btn btn-secondary">
+
+                        Cancel
+
+                    </a>
+
+                    <button type="submit"
+                            class="btn btn-primary">
+
+                        Create Timetable
+
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+    
+        const sessionSelect = document.getElementById("id_session");
+        const termSelect = document.getElementById("id_term");
+    
+        if (!sessionSelect || !termSelect) {
+            return;
+        }
+    
+        const allTerms = [
+            {% for term in form.term.field.queryset %}
+            {
+                id: "{{ term.id }}",
+                sessionId: "{{ term.session_id }}",
+                name: "{{ term.get_name_display|escapejs }}"
+            },
+            {% endfor %}
+        ];
+    
+        function updateTerms() {
+    
+            const selectedSession = sessionSelect.value;
+            const selectedTerm = "{{ form.data.term|default:'' }}";
+    
+            termSelect.innerHTML = "";
+    
+            const placeholder = document.createElement("option");
+            placeholder.value = "";
+            placeholder.textContent = "Select Academic Term";
+            termSelect.appendChild(placeholder);
+    
+            if (!selectedSession) {
+                termSelect.disabled = true;
+                return;
+            }
+    
+            const matchingTerms = allTerms.filter(
+                term => term.sessionId === selectedSession
+            );
+    
+            matchingTerms.forEach(function (term) {
+    
+                const option = document.createElement("option");
+    
+                option.value = term.id;
+                option.textContent = term.name;
+    
+                if (term.id === selectedTerm) {
+                    option.selected = true;
+                }
+    
+                termSelect.appendChild(option);
+    
+            });
+    
+            termSelect.disabled = matchingTerms.length === 0;
+        }
+    
+        sessionSelect.addEventListener("change", function () {
+    
+            // Clear any previous term selection when the session changes.
+            termSelect.value = "";
+    
+            updateTerms();
+    
+        });
+    
+        updateTerms();
+    
+    });
+    </script>
+
+{% endblock %}

@@ -76,6 +76,7 @@ INSTALLED_APPS = [
     'announcements',
     'maintenance',
     'core',
+    "timetable",
     
     'schools',
 ]

@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block title %}Delete Timetable Requirement{% endblock %}
+
+{% block content %}
+
+<div class="container-fluid">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <div>
+            <h1>Delete Timetable Requirement</h1>
+
+            <p class="text-muted mb-0">
+                Confirm that you want to remove this timetable requirement.
+            </p>
+        </div>
+
+        <a href="{% url 'timetable_requirements' timetable.id %}"
+           class="btn btn-outline-secondary">
+            Back to Requirements
+        </a>
+
+    </div>
+
+
+    <div class="card shadow-sm">
+
+        <div class="card-body">
+
+            <div class="alert alert-warning">
+                <strong>Are you sure?</strong>
+                This timetable requirement will be permanently removed.
+            </div>
+
+
+            <h5 class="card-title mb-4">
+                Requirement Details
+            </h5>
+
+
+            <div class="mb-3">
+                <strong>Academic Session:</strong>
+                {{ timetable.term.session.name }}
+            </div>
+
+            <div class="mb-3">
+                <strong>Academic Term:</strong>
+                {{ timetable.term.get_name_display }}
+            </div>
+
+            <div class="mb-3">
+                <strong>Class:</strong>
+                {{ requirement.allocation.school_class.name }}
+            </div>
+
+            <div class="mb-3">
+                <strong>Subject:</strong>
+                {{ requirement.allocation.subject.name }}
+            </div>
+
+            <div class="mb-3">
+                <strong>Teacher:</strong>
+                {{ requirement.allocation.teacher.user.get_full_name|default:requirement.allocation.teacher.user.username }}
+            </div>
+
+            <div class="mb-3">
+                <strong>Lessons per week:</strong>
+                {{ requirement.lessons_per_week }}
+            </div>
+
+            <div class="mb-4">
+                <strong>Double periods per week:</strong>
+                {{ requirement.double_periods }}
+            </div>
+
+
+            <form method="post">
+
+                {% csrf_token %}
+
+                <button type="submit"
+                        class="btn btn-danger">
+                    Yes, Delete Requirement
+                </button>
+
+                <a href="{% url 'timetable_requirements' timetable.id %}"
+                   class="btn btn-outline-secondary ms-2">
+                    Cancel
+                </a>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}
