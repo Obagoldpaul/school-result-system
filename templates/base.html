@@ -110,6 +110,10 @@
                     Manage Schools
                 </a>
 
+                <a href="{% url 'manage_features' %}">
+                    Features
+                </a>
+
                 <a href="{% url 'platform_settings' %}">
                     Platform Settings
                 </a>
@@ -237,6 +241,10 @@
                     Enter Scores
                 </a>
 
+                <a href="{% url 'dashboard_home' %}#teacher-timetable">
+                    🗓️ My Timetable
+                </a>
+
                 <details>
                     <summary>Attendance</summary>
                     <div class="nav-sub-links">
@@ -254,6 +262,10 @@
 
                 <a href="{% url 'select_allocation' %}">
                     Enter Scores
+                </a>
+
+                <a href="{% url 'dashboard_home' %}#teacher-timetable">
+                    🗓️ My Timetable
                 </a>
 
                 {% elif is_student %}
@@ -287,6 +299,10 @@
 
                     </div>
                 </details>
+
+                <a href="{% url 'dashboard_home' %}#student-timetable">
+                    🗓️ My Timetable
+                </a>
 
                 <details>
                     <summary>💰 Fees & Payments</summary>

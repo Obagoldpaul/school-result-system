@@ -65,6 +65,7 @@ def register_student(request):
                         f"Your student account has been created on "
                         f"Paul SchoolHub for "
                         f"{request.user.school.name}.\n\n"
+                        f"Username: {student.user.username}\n\n"
                         f"Set your password using this link:\n\n"
                         f"{setup_url}\n\n"
                         f"This link is valid for 72 hours and can only be "

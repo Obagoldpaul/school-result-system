@@ -11,6 +11,7 @@ from .models import (
     SubscriptionPackage,
     SchoolSubscription,
     PlatformSettings,
+    Feature,
 )
 
 User = get_user_model()
@@ -353,6 +354,47 @@ class SchoolSubscriptionForm(forms.ModelForm):
             "start_date": "Start Date",
         }
 
+
+class SubscriptionPackageForm(forms.ModelForm):
+    class Meta:
+        model = SubscriptionPackage
+        fields = ["name", "description", "price", "is_active", "features"]
+        widgets = {
+            "name": forms.Select(attrs={"class": "form-select"}),
+            "description": forms.Textarea(
+                attrs={
+                    "class": "form-control",
+                    "rows": 4,
+                    "placeholder": "Describe what this package provides.",
+                }
+            ),
+            "price": forms.NumberInput(
+                attrs={
+                    "class": "form-control",
+                    "step": "0.01",
+                    "min": "0",
+                }
+            ),
+            "is_active": forms.CheckboxInput(
+                attrs={"class": "form-check-input"}
+            ),
+            "features": forms.CheckboxSelectMultiple(
+                attrs={"class": "form-check-input"}
+            ),
+        }
+        labels = {
+            "name": "Package Name",
+            "description": "Description",
+            "price": "Price",
+            "is_active": "Active Package",
+            "features": "Features",
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["features"].queryset = Feature.objects.filter(
+            is_active=True
+        )
 
 class PlatformSettingsForm(forms.ModelForm):
     """
@@ -741,3 +783,74 @@ class EditSchoolUserForm(forms.ModelForm):
             )
 
         return username
+    
+    
+class FeatureForm(forms.ModelForm):
+    """
+    Form used by Platform Administrators to create and edit
+    Paul SchoolHub platform features.
+    """
+
+    class Meta:
+        model = Feature
+        fields = [
+            "code",
+            "name",
+            "description",
+            "is_active",
+        ]
+
+        widgets = {
+            "code": forms.TextInput(
+                attrs={
+                    "class": "form-control",
+                    "placeholder": "e.g. TIMETABLE",
+                }
+            ),
+
+            "name": forms.TextInput(
+                attrs={
+                    "class": "form-control",
+                    "placeholder": "Feature name",
+                }
+            ),
+
+            "description": forms.Textarea(
+                attrs={
+                    "class": "form-control",
+                    "rows": 4,
+                    "placeholder": "Describe what this feature provides.",
+                }
+            ),
+
+            "is_active": forms.CheckboxInput(
+                attrs={
+                    "class": "form-check-input",
+                }
+            ),
+        }
+
+        labels = {
+            "code": "Feature Code",
+            "name": "Feature Name",
+            "description": "Description",
+            "is_active": "Active Feature",
+        }
+
+    def clean_code(self):
+        code = self.cleaned_data["code"].strip().upper()
+
+        existing_feature = Feature.objects.filter(
+            code__iexact=code
+        ).exclude(
+            pk=self.instance.pk
+        ).exists()
+
+        if existing_feature:
+            raise forms.ValidationError(
+                "A feature with this code already exists."
+            )
+
+        return code
+    
+    

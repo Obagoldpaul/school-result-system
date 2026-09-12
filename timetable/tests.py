@@ -10,8 +10,10 @@ from django.urls import reverse
 from .services import sync_timetable_requirements
 
 from academics.models import AcademicSession, Term
+from students.models import SchoolClass, Student
 from allocations.models import SubjectAllocation
 from schools.models import (
+    Feature,
     School,
     SchoolRole,
     Permission,
@@ -2051,9 +2053,18 @@ class TimetableViewTests(TestCase):
             school_type=School.SchoolType.PRIMARY_SECONDARY,
         )
         
-        cls.package = SubscriptionPackage.objects.create(
-            name=SubscriptionPackage.PackageType.BASIC,
+        cls.timetable_feature = Feature.objects.create(
+            code="TIMETABLE",
+            name="Timetable",
+            description="School timetable management.",
+            is_active=True,
         )
+        
+        cls.package = SubscriptionPackage.objects.create(
+            name=SubscriptionPackage.PackageType.STANDARD,
+        )
+        
+        cls.package.features.add(cls.timetable_feature)
 
         SchoolSubscription.objects.create(
             school=cls.school,
@@ -2320,4 +2331,1140 @@ class TimetableViewTests(TestCase):
         self.assertEqual(
             response.context["grid"][1]["cells"][0]["entry"],
             [second_entry],
+        )
+        
+
+class TimetableApprovalViewTests(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.school = School.objects.create(
+            name="Timetable Approval School",
+            code="TAS",
+            school_type=School.SchoolType.PRIMARY_SECONDARY,
+        )
+
+        cls.other_school = School.objects.create(
+            name="Other Approval School",
+            code="OAS",
+            school_type=School.SchoolType.PRIMARY_SECONDARY,
+        )
+        
+        cls.timetable_feature = Feature.objects.create(
+            code="TIMETABLE",
+            name="Timetable",
+            description="School timetable management.",
+            is_active=True,
+        )
+
+        cls.package = SubscriptionPackage.objects.create(
+            name=SubscriptionPackage.PackageType.STANDARD,
+        )
+        
+        cls.package.features.add(cls.timetable_feature)
+
+        SchoolSubscription.objects.create(
+            school=cls.school,
+            package=cls.package,
+            start_date=timezone.now().date(),
+        )
+
+        SchoolSubscription.objects.create(
+            school=cls.other_school,
+            package=cls.package,
+            start_date=timezone.now().date(),
+        )
+
+        cls.user = User.objects.create_superuser(
+            username="approval_user",
+            password="testpass123",
+            email="approval@example.com",
+        )
+        cls.user.school = cls.school
+        cls.user.save()
+
+        cls.other_user = User.objects.create_superuser(
+            username="other_approval_user",
+            password="testpass123",
+            email="otherapproval@example.com",
+        )
+        cls.other_user.school = cls.other_school
+        cls.other_user.save()
+
+        cls.role = SchoolRole.objects.create(
+            school=cls.school,
+            name="Approval Administrator",
+            base_role=SchoolRole.BaseRole.ADMIN,
+        )
+
+        cls.approve_permission = Permission.objects.create(
+            code="timetable.approve",
+            name="Approve Timetables",
+            description="Approve generated timetables before publication.",
+            module="Timetable",
+            is_active=True,
+        )
+
+        cls.role.permissions.add(cls.approve_permission)
+
+        cls.user.school_role = cls.role
+        cls.user.save()
+
+        cls.other_role = SchoolRole.objects.create(
+            school=cls.other_school,
+            name="Other Approval Administrator",
+            base_role=SchoolRole.BaseRole.ADMIN,
+        )
+
+        cls.other_role.permissions.add(cls.approve_permission)
+
+        cls.other_user.school_role = cls.other_role
+        cls.other_user.save()
+
+        cls.session = AcademicSession.objects.create(
+            school=cls.school,
+            name="2026/2027",
+            is_current=True,
+        )
+
+        cls.term = Term.objects.create(
+            session=cls.session,
+            name=Term.TermName.FIRST,
+        )
+
+        cls.school_class = SchoolClass.objects.create(
+            school=cls.school,
+            name="JSS 1",
+            section=SchoolClass.Section.JUNIOR_SECONDARY,
+        )
+
+        cls.subject = Subject.objects.create(
+            school=cls.school,
+            name="Mathematics",
+            code="TAMATH",
+            level=Subject.SubjectLevel.SECONDARY,
+        )
+
+        cls.teacher_user = User.objects.create_user(
+            username="approval_teacher",
+            password="testpass123",
+        )
+        cls.teacher_user.school = cls.school
+        cls.teacher_user.save()
+
+        cls.teacher = Teacher.objects.create(
+            user=cls.teacher_user,
+        )
+
+        cls.allocation = SubjectAllocation.objects.create(
+            teacher=cls.teacher,
+            subject=cls.subject,
+            school_class=cls.school_class,
+            term=cls.term,
+        )
+
+        cls.timetable = Timetable.objects.create(
+            school=cls.school,
+            term=cls.term,
+            name="Approval Test Timetable",
+            days=[
+                TimetableEntry.Day.MONDAY,
+                TimetableEntry.Day.TUESDAY,
+            ],
+            created_by=cls.user,
+        )
+
+    def create_generated_entry(self):
+        period = TimetablePeriod.objects.create(
+            timetable=self.timetable,
+            name="Period 1",
+            period_number=1,
+            start_time=time(8, 0),
+            end_time=time(9, 0),
+        )
+
+        requirement = TimetableRequirement.objects.create(
+            timetable=self.timetable,
+            allocation=self.allocation,
+            lessons_per_week=1,
+        )
+
+        return TimetableEntry.objects.create(
+            timetable=self.timetable,
+            requirement=requirement,
+            day=TimetableEntry.Day.MONDAY,
+            period=period,
+        )
+
+    def test_user_with_approve_permission_can_approve_generated_draft(self):
+        self.create_generated_entry()
+
+        self.client.force_login(self.user)
+
+        response = self.client.post(
+            reverse(
+                "approve_timetable",
+                args=[self.timetable.id],
+            )
+        )
+
+        self.assertEqual(response.status_code, 302)
+
+        self.timetable.refresh_from_db()
+
+        self.assertEqual(
+            self.timetable.status,
+            Timetable.Status.APPROVED,
+        )
+
+    def test_approval_does_not_publish_timetable(self):
+        self.create_generated_entry()
+
+        self.client.force_login(self.user)
+
+        self.client.post(
+            reverse(
+                "approve_timetable",
+                args=[self.timetable.id],
+            )
+        )
+
+        self.timetable.refresh_from_db()
+
+        self.assertEqual(
+            self.timetable.status,
+            Timetable.Status.APPROVED,
+        )
+        self.assertNotEqual(
+            self.timetable.status,
+            Timetable.Status.PUBLISHED,
+        )
+
+    def test_timetable_without_entries_cannot_be_approved(self):
+        self.client.force_login(self.user)
+
+        response = self.client.post(
+            reverse(
+                "approve_timetable",
+                args=[self.timetable.id],
+            )
+        )
+
+        self.assertEqual(response.status_code, 302)
+
+        self.timetable.refresh_from_db()
+
+        self.assertEqual(
+            self.timetable.status,
+            Timetable.Status.DRAFT,
+        )
+
+    def test_already_approved_timetable_cannot_be_approved_again(self):
+        self.create_generated_entry()
+
+        self.timetable.status = Timetable.Status.APPROVED
+        self.timetable.save()
+
+        self.client.force_login(self.user)
+
+        response = self.client.post(
+            reverse(
+                "approve_timetable",
+                args=[self.timetable.id],
+            )
+        )
+
+        self.assertEqual(response.status_code, 302)
+
+        self.timetable.refresh_from_db()
+
+        self.assertEqual(
+            self.timetable.status,
+            Timetable.Status.APPROVED,
+        )
+
+    def test_user_from_another_school_cannot_approve_timetable(self):
+        self.create_generated_entry()
+
+        self.client.force_login(self.other_user)
+
+        response = self.client.post(
+            reverse(
+                "approve_timetable",
+                args=[self.timetable.id],
+            )
+        )
+
+        self.assertEqual(response.status_code, 404)
+
+        self.timetable.refresh_from_db()
+
+        self.assertEqual(
+            self.timetable.status,
+            Timetable.Status.DRAFT,
+        )
+
+    def test_user_without_approve_permission_is_denied(self):
+        user = User.objects.create_user(
+            username="no_approval_permission",
+            password="testpass123",
+        )
+        user.school = self.school
+
+        role = SchoolRole.objects.create(
+            school=self.school,
+            name="No Approval Role",
+            base_role=SchoolRole.BaseRole.ADMIN,
+        )
+
+        user.school_role = role
+        user.save()
+
+        self.create_generated_entry()
+
+        self.client.force_login(user)
+
+        response = self.client.post(
+            reverse(
+                "approve_timetable",
+                args=[self.timetable.id],
+            )
+        )
+
+        self.assertEqual(response.status_code, 403)
+
+        self.timetable.refresh_from_db()
+
+        self.assertEqual(
+            self.timetable.status,
+            Timetable.Status.DRAFT,
+        )
+        
+class TimetablePublishViewTests(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.school = School.objects.create(
+            name="Timetable Publish School",
+            code="TPS",
+            school_type=School.SchoolType.PRIMARY_SECONDARY,
+        )
+
+        cls.other_school = School.objects.create(
+            name="Other Publish School",
+            code="OPS",
+            school_type=School.SchoolType.PRIMARY_SECONDARY,
+        )
+        
+        cls.timetable_feature = Feature.objects.create(
+            code="TIMETABLE",
+            name="Timetable",
+            description="School timetable management.",
+            is_active=True,
+        )
+
+        cls.package = SubscriptionPackage.objects.create(
+            name=SubscriptionPackage.PackageType.STANDARD,
+        )
+        
+        cls.package.features.add(cls.timetable_feature)
+
+        SchoolSubscription.objects.create(
+            school=cls.school,
+            package=cls.package,
+            start_date=timezone.now().date(),
+        )
+
+        SchoolSubscription.objects.create(
+            school=cls.other_school,
+            package=cls.package,
+            start_date=timezone.now().date(),
+        )
+
+        cls.user = User.objects.create_superuser(
+            username="publish_user",
+            password="testpass123",
+            email="publish@example.com",
+        )
+        cls.user.school = cls.school
+        cls.user.save()
+
+        cls.other_user = User.objects.create_superuser(
+            username="other_publish_user",
+            password="testpass123",
+            email="otherpublish@example.com",
+        )
+        cls.other_user.school = cls.other_school
+        cls.other_user.save()
+
+        cls.role = SchoolRole.objects.create(
+            school=cls.school,
+            name="Publish Administrator",
+            base_role=SchoolRole.BaseRole.ADMIN,
+        )
+
+        cls.publish_permission = Permission.objects.create(
+            code="timetable.publish",
+            name="Publish Timetables",
+            description="Publish approved timetables.",
+            module="Timetable",
+            is_active=True,
+        )
+        
+        cls.view_permission = Permission.objects.create(
+            code="timetable.view",
+            name="View Timetables",
+            description="View Timetables",
+            module="Timetable",
+            is_active=True,
+        )
+
+        cls.role.permissions.add(
+            cls.publish_permission,
+            cls.view_permission,
+        )
+
+        cls.user.school_role = cls.role
+        cls.user.save()
+
+        cls.other_role = SchoolRole.objects.create(
+            school=cls.other_school,
+            name="Other Publish Administrator",
+            base_role=SchoolRole.BaseRole.ADMIN,
+        )
+
+        cls.other_role.permissions.add(
+            cls.publish_permission,
+            cls.view_permission,
+        )
+        cls.other_user.school_role = cls.other_role
+        cls.other_user.save()
+
+        cls.session = AcademicSession.objects.create(
+            school=cls.school,
+            name="2026/2027",
+            is_current=True,
+        )
+
+        cls.term = Term.objects.create(
+            session=cls.session,
+            name=Term.TermName.FIRST,
+        )
+
+        cls.school_class = SchoolClass.objects.create(
+            school=cls.school,
+            name="JSS 1",
+            section=SchoolClass.Section.JUNIOR_SECONDARY,
+        )
+
+        cls.subject = Subject.objects.create(
+            school=cls.school,
+            name="Mathematics",
+            code="TPMATH",
+            level=Subject.SubjectLevel.SECONDARY,
+        )
+
+        cls.teacher_user = User.objects.create_user(
+            username="publish_teacher",
+            password="testpass123",
+        )
+        cls.teacher_user.school = cls.school
+        cls.teacher_user.save()
+
+        cls.teacher = Teacher.objects.create(
+            user=cls.teacher_user,
+        )
+
+        cls.allocation = SubjectAllocation.objects.create(
+            teacher=cls.teacher,
+            subject=cls.subject,
+            school_class=cls.school_class,
+            term=cls.term,
+        )
+
+        cls.timetable = Timetable.objects.create(
+            school=cls.school,
+            term=cls.term,
+            name="Publish Test Timetable",
+            days=[
+                TimetableEntry.Day.MONDAY,
+                TimetableEntry.Day.TUESDAY,
+            ],
+            status=Timetable.Status.APPROVED,
+            created_by=cls.user,
+        )
+
+    def create_generated_entry(self):
+        period = TimetablePeriod.objects.create(
+            timetable=self.timetable,
+            name="Period 1",
+            period_number=1,
+            start_time=time(8, 0),
+            end_time=time(9, 0),
+        )
+
+        requirement = TimetableRequirement.objects.create(
+            timetable=self.timetable,
+            allocation=self.allocation,
+            lessons_per_week=1,
+        )
+
+        return TimetableEntry.objects.create(
+            timetable=self.timetable,
+            requirement=requirement,
+            day=TimetableEntry.Day.MONDAY,
+            period=period,
+        )
+
+    def test_user_with_publish_permission_can_publish_approved_timetable(self):
+        self.create_generated_entry()
+
+        self.client.force_login(self.user)
+
+        response = self.client.post(
+            reverse(
+                "publish_timetable",
+                kwargs={"timetable_id": self.timetable.id},
+            )
+        )
+
+        self.assertRedirects(
+            response,
+            reverse(
+                "timetable_view",
+                kwargs={"timetable_id": self.timetable.id},
+            ),
+        )
+
+        self.timetable.refresh_from_db()
+
+        self.assertEqual(
+            self.timetable.status,
+            Timetable.Status.PUBLISHED,
+        )
+
+    def test_publishing_does_not_modify_timetable_entries(self):
+        entry = self.create_generated_entry()
+
+        self.client.force_login(self.user)
+
+        self.client.post(
+            reverse(
+                "publish_timetable",
+                kwargs={"timetable_id": self.timetable.id},
+            )
+        )
+
+        self.assertTrue(
+            TimetableEntry.objects.filter(
+                id=entry.id,
+                timetable=self.timetable,
+            ).exists()
+        )
+
+    def test_draft_timetable_cannot_be_published(self):
+        self.timetable.status = Timetable.Status.DRAFT
+        self.timetable.save()
+
+        self.client.force_login(self.user)
+
+        response = self.client.post(
+            reverse(
+                "publish_timetable",
+                kwargs={"timetable_id": self.timetable.id},
+            )
+        )
+
+        self.assertRedirects(
+            response,
+            reverse(
+                "timetable_view",
+                kwargs={"timetable_id": self.timetable.id},
+            ),
+        )
+
+        self.timetable.refresh_from_db()
+
+        self.assertEqual(
+            self.timetable.status,
+            Timetable.Status.DRAFT,
+        )
+
+    def test_published_timetable_cannot_be_published_again(self):
+        self.timetable.status = Timetable.Status.PUBLISHED
+        self.timetable.save()
+
+        self.client.force_login(self.user)
+
+        response = self.client.post(
+            reverse(
+                "publish_timetable",
+                kwargs={"timetable_id": self.timetable.id},
+            )
+        )
+
+        self.assertRedirects(
+            response,
+            reverse(
+                "timetable_view",
+                kwargs={"timetable_id": self.timetable.id},
+            ),
+        )
+
+        self.timetable.refresh_from_db()
+
+        self.assertEqual(
+            self.timetable.status,
+            Timetable.Status.PUBLISHED,
+        )
+
+    def test_user_without_publish_permission_gets_403(self):
+        user = User.objects.create_user(
+            username="no_publish_user",
+            password="testpass123",
+        )
+        user.school = self.school
+        user.save()
+
+        self.client.force_login(user)
+
+        response = self.client.post(
+            reverse(
+                "publish_timetable",
+                kwargs={"timetable_id": self.timetable.id},
+            )
+        )
+
+        self.assertEqual(response.status_code, 403)
+
+    def test_other_school_user_cannot_publish_timetable(self):
+        self.client.force_login(self.other_user)
+
+        response = self.client.post(
+            reverse(
+                "publish_timetable",
+                kwargs={"timetable_id": self.timetable.id},
+            )
+        )
+
+        self.assertEqual(response.status_code, 404)
+        
+class TimetablePortalViewTests(TestCase):
+    def setUp(self):
+        self.school = School.objects.create(
+            name="Portal Test School",
+            code="PTS",
+            school_type=School.SchoolType.PRIMARY_SECONDARY,
+        )
+
+        self.other_school = School.objects.create(
+            name="Other Portal School",
+            code="OPS",
+            school_type=School.SchoolType.PRIMARY_SECONDARY,
+        )
+
+        self.package = SubscriptionPackage.objects.create(
+            name=SubscriptionPackage.PackageType.BASIC,
+        )
+
+        SchoolSubscription.objects.create(
+            school=self.school,
+            package=self.package,
+            start_date=timezone.now().date(),
+        )
+
+        SchoolSubscription.objects.create(
+            school=self.other_school,
+            package=self.package,
+            start_date=timezone.now().date(),
+        )
+        
+        self.timetable_feature = Feature.objects.create(
+            code="TIMETABLE",
+            name="Timetable",
+        )
+
+        self.student_portal_feature = Feature.objects.create(
+            code="STUDENT_PORTAL",
+            name="Student Portal",
+        )
+
+        self.package.features.add(
+            self.timetable_feature,
+            self.student_portal_feature,
+        )
+
+        # Current academic session / term for the main school.
+        self.session = AcademicSession.objects.create(
+            school=self.school,
+            name="2025/2026",
+            is_current=True,
+        )
+        self.term = Term.objects.create(
+            session=self.session,
+            name=Term.TermName.FIRST,
+            is_current=True,
+        )
+
+        # A non-current session / term.
+        self.old_session = AcademicSession.objects.create(
+            school=self.school,
+            name="2024/2025",
+            is_current=False,
+        )
+        self.old_term = Term.objects.create(
+            session=self.old_session,
+            name=Term.TermName.FIRST,
+            is_current=False,
+        )
+
+        # Other school's current session / term.
+        self.other_session = AcademicSession.objects.create(
+            school=self.other_school,
+            name="2025/2026",
+            is_current=True,
+        )
+        self.other_term = Term.objects.create(
+            session=self.other_session,
+            name=Term.TermName.FIRST,
+            is_current=True,
+        )
+
+        # Classes in the main school.
+        self.own_class = SchoolClass.objects.create(
+            school=self.school,
+            name="JSS 1",
+            section=SchoolClass.Section.JUNIOR_SECONDARY,
+            is_active=True,
+        )
+        self.other_class = SchoolClass.objects.create(
+            school=self.school,
+            name="JSS 2",
+            section=SchoolClass.Section.JUNIOR_SECONDARY,
+            is_active=True,
+        )
+
+        # Class in another school.
+        self.other_school_class = SchoolClass.objects.create(
+            school=self.other_school,
+            name="JSS 1",
+            section=SchoolClass.Section.JUNIOR_SECONDARY,
+            is_active=True,
+        )
+
+        # Users.
+        self.teacher_user = User.objects.create_user(
+            username="portal_teacher",
+            password="testpass123",
+        )
+        self.teacher_user.school = self.school
+        self.teacher_user.save()
+
+        self.student_user = User.objects.create_user(
+            username="portal_student",
+            password="testpass123",
+        )
+        self.student_user.school = self.school
+        self.student_user.save()
+
+        self.other_student_user = User.objects.create_user(
+            username="portal_other_student",
+            password="testpass123",
+        )
+        self.other_student_user.school = self.school
+        self.other_student_user.save()
+
+        # Teacher profile.
+        self.teacher = Teacher.objects.create(
+            user=self.teacher_user,
+            assigned_class=self.own_class,
+        )
+
+        # Student profiles.
+        self.student = Student.objects.create(
+            user=self.student_user,
+            school_class=self.own_class,
+        )
+        self.other_student = Student.objects.create(
+            user=self.other_student_user,
+            school_class=self.other_class,
+        )
+
+        # Subjects.
+        self.math = Subject.objects.create(
+            school=self.school,
+            name="Mathematics",
+            level=Subject.SubjectLevel.SECONDARY,
+        )
+        self.english = Subject.objects.create(
+            school=self.school,
+            name="English",
+            code="TPENG",
+            level=Subject.SubjectLevel.SECONDARY,
+        )
+
+        # Teachers for allocations.
+        self.teacher_two_user = User.objects.create_user(
+            username="portal_teacher_two",
+            password="testpass123",
+        )
+        self.teacher_two_user.school = self.school
+        self.teacher_two_user.save()
+
+        self.teacher_two = Teacher.objects.create(
+            user=self.teacher_two_user,
+            assigned_class=self.other_class,
+        )
+
+        # Allocations for both classes.
+        self.own_allocation = SubjectAllocation.objects.create(
+            school_class=self.own_class,
+            subject=self.math,
+            teacher=self.teacher,
+            term=self.term,
+        )
+        self.other_allocation = SubjectAllocation.objects.create(
+            school_class=self.other_class,
+            subject=self.english,
+            teacher=self.teacher_two,
+            term=self.term,
+        )
+
+        # Current published timetable.
+        self.timetable = Timetable.objects.create(
+            school=self.school,
+            term=self.term,
+            name="2025/2026 First Term Timetable",
+            days=[
+                TimetableEntry.Day.MONDAY,
+                TimetableEntry.Day.TUESDAY,
+            ],
+            status=Timetable.Status.PUBLISHED,
+        )
+
+        self.period_one = TimetablePeriod.objects.create(
+            timetable=self.timetable,
+            name="Period 1",
+            period_number=1,
+            start_time=time(8, 0),
+            end_time=time(9, 0),
+            is_break=False,
+            is_active=True,
+        )
+
+        self.period_two = TimetablePeriod.objects.create(
+            timetable=self.timetable,
+            name="Period 2",
+            period_number=2,
+            start_time=time(9, 0),
+            end_time=time(10, 0),
+            is_break=False,
+            is_active=True,
+        )
+
+        self.own_requirement = TimetableRequirement.objects.create(
+            timetable=self.timetable,
+            allocation=self.own_allocation,
+            lessons_per_week=1,
+        )
+
+        self.other_requirement = TimetableRequirement.objects.create(
+            timetable=self.timetable,
+            allocation=self.other_allocation,
+            lessons_per_week=1,
+        )
+
+        self.own_entry = TimetableEntry.objects.create(
+            timetable=self.timetable,
+            requirement=self.own_requirement,
+            day=TimetableEntry.Day.MONDAY,
+            period=self.period_one,
+        )
+
+        self.other_entry = TimetableEntry.objects.create(
+            timetable=self.timetable,
+            requirement=self.other_requirement,
+            day=TimetableEntry.Day.MONDAY,
+            period=self.period_two,
+        )
+
+        # Published timetable for the previous/non-current academic term.
+        self.old_timetable = Timetable.objects.create(
+            school=self.school,
+            term=self.old_term,
+            name="2024/2025 First Term Timetable",
+            days=[TimetableEntry.Day.MONDAY],
+            status=Timetable.Status.PUBLISHED,
+        )
+
+        old_period = TimetablePeriod.objects.create(
+            timetable=self.old_timetable,
+            name="Period 1",
+            period_number=1,
+            start_time=time(8, 0),
+            end_time=time(9, 0),
+            is_break=False,
+            is_active=True,
+        )
+
+        old_allocation = SubjectAllocation.objects.create(
+            teacher=self.teacher,
+            subject=self.math,
+            school_class=self.own_class,
+            term=self.old_term,
+        )
+
+        old_requirement = TimetableRequirement.objects.create(
+            timetable=self.old_timetable,
+            allocation=old_allocation,
+            lessons_per_week=1,
+        )
+
+        TimetableEntry.objects.create(
+            timetable=self.old_timetable,
+            requirement=old_requirement,
+            day=TimetableEntry.Day.MONDAY,
+            period=old_period,
+        )
+
+        # Published timetable belonging to another school.
+        other_subject = Subject.objects.create(
+            school=self.other_school,
+            name="Mathematics",
+            code="OPMATH",
+            level=Subject.SubjectLevel.SECONDARY,
+        )
+
+        other_teacher_user = User.objects.create_user(
+            username="other_school_teacher",
+            password="testpass123",
+        )
+        other_teacher_user.school = self.other_school
+        other_teacher_user.save()
+
+        other_teacher = Teacher.objects.create(
+            user=other_teacher_user,
+            assigned_class=self.other_school_class,
+        )
+
+        other_allocation = SubjectAllocation.objects.create(
+            school_class=self.other_school_class,
+            subject=other_subject,
+            teacher=other_teacher,
+            term=self.other_term,
+        )
+
+        self.other_timetable = Timetable.objects.create(
+            school=self.other_school,
+            term=self.other_term,
+            name="Other School Timetable",
+            days=[TimetableEntry.Day.MONDAY],
+            status=Timetable.Status.PUBLISHED,
+        )
+
+        other_period = TimetablePeriod.objects.create(
+            timetable=self.other_timetable,
+            name="Period 1",
+            period_number=1,
+            start_time=time(8, 0),
+            end_time=time(9, 0),
+            is_break=False,
+            is_active=True,
+        )
+
+        other_requirement = TimetableRequirement.objects.create(
+            timetable=self.other_timetable,
+            allocation=other_allocation,
+            lessons_per_week=1,
+        )
+
+        TimetableEntry.objects.create(
+            timetable=self.other_timetable,
+            requirement=other_requirement,
+            day=TimetableEntry.Day.MONDAY,
+            period=other_period,
+        )
+
+    def _get_grid_entries(self, response):
+        """
+        Extract timetable entries from the expected portal grid context.
+        """
+        entries = []
+
+        for row in response.context["grid"]:
+            for cell in row["cells"]:
+                cell_entries = cell.get("entry") or []
+                if not isinstance(cell_entries, list):
+                    cell_entries = [cell_entries]
+                entries.extend(cell_entries)
+
+        return entries
+
+    def test_teacher_can_view_published_whole_school_timetable(self):
+        self.client.force_login(self.teacher_user)
+
+        response = self.client.get(
+            reverse("teacher_timetable")
+        )
+
+        self.assertEqual(response.status_code, 200)
+
+        entries = self._get_grid_entries(response)
+        entry_ids = {entry.id for entry in entries}
+
+        self.assertIn(self.own_entry.id, entry_ids)
+        self.assertIn(self.other_entry.id, entry_ids)
+
+    def test_teacher_does_not_need_timetable_permission(self):
+        self.client.force_login(self.teacher_user)
+
+        response = self.client.get(
+            reverse("teacher_timetable")
+        )
+
+        self.assertEqual(response.status_code, 200)
+
+    def test_teacher_cannot_view_draft_timetable(self):
+        self.timetable.status = Timetable.Status.DRAFT
+        self.timetable.save()
+
+        self.client.force_login(self.teacher_user)
+
+        response = self.client.get(
+            reverse("teacher_timetable")
+        )
+
+        self.assertEqual(response.status_code, 404)
+
+    def test_teacher_cannot_view_approved_timetable(self):
+        self.timetable.status = Timetable.Status.APPROVED
+        self.timetable.save()
+
+        self.client.force_login(self.teacher_user)
+
+        response = self.client.get(
+            reverse("teacher_timetable")
+        )
+
+        self.assertEqual(response.status_code, 404)
+
+    def test_teacher_cannot_view_other_school_timetable(self):
+        self.client.force_login(self.teacher_user)
+
+        response = self.client.get(
+            reverse("teacher_timetable")
+        )
+
+        self.assertEqual(response.status_code, 200)
+
+        entries = self._get_grid_entries(response)
+
+        other_school_entry_ids = set(
+            self.other_timetable.entries.values_list("id", flat=True)
+        )
+        returned_entry_ids = {entry.id for entry in entries}
+
+        self.assertTrue(
+            returned_entry_ids.isdisjoint(other_school_entry_ids)
+        )
+
+    def test_student_can_view_only_own_class_timetable(self):
+        self.client.force_login(self.student_user)
+
+        response = self.client.get(
+            reverse("student_timetable")
+        )
+
+        self.assertEqual(response.status_code, 200)
+
+        entries = self._get_grid_entries(response)
+        entry_ids = {entry.id for entry in entries}
+
+        self.assertIn(self.own_entry.id, entry_ids)
+        self.assertNotIn(self.other_entry.id, entry_ids)
+
+    def test_student_timetable_is_server_side_filtered_to_own_class(self):
+        self.client.force_login(self.student_user)
+
+        response = self.client.get(
+            reverse("student_timetable")
+        )
+
+        self.assertEqual(response.status_code, 200)
+
+        entries = self._get_grid_entries(response)
+
+        returned_class_ids = {
+            entry.requirement.allocation.school_class_id
+            for entry in entries
+        }
+
+        self.assertEqual(
+            returned_class_ids,
+            {self.own_class.id},
+        )
+
+    def test_student_cannot_view_draft_timetable(self):
+        self.timetable.status = Timetable.Status.DRAFT
+        self.timetable.save()
+
+        self.client.force_login(self.student_user)
+
+        response = self.client.get(
+            reverse("student_timetable")
+        )
+
+        self.assertEqual(response.status_code, 404)
+
+    def test_student_cannot_view_approved_timetable(self):
+        self.timetable.status = Timetable.Status.APPROVED
+        self.timetable.save()
+
+        self.client.force_login(self.student_user)
+
+        response = self.client.get(
+            reverse("student_timetable")
+        )
+
+        self.assertEqual(response.status_code, 404)
+
+    def test_student_cannot_view_other_school_timetable(self):
+        self.student_user.school = self.school
+        self.student_user.save()
+
+        self.client.force_login(self.student_user)
+
+        response = self.client.get(
+            reverse("student_timetable")
+        )
+
+        self.assertEqual(response.status_code, 200)
+
+        entries = self._get_grid_entries(response)
+
+        other_school_entry_ids = set(
+            self.other_timetable.entries.values_list("id", flat=True)
+        )
+        returned_entry_ids = {entry.id for entry in entries}
+
+        self.assertTrue(
+            returned_entry_ids.isdisjoint(other_school_entry_ids)
+        )
+
+    def test_student_cannot_view_non_current_term_timetable(self):
+        self.client.force_login(self.student_user)
+
+        response = self.client.get(
+            reverse("student_timetable")
+        )
+
+        self.assertEqual(response.status_code, 200)
+
+        entries = self._get_grid_entries(response)
+        returned_entry_ids = {entry.id for entry in entries}
+
+        old_entry_ids = set(
+            self.old_timetable.entries.values_list("id", flat=True)
+        )
+
+        self.assertTrue(
+            returned_entry_ids.isdisjoint(old_entry_ids)
         )

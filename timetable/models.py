@@ -10,6 +10,7 @@ class Timetable(models.Model):
 
     class Status(models.TextChoices):
         DRAFT = "DRAFT", "Draft"
+        APPROVED = "APPROVED", "Approved"
         PUBLISHED = "PUBLISHED", "Published"
 
     school = models.ForeignKey(

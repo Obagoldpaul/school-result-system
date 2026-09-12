@@ -312,6 +312,12 @@ PERMISSIONS = [
         "description": "Generate and regenerate school timetables.",
     },
     {
+        "code": "timetable.approve",
+        "name": "Approve Timetables",
+        "module": "Timetable",
+        "description": "Approve generated timetables before publication.",
+    },
+    {
         "code": "timetable.publish",
         "name": "Publish Timetables",
         "module": "Timetable",

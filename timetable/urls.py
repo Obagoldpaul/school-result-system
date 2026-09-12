@@ -44,6 +44,22 @@ urlpatterns = [
     ),
     
     path(
+        "<int:timetable_id>/approve/",
+        views.approve_timetable_view,
+        name="approve_timetable",
+    ),
+    
+    path(
+        "<int:timetable_id>/publish/",
+        views.publish_timetable_view,
+        name="publish_timetable",
+    ),
+    
+    path("teacher/", views.teacher_timetable, name="teacher_timetable"),
+    
+    path("student/", views.student_timetable, name="student_timetable"),
+    
+    path(
         "<int:timetable_id>/requirements/<int:requirement_id>/edit/",
         views.edit_timetable_requirement,
         name="edit_timetable_requirement",

@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+
+{% block title %}Student Timetable{% endblock %}
+
+{% block content %}
+
+<div class="container-fluid">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <div>
+            <h1>Student Timetable</h1>
+
+            <p class="text-muted mb-0">
+                {{ timetable.name }}
+            </p>
+        </div>
+
+    </div>
+
+
+    <div class="card shadow-sm mb-4">
+
+        <div class="card-body">
+
+            <h5 class="card-title">
+                {{ timetable.name }}
+            </h5>
+
+            <p class="mb-1">
+                <strong>Academic Session:</strong>
+                {{ timetable.term.session.name }}
+            </p>
+
+            <p class="mb-1">
+                <strong>Academic Term:</strong>
+                {{ timetable.term.get_name_display }}
+            </p>
+
+            <p class="mb-0">
+                <strong>Class:</strong>
+                {{ student.school_class.name }}
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <div class="card shadow-sm">
+
+        <div class="card-body">
+
+            <div class="table-responsive">
+
+                <table class="table table-bordered align-middle text-center">
+
+                    <thead>
+                        <tr>
+
+                            <th>Day</th>
+
+                            {% for period in periods %}
+                                <th>
+                                    {{ period.name }}
+
+                                    <br>
+
+                                    <small class="text-muted">
+                                        {{ period.start_time|time:"H:i" }}
+                                        -
+                                        {{ period.end_time|time:"H:i" }}
+                                    </small>
+                                </th>
+                            {% endfor %}
+
+                        </tr>
+                    </thead>
+
+
+                    <tbody>
+
+                        {% for row in grid %}
+
+                            <tr>
+
+                                <th class="text-start">
+                                    {{ row.day_label }}
+                                </th>
+
+
+                                {% for cell in row.cells %}
+
+                                    <td>
+
+                                        {% if cell.period.is_break %}
+
+                                            <strong>Break</strong>
+
+                                        {% elif cell.entry %}
+
+                                            {% for entry in cell.entry %}
+
+                                                <div class="mb-2">
+
+                                                    <strong>
+                                                        {{ entry.requirement.allocation.subject.name }}
+                                                    </strong>
+
+                                                    <br>
+
+                                                    <small class="text-muted">
+                                                        {{ entry.requirement.allocation.teacher.user.get_full_name|default:entry.requirement.allocation.teacher.user.username }}
+                                                    </small>
+
+                                                </div>
+
+                                                {% if not forloop.last %}
+                                                    <hr class="my-2">
+                                                {% endif %}
+
+                                            {% endfor %}
+
+                                        {% else %}
+
+                                            <span class="text-muted">
+                                                —
+                                            </span>
+
+                                        {% endif %}
+
+                                    </td>
+
+                                {% endfor %}
+
+                            </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

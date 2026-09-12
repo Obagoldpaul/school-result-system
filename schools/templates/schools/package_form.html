@@ -1,0 +1,265 @@
+{% extends "base.html" %}
+
+{% block title %}
+    {{ page_title }} | {{ platform_settings.platform_name|default:"Paul SchoolHub" }}
+{% endblock %}
+
+{% block content %}
+
+<div class="container py-4">
+
+    <div class="mb-4">
+
+        <h2>
+            {{ page_title }}
+        </h2>
+
+        <p class="text-muted mb-0">
+            Create and manage Paul SchoolHub subscription packages.
+        </p>
+
+    </div>
+
+
+    {% if messages %}
+
+        {% for message in messages %}
+
+            <div class="alert alert-{{ message.tags }}">
+                {{ message }}
+            </div>
+
+        {% endfor %}
+
+    {% endif %}
+
+
+    <div class="card shadow-sm">
+
+        <div class="card-header">
+
+            <h5 class="mb-0">
+                Package Details
+            </h5>
+
+        </div>
+
+
+        <div class="card-body">
+
+            <form method="post">
+
+                {% csrf_token %}
+
+
+                {% if form.non_field_errors %}
+
+                    <div class="alert alert-danger">
+
+                        {{ form.non_field_errors }}
+
+                    </div>
+
+                {% endif %}
+
+
+                <!-- PACKAGE NAME -->
+
+                <div class="mb-3">
+
+                    <label
+                        for="{{ form.name.id_for_label }}"
+                        class="form-label"
+                    >
+                        {{ form.name.label }}
+                    </label>
+
+                    {{ form.name }}
+
+                    {% if form.name.errors %}
+
+                        <div class="text-danger small mt-1">
+
+                            {{ form.name.errors }}
+
+                        </div>
+
+                    {% endif %}
+
+                </div>
+
+
+                <!-- DESCRIPTION -->
+
+                <div class="mb-3">
+
+                    <label
+                        for="{{ form.description.id_for_label }}"
+                        class="form-label"
+                    >
+                        {{ form.description.label }}
+                    </label>
+
+                    {{ form.description }}
+
+                    {% if form.description.errors %}
+
+                        <div class="text-danger small mt-1">
+
+                            {{ form.description.errors }}
+
+                        </div>
+
+                    {% endif %}
+
+                </div>
+
+
+                <!-- PRICE -->
+
+                <div class="mb-3">
+
+                    <label
+                        for="{{ form.price.id_for_label }}"
+                        class="form-label"
+                    >
+                        {{ form.price.label }}
+                    </label>
+
+                    {{ form.price }}
+
+                    {% if form.price.errors %}
+
+                        <div class="text-danger small mt-1">
+
+                            {{ form.price.errors }}
+
+                        </div>
+
+                    {% endif %}
+
+                    <div class="form-text">
+                        Enter the package price in Nigerian Naira.
+                    </div>
+
+                </div>
+
+
+                <!-- FEATURES -->
+
+                <div class="mb-4">
+
+                    <label class="form-label">
+                        {{ form.features.label }}
+                    </label>
+
+                    <div class="border rounded p-3">
+
+                        {% if form.features.field.queryset %}
+
+                            {% for checkbox in form.features %}
+
+                                <div class="form-check mb-2">
+
+                                    {{ checkbox.tag }}
+
+                                    <label
+                                        class="form-check-label"
+                                        for="{{ checkbox.id_for_label }}"
+                                    >
+                                        {{ checkbox.choice_label }}
+                                    </label>
+
+                                </div>
+
+                            {% empty %}
+
+                                <div class="text-muted">
+                                    No active features are available.
+                                </div>
+
+                            {% endfor %}
+
+                        {% else %}
+
+                            <div class="text-muted">
+                                No active features are available.
+                            </div>
+
+                        {% endif %}
+
+                    </div>
+
+                    {% if form.features.errors %}
+
+                        <div class="text-danger small mt-1">
+
+                            {{ form.features.errors }}
+
+                        </div>
+
+                    {% endif %}
+
+                    <div class="form-text">
+                        Select the features included in this package.
+                    </div>
+
+                </div>
+
+
+                <!-- ACTIVE STATUS -->
+
+                <div class="form-check mb-4">
+
+                    {{ form.is_active }}
+
+                    <label
+                        class="form-check-label"
+                        for="{{ form.is_active.id_for_label }}"
+                    >
+                        {{ form.is_active.label }}
+                    </label>
+
+                    {% if form.is_active.errors %}
+
+                        <div class="text-danger small mt-1">
+
+                            {{ form.is_active.errors }}
+
+                        </div>
+
+                    {% endif %}
+
+                </div>
+
+
+                <!-- ACTIONS -->
+
+                <div class="d-flex gap-2">
+
+                    <button
+                        type="submit"
+                        class="btn btn-primary"
+                    >
+                        Save Package
+                    </button>
+
+
+                    <a
+                        href="{% url 'manage_packages' %}"
+                        class="btn btn-secondary"
+                    >
+                        Back to Packages
+                    </a>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

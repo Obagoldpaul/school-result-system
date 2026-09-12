@@ -22,12 +22,38 @@
                class="btn btn-primary">
                 Requirements
             </a>
-
+        
+            {% if timetable.status == "DRAFT" and timetable.entries.exists %}
+                <form method="post"
+                      action="{% url 'approve_timetable' timetable.id %}"
+                      class="d-inline">
+                    {% csrf_token %}
+        
+                    <button type="submit"
+                            class="btn btn-success">
+                        Approve Timetable
+                    </button>
+                </form>
+            {% endif %}
+        
+            {% if timetable.status == "APPROVED" %}
+                <form method="post"
+                      action="{% url 'publish_timetable' timetable.id %}"
+                      class="d-inline">
+                    {% csrf_token %}
+        
+                    <button type="submit"
+                            class="btn btn-success">
+                        Publish Timetable
+                    </button>
+                </form>
+            {% endif %}
+        
             <a href="{% url 'timetable_list' %}"
                class="btn btn-outline-secondary">
                 Back to Timetables
             </a>
-
+        
         </div>
 
     </div>

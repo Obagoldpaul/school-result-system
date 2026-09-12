@@ -81,6 +81,38 @@ urlpatterns = [
         name="platform_settings",
     ),
     
+    path("packages/", views.manage_packages, name="manage_packages"),
+    
+    path("packages/create/", views.create_package, name="create_package"),
+    
+    path("packages/<int:package_id>/edit/", views.edit_package, name="edit_package"),
+    
+    path("packages/<int:package_id>/status/", views.toggle_package_status, name="toggle_package_status"),
+    
+    path(
+        "features/",
+        views.manage_features,
+        name="manage_features",
+    ),
+
+    path(
+        "features/create/",
+        views.create_feature,
+        name="create_feature",
+    ),
+
+    path(
+        "features/<int:feature_id>/edit/",
+        views.edit_feature,
+        name="edit_feature",
+    ),
+
+    path(
+        "features/<int:feature_id>/status/",
+        views.toggle_feature_status,
+        name="toggle_feature_status",
+    ),
+    
     path(
         "schools/<int:school_id>/roles/",
         views.manage_school_roles,

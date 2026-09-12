@@ -2,8 +2,9 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect
 
 from accounts.decorators import management_required
-from accounts.permissions import school_permission_required
-from students.models import SchoolClass
+from accounts.permissions import feature_required, school_permission_required
+from students.models import SchoolClass, Student
+from accounts.utils import get_current_term
 
 from .forms import (
     TimetableForm,
@@ -29,6 +30,7 @@ from django.core.exceptions import ValidationError
 
 @management_required
 @login_required
+@feature_required("TIMETABLE")
 @school_permission_required("timetable.create")
 def create_timetable(request):
     school = request.user.school
@@ -56,6 +58,7 @@ def create_timetable(request):
 
 
 @login_required
+@feature_required("TIMETABLE")
 def timetable_list(request):
     school = request.user.school
 
@@ -74,6 +77,7 @@ def timetable_list(request):
     
 @login_required
 @management_required
+@feature_required("TIMETABLE")
 @school_permission_required("timetable.create")
 def edit_timetable(request, timetable_id):
     school = request.user.school
@@ -157,6 +161,7 @@ def edit_timetable(request, timetable_id):
 
 @login_required
 @management_required
+@feature_required("TIMETABLE")
 @school_permission_required("timetable.view")
 def timetable_view(request, timetable_id):
     school = request.user.school
@@ -249,6 +254,7 @@ def timetable_view(request, timetable_id):
     )
 
 @login_required
+@feature_required("TIMETABLE")
 def timetable_periods(request, timetable_id):
     school = request.user.school
 
@@ -295,6 +301,7 @@ def timetable_periods(request, timetable_id):
     )
 
 @login_required
+@feature_required("TIMETABLE")
 def timetable_requirements(request, timetable_id):
     school = request.user.school
 
@@ -363,6 +370,7 @@ def timetable_requirements(request, timetable_id):
 
 @login_required
 @management_required
+@feature_required("TIMETABLE")
 @school_permission_required("timetable.create")
 def sync_timetable_requirements_view(request, timetable_id):
     school = request.user.school
@@ -401,6 +409,7 @@ def sync_timetable_requirements_view(request, timetable_id):
     )
 
 @login_required
+@feature_required("TIMETABLE")
 @school_permission_required("timetable.create")
 def generate_timetable_view(request, timetable_id):
     school = request.user.school
@@ -437,6 +446,246 @@ def generate_timetable_view(request, timetable_id):
     return redirect(
         "timetable_requirements",
         timetable_id=timetable.id,
+    )
+
+@login_required
+@management_required
+@feature_required("TIMETABLE")
+@school_permission_required("timetable.approve")
+def approve_timetable_view(request, timetable_id):
+    school = request.user.school
+
+    timetable = get_object_or_404(
+        Timetable.objects.select_related(
+            "term",
+            "term__session",
+        ),
+        id=timetable_id,
+        school=school,
+    )
+
+    if request.method != "POST":
+        return redirect(
+            "timetable_view",
+            timetable_id=timetable.id,
+        )
+
+    if timetable.status != Timetable.Status.DRAFT:
+        messages.error(
+            request,
+            "Only draft timetables can be approved.",
+        )
+        return redirect(
+            "timetable_view",
+            timetable_id=timetable.id,
+        )
+
+    if not timetable.entries.exists():
+        messages.error(
+            request,
+            "This timetable cannot be approved because it has no generated lesson entries.",
+        )
+        return redirect(
+            "timetable_view",
+            timetable_id=timetable.id,
+        )
+
+    timetable.status = Timetable.Status.APPROVED
+    timetable.save()
+
+    messages.success(
+        request,
+        "Timetable approved successfully.",
+    )
+
+    return redirect(
+        "timetable_view",
+        timetable_id=timetable.id,
+    )
+
+@login_required
+@management_required
+@feature_required("TIMETABLE")
+@school_permission_required("timetable.publish")
+def publish_timetable_view(request, timetable_id):
+    school = request.user.school
+
+    timetable = get_object_or_404(
+        Timetable.objects.select_related("term", "term__session"),
+        id=timetable_id,
+        school=school,
+    )
+
+    if request.method != "POST":
+        return redirect("timetable_view", timetable_id=timetable.id)
+
+    if timetable.status != Timetable.Status.APPROVED:
+        messages.error(
+            request,
+            "Only approved timetables can be published.",
+        )
+        return redirect("timetable_view", timetable_id=timetable.id)
+
+    timetable.status = Timetable.Status.PUBLISHED
+    timetable.save()
+
+    messages.success(
+        request,
+        "Timetable published successfully.",
+    )
+
+    return redirect("timetable_view", timetable_id=timetable.id)
+
+@login_required
+@feature_required("TIMETABLE")
+def teacher_timetable(request):
+    school = request.user.school
+    current_term = get_current_term(request.user)
+
+    if not current_term:
+        return get_object_or_404(Timetable, id=0)
+
+    timetable = get_object_or_404(
+        Timetable.objects.select_related(
+            "term",
+            "term__session",
+        ),
+        school=school,
+        term=current_term,
+        status=Timetable.Status.PUBLISHED,
+    )
+
+    periods = timetable.periods.filter(
+        is_active=True,
+    ).order_by("period_number")
+
+    entries = (
+        timetable.entries
+        .select_related(
+            "requirement__allocation__school_class",
+            "requirement__allocation__subject",
+            "requirement__allocation__teacher__user",
+            "period",
+        )
+        .order_by("period__period_number")
+    )
+
+    entries_by_slot = {}
+
+    for entry in entries:
+        slot = (entry.day, entry.period_id)
+        entries_by_slot.setdefault(slot, []).append(entry)
+
+    day_labels = dict(TimetableEntry.Day.choices)
+
+    grid = []
+
+    for day_value in timetable.days:
+        row = {
+            "day": day_value,
+            "day_label": day_labels.get(day_value, day_value),
+            "cells": [],
+        }
+
+        for period in periods:
+            row["cells"].append({
+                "period": period,
+                "entry": entries_by_slot.get(
+                    (day_value, period.id)
+                ),
+            })
+
+        grid.append(row)
+
+    return render(
+        request,
+        "timetable/teacher_timetable.html",
+        {
+            "timetable": timetable,
+            "grid": grid,
+            "periods": periods,
+        },
+    )
+    
+@login_required
+@feature_required("TIMETABLE")
+@feature_required("STUDENT_PORTAL")
+def student_timetable(request):
+    school = request.user.school
+    current_term = get_current_term(request.user)
+
+    student = get_object_or_404(
+        Student.objects.select_related("school_class"),
+        user=request.user,
+    )
+
+    if not current_term:
+        return get_object_or_404(Timetable, id=0)
+
+    timetable = get_object_or_404(
+        Timetable.objects.select_related(
+            "term",
+            "term__session",
+        ),
+        school=school,
+        term=current_term,
+        status=Timetable.Status.PUBLISHED,
+    )
+
+    periods = timetable.periods.filter(
+        is_active=True,
+    ).order_by("period_number")
+
+    entries = (
+        timetable.entries
+        .select_related(
+            "requirement__allocation__school_class",
+            "requirement__allocation__subject",
+            "requirement__allocation__teacher__user",
+            "period",
+        )
+        .filter(
+            requirement__allocation__school_class=student.school_class,
+        )
+        .order_by("period__period_number")
+    )
+
+    entries_by_slot = {}
+
+    for entry in entries:
+        slot = (entry.day, entry.period_id)
+        entries_by_slot.setdefault(slot, []).append(entry)
+
+    day_labels = dict(TimetableEntry.Day.choices)
+
+    grid = []
+
+    for day_value in timetable.days:
+        row = {
+            "day": day_value,
+            "day_label": day_labels.get(day_value, day_value),
+            "cells": [],
+        }
+
+        for period in periods:
+            row["cells"].append({
+                "period": period,
+                "entry": entries_by_slot.get(
+                    (day_value, period.id)
+                ),
+            })
+
+        grid.append(row)
+
+    return render(
+        request,
+        "timetable/student_timetable.html",
+        {
+            "timetable": timetable,
+            "grid": grid,
+            "periods": periods,
+            "student": student,
+        },
     )
 
 @login_required
@@ -503,6 +752,7 @@ def edit_timetable_requirement(request, timetable_id, requirement_id):
     )
     
 @login_required
+@feature_required("TIMETABLE")
 def delete_timetable_requirement(request, timetable_id, requirement_id):
     school = request.user.school
 
@@ -550,6 +800,7 @@ def delete_timetable_requirement(request, timetable_id, requirement_id):
     )
 
 @login_required
+@feature_required("TIMETABLE")
 def edit_timetable_period(request, timetable_id, period_id):
     school = request.user.school
 
@@ -637,6 +888,7 @@ def delete_timetable_period(request, timetable_id, period_id):
     )
     
 @login_required
+@feature_required("TIMETABLE")
 @school_permission_required("timetable.create")
 def teacher_availability(request):
     if request.method == "POST":
@@ -683,6 +935,7 @@ def teacher_availability(request):
     )
 
 @login_required
+@feature_required("TIMETABLE")
 @school_permission_required("timetable.create")
 def edit_teacher_availability(request, availability_id):
     availability = get_object_or_404(
@@ -727,6 +980,7 @@ def edit_teacher_availability(request, availability_id):
     
 
 @login_required
+@feature_required("TIMETABLE")
 @school_permission_required("timetable.create")
 def delete_teacher_availability(request, availability_id):
     availability = get_object_or_404(

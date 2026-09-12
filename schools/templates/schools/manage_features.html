@@ -1,0 +1,216 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container py-4">
+
+    <div class="mb-4">
+
+        <h2>
+            Manage Features
+        </h2>
+
+        <p class="text-muted mb-0">
+            Manage the features available across Paul SchoolHub subscription packages.
+        </p>
+
+    </div>
+
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+
+
+    <div class="d-flex justify-content-end mb-4">
+
+        <a
+            href="{% url 'create_feature' %}"
+            class="btn btn-primary"
+        >
+            Add Feature
+        </a>
+
+    </div>
+
+
+    <div class="card shadow-sm">
+
+        <div class="card-header">
+
+            <h5 class="mb-0">
+                Paul SchoolHub Features
+            </h5>
+
+        </div>
+
+
+        <div class="card-body p-0">
+
+            <div class="table-responsive">
+
+                <table class="table table-hover align-middle mb-0">
+
+                    <thead>
+
+                        <tr>
+
+                            <th>
+                                Feature
+                            </th>
+
+                            <th>
+                                Code
+                            </th>
+
+                            <th>
+                                Description
+                            </th>
+
+                            <th>
+                                Status
+                            </th>
+
+                            <th class="text-end">
+                                Actions
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody>
+
+                        {% for feature in features %}
+
+                            <tr>
+
+                                <td>
+                                    <strong>
+                                        {{ feature.name }}
+                                    </strong>
+                                </td>
+
+
+                                <td>
+                                    <code>
+                                        {{ feature.code }}
+                                    </code>
+                                </td>
+
+
+                                <td>
+
+                                    {% if feature.description %}
+
+                                        {{ feature.description }}
+
+                                    {% else %}
+
+                                        <span class="text-muted">
+                                            No description provided.
+                                        </span>
+
+                                    {% endif %}
+
+                                </td>
+
+
+                                <td>
+
+                                    {% if feature.is_active %}
+
+                                        <span class="badge bg-success">
+                                            Active
+                                        </span>
+
+                                    {% else %}
+
+                                        <span class="badge bg-secondary">
+                                            Inactive
+                                        </span>
+
+                                    {% endif %}
+
+                                </td>
+
+
+                                <td class="text-end">
+
+                                    <div class="d-flex justify-content-end gap-2">
+
+                                        <a
+                                            href="{% url 'edit_feature' feature.id %}"
+                                            class="btn btn-sm btn-outline-primary"
+                                        >
+                                            Edit
+                                        </a>
+
+
+                                        <form
+                                            method="post"
+                                            action="{% url 'toggle_feature_status' feature.id %}"
+                                        >
+
+                                            {% csrf_token %}
+
+                                            <button
+                                                type="submit"
+                                                class="btn btn-sm {% if feature.is_active %}btn-outline-danger{% else %}btn-outline-success{% endif %}"
+                                            >
+
+                                                {% if feature.is_active %}
+                                                    Deactivate
+                                                {% else %}
+                                                    Activate
+                                                {% endif %}
+
+                                            </button>
+
+                                        </form>
+
+                                    </div>
+
+                                </td>
+
+                            </tr>
+
+                        {% empty %}
+
+                            <tr>
+
+                                <td
+                                    colspan="5"
+                                    class="text-center py-4"
+                                >
+
+                                    <div class="text-muted">
+
+                                        No features have been created yet.
+
+                                    </div>
+
+                                </td>
+
+                            </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

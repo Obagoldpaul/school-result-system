@@ -25,11 +25,13 @@ from .forms import (
     SchoolRegistrationForm,
     EditSchoolForm,
     SchoolSubscriptionForm,
+    SubscriptionPackageForm,
     PlatformSettingsForm,
     AssignSchoolRoleForm,
     SchoolRoleForm,
     CreateSchoolUserForm,
     EditSchoolUserForm,
+    FeatureForm,
 )
 from .models import (
     School,
@@ -38,6 +40,7 @@ from .models import (
     PlatformSettings,
     SchoolRole,
     Permission,
+    Feature,
 )
 
 from students.models import SchoolClass
@@ -1717,3 +1720,227 @@ def edit_subscription(request, school_id):
             "form": form,
         },
     )
+    
+@login_required
+@platform_admin_required
+def manage_packages(request):
+    packages = (
+        SubscriptionPackage.objects
+        .prefetch_related("features")
+        .all()
+    )
+    return render(
+        request,
+        "schools/manage_packages.html",
+        {"packages": packages},
+    )
+
+
+@login_required
+@platform_admin_required
+def create_package(request):
+    if request.method == "POST":
+        form = SubscriptionPackageForm(request.POST)
+        if form.is_valid():
+            package = form.save()
+            messages.success(
+                request,
+                f"{package.get_name_display()} package was created successfully.",
+            )
+            return redirect("manage_packages")
+    else:
+        form = SubscriptionPackageForm()
+
+    return render(
+        request,
+        "schools/package_form.html",
+        {
+            "form": form,
+            "page_title": "Add Package",
+        },
+    )
+
+
+@login_required
+@platform_admin_required
+def edit_package(request, package_id):
+    package = get_object_or_404(
+        SubscriptionPackage,
+        id=package_id,
+    )
+
+    if request.method == "POST":
+        form = SubscriptionPackageForm(
+            request.POST,
+            instance=package,
+        )
+        if form.is_valid():
+            package = form.save()
+            messages.success(
+                request,
+                f"{package.get_name_display()} package was updated successfully.",
+            )
+            return redirect("manage_packages")
+    else:
+        form = SubscriptionPackageForm(instance=package)
+
+    return render(
+        request,
+        "schools/package_form.html",
+        {
+            "form": form,
+            "package": package,
+            "page_title": "Edit Package",
+        },
+    )
+
+
+@login_required
+@platform_admin_required
+@require_POST
+def toggle_package_status(request, package_id):
+    package = get_object_or_404(
+        SubscriptionPackage,
+        id=package_id,
+    )
+
+    package.is_active = not package.is_active
+    package.save(update_fields=["is_active"])
+
+    status = "activated" if package.is_active else "deactivated"
+
+    messages.success(
+        request,
+        f"{package.get_name_display()} package was {status} successfully.",
+    )
+
+    return redirect("manage_packages")
+    
+@login_required
+@platform_admin_required
+def manage_features(request):
+    """
+    Display all Paul SchoolHub platform features
+    for Platform Administrators.
+    """
+
+    features = Feature.objects.all()
+
+    return render(
+        request,
+        "schools/manage_features.html",
+        {
+            "features": features,
+        },
+    )
+
+
+@login_required
+@platform_admin_required
+def create_feature(request):
+    """
+    Allow Platform Administrators to create a new
+    Paul SchoolHub platform feature.
+    """
+
+    if request.method == "POST":
+
+        form = FeatureForm(request.POST)
+
+        if form.is_valid():
+
+            feature = form.save()
+
+            messages.success(
+                request,
+                f"{feature.name} was created successfully."
+            )
+
+            return redirect("manage_features")
+
+    else:
+
+        form = FeatureForm()
+
+    return render(
+        request,
+        "schools/feature_form.html",
+        {
+            "form": form,
+            "page_title": "Add Feature",
+        },
+    )
+
+
+@login_required
+@platform_admin_required
+def edit_feature(request, feature_id):
+    """
+    Allow Platform Administrators to edit an existing
+    Paul SchoolHub platform feature.
+    """
+
+    feature = get_object_or_404(
+        Feature,
+        id=feature_id,
+    )
+
+    if request.method == "POST":
+
+        form = FeatureForm(
+            request.POST,
+            instance=feature,
+        )
+
+        if form.is_valid():
+
+            feature = form.save()
+
+            messages.success(
+                request,
+                f"{feature.name} was updated successfully."
+            )
+
+            return redirect("manage_features")
+
+    else:
+
+        form = FeatureForm(
+            instance=feature,
+        )
+
+    return render(
+        request,
+        "schools/feature_form.html",
+        {
+            "form": form,
+            "feature": feature,
+            "page_title": "Edit Feature",
+        },
+    )
+
+
+@login_required
+@platform_admin_required
+@require_POST
+def toggle_feature_status(request, feature_id):
+    """
+    Activate or deactivate a Paul SchoolHub platform feature.
+    """
+
+    feature = get_object_or_404(
+        Feature,
+        id=feature_id,
+    )
+
+    feature.is_active = not feature.is_active
+    feature.save(update_fields=["is_active"])
+
+    status = "activated" if feature.is_active else "deactivated"
+
+    messages.success(
+        request,
+        f"{feature.name} was {status} successfully."
+    )
+
+    return redirect("manage_features")
