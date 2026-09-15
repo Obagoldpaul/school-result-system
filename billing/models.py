@@ -289,6 +289,10 @@ def get_fee_assignments_for_student(student, term):
         if (
             assignment.department_id
             and assignment.department_id == student.department_id
+            and (
+                not assignment.school_class_id
+                or assignment.school_class_id == student.school_class_id
+            )
         ):
 
             if assignment.fee_category_id not in applicable:

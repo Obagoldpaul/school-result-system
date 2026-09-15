@@ -5,10 +5,17 @@ from django.urls import reverse
 
 from academics.models import AcademicSession, Term
 from accounts.models import User
-from billing.models import FeeAssignment, FeeCategory, Payment, PaymentAllocation
+
 from schools.models import School, SchoolRole, Permission
-from students.models import SchoolClass, Student
+from students.models import SchoolClass, Student, Department
 from datetime import date
+from billing.models import (
+    FeeAssignment,
+    FeeCategory,
+    Payment,
+    PaymentAllocation,
+    get_fee_assignments_for_student,
+)
 
 from schools.models import (
     Feature,
@@ -288,3 +295,77 @@ class BillingConsistencyTests(TestCase):
         self.assertEqual(row["balance"], Decimal("0.00"))
         self.assertEqual(row["account_arrears"], Decimal("80.00"))
         self.assertEqual(row["outstanding_terms"][0]["term"], prior_term)
+
+    def test_class_and_department_fee_only_applies_to_matching_class(self):
+        science_department = Department.objects.create(
+            school=self.school,
+            name="Science",
+        )
+
+        ss3 = SchoolClass.objects.create(
+            school=self.school,
+            name="SS3",
+        )
+
+        ss1 = SchoolClass.objects.create(
+            school=self.school,
+            name="SS1",
+        )
+
+        ss3_student_user = User.objects.create_user(
+            username="ss3_science_student",
+            password="password123",
+            school=self.school,
+        )
+
+        ss3_student = Student.objects.create(
+            user=ss3_student_user,
+            school_class=ss3,
+            department=science_department,
+        )
+
+        ss1_student_user = User.objects.create_user(
+            username="ss1_science_student",
+            password="password123",
+            school=self.school,
+        )
+
+        ss1_student = Student.objects.create(
+            user=ss1_student_user,
+            school_class=ss1,
+            department=science_department,
+        )
+
+        science_fee = FeeCategory.objects.create(
+            school=self.school,
+            name="Science Fee",
+            category_type="COMPULSORY",
+        )
+
+        assignment = FeeAssignment.objects.create(
+            fee_category=science_fee,
+            term=self.term,
+            school_class=ss3,
+            department=science_department,
+            amount=Decimal("50000.00"),
+        )
+
+        ss3_assignments = get_fee_assignments_for_student(
+            ss3_student,
+            self.term,
+        )
+
+        ss1_assignments = get_fee_assignments_for_student(
+            ss1_student,
+            self.term,
+        )
+
+        self.assertIn(
+            assignment,
+            ss3_assignments,
+        )
+
+        self.assertNotIn(
+            assignment,
+            ss1_assignments,
+        )
