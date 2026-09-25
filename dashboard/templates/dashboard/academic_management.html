@@ -498,6 +498,72 @@
 
                     </div>
 
+                    <div class="mb-3">
+
+                        <label class="form-label">
+                            Default Elective Subjects
+                        </label>
+                    
+                        <div class="mb-3">
+
+                            <label class="form-label">
+                                Default Elective Subjects
+                            </label>
+                        
+                            <div class="border rounded p-3">
+                        
+                                {% for subject in elective_subjects %}
+                        
+                                    <div class="form-check mb-2">
+                        
+                                        <input
+                                            class="form-check-input"
+                                            type="checkbox"
+                                            name="default_electives"
+                                            value="{{ subject.id }}"
+                                            id="defaultElective{{ department.id }}{{ subject.id }}"
+                                            {% if subject in department.default_electives.all %}
+                                                checked
+                                            {% endif %}
+                                        >
+                        
+                                        <label
+                                            class="form-check-label"
+                                            for="defaultElective{{ department.id }}{{ subject.id }}"
+                                        >
+                                            {{ subject.name }}
+                        
+                                            {% if subject.code %}
+                                                ({{ subject.code }})
+                                            {% endif %}
+                                        </label>
+                        
+                                    </div>
+                        
+                                {% empty %}
+                        
+                                    <p class="text-muted mb-0">
+                                        No active elective subjects have been created for this school.
+                                    </p>
+                        
+                                {% endfor %}
+                        
+                            </div>
+                        
+                            <small class="text-muted">
+                                Select the elective subjects that students in this department
+                                should receive automatically.
+                            </small>
+                        
+                        </div>
+                    
+                        <small class="text-muted">
+                            Select the elective subjects that students in this department
+                            should receive automatically.
+                        </small>
+                    
+                    </div>
+
                 </div>
 
 

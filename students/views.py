@@ -37,6 +37,18 @@ def register_student(request):
 
         if form.is_valid():
             student = form.save()
+            
+            # Apply the student's department default electives.
+            if student.department_id:
+
+                default_electives = student.department.default_electives.filter(
+                    school=student.user.school,
+                    is_elective=True,
+                    is_active=True,
+                    classsubject__school_class=student.school_class,
+                ).distinct()
+
+                student.elective_subjects.set(default_electives)
 
             # Send a secure password setup link if an email address was provided.
             if student.user.email:

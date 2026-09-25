@@ -1,0 +1,1273 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}
+Term Financial Report
+{% endblock %}
+
+{% block content %}
+
+<style>
+
+    .financial-report {
+        background: #fff;
+        padding: 30px;
+    }
+
+    .report-header {
+        border-bottom: 2px solid #16401c;
+        padding-bottom: 20px;
+        margin-bottom: 25px;
+    }
+
+    .report-school-logo {
+        max-height: 80px;
+        max-width: 120px;
+        object-fit: contain;
+    }
+
+    .report-title {
+        color: #16401c;
+        font-weight: 700;
+        margin-bottom: 5px;
+    }
+
+    .report-subtitle {
+        color: #666;
+        margin-bottom: 0;
+    }
+
+    .report-period {
+        background: #f7f2ef;
+        border-left: 5px solid #ffc837;
+        padding: 15px;
+        margin-bottom: 25px;
+    }
+
+    .report-section-title {
+        color: #16401c;
+        font-weight: 600;
+        border-bottom: 1px solid #dee2e6;
+        padding-bottom: 8px;
+        margin-bottom: 15px;
+    }
+
+    .summary-card {
+        height: 100%;
+    }
+
+    .summary-card h6 {
+        margin-bottom: 8px;
+    }
+
+    .summary-card h4,
+    .summary-card h5 {
+        margin-bottom: 0;
+    }
+
+    .report-table th {
+        background: #f7f2ef;
+        white-space: nowrap;
+    }
+
+    .report-table td,
+    .report-table th {
+        vertical-align: middle;
+    }
+
+    .report-total {
+        font-weight: 700;
+        background: #f7f2ef;
+    }
+
+    .class-report-heading {
+        background: #16401c;
+        color: #fff;
+        padding: 8px 12px;
+        margin-top: 20px;
+        margin-bottom: 0;
+        font-weight: 600;
+        border-radius: 4px 4px 0 0;
+    }
+
+    .report-footer {
+        border-top: 1px solid #dee2e6;
+        margin-top: 30px;
+        padding-top: 15px;
+        text-align: center;
+        color: #777;
+        font-size: 12px;
+    }
+
+    .print-only {
+        display: none;
+    }
+
+
+    /* =====================================================
+       PRINT VERSION
+    ====================================================== */
+
+    @media print {
+
+        @page {
+            size: A4;
+            margin: 12mm;
+        }
+
+        html,
+        body {
+            background: #fff !important;
+            color: #000 !important;
+            font-size: 10pt;
+        }
+
+        .app-layout {
+            display: block !important;
+        }
+
+        .sidebar,
+        .sidebar-overlay,
+        .mobile-menu-toggle,
+        .topbar,
+        footer,
+        .whatsapp-support-button,
+        .report-selector,
+        .no-print {
+            display: none !important;
+        }
+
+        .main-area {
+            margin: 0 !important;
+            padding: 0 !important;
+            width: 100% !important;
+        }
+
+        .content {
+            margin: 0 !important;
+            padding: 0 !important;
+            width: 100% !important;
+        }
+
+        .financial-report {
+            display: block !important;
+            width: 100% !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            box-shadow: none !important;
+            background: #fff !important;
+        }
+
+        .report-header {
+            border-bottom: 2px solid #000 !important;
+            padding-bottom: 12px !important;
+            margin-bottom: 15px !important;
+        }
+
+        .report-school-logo {
+            max-height: 65px !important;
+            max-width: 100px !important;
+        }
+
+        .report-title {
+            color: #000 !important;
+            font-size: 18pt !important;
+        }
+
+        .report-header h4 {
+            font-size: 13pt !important;
+        }
+
+        .report-subtitle {
+            color: #000 !important;
+            font-size: 10pt !important;
+        }
+
+        .report-period {
+            background: #fff !important;
+            border: 1px solid #000 !important;
+            padding: 8px !important;
+            margin-bottom: 15px !important;
+        }
+
+        .report-section {
+            page-break-inside: avoid;
+        }
+
+        .report-section-title {
+            color: #000 !important;
+            font-size: 12pt !important;
+            border-bottom: 1px solid #000 !important;
+            margin-bottom: 8px !important;
+        }
+
+        .summary-card {
+            border: 1px solid #999 !important;
+            page-break-inside: avoid;
+        }
+
+        .summary-card h4 {
+            font-size: 13pt !important;
+        }
+
+        .card {
+            box-shadow: none !important;
+        }
+
+        .table-responsive {
+            overflow: visible !important;
+        }
+
+        .report-table {
+            width: 100% !important;
+            border-collapse: collapse !important;
+            font-size: 8.5pt !important;
+        }
+
+        .report-table th,
+        .report-table td {
+            border: 1px solid #777 !important;
+            padding: 5px 6px !important;
+        }
+
+        .report-table th {
+            background: #eee !important;
+            color: #000 !important;
+        }
+
+        .report-total {
+            background: #eee !important;
+            color: #000 !important;
+        }
+
+        .class-report-heading {
+            background: #eee !important;
+            color: #000 !important;
+            border: 1px solid #777 !important;
+            border-bottom: none !important;
+            padding: 6px 8px !important;
+            margin-top: 12px !important;
+            margin-bottom: 0 !important;
+            font-size: 10pt !important;
+            page-break-after: avoid;
+        }
+
+        .student-class-section {
+            page-break-inside: avoid;
+        }
+
+        .student-class-section table {
+            margin-bottom: 8px !important;
+        }
+
+        .report-footer {
+            color: #000 !important;
+            margin-top: 20px !important;
+            padding-top: 8px !important;
+            font-size: 8pt !important;
+        }
+
+        .print-only {
+            display: block !important;
+        }
+
+        thead {
+            display: table-header-group;
+        }
+
+        tfoot {
+            display: table-footer-group;
+        }
+
+        tr {
+            page-break-inside: avoid;
+        }
+
+        img {
+            print-color-adjust: exact;
+            -webkit-print-color-adjust: exact;
+        }
+
+    }
+
+</style>
+
+
+<div class="container-fluid mt-4">
+
+    <!-- =====================================================
+         REPORT SELECTOR
+    ====================================================== -->
+
+    <div class="card shadow mb-4 report-selector">
+
+        <div class="card-header">
+
+            <h5 class="mb-0">
+                Report Period
+            </h5>
+
+        </div>
+
+        <div class="card-body">
+
+            <form method="get">
+
+                <div class="row g-3 align-items-end">
+
+                    <div class="col-md-5">
+
+                        <label class="form-label">
+                            Academic Session
+                        </label>
+
+                        <select
+                            name="session"
+                            class="form-select"
+                            onchange="this.form.submit()"
+                        >
+
+                            <option value="">
+                                Select Session
+                            </option>
+
+                            {% for item in sessions %}
+
+                                <option
+                                    value="{{ item.id }}"
+                                    {% if selected_session == item.id|stringformat:"s" %}
+                                        selected
+                                    {% endif %}
+                                >
+                                    {{ item.name }}
+                                </option>
+
+                            {% endfor %}
+
+                        </select>
+
+                    </div>
+
+
+                    <div class="col-md-5">
+
+                        <label class="form-label">
+                            Term
+                        </label>
+
+                        <select
+                            name="term"
+                            class="form-select"
+                        >
+
+                            <option value="">
+                                Select Term
+                            </option>
+
+                            {% for item in terms %}
+
+                                <option
+                                    value="{{ item.id }}"
+                                    {% if selected_term == item.id|stringformat:"s" %}
+                                        selected
+                                    {% endif %}
+                                >
+                                    {{ item.name }}
+                                </option>
+
+                            {% endfor %}
+
+                        </select>
+
+                    </div>
+
+
+                    <div class="col-md-2">
+
+                        <button
+                            type="submit"
+                            class="btn btn-success w-100"
+                        >
+                            View Report
+                        </button>
+
+                    </div>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+
+    {% if term %}
+
+
+    <div class="financial-report shadow-sm">
+
+
+        <!-- =================================================
+             REPORT HEADER
+        ================================================== -->
+
+        <div class="report-header">
+
+            <div class="row align-items-center">
+
+                <div class="col-md-2 text-center">
+
+                    {% if school_settings.school_logo %}
+
+                        <img
+                            src="{{ school_settings.school_logo.url }}"
+                            alt="{{ school_settings.school_name }}"
+                            class="report-school-logo"
+                        >
+
+                    {% endif %}
+
+                </div>
+
+
+                <div class="col-md-8 text-center">
+
+                    <h2 class="report-title">
+
+                        {{ school_settings.school_name|default:"School Management System" }}
+
+                    </h2>
+
+                    {% if school_settings.school_address %}
+
+                        <p class="mb-1">
+                            {{ school_settings.school_address }}
+                        </p>
+
+                    {% endif %}
+
+                    <h4 class="mt-3 mb-1">
+                        TERM FINANCIAL REPORT
+                    </h4>
+
+                    <p class="report-subtitle">
+
+                        {{ session.name }} — {{ term.name }}
+
+                    </p>
+
+                </div>
+
+
+                <div class="col-md-2 text-end no-print">
+
+                    <button
+                        type="button"
+                        onclick="window.print()"
+                        class="btn btn-success"
+                    >
+                        🖨️ Print Report
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- Print-only report date -->
+
+        <div class="print-only text-end mb-3">
+
+            <small>
+                Report generated:
+                {% now "d M Y, h:i A" %}
+            </small>
+
+        </div>
+
+
+        <!-- =================================================
+             REPORT PERIOD
+        ================================================== -->
+
+        <div class="report-period">
+
+            <div class="row">
+
+                <div class="col-md-6">
+
+                    <strong>
+                        Academic Session:
+                    </strong>
+
+                    {{ session.name }}
+
+                </div>
+
+
+                <div class="col-md-6">
+
+                    <strong>
+                        Term:
+                    </strong>
+
+                    {{ term.name }}
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- =================================================
+             FINANCIAL SUMMARY
+        ================================================== -->
+
+        <div class="report-section mb-4">
+
+            <h5 class="report-section-title">
+                Financial Summary
+            </h5>
+
+
+            <div class="row g-3">
+
+
+                <div class="col-md-4">
+
+                    <div class="card border-info summary-card">
+
+                        <div class="card-body text-center">
+
+                            <h6>
+                                Expected Revenue
+                            </h6>
+
+                            <h4 class="text-info">
+
+                                ₦{{ expected_revenue|intcomma }}
+
+                            </h4>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <div class="col-md-4">
+
+                    <div class="card border-success summary-card">
+
+                        <div class="card-body text-center">
+
+                            <h6>
+                                Amount Collected
+                            </h6>
+
+                            <h4 class="text-success">
+
+                                ₦{{ collected|intcomma }}
+
+                            </h4>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <div class="col-md-4">
+
+                    <div class="card border-danger summary-card">
+
+                        <div class="card-body text-center">
+
+                            <h6>
+                                Outstanding
+                            </h6>
+
+                            <h4 class="text-danger">
+
+                                ₦{{ outstanding|intcomma }}
+
+                            </h4>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <div class="col-md-4">
+
+                    <div class="card border-success summary-card">
+
+                        <div class="card-body text-center">
+
+                            <h6>
+                                Collection Rate
+                            </h6>
+
+                            <h4 class="text-success">
+
+                                {{ collection_rate }}%
+
+                            </h4>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <div class="col-md-4">
+
+                    <div class="card border-primary summary-card">
+
+                        <div class="card-body text-center">
+
+                            <h6>
+                                Active Students
+                            </h6>
+
+                            <h4 class="text-primary">
+
+                                {{ total_students }}
+
+                            </h4>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <div class="col-md-4">
+
+                    <div class="card border-danger summary-card">
+
+                        <div class="card-body text-center">
+
+                            <h6>
+                                Students Owing
+                            </h6>
+
+                            <h4 class="text-danger">
+
+                                {{ students_owing }}
+
+                            </h4>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+            </div>
+
+        </div>
+
+
+        <!-- =================================================
+             FEE CATEGORY BREAKDOWN
+        ================================================== -->
+
+        <div class="report-section mb-4">
+
+            <h5 class="report-section-title">
+                Fee Category Breakdown
+            </h5>
+
+
+            {% if category_rows %}
+
+                <div class="table-responsive">
+
+                    <table class="table table-bordered report-table">
+
+                        <thead>
+
+                            <tr>
+
+                                <th>
+                                    Fee Category
+                                </th>
+
+                                <th>
+                                    Type
+                                </th>
+
+                                <th class="text-end">
+                                    Expected
+                                </th>
+
+                                <th class="text-end">
+                                    Collected
+                                </th>
+
+                                <th class="text-end">
+                                    Outstanding
+                                </th>
+
+                            </tr>
+
+                        </thead>
+
+
+                        <tbody>
+
+                            {% for row in category_rows %}
+
+                                <tr>
+
+                                    <td>
+                                        {{ row.category.name }}
+                                    </td>
+
+                                    <td>
+                                        {{ row.category_type|title }}
+                                    </td>
+
+                                    <td class="text-end">
+                                        ₦{{ row.expected|intcomma }}
+                                    </td>
+
+                                    <td class="text-end">
+                                        ₦{{ row.paid|intcomma }}
+                                    </td>
+
+                                    <td class="text-end">
+                                        ₦{{ row.balance|intcomma }}
+                                    </td>
+
+                                </tr>
+
+                            {% endfor %}
+
+
+                            <tr class="report-total">
+
+                                <td colspan="2">
+                                    Total
+                                </td>
+
+                                <td class="text-end">
+                                    ₦{{ expected_revenue|intcomma }}
+                                </td>
+
+                                <td class="text-end">
+                                    ₦{{ collected|intcomma }}
+                                </td>
+
+                                <td class="text-end">
+                                    ₦{{ outstanding|intcomma }}
+                                </td>
+
+                            </tr>
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            {% else %}
+
+                <div class="alert alert-info">
+                    No fee assignments were recorded for this term.
+                </div>
+
+            {% endif %}
+
+        </div>
+
+
+        <!-- =================================================
+             PAYMENT SUMMARY
+        ================================================== -->
+
+        <div class="report-section mb-4">
+
+            <h5 class="report-section-title">
+                Payment Summary
+            </h5>
+
+
+            <div class="row g-3 mb-3">
+
+
+                <div class="col-md-4">
+
+                    <div class="card border-primary">
+
+                        <div class="card-body text-center">
+
+                            <h6>
+                                Number of Payments
+                            </h6>
+
+                            <h4 class="text-primary">
+                                {{ payment_count }}
+                            </h4>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <div class="col-md-4">
+
+                    <div class="card border-success">
+
+                        <div class="card-body text-center">
+
+                            <h6>
+                                Total Collected
+                            </h6>
+
+                            <h4 class="text-success">
+
+                                ₦{{ collected|intcomma }}
+
+                            </h4>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <div class="col-md-4">
+
+                    <div class="card border-warning">
+
+                        <div class="card-body text-center">
+
+                            <h6>
+                                Unallocated Payments
+                            </h6>
+
+                            <h4 class="text-warning">
+
+                                ₦{{ unallocated_payments|intcomma }}
+
+                            </h4>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+            </div>
+
+
+            <div class="table-responsive">
+
+                <table class="table table-bordered report-table">
+
+                    <thead>
+
+                        <tr>
+
+                            <th>
+                                Payment Method
+                            </th>
+
+                            <th class="text-end">
+                                Number of Payments
+                            </th>
+
+                            <th class="text-end">
+                                Amount
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody>
+
+                        {% for method, data in payment_method_totals.items %}
+
+                            <tr>
+
+                                <td>
+                                    {{ data.label }}
+                                </td>
+
+                                <td class="text-end">
+                                    {{ data.count }}
+                                </td>
+
+                                <td class="text-end">
+                                    ₦{{ data.amount|intcomma }}
+                                </td>
+
+                            </tr>
+
+                        {% empty %}
+
+                            <tr>
+
+                                <td colspan="3" class="text-center text-muted">
+                                    No payments recorded for this term.
+                                </td>
+
+                            </tr>
+
+                        {% endfor %}
+
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+
+        <!-- =================================================
+                STUDENT FINANCIAL SUMMARY
+        ================================================== -->
+        
+        <div class="report-section mb-4">
+        
+            <h5 class="report-section-title">
+                Student Financial Summary
+            </h5>
+        
+        
+            {% if student_rows %}
+        
+                {% regroup student_rows by school_class as class_groups %}
+        
+        
+                {% for class_group in class_groups %}
+        
+                    <div class="student-class-section">
+        
+                        <div class="class-report-heading">
+        
+                            {% if class_group.grouper %}
+        
+                                {{ class_group.grouper }}
+        
+                            {% else %}
+        
+                                Unassigned Class
+        
+                            {% endif %}
+        
+                        </div>
+        
+        
+                        <div class="table-responsive">
+        
+                            <table class="table table-bordered table-striped report-table">
+        
+                                <thead>
+        
+                                    <tr>
+        
+                                        <th>
+                                            #
+                                        </th>
+        
+                                        <th>
+                                            Student
+                                        </th>
+        
+                                        <th>
+                                            Admission No.
+                                        </th>
+        
+                                        <th class="text-end">
+                                            Expected
+                                        </th>
+        
+                                        <th class="text-end">
+                                            Paid
+                                        </th>
+        
+                                        <th class="text-end">
+                                            Outstanding
+                                        </th>
+        
+                                        <th>
+                                            Status
+                                        </th>
+        
+                                    </tr>
+        
+                                </thead>
+        
+        
+                                <tbody>
+        
+                                    {% for row in class_group.list %}
+        
+                                        <tr>
+        
+                                            <td>
+                                                {{ forloop.counter }}
+                                            </td>
+        
+                                            <td>
+                                                {{ row.student.user.get_full_name }}
+                                            </td>
+        
+                                            <td>
+                                                {{ row.admission_number }}
+                                            </td>
+        
+                                            <td class="text-end">
+                                                ₦{{ row.expected|intcomma }}
+                                            </td>
+        
+                                            <td class="text-end">
+                                                ₦{{ row.paid|intcomma }}
+                                            </td>
+        
+                                            <td class="text-end">
+                                                ₦{{ row.balance|intcomma }}
+                                            </td>
+        
+                                            <td>
+        
+                                                {% if row.status == "Paid" %}
+        
+                                                    <span class="text-success">
+                                                        Paid
+                                                    </span>
+        
+                                                {% elif row.status == "Part Payment" %}
+        
+                                                    <span class="text-warning">
+                                                        Part Payment
+                                                    </span>
+        
+                                                {% elif row.status == "Owing" %}
+        
+                                                    <span class="text-danger">
+                                                        Owing
+                                                    </span>
+        
+                                                {% else %}
+        
+                                                    <span class="text-muted">
+                                                        No Charges
+                                                    </span>
+        
+                                                {% endif %}
+        
+                                            </td>
+        
+                                        </tr>
+        
+                                    {% endfor %}
+        
+                                </tbody>
+        
+                            </table>
+        
+                        </div>
+        
+                    </div>
+        
+                {% endfor %}
+        
+            {% else %}
+        
+                <div class="alert alert-info">
+                    No active students were found for this school.
+                </div>
+        
+            {% endif %}
+        
+        </div>
+
+
+        <!-- =================================================
+             REPORT TOTALS
+        ================================================== -->
+
+        <div class="report-section mb-4">
+
+            <h5 class="report-section-title">
+                Report Totals
+            </h5>
+
+
+            <div class="table-responsive">
+
+                <table class="table table-bordered report-table">
+
+                    <tbody>
+
+                        <tr class="report-total">
+
+                            <th>
+                                Total Active Students
+                            </th>
+
+                            <td class="text-end">
+                                {{ total_students }}
+                            </td>
+
+                        </tr>
+
+                        <tr>
+
+                            <th>
+                                Fully Paid Students
+                            </th>
+
+                            <td class="text-end">
+                                {{ students_fully_paid }}
+                            </td>
+
+                        </tr>
+
+                        <tr>
+
+                            <th>
+                                Students Owing
+                            </th>
+
+                            <td class="text-end">
+                                {{ students_owing }}
+                            </td>
+
+                        </tr>
+
+                        <tr>
+
+                            <th>
+                                Expected Revenue
+                            </th>
+
+                            <td class="text-end">
+                                ₦{{ expected_revenue|intcomma }}
+                            </td>
+
+                        </tr>
+
+                        <tr>
+
+                            <th>
+                                Amount Collected
+                            </th>
+
+                            <td class="text-end">
+                                ₦{{ collected|intcomma }}
+                            </td>
+
+                        </tr>
+
+                        <tr>
+
+                            <th>
+                                Outstanding Balance
+                            </th>
+
+                            <td class="text-end">
+                                ₦{{ outstanding|intcomma }}
+                            </td>
+
+                        </tr>
+
+                        <tr class="report-total">
+
+                            <th>
+                                Collection Rate
+                            </th>
+
+                            <td class="text-end">
+                                {{ collection_rate }}%
+                            </td>
+
+                        </tr>
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+
+        <!-- =================================================
+             REPORT FOOTER
+        ================================================== -->
+
+        <div class="report-footer">
+
+            <p class="mb-1">
+
+                <strong>
+                    {{ school_settings.school_name|default:"School Management System" }}
+                </strong>
+
+            </p>
+
+            <p class="mb-1">
+                Term Financial Report —
+                {{ session.name }} — {{ term.name }}
+            </p>
+
+            <p class="mb-0">
+
+                Powered by
+                <strong>Paul Media Services</strong>
+
+            </p>
+
+        </div>
+
+
+    </div>
+
+
+    {% else %}
+
+        <div class="card shadow">
+
+            <div class="card-body">
+
+                <div class="alert alert-info mb-0">
+
+                    Select an academic session and term to view the
+                    financial report.
+
+                </div>
+
+            </div>
+
+        </div>
+
+    {% endif %}
+
+
+</div>
+
+{% endblock %}

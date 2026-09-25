@@ -10,6 +10,17 @@ urlpatterns = [
         views.students_owing_print,
         name="students_owing_print",
     ),
+    path(
+        "reports/term-financial/",
+        views.term_financial_report,
+        name="term_financial_report",
+    ),
+    
+    path(
+        "reports/session-financial/",
+        views.session_financial_report,
+        name="session_financial_report",
+    ),
     path('opening-balance/', views.add_opening_balance, name='add_opening_balance'),
     path("opening-balances/", views.opening_balance_list, name="opening_balance_list",),
     path('bill/', views.select_student_bill, name='select_student_bill'),

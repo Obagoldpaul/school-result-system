@@ -1,0 +1,265 @@
+{% extends "base.html" %}
+
+{% block title %}
+Elective Assignments
+{% endblock %}
+
+{% block content %}
+
+<div class="container-fluid px-4 mt-4">
+
+    <div class="card shadow-lg border-0">
+
+        <div class="card-header school-header d-flex justify-content-between align-items-center">
+
+            <h3 class="mb-0">
+                Elective Assignments
+            </h3>
+
+        </div>
+
+        <div class="card-body p-4">
+
+            <form method="GET" class="row g-3 mb-4">
+
+                <div class="col-md-4">
+
+                    <label for="class" class="form-label">
+                        Class
+                    </label>
+
+                    <select
+                        name="class"
+                        id="class"
+                        class="form-select"
+                    >
+
+                        <option value="">
+                            All Classes
+                        </option>
+
+                        {% for school_class in classes %}
+
+                            <option
+                                value="{{ school_class.id }}"
+                                {% if school_class.id|stringformat:"s" == selected_class %}
+                                    selected
+                                {% endif %}
+                            >
+                                {{ school_class }}
+                            </option>
+
+                        {% endfor %}
+
+                    </select>
+
+                </div>
+
+                <div class="col-md-4">
+
+                    <label for="department" class="form-label">
+                        Department
+                    </label>
+
+                    <select
+                        name="department"
+                        id="department"
+                        class="form-select"
+                    >
+
+                        <option value="">
+                            All Departments
+                        </option>
+
+                        {% for department in departments %}
+
+                            <option
+                                value="{{ department.id }}"
+                                {% if department.id|stringformat:"s" == selected_department %}
+                                    selected
+                                {% endif %}
+                            >
+                                {{ department }}
+                            </option>
+
+                        {% endfor %}
+
+                    </select>
+
+                </div>
+
+                <div class="col-md-2 d-flex align-items-end">
+
+                    <button
+                        type="submit"
+                        class="btn btn-success w-100"
+                    >
+                        Filter
+                    </button>
+
+                </div>
+
+                <div class="col-md-2 d-flex align-items-end">
+
+                    <a
+                        href="{% url 'elective_assignment_list' %}"
+                        class="btn btn-secondary w-100"
+                    >
+                        Reset
+                    </a>
+
+                </div>
+
+            </form>
+
+            {% if selected_department %}
+
+                <form method="POST" class="mb-4">
+
+                    {% csrf_token %}
+
+                    <button
+                        type="submit"
+                        class="btn btn-primary"
+                        onclick="return confirm(
+                            'Apply this department\\'s default electives to the filtered students? Existing elective assignments will be preserved.'
+                        );"
+                    >
+                        Apply Department Defaults
+                    </button>
+
+                    <small class="text-muted ms-2">
+                        Adds the selected department's default electives
+                        without removing existing assignments.
+                    </small>
+
+                </form>
+
+            {% endif %}
+
+
+            <div class="table-responsive">
+
+                <table class="table table-hover table-bordered align-middle">
+
+                    <thead class="table-success">
+
+                        <tr>
+
+                            <th>
+                                Student
+                            </th>
+
+                            <th>
+                                Admission No.
+                            </th>
+
+                            <th>
+                                Class
+                            </th>
+
+                            <th>
+                                Department
+                            </th>
+
+                            <th>
+                                Current Electives
+                            </th>
+
+                            <th class="text-center">
+                                Action
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                        {% for student in students %}
+
+                            <tr>
+
+                                <td>
+
+                                    <strong>
+                                        {{ student.user.get_full_name }}
+                                    </strong>
+
+                                </td>
+
+                                <td>
+                                    {{ student.admission_number }}
+                                </td>
+
+                                <td>
+
+                                    <span class="badge bg-primary">
+                                        {{ student.school_class }}
+                                    </span>
+
+                                </td>
+
+                                <td>
+                                    {{ student.department|default:"-" }}
+                                </td>
+
+                                <td>
+
+                                    {% for subject in student.elective_subjects.all %}
+
+                                        <span class="badge bg-success me-1">
+                                            {{ subject.name }}
+                                        </span>
+
+                                    {% empty %}
+
+                                        <span class="text-muted">
+                                            No electives assigned
+                                        </span>
+
+                                    {% endfor %}
+
+                                </td>
+
+                                <td class="text-center">
+
+                                    <a
+                                    href="{% url 'assign_electives_to_student' student.id %}{% if selected_class or selected_department %}?{% if selected_class %}class={{ selected_class }}{% endif %}{% if selected_class and selected_department %}&{% endif %}{% if selected_department %}department={{ selected_department }}{% endif %}{% endif %}"
+                                        class="btn btn-sm btn-outline-primary"
+                                    >
+                                        Assign / Edit
+                                    </a>
+
+                                </td>
+
+                            </tr>
+
+                        {% empty %}
+
+                            <tr>
+
+                                <td
+                                    colspan="6"
+                                    class="text-center text-muted py-5"
+                                >
+                                    No active students found.
+                                </td>
+
+                            </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

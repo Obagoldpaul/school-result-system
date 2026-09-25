@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+
+{% block title %}Assign Electives{% endblock %}
+
+{% block content %}
+
+<h1>Assign Elective Subjects</h1>
+
+<p>
+    <strong>Student:</strong>
+    {{ student.user.get_full_name|default:student.user.username }}
+</p>
+
+<p>
+    <strong>Admission Number:</strong>
+    {{ student.admission_number }}
+</p>
+
+<p>
+    <strong>Class:</strong>
+    {{ student.school_class }}
+</p>
+
+{% if student.department %}
+    <p>
+        <strong>Department:</strong>
+        {{ student.department }}
+    </p>
+{% endif %}
+
+<hr>
+
+<form method="POST">
+    {% csrf_token %}
+
+    <h2>Available Elective Subjects</h2>
+
+    {% if available_electives %}
+        {% for subject in available_electives %}
+            <div>
+                <label>
+                    <input
+                        type="checkbox"
+                        name="electives"
+                        value="{{ subject.id }}"
+                        {% if subject in selected_electives %}
+                            checked
+                        {% endif %}
+                    >
+                    {{ subject.name }}
+
+                    {% if subject.code %}
+                        ({{ subject.code }})
+                    {% endif %}
+                </label>
+            </div>
+        {% endfor %}
+    {% else %}
+        <p>
+            No elective subjects have been assigned to this student's class.
+        </p>
+    {% endif %}
+
+    <p>
+        <button type="submit">
+            Save Elective Subjects
+        </button>
+
+        <a href="{% url 'student_list' %}">
+            Cancel
+        </a>
+    </p>
+</form>
+
+{% endblock %}

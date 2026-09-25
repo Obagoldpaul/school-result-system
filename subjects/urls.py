@@ -10,6 +10,18 @@ urlpatterns = [
         views.edit_subject,
         name='edit_subject'
     ),
+    
+    path(
+        'electives/student/<int:student_id>/',
+        views.assign_electives_to_student,
+        name='assign_electives_to_student',
+    ),
+    
+    path(
+        'electives/',
+        views.elective_assignment_list,
+        name='elective_assignment_list',
+    ),
 
     path(
         '<int:subject_id>/deactivate/',

@@ -175,6 +175,10 @@
                             Class Subjects
                         </a>
 
+                        <a href="{% url 'elective_assignment_list' %}">
+                            Elective Assignments
+                        </a>
+
                     </div>
                 </details>
 
@@ -235,6 +239,10 @@
                 {% if can_manage_billing %}
                 <a href="{% url 'billing_dashboard' %}">
                     Billing
+                </a>
+
+                <a href="{% url 'session_financial_report' %}">
+                    Session Financial Report
                 </a>
                 {% endif %}
 
@@ -434,7 +442,7 @@
 
                     <br>
 
-                    {{ platform_settings.platform_footer|default:"Powered by Paul Media" }}
+                    {{ platform_settings.platform_footer|default:"Powered by Paul Media Services" }}
 
                     <br>
 
@@ -442,7 +450,7 @@
 
                     {% else %}
 
-                    Powered by <strong>Paul Media</strong>
+                    Powered by <strong>Paul Media Services</strong>
 
                     <br>
 

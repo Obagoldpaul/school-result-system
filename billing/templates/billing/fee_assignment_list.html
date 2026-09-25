@@ -229,22 +229,17 @@ Fee Assignments
 
 
                             <!-- Status -->
-
                             <div class="col-md-2">
-
                                 <label class="form-label">
                                     Status
                                 </label>
-
                                 <select
                                     name="status"
                                     class="form-select"
                                 >
-
                                     <option value="">
                                         All Status
                                     </option>
-
                                     <option
                                         value="active"
                                         {% if selected_status == "active" %}
@@ -253,7 +248,6 @@ Fee Assignments
                                     >
                                         Active
                                     </option>
-
                                     <option
                                         value="inactive"
                                         {% if selected_status == "inactive" %}
@@ -262,9 +256,35 @@ Fee Assignments
                                     >
                                         Inactive
                                     </option>
-
                                 </select>
+                            </div>
 
+                            <!-- Sort By -->
+                            <div class="col-md-2">
+                                <label class="form-label">
+                                    Sort By
+                                </label>
+                                <select
+                                    name="sort"
+                                    class="form-select"
+                                >
+                                    <option
+                                        value=""
+                                        {% if not selected_sort %}
+                                            selected
+                                        {% endif %}
+                                    >
+                                        Default
+                                    </option>
+                                    <option
+                                        value="class"
+                                        {% if selected_sort == "class" %}
+                                            selected
+                                        {% endif %}
+                                    >
+                                        Class
+                                    </option>
+                                </select>
                             </div>
 
 

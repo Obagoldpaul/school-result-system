@@ -269,6 +269,651 @@ def billing_dashboard(request):
         "billing/dashboard.html",
         context,
     )
+    
+@login_required
+@school_permission_required("billing.view")
+@billing_required
+def term_financial_report(request):
+
+    school = request.user.school
+
+    session_id = request.GET.get("session")
+    term_id = request.GET.get("term")
+
+    current_term = get_current_term(request.user)
+
+    # ---------------------------------------------------------
+    # DEFAULT SESSION / TERM
+    # ---------------------------------------------------------
+
+    if not session_id and current_term:
+        session_id = str(current_term.session_id)
+
+    if not term_id and current_term:
+        if (
+            not session_id
+            or str(current_term.session_id) == str(session_id)
+        ):
+            term_id = str(current_term.id)
+
+    session = None
+    term = None
+
+    # ---------------------------------------------------------
+    # SELECT SESSION
+    # ---------------------------------------------------------
+
+    if session_id:
+
+        session = get_object_or_404(
+            AcademicSession,
+            id=session_id,
+            school=school,
+        )
+
+    # ---------------------------------------------------------
+    # SELECT TERM
+    # ---------------------------------------------------------
+
+    if term_id:
+
+        if session:
+
+            term = get_object_or_404(
+                Term,
+                id=term_id,
+                session=session,
+                session__school=school,
+            )
+
+        else:
+
+            term = get_object_or_404(
+                Term,
+                id=term_id,
+                session__school=school,
+            )
+
+            session = term.session
+            session_id = str(term.session_id)
+
+    # ---------------------------------------------------------
+    # STUDENTS
+    # ---------------------------------------------------------
+
+    students = (
+        Student.objects
+        .filter(
+            user__school=school,
+            is_active=True,
+        )
+        .select_related(
+            "user",
+            "school_class",
+            "department",
+        )
+        .order_by(
+            "school_class__name",
+            "user__last_name",
+            "user__first_name",
+        )
+    )
+
+    # ---------------------------------------------------------
+    # REPORT TOTALS
+    # ---------------------------------------------------------
+
+    expected_revenue = Decimal("0.00")
+    collected = Decimal("0.00")
+    outstanding = Decimal("0.00")
+
+    students_owing = 0
+    students_fully_paid = 0
+
+    student_rows = []
+
+    category_totals = {}
+
+    if term:
+
+        # -----------------------------------------------------
+        # TOTAL PAYMENTS
+        # -----------------------------------------------------
+
+        payment_queryset = Payment.objects.filter(
+            student__user__school=school,
+            term=term,
+        )
+
+        collected = (
+            payment_queryset.aggregate(
+                total=Sum("amount")
+            )["total"]
+            or Decimal("0.00")
+        )
+
+        payment_count = payment_queryset.count()
+
+        # -----------------------------------------------------
+        # PAYMENT METHOD TOTALS
+        # -----------------------------------------------------
+
+        payment_method_totals = {}
+
+        for method_code, method_label in Payment.PAYMENT_METHODS:
+
+            method_total = (
+                payment_queryset
+                .filter(
+                    payment_method=method_code,
+                )
+                .aggregate(
+                    total=Sum("amount")
+                )["total"]
+                or Decimal("0.00")
+            )
+
+            method_count = payment_queryset.filter(
+                payment_method=method_code,
+            ).count()
+
+            payment_method_totals[method_code] = {
+                "label": method_label,
+                "count": method_count,
+                "amount": method_total,
+            }
+
+        # -----------------------------------------------------
+        # STUDENT FINANCIAL DETAILS
+        # -----------------------------------------------------
+
+        for student in students:
+
+            assignments = get_fee_assignments_for_student(
+                student,
+                term,
+            )
+
+            student_expected = sum(
+                (
+                    assignment.amount
+                    for assignment in assignments
+                ),
+                Decimal("0.00"),
+            )
+
+            breakdown = get_student_fee_breakdown(
+                student,
+                term,
+            )
+
+            student_paid = sum(
+                (
+                    item["paid"]
+                    for item in breakdown
+                ),
+                Decimal("0.00"),
+            )
+
+            student_balance = sum(
+                (
+                    item["balance"]
+                    for item in breakdown
+                ),
+                Decimal("0.00"),
+            )
+
+            expected_revenue += student_expected
+            outstanding += student_balance
+
+            # -------------------------------------------------
+            # STUDENT STATUS
+            # -------------------------------------------------
+
+            if student_expected <= Decimal("0.00"):
+
+                status = "No Charges"
+
+            elif student_balance <= Decimal("0.00"):
+
+                status = "Paid"
+                students_fully_paid += 1
+
+            elif student_paid > Decimal("0.00"):
+
+                status = "Part Payment"
+                students_owing += 1
+
+            else:
+
+                status = "Owing"
+                students_owing += 1
+
+            student_rows.append({
+                "student": student,
+                "admission_number": student.admission_number,
+                "school_class": student.school_class,
+                "expected": student_expected,
+                "paid": student_paid,
+                "balance": student_balance,
+                "status": status,
+            })
+
+            # -------------------------------------------------
+            # FEE CATEGORY TOTALS
+            # -------------------------------------------------
+
+            for item in breakdown:
+
+                category = item["fee_category"]
+
+                if category.id not in category_totals:
+
+                    category_totals[category.id] = {
+                        "category": category,
+                        "category_type": (
+                            item["category_type"]
+                        ),
+                        "expected": Decimal("0.00"),
+                        "paid": Decimal("0.00"),
+                        "balance": Decimal("0.00"),
+                    }
+
+                category_totals[category.id]["expected"] += (
+                    item["amount"]
+                )
+
+                category_totals[category.id]["paid"] += (
+                    item["paid"]
+                )
+
+                category_totals[category.id]["balance"] += (
+                    item["balance"]
+                )
+
+        # -----------------------------------------------------
+        # CATEGORY REPORT ROWS
+        # -----------------------------------------------------
+
+        category_rows = sorted(
+            category_totals.values(),
+            key=lambda row: row["category"].name.lower(),
+        )
+
+        # -----------------------------------------------------
+        # UNALLOCATED PAYMENTS
+        # -----------------------------------------------------
+
+        allocated_total = (
+            PaymentAllocation.objects
+            .filter(
+                payment__student__user__school=school,
+                payment__term=term,
+                fee_category__isnull=False,
+            )
+            .aggregate(
+                total=Sum("amount")
+            )["total"]
+            or Decimal("0.00")
+        )
+
+        unallocated_payments = (
+            collected - allocated_total
+        )
+
+        if unallocated_payments < Decimal("0.00"):
+            unallocated_payments = Decimal("0.00")
+
+    else:
+
+        payment_count = 0
+        payment_method_totals = {}
+        category_rows = []
+        unallocated_payments = Decimal("0.00")
+
+    # ---------------------------------------------------------
+    # COLLECTION RATE
+    # ---------------------------------------------------------
+
+    collection_rate = Decimal("0.00")
+
+    if expected_revenue > Decimal("0.00"):
+
+        collection_rate = (
+            collected
+            / expected_revenue
+        ) * Decimal("100")
+
+    # ---------------------------------------------------------
+    # FILTER DATA
+    # ---------------------------------------------------------
+
+    sessions = AcademicSession.objects.filter(
+        school=school,
+    ).order_by(
+        "-name"
+    )
+
+    terms = (
+        Term.objects
+        .filter(
+            session__school=school,
+        )
+        .select_related(
+            "session",
+        )
+        .order_by(
+            "session__name",
+            "name",
+        )
+    )
+
+    if session:
+
+        terms = terms.filter(
+            session=session,
+        )
+
+    # ---------------------------------------------------------
+    # RENDER
+    # ---------------------------------------------------------
+
+    return render(
+        request,
+        "billing/term_financial_report.html",
+        {
+            "sessions": sessions,
+            "terms": terms,
+
+            "selected_session": session_id,
+            "selected_term": term_id,
+
+            "session": session,
+            "term": term,
+
+            # Summary
+            "total_students": students.count(),
+            "expected_revenue": expected_revenue,
+            "collected": collected,
+            "outstanding": outstanding,
+            "collection_rate": round(
+                collection_rate,
+                2,
+            ),
+            "students_owing": students_owing,
+            "students_fully_paid": students_fully_paid,
+
+            # Detailed report
+            "category_rows": category_rows,
+            "student_rows": student_rows,
+
+            # Payment information
+            "payment_count": payment_count,
+            "payment_method_totals": payment_method_totals,
+            "unallocated_payments": unallocated_payments,
+        },
+    )
+
+@login_required
+@school_permission_required("billing.view")
+@billing_required
+def session_financial_report(request):
+    school = request.user.school
+
+    session_id = request.GET.get("session")
+    current_term = get_current_term(request.user)
+
+    if not session_id and current_term:
+        session_id = str(current_term.session_id)
+
+    session = None
+
+    if session_id:
+        session = get_object_or_404(
+            AcademicSession,
+            id=session_id,
+            school=school,
+        )
+
+    students = (
+        Student.objects
+        .filter(
+            user__school=school,
+            is_active=True,
+        )
+        .select_related(
+            "user",
+            "school_class",
+            "department",
+        )
+        .order_by(
+            "school_class__name",
+            "user__last_name",
+            "user__first_name",
+        )
+    )
+
+    expected_revenue = Decimal("0.00")
+    collected = Decimal("0.00")
+    outstanding = Decimal("0.00")
+    students_owing = 0
+    students_fully_paid = 0
+
+    term_rows = []
+    student_totals = {}
+    category_totals = {}
+
+    if session:
+        terms = sorted(
+            session.terms.all(),
+            key=get_term_order,
+        )
+
+        session_payments = Payment.objects.filter(
+            student__user__school=school,
+            term__session=session,
+        )
+
+        collected = (
+            session_payments.aggregate(total=Sum("amount"))["total"]
+            or Decimal("0.00")
+        )
+        payment_count = session_payments.count()
+
+        payment_method_totals = {}
+
+        for method_code, method_label in Payment.PAYMENT_METHODS:
+            method_queryset = session_payments.filter(
+                payment_method=method_code,
+            )
+
+            method_total = (
+                method_queryset.aggregate(total=Sum("amount"))["total"]
+                or Decimal("0.00")
+            )
+
+            payment_method_totals[method_code] = {
+                "label": method_label,
+                "count": method_queryset.count(),
+                "amount": method_total,
+            }
+
+        for student in students:
+            student_totals[student.id] = {
+                "student": student,
+                "admission_number": student.admission_number,
+                "school_class": student.school_class,
+                "expected": Decimal("0.00"),
+                "paid": Decimal("0.00"),
+                "balance": Decimal("0.00"),
+            }
+
+        for term in terms:
+            payment_queryset = session_payments.filter(
+                term=term,
+            )
+
+            term_collected = (
+                payment_queryset.aggregate(total=Sum("amount"))["total"]
+                or Decimal("0.00")
+            )
+            term_payment_count = payment_queryset.count()
+
+            term_expected = Decimal("0.00")
+            term_outstanding = Decimal("0.00")
+
+            for student in students:
+                assignments = get_fee_assignments_for_student(
+                    student,
+                    term,
+                )
+
+                student_expected = sum(
+                    (assignment.amount for assignment in assignments),
+                    Decimal("0.00"),
+                )
+
+                breakdown = get_student_fee_breakdown(
+                    student,
+                    term,
+                )
+
+                student_paid = sum(
+                    (item["paid"] for item in breakdown),
+                    Decimal("0.00"),
+                )
+
+                student_balance = sum(
+                    (item["balance"] for item in breakdown),
+                    Decimal("0.00"),
+                )
+
+                term_expected += student_expected
+                term_outstanding += student_balance
+
+                row = student_totals[student.id]
+                row["expected"] += student_expected
+                row["paid"] += student_paid
+                row["balance"] += student_balance
+
+                for item in breakdown:
+                    category = item["fee_category"]
+
+                    if category.id not in category_totals:
+                        category_totals[category.id] = {
+                            "category": category,
+                            "category_type": item["category_type"],
+                            "expected": Decimal("0.00"),
+                            "paid": Decimal("0.00"),
+                            "balance": Decimal("0.00"),
+                        }
+
+                    category_totals[category.id]["expected"] += item["amount"]
+                    category_totals[category.id]["paid"] += item["paid"]
+                    category_totals[category.id]["balance"] += item["balance"]
+
+            expected_revenue += term_expected
+            outstanding += term_outstanding
+
+            term_collection_rate = Decimal("0.00")
+
+            if term_expected > Decimal("0.00"):
+                term_collection_rate = (
+                    term_collected / term_expected
+                ) * Decimal("100")
+
+            term_rows.append({
+                "term": term,
+                "expected": term_expected,
+                "collected": term_collected,
+                "outstanding": term_outstanding,
+                "collection_rate": round(term_collection_rate, 2),
+                "payment_count": term_payment_count,
+            })
+
+        student_rows = []
+
+        for row in student_totals.values():
+            if row["expected"] <= Decimal("0.00"):
+                row["status"] = "No Charges"
+
+            elif row["balance"] <= Decimal("0.00"):
+                row["status"] = "Paid"
+                students_fully_paid += 1
+
+            elif row["paid"] > Decimal("0.00"):
+                row["status"] = "Part Payment"
+                students_owing += 1
+
+            else:
+                row["status"] = "Owing"
+                students_owing += 1
+
+            student_rows.append(row)
+
+        allocated_total = (
+            PaymentAllocation.objects
+            .filter(
+                payment__student__user__school=school,
+                payment__term__session=session,
+                fee_category__isnull=False,
+            )
+            .aggregate(total=Sum("amount"))["total"]
+            or Decimal("0.00")
+        )
+
+        unallocated_payments = collected - allocated_total
+
+        if unallocated_payments < Decimal("0.00"):
+            unallocated_payments = Decimal("0.00")
+
+        category_rows = sorted(
+            category_totals.values(),
+            key=lambda row: row["category"].name.lower(),
+        )
+
+    else:
+        payment_count = 0
+        payment_method_totals = {}
+        student_rows = []
+        category_rows = []
+        unallocated_payments = Decimal("0.00")
+
+    collection_rate = Decimal("0.00")
+
+    if expected_revenue > Decimal("0.00"):
+        collection_rate = (
+            collected / expected_revenue
+        ) * Decimal("100")
+
+    sessions = (
+        AcademicSession.objects
+        .filter(school=school)
+        .order_by("-name")
+    )
+
+    return render(
+        request,
+        "billing/session_financial_report.html",
+        {
+            "sessions": sessions,
+            "selected_session": session_id,
+            "session": session,
+            "total_students": students.count(),
+            "expected_revenue": expected_revenue,
+            "collected": collected,
+            "outstanding": outstanding,
+            "collection_rate": round(collection_rate, 2),
+            "students_owing": students_owing,
+            "students_fully_paid": students_fully_paid,
+            "term_rows": term_rows,
+            "category_rows": category_rows,
+            "student_rows": student_rows,
+            "payment_count": payment_count,
+            "payment_method_totals": payment_method_totals,
+            "unallocated_payments": unallocated_payments,
+        },
+    )
 
 @login_required
 @school_permission_required("billing.view")
@@ -989,11 +1634,24 @@ def fee_assignment_list(request):
     # ORDERING
     # ---------------------------------------------------------
 
-    assignments = assignments.order_by(
-        "term__session__name",
-        "term",
-        "fee_category__name",
-    )
+    sort = request.GET.get("sort")
+
+    if sort == "class":
+        assignments = assignments.order_by(
+            "term__session__name",
+            "term",
+            "school_class__name",
+            "department__name",
+            "student__user__last_name",
+            "student__user__first_name",
+            "fee_category__name",
+        )
+    else:
+        assignments = assignments.order_by(
+            "term__session__name",
+            "term",
+            "fee_category__name",
+        )
 
     # ---------------------------------------------------------
     # FILTER DROPDOWNS
@@ -1046,6 +1704,7 @@ def fee_assignment_list(request):
         "selected_category": category_id,
         "selected_type": category_type,
         "selected_status": status,
+        "selected_sort": sort,
         "search": search,
     }
 
@@ -2271,8 +2930,6 @@ def terms_by_session(request):
     })
 
 @login_required
-@school_permission_required("billing.view")
-@billing_required
 def student_bill(request, student_id, term_id):
 
     student = get_object_or_404(
@@ -2300,8 +2957,6 @@ def student_bill(request, student_id, term_id):
 
 
 @login_required
-@school_permission_required("billing.view")
-@billing_required
 def student_bill_pdf(request, student_id, term_id):
 
     student = get_object_or_404(

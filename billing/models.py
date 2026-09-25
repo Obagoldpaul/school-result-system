@@ -263,13 +263,12 @@ def get_fee_assignments_for_student(student, term):
 
         if assignment.fee_category.category_type == "OPTIONAL":
 
-            opted_in = OptionalFeeEnrollment.objects.filter(
+            enrollment = OptionalFeeEnrollment.objects.filter(
                 fee_assignment=assignment,
                 student=student,
-                opted_in=True,
-            ).exists()
+            ).first()
 
-            if not opted_in:
+            if enrollment and not enrollment.opted_in:
                 continue
 
         # -------------------------------------------------

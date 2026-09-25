@@ -12,6 +12,7 @@ from datetime import date
 from billing.models import (
     FeeAssignment,
     FeeCategory,
+    OptionalFeeEnrollment,
     Payment,
     PaymentAllocation,
     get_fee_assignments_for_student,
@@ -368,4 +369,59 @@ class BillingConsistencyTests(TestCase):
         self.assertNotIn(
             assignment,
             ss1_assignments,
+        )
+        
+
+    def test_optional_fee_is_included_by_default_without_enrollment(self):
+        optional_category = FeeCategory.objects.create(
+            school=self.school,
+            name="Graduation Fee",
+            category_type="OPTIONAL",
+        )
+
+        assignment = FeeAssignment.objects.create(
+            fee_category=optional_category,
+            term=self.term,
+            school_class=self.school_class,
+            amount=Decimal("25000.00"),
+        )
+
+        assignments = get_fee_assignments_for_student(
+            self.student,
+            self.term,
+        )
+
+        self.assertIn(
+            assignment,
+            assignments,
+        )
+
+    def test_optional_fee_is_excluded_when_student_opts_out(self):
+        optional_category = FeeCategory.objects.create(
+            school=self.school,
+            name="Excursion Fee",
+            category_type="OPTIONAL",
+        )
+
+        assignment = FeeAssignment.objects.create(
+            fee_category=optional_category,
+            term=self.term,
+            school_class=self.school_class,
+            amount=Decimal("15000.00"),
+        )
+
+        OptionalFeeEnrollment.objects.create(
+            fee_assignment=assignment,
+            student=self.student,
+            opted_in=False,
+        )
+
+        assignments = get_fee_assignments_for_student(
+            self.student,
+            self.term,
+        )
+
+        self.assertNotIn(
+            assignment,
+            assignments,
         )

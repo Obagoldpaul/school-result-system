@@ -34,6 +34,112 @@
 
 </div>
 
+<div class="section-card">
+
+    <form method="GET">
+
+        <div class="row g-3 align-items-end">
+
+            <div class="col-md-4">
+
+                <label for="section" class="form-label">
+                    Group / Section
+                </label>
+
+                <select
+                    name="section"
+                    id="section"
+                    class="form-select"
+                >
+                    <option value="">All Groups</option>
+
+                    <option value="PRE_PRIMARY"
+                        {% if selected_section == "PRE_PRIMARY" %}selected{% endif %}>
+                        Pre-Primary
+                    </option>
+
+                    <option value="PRIMARY"
+                        {% if selected_section == "PRIMARY" %}selected{% endif %}>
+                        Primary
+                    </option>
+
+                    <option value="JUNIOR_SECONDARY"
+                        {% if selected_section == "JUNIOR_SECONDARY" %}selected{% endif %}>
+                        Junior Secondary
+                    </option>
+
+                    <option value="SENIOR_SECONDARY"
+                        {% if selected_section == "SENIOR_SECONDARY" %}selected{% endif %}>
+                        Senior Secondary
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <div class="col-md-4">
+
+                <label for="class" class="form-label">
+                    Class
+                </label>
+
+                <select
+                    name="class"
+                    id="class"
+                    class="form-select"
+                >
+
+                    <option value="">
+                        All Classes
+                    </option>
+
+                    {% for school_class in classes %}
+
+                        <option
+                            value="{{ school_class.id }}"
+                            {% if selected_class|stringformat:"s" == school_class.id|stringformat:"s" %}
+                                selected
+                            {% endif %}
+                        >
+                            {{ school_class }}
+                        </option>
+
+                    {% endfor %}
+
+                </select>
+
+            </div>
+
+
+            <div class="col-md-2">
+
+                <button
+                    type="submit"
+                    class="btn btn-success w-100"
+                >
+                    Filter
+                </button>
+
+            </div>
+
+
+            <div class="col-md-2">
+
+                <a
+                    href="{% url 'class_subject_list' %}"
+                    class="btn btn-secondary w-100"
+                >
+                    Reset
+                </a>
+
+            </div>
+
+        </div>
+
+    </form>
+
+</div>
 
 {% for section in grouped_sections %}
 
@@ -163,6 +269,22 @@
                                 >
 
                                     {% csrf_token %}
+
+                                    {% if selected_section %}
+                                        <input
+                                            type="hidden"
+                                            name="section"
+                                            value="{{ selected_section }}"
+                                        >
+                                    {% endif %}
+
+                                    {% if selected_class %}
+                                        <input
+                                            type="hidden"
+                                            name="class"
+                                            value="{{ selected_class }}"
+                                        >
+                                    {% endif %}
 
                                     <button
                                         type="submit"

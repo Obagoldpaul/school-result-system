@@ -6,6 +6,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from academics.models import AcademicSession, Term
 from accounts.permissions import is_management
 from accounts.permissions import school_permission_required
+from subjects.models import Subject
 
 from .services import build_dashboard
 from django.db import IntegrityError
@@ -82,6 +83,12 @@ def academic_management(request):
     departments = Department.objects.filter(
         school=school
     ).order_by("name")
+    
+    elective_subjects = Subject.objects.filter(
+        school=school,
+        is_elective=True,
+        is_active=True,
+    ).order_by("name")
 
     context = {
         "current_session": current_session,
@@ -89,6 +96,7 @@ def academic_management(request):
         "sessions": sessions,
         "terms": terms,
         "departments": departments,
+        "elective_subjects": elective_subjects,
     }
 
     return render(
@@ -317,14 +325,25 @@ def edit_department(request, department_id):
         )
         return redirect("academic_management")
 
+    elective_ids = request.POST.getlist("default_electives")
+
+    valid_electives = Subject.objects.filter(
+        id__in=elective_ids,
+        school=request.user.school,
+        is_elective=True,
+        is_active=True,
+    )
+
     old_name = department.name
 
     department.name = name
     department.save()
 
+    department.default_electives.set(valid_electives)
+
     messages.success(
         request,
-        f"Department '{old_name}' was renamed to '{name}'."
+        f"Department '{old_name}' was updated successfully."
     )
 
     return redirect("academic_management")

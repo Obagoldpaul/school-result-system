@@ -18,6 +18,12 @@ class Department(models.Model):
     name = models.CharField(
         max_length=50
     )
+    
+    default_electives = models.ManyToManyField(
+        "subjects.Subject",
+        blank=True,
+        related_name="default_elective_departments",
+    )
 
     class Meta:
         unique_together = ('school', 'name')

@@ -1,8 +1,9 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
 from django.contrib.auth.decorators import login_required
+from requests import request
 from accounts.permissions import school_permission_required
-
+from students.models import Student, SchoolClass, Department
 from .forms import (
     SubjectForm,
     ClassSubjectForm,
@@ -242,6 +243,9 @@ def class_subject_list(request):
 
     school = request.user.school
 
+    selected_section = request.GET.get("section")
+    selected_class = request.GET.get("class")
+
     class_subjects = (
         ClassSubject.objects
         .filter(
@@ -252,11 +256,22 @@ def class_subject_list(request):
             'subject',
             'subject__parent',
         )
-        .order_by(
-            'school_class__section',
-            'school_class__name',
-            'subject__name',
+    )
+
+    if selected_section:
+        class_subjects = class_subjects.filter(
+            school_class__section=selected_section
         )
+
+    if selected_class:
+        class_subjects = class_subjects.filter(
+            school_class_id=selected_class
+        )
+
+    class_subjects = class_subjects.order_by(
+        'school_class__section',
+        'school_class__name',
+        'subject__name',
     )
 
     # --------------------------------------------------
@@ -333,6 +348,15 @@ def class_subject_list(request):
         'subjects/class_subject_list.html',
         {
             'grouped_sections': grouped_sections,
+            'selected_section': selected_section,
+            'selected_class': selected_class,
+            'classes': SchoolClass.objects.filter(
+                school=school,
+                is_active=True,
+            ).order_by(
+                'section',
+                'name',
+            ),
         }
     )
 
@@ -349,7 +373,24 @@ def unassign_subject_from_class(request, assignment_id):
 
     if request.method == 'POST':
         assignment.delete()
-        return redirect('class_subject_list')
+
+        selected_section = request.POST.get('section')
+        selected_class = request.POST.get('class')
+
+        redirect_url = reverse('class_subject_list')
+
+        query_params = []
+
+        if selected_section:
+            query_params.append(f"section={selected_section}")
+
+        if selected_class:
+            query_params.append(f"class={selected_class}")
+
+        if query_params:
+            redirect_url += "?" + "&".join(query_params)
+
+        return redirect(redirect_url)
 
     return render(
         request,
@@ -433,4 +474,192 @@ def bulk_assign_subjects(request):
                 for subject in form.fields["subjects"].queryset
             },
         }
+    )
+
+
+@staff_required
+@login_required
+@school_permission_required("subjects.assign")
+def assign_electives_to_student(request, student_id):
+
+    student = get_object_or_404(
+        Student,
+        id=student_id,
+        user__school=request.user.school,
+    )
+
+    available_electives = (
+        Subject.objects
+        .filter(
+            school=request.user.school,
+            is_elective=True,
+            is_active=True,
+            classsubject__school_class=student.school_class,
+        )
+        .distinct()
+        .order_by("name")
+    )
+
+    if request.method == "POST":
+
+        elective_ids = request.POST.getlist("electives")
+
+        valid_electives = available_electives.filter(
+            id__in=elective_ids
+        )
+
+        student.elective_subjects.set(valid_electives)
+
+        messages.success(
+            request,
+            f"Elective subjects updated for {student.user.get_full_name() or student.user.username}."
+        )
+
+        selected_class = request.GET.get("class")
+        selected_department = request.GET.get("department")
+
+        redirect_url = reverse("elective_assignment_list")
+
+        query_params = []
+
+        if selected_class:
+            query_params.append(f"class={selected_class}")
+
+        if selected_department:
+            query_params.append(f"department={selected_department}")
+
+        if query_params:
+            redirect_url += "?" + "&".join(query_params)
+
+        return redirect(redirect_url)
+
+    selected_electives = student.elective_subjects.filter(
+        id__in=available_electives.values("id")
+    )
+
+    return render(
+        request,
+        "subjects/assign_electives_to_student.html",
+        {
+            "student": student,
+            "available_electives": available_electives,
+            "selected_electives": selected_electives,
+        },
+    )
+    
+@staff_required
+@login_required
+@school_permission_required("subjects.assign")
+def elective_assignment_list(request):
+
+    school = request.user.school
+
+    students = (
+        Student.objects
+        .filter(
+            user__school=school,
+            is_active=True,
+            admission_status="ACTIVE",
+        )
+        .select_related(
+            "user",
+            "school_class",
+            "department",
+        )
+        .prefetch_related("elective_subjects")
+        .order_by(
+            "school_class__section",
+            "school_class__name",
+            "user__last_name",
+            "user__first_name",
+        )
+    )
+
+    classes = SchoolClass.objects.filter(
+        school=school,
+        is_active=True,
+    ).order_by(
+        "section",
+        "name",
+    )
+
+    departments = Department.objects.filter(
+        school=school,
+    ).order_by("name")
+
+    selected_class = request.GET.get("class")
+    selected_department = request.GET.get("department")
+
+    if selected_class:
+        students = students.filter(
+            school_class_id=selected_class
+        )
+
+    if selected_department:
+        students = students.filter(
+            department_id=selected_department
+        )
+
+    if request.method == "POST":
+
+        if not selected_department:
+            messages.error(
+                request,
+                "Select a department before applying department defaults."
+            )
+            return redirect("elective_assignment_list")
+
+        department = get_object_or_404(
+            Department,
+            id=selected_department,
+            school=school,
+        )
+
+        default_electives = department.default_electives.filter(
+            school=school,
+            is_elective=True,
+            is_active=True,
+        )
+
+        updated_count = 0
+
+        for student in students:
+
+            student_electives = default_electives.filter(
+                classsubject__school_class=student.school_class,
+            ).distinct()
+
+            if student_electives.exists():
+                student.elective_subjects.add(
+                    *student_electives
+                )
+                updated_count += 1
+
+        messages.success(
+            request,
+            f"Department defaults applied to "
+            f"{updated_count} student(s). Existing elective assignments "
+            f"were preserved."
+        )
+
+        return redirect(
+            f"{reverse('elective_assignment_list')}"
+            f"?department={selected_department}"
+            + (
+                f"&class={selected_class}"
+                if selected_class
+                else ""
+            )
+        )
+
+    return render(
+        request,
+        "subjects/elective_assignment_list.html",
+        {
+            "students": students,
+            "classes": classes,
+            "departments": departments,
+            "selected_class": selected_class,
+            "selected_department": selected_department,
+        },
     )
