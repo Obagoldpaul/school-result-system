@@ -27,50 +27,68 @@ DAYS = [
 
 def _validate_period_structure(periods):
     """
-    Ensure the timetable periods do not overlap.
+    Ensure the timetable periods do not overlap within each day.
 
-    This protects the generator from treating overlapping period numbers
-    as separate time slots when they actually occur at the same time.
+    Periods on different days may have identical times and therefore
+    must not be treated as overlapping.
     """
 
-    ordered = sorted(
-        periods,
-        key=lambda period: (
-            period.start_time,
-            period.end_time,
-            period.period_number,
-        ),
-    )
+    periods_by_day = {}
 
-    for previous, current in zip(ordered, ordered[1:]):
-        if current.start_time < previous.end_time:
-            raise TimetableGenerationError(
-                "Timetable periods overlap: "
-                f"'{previous.name}' and '{current.name}'. "
-                "Please correct the period times before generating."
-            )
+    for period in periods:
+        periods_by_day.setdefault(period.day, []).append(period)
+
+    for day_periods in periods_by_day.values():
+        ordered = sorted(
+            day_periods,
+            key=lambda period: (
+                period.start_time,
+                period.end_time,
+                period.period_number,
+            ),
+        )
+
+        for previous, current in zip(ordered, ordered[1:]):
+            if current.start_time < previous.end_time:
+                raise TimetableGenerationError(
+                    "Timetable periods overlap: "
+                    f"'{previous.name}' and '{current.name}'. "
+                    "Please correct the period times before generating."
+                )
 
 
 def _build_double_period_pairs(periods):
     """
-    Return valid consecutive lesson-period pairs.
+    Return valid consecutive lesson-period pairs within each day.
 
     A double period must:
     - use two active, non-break periods
+    - belong to the same day
     - have consecutive period numbers
     - have no time gap between the two periods
     """
 
     pairs = []
 
-    for first, second in zip(periods, periods[1:]):
-        if first.period_number + 1 != second.period_number:
-            continue
+    periods_by_day = {}
 
-        if first.end_time != second.start_time:
-            continue
+    for period in periods:
+        periods_by_day.setdefault(period.day, []).append(period)
 
-        pairs.append((first, second))
+    for day_periods in periods_by_day.values():
+        ordered = sorted(
+            day_periods,
+            key=lambda period: period.period_number,
+        )
+
+        for first, second in zip(ordered, ordered[1:]):
+            if first.period_number + 1 != second.period_number:
+                continue
+
+            if first.end_time != second.start_time:
+                continue
+
+            pairs.append((first, second))
 
     return pairs
 
@@ -153,7 +171,13 @@ def _candidate_placements(
 
     if unit["length"] == 1:
         for day in days:
-            for period in lesson_periods:
+            day_periods = [
+                period
+                for period in lesson_periods
+                if period.day == day
+            ]
+
+            for period in day_periods:
                 cache_key = (
                     teacher.id,
                     day,
@@ -181,7 +205,13 @@ def _candidate_placements(
 
     else:
         for day in days:
-            for first, second in double_pairs:
+            day_double_pairs = [
+                (first, second)
+                for first, second in double_pairs
+                if first.day == day and second.day == day
+            ]
+
+            for first, second in day_double_pairs:
                 cache_key = (
                     teacher.id,
                     day,

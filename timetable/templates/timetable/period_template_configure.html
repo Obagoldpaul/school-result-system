@@ -1,0 +1,266 @@
+{% extends "base.html" %}
+
+{% block title %}Configure Period Template{% endblock %}
+
+{% block content %}
+
+<div class="container-fluid">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <div>
+            <h1>{{ template.name }}</h1>
+
+            {% if template.description %}
+                <p class="text-muted mb-1">
+                    {{ template.description }}
+                </p>
+            {% endif %}
+
+            <span class="badge bg-secondary">
+                {% if template.is_active %}Active{% else %}Inactive{% endif %}
+            </span>
+
+            {% if template.is_default %}
+                <span class="badge bg-primary">
+                    Default
+                </span>
+            {% endif %}
+        </div>
+
+        <div>
+            <a href="{% url 'timetable_period_templates' %}"
+               class="btn btn-secondary">
+                Back to Period Templates
+            </a>
+        </div>
+
+    </div>
+
+
+    <div class="row g-4">
+
+        <!-- Add Day -->
+
+        <div class="col-lg-4">
+
+            <div class="card shadow-sm">
+
+                <div class="card-body">
+
+                    <h5 class="card-title mb-3">
+                        Add School Day
+                    </h5>
+
+                    <p class="text-muted">
+                        Add the days that this period template will use.
+                    </p>
+
+                    <form method="post">
+
+                        {% csrf_token %}
+
+                        <input type="hidden"
+                               name="action"
+                               value="add_day">
+
+                        {{ day_form.as_p }}
+
+                        <button type="submit"
+                                class="btn btn-primary">
+                            Add Day
+                        </button>
+
+                    </form>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- Days and Blocks -->
+
+        <div class="col-lg-8">
+
+            {% if days %}
+
+                {% for day in days %}
+
+                    <div class="card shadow-sm mb-4">
+
+                        <div class="card-body">
+
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+
+                                <h5 class="mb-0">
+                                    {{ day.get_day_display }}
+                                </h5>
+
+                                <span class="badge bg-light text-dark">
+                                    {{ day.blocks.count }} block{{ day.blocks.count|pluralize }}
+                                </span>
+
+                            </div>
+
+
+                            {% if day.blocks.all %}
+
+                                <div class="table-responsive">
+
+                                    <table class="table table-hover align-middle">
+
+                                        <thead>
+                                            <tr>
+                                                <th>#</th>
+                                                <th>Name</th>
+                                                <th>Time</th>
+                                                <th>Type</th>
+                                                <th>Status</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+
+                                        <tbody>
+
+                                            {% for block in day.blocks.all %}
+
+                                                <tr>
+
+                                                    <td>
+                                                        {{ block.block_number }}
+                                                    </td>
+
+                                                    <td>
+                                                        <strong>
+                                                            {{ block.name }}
+                                                        </strong>
+                                                    </td>
+
+                                                    <td>
+                                                        {{ block.start_time|time:"H:i" }}
+                                                        –
+                                                        {{ block.end_time|time:"H:i" }}
+                                                    </td>
+
+                                                    <td>
+                                                        {{ block.get_block_type_display }}
+                                                    </td>
+
+                                                    <td>
+                                                        {% if block.is_active %}
+                                                            <span class="badge bg-success">
+                                                                Active
+                                                            </span>
+                                                        {% else %}
+                                                            <span class="badge bg-secondary">
+                                                                Inactive
+                                                            </span>
+                                                        {% endif %}
+                                                    </td>
+
+                                                    <td>
+                                                        <div class="d-flex gap-2">
+                                                    
+                                                            <a href="{% url 'edit_timetable_period_template_block' template.id block.id %}"
+                                                               class="btn btn-sm btn-primary">
+                                                                Edit
+                                                            </a>
+                                                    
+                                                            <a href="{% url 'delete_timetable_period_template_block' template.id block.id %}"
+                                                               class="btn btn-sm btn-danger">
+                                                                Delete
+                                                            </a>
+                                                    
+                                                        </div>
+                                                    </td>
+
+                                                </tr>
+
+                                            {% empty %}
+
+                                                <tr>
+                                                    <td colspan="6"
+                                                        class="text-muted text-center py-3">
+                                                        No blocks added yet.
+                                                    </td>
+                                                </tr>
+
+                                            {% endfor %}
+
+                                        </tbody>
+
+                                    </table>
+
+                                </div>
+
+                            {% else %}
+
+                                <p class="text-muted">
+                                    No blocks added yet.
+                                </p>
+
+                            {% endif %}
+
+
+                            <hr>
+
+
+                            <h6 class="mb-3">
+                                Add Block
+                            </h6>
+
+                            <form method="post">
+
+                                {% csrf_token %}
+
+                                <input type="hidden"
+                                       name="action"
+                                       value="add_block">
+
+                                <input type="hidden"
+                                       name="day_id"
+                                       value="{{ day.id }}">
+
+                                {{ block_form.as_p }}
+
+                                <button type="submit"
+                                        class="btn btn-primary">
+                                    Add Block
+                                </button>
+
+                            </form>
+
+                        </div>
+
+                    </div>
+
+                {% endfor %}
+
+            {% else %}
+
+                <div class="card shadow-sm">
+
+                    <div class="card-body text-center py-5">
+
+                        <h5>No school days configured</h5>
+
+                        <p class="text-muted mb-0">
+                            Add a school day to begin configuring this
+                            period template.
+                        </p>
+
+                    </div>
+
+                </div>
+
+            {% endif %}
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

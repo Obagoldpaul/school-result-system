@@ -35,6 +35,7 @@
                 <p class="mb-0 mt-2">
                     You are about to delete
                     <strong>{{ period.name }}</strong>
+                    — {{ period.get_day_display }}
                     ({{ period.start_time|time:"H:i" }}
                     –
                     {{ period.end_time|time:"H:i" }}).

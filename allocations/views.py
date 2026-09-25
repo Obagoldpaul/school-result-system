@@ -5,6 +5,7 @@ from django.contrib import messages
 from .forms import (
     SubjectAllocationForm,
     BulkSubjectAllocationForm,
+    CarryForwardAllocationForm,
 )
 
 from .models import SubjectAllocation
@@ -288,6 +289,122 @@ def bulk_add_allocation(request):
         }
     )
 
+
+@login_required
+@staff_required
+@school_permission_required("subjects.assign")
+def carry_forward_allocations(request):
+    """
+    Carry subject allocations from one term to another.
+
+    Existing destination allocations are preserved.
+    Only missing subject/class allocations are created.
+    """
+
+    school = request.user.school
+
+    form = CarryForwardAllocationForm(
+        request.POST or None,
+        user=request.user,
+    )
+
+    if request.method == "POST" and form.is_valid():
+        from_session = form.cleaned_data["from_session"]
+        from_term = form.cleaned_data["from_term"]
+        to_session = form.cleaned_data["to_session"]
+        to_term = form.cleaned_data["to_term"]
+
+        # Explicit tenant protection.
+        if (
+            from_session.school_id != school.id
+            or from_term.session.school_id != school.id
+            or to_session.school_id != school.id
+            or to_term.session.school_id != school.id
+        ):
+            messages.error(
+                request,
+                "The selected terms do not belong to your school.",
+            )
+            return redirect("allocation_list")
+
+        source_allocations = (
+            SubjectAllocation.objects.filter(
+                term=from_term,
+                subject__school=school,
+                school_class__school=school,
+                teacher__user__school=school,
+            )
+            .select_related(
+                "teacher",
+                "subject",
+                "school_class",
+            )
+        )
+
+        existing_destination = set(
+            SubjectAllocation.objects.filter(
+                term=to_term,
+                subject__school=school,
+                school_class__school=school,
+                teacher__user__school=school,
+            ).values_list(
+                "subject_id",
+                "school_class_id",
+            )
+        )
+
+        created_count = 0
+        skipped_count = 0
+
+        for allocation in source_allocations:
+            allocation_key = (
+                allocation.subject_id,
+                allocation.school_class_id,
+            )
+
+            if allocation_key in existing_destination:
+                skipped_count += 1
+                continue
+
+            SubjectAllocation.objects.create(
+                teacher=allocation.teacher,
+                subject=allocation.subject,
+                school_class=allocation.school_class,
+                term=to_term,
+            )
+
+            existing_destination.add(allocation_key)
+            created_count += 1
+
+        if created_count:
+            messages.success(
+                request,
+                f"{created_count} allocation(s) carried forward successfully.",
+            )
+
+        if skipped_count:
+            messages.info(
+                request,
+                f"{skipped_count} allocation(s) skipped because they "
+                "already exist in the destination term.",
+            )
+
+        if not created_count and not skipped_count:
+            messages.info(
+                request,
+                "No allocations were found to carry forward.",
+            )
+
+        return redirect("allocation_list")
+
+    return render(
+        request,
+        "allocations/carry_forward_allocations.html",
+        {
+            "form": form,
+            "carry_forward_terms": form.school_terms,
+        },
+    )
 
 @school_permission_required("subjects.view")
 @staff_required

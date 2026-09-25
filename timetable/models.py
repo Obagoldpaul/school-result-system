@@ -84,6 +84,160 @@ class Timetable(models.Model):
     def __str__(self):
         return f"{self.name} - {self.school}"
 
+class Day(models.TextChoices):
+    MONDAY = "MONDAY", "Monday"
+    TUESDAY = "TUESDAY", "Tuesday"
+    WEDNESDAY = "WEDNESDAY", "Wednesday"
+    THURSDAY = "THURSDAY", "Thursday"
+    FRIDAY = "FRIDAY", "Friday"
+    SATURDAY = "SATURDAY", "Saturday"
+
+class TimetablePeriodTemplate(models.Model):
+    """
+    Reusable school-level timetable period structure.
+
+    A school may maintain multiple named templates, with at most one
+    template marked as the default.
+    """
+
+    school = models.ForeignKey(
+        "schools.School",
+        on_delete=models.CASCADE,
+        related_name="timetable_period_templates",
+    )
+    name = models.CharField(max_length=100)
+    description = models.TextField(blank=True)
+    is_default = models.BooleanField(default=False)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["school", "name"],
+                name="unique_timetable_period_template_name",
+            ),
+            models.UniqueConstraint(
+                fields=["school"],
+                condition=models.Q(is_default=True),
+                name="unique_default_timetable_period_template",
+            ),
+        ]
+        ordering = ["name"]
+
+    def __str__(self):
+        return f"{self.name} - {self.school}"
+
+
+class TimetablePeriodTemplateDay(models.Model):
+    """
+    Defines which days are included in a reusable period template.
+    """
+
+    class Day(models.TextChoices):
+        MONDAY = "MONDAY", "Monday"
+        TUESDAY = "TUESDAY", "Tuesday"
+        WEDNESDAY = "WEDNESDAY", "Wednesday"
+        THURSDAY = "THURSDAY", "Thursday"
+        FRIDAY = "FRIDAY", "Friday"
+        SATURDAY = "SATURDAY", "Saturday"
+
+    template = models.ForeignKey(
+        TimetablePeriodTemplate,
+        on_delete=models.CASCADE,
+        related_name="days",
+    )
+    day = models.CharField(max_length=15, choices=Day.choices)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["template", "day"],
+                name="unique_timetable_period_template_day",
+            )
+        ]
+        ordering = ["day"]
+
+    def __str__(self):
+        return f"{self.template.name} - {self.get_day_display()}"
+
+
+class TimetablePeriodTemplateBlock(models.Model):
+    """
+    Defines one time block within a specific day of a reusable template.
+
+    Blocks may represent teaching periods, breaks, or school activities
+    such as assembly or fellowship.
+    """
+
+    class BlockType(models.TextChoices):
+        TEACHING = "TEACHING", "Teaching"
+        BREAK = "BREAK", "Break"
+        ACTIVITY = "ACTIVITY", "Activity"
+
+    day = models.ForeignKey(
+        TimetablePeriodTemplateDay,
+        on_delete=models.CASCADE,
+        related_name="blocks",
+    )
+    name = models.CharField(max_length=50)
+    block_number = models.PositiveIntegerField()
+    start_time = models.TimeField()
+    end_time = models.TimeField()
+    block_type = models.CharField(
+        max_length=15,
+        choices=BlockType.choices,
+        default=BlockType.TEACHING,
+    )
+    description = models.TextField(blank=True)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["day", "block_number"],
+                name="unique_timetable_period_template_block_number",
+            ),
+            models.CheckConstraint(
+                condition=models.Q(start_time__lt=models.F("end_time")),
+                name="valid_timetable_period_template_block_time",
+            ),
+        ]
+        ordering = ["day", "block_number"]
+
+    def clean(self):
+        if not self.day_id:
+            return
+
+        if self.start_time and self.end_time:
+            if self.start_time >= self.end_time:
+                raise ValidationError(
+                    "Block end time must be after block start time."
+                )
+
+        overlapping_blocks = TimetablePeriodTemplateBlock.objects.filter(
+            day=self.day,
+            is_active=True,
+            start_time__lt=self.end_time,
+            end_time__gt=self.start_time,
+        ).exclude(pk=self.pk)
+
+        if overlapping_blocks.exists():
+            raise ValidationError(
+                "This block overlaps another active block on the same day."
+            )
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return (
+            f"{self.day.template.name} - "
+            f"{self.day.get_day_display()} - "
+            f"{self.name}"
+        )
 
 class TimetablePeriod(models.Model):
     """
@@ -94,6 +248,11 @@ class TimetablePeriod(models.Model):
         Timetable,
         on_delete=models.CASCADE,
         related_name="periods",
+    )
+
+    day = models.CharField(
+        max_length=15,
+        choices=Day.choices,
     )
 
     name = models.CharField(
@@ -117,12 +276,12 @@ class TimetablePeriod(models.Model):
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=["timetable", "period_number"],
-                name="unique_timetable_period_number",
+                fields=["timetable", "day", "period_number"],
+                name="unique_timetable_period_day_number",
             )
         ]
 
-        ordering = ["period_number"]
+        ordering = ["day", "period_number"]
 
     def clean(self):
         if self.start_time and self.end_time:
@@ -288,14 +447,8 @@ class TimetableEntry(models.Model):
     """
     Represents one actual lesson placed into a timetable period.
     """
-
-    class Day(models.TextChoices):
-        MONDAY = "MONDAY", "Monday"
-        TUESDAY = "TUESDAY", "Tuesday"
-        WEDNESDAY = "WEDNESDAY", "Wednesday"
-        THURSDAY = "THURSDAY", "Thursday"
-        FRIDAY = "FRIDAY", "Friday"
-        SATURDAY = "SATURDAY", "Saturday"
+    
+    Day = Day
 
     timetable = models.ForeignKey(
         Timetable,

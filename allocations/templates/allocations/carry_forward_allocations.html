@@ -1,0 +1,276 @@
+{% extends 'base.html' %}
+
+{% block title %}Carry Forward Subject Allocations{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+    <div>
+        <h1>Carry Forward Subject Allocations</h1>
+        <p class="page-subtitle">
+            Carry subject and teacher allocations from one academic term
+            to another.
+        </p>
+    </div>
+</div>
+
+<div class="section-card">
+
+    <div class="section-card-header">
+        <div>
+            <h2>Carry Forward Allocations</h2>
+            <p class="text-muted">
+                Select the source academic session and term, then the
+                destination academic session and term. Existing allocations
+                in the destination term will be preserved.
+            </p>
+        </div>
+    </div>
+
+    {% if form.non_field_errors %}
+        <div class="form-errors">
+            {% for error in form.non_field_errors %}
+                <div>{{ error }}</div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <form method="post">
+        {% csrf_token %}
+
+        <div class="form-field">
+            <label for="{{ form.from_session.id_for_label }}">
+                Source Academic Session
+            </label>
+        
+            {{ form.from_session }}
+        
+            {% if form.from_session.errors %}
+                <div class="field-errors">
+                    {% for error in form.from_session.errors %}
+                        <div>{{ error }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+        
+        <div class="form-field">
+            <label for="{{ form.from_term.id_for_label }}">
+                Source Term
+            </label>
+        
+            {{ form.from_term }}
+        
+            {% if form.from_term.errors %}
+                <div class="field-errors">
+                    {% for error in form.from_term.errors %}
+                        <div>{{ error }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+        
+        <div class="form-field">
+            <label for="{{ form.to_session.id_for_label }}">
+                Destination Academic Session
+            </label>
+        
+            {{ form.to_session }}
+        
+            {% if form.to_session.errors %}
+                <div class="field-errors">
+                    {% for error in form.to_session.errors %}
+                        <div>{{ error }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+        
+        <div class="form-field">
+            <label for="{{ form.to_term.id_for_label }}">
+                Destination Term
+            </label>
+        
+            {{ form.to_term }}
+        
+            {% if form.to_term.errors %}
+                <div class="field-errors">
+                    {% for error in form.to_term.errors %}
+                        <div>{{ error }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="form-actions">
+            <a
+                href="{% url 'allocation_list' %}"
+                class="btn btn-outline-secondary">
+                Cancel
+            </a>
+
+            <button
+                type="submit"
+                class="btn btn-success">
+                Carry Forward Allocations
+            </button>
+        </div>
+    </form>
+
+</div>
+
+<style>
+    .page-header {
+        margin-bottom: 25px;
+    }
+
+    .page-header h1 {
+        margin-bottom: 5px;
+    }
+
+    .page-subtitle {
+        color: #777;
+        margin: 0;
+    }
+
+    .section-card {
+        background: #fff;
+        border-radius: 12px;
+        padding: 24px;
+        margin-bottom: 25px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, .06);
+        max-width: 800px;
+    }
+
+    .section-card-header {
+        margin-bottom: 25px;
+    }
+
+    .section-card-header h2 {
+        margin: 0 0 5px;
+        font-size: 20px;
+    }
+
+    .text-muted {
+        color: #777;
+        margin: 0;
+    }
+
+    .form-field {
+        display: flex;
+        flex-direction: column;
+        gap: 7px;
+        margin-bottom: 20px;
+    }
+
+    .form-field label {
+        font-weight: 600;
+    }
+
+    .form-field select {
+        padding: 11px 12px;
+        border: 1px solid #ccc;
+        border-radius: 7px;
+        background: #fff;
+        font-size: 14px;
+    }
+
+    .form-errors,
+    .field-errors {
+        color: #a33;
+        font-size: 13px;
+    }
+
+    .form-errors {
+        background: #fff1f1;
+        border: 1px solid #f0cccc;
+        border-radius: 7px;
+        padding: 12px 15px;
+        margin-bottom: 20px;
+    }
+
+    .field-errors {
+        margin-top: 3px;
+    }
+
+    .form-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        margin-top: 25px;
+    }
+
+    @media (max-width: 700px) {
+        .form-actions {
+            flex-direction: column-reverse;
+        }
+
+        .form-actions .btn {
+            width: 100%;
+        }
+    }
+</style>
+
+<script>
+    const carryForwardTerms = [
+        {% for term in carry_forward_terms %}
+            {
+                id: "{{ term.pk }}",
+                sessionId: "{{ term.session_id }}",
+                name: "{{ term.get_name_display|escapejs }}"
+            }{% if not forloop.last %},{% endif %}
+        {% endfor %}
+    ];
+
+    function updateTermOptions(sessionSelect, termSelect) {
+        const selectedSessionId = sessionSelect.value;
+        const currentTermId = termSelect.value;
+
+        termSelect.innerHTML = "";
+
+        const placeholder = document.createElement("option");
+        placeholder.value = "";
+        placeholder.textContent = "Select term";
+        termSelect.appendChild(placeholder);
+
+        carryForwardTerms
+            .filter(term => term.sessionId === selectedSessionId)
+            .forEach(term => {
+                const option = document.createElement("option");
+
+                option.value = term.id;
+                option.textContent = term.name;
+
+                if (term.id === currentTermId) {
+                    option.selected = true;
+                }
+
+                termSelect.appendChild(option);
+            });
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+        const fromSession = document.getElementById(
+            "{{ form.from_session.id_for_label }}"
+        );
+        const fromTerm = document.getElementById(
+            "{{ form.from_term.id_for_label }}"
+        );
+        const toSession = document.getElementById(
+            "{{ form.to_session.id_for_label }}"
+        );
+        const toTerm = document.getElementById(
+            "{{ form.to_term.id_for_label }}"
+        );
+
+        fromSession.addEventListener("change", function () {
+            updateTermOptions(fromSession, fromTerm);
+        });
+
+        toSession.addEventListener("change", function () {
+            updateTermOptions(toSession, toTerm);
+        });
+    });
+</script>
+
+{% endblock %}

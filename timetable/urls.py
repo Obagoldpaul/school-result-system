@@ -18,11 +18,40 @@ urlpatterns = [
         views.timetable_view,
         name="timetable_view",
     ),
+    
+    path(
+        "period-templates/",
+        views.timetable_period_templates,
+        name="timetable_period_templates",
+    ),
+    
+    path(
+        "period-templates/<int:template_id>/configure/",
+        views.timetable_period_template_configure,
+        name="timetable_period_template_configure",
+    ),
+    
+    path(
+        "period-templates/<int:template_id>/blocks/<int:block_id>/edit/",
+        views.edit_timetable_period_template_block,
+        name="edit_timetable_period_template_block",
+    ),
+    path(
+        "period-templates/<int:template_id>/blocks/<int:block_id>/delete/",
+        views.delete_timetable_period_template_block,
+        name="delete_timetable_period_template_block",
+    ),
 
     path(
         "<int:timetable_id>/periods/",
         views.timetable_periods,
         name="timetable_periods",
+    ),
+    
+    path(
+        "<int:timetable_id>/periods/apply-template/",
+        views.apply_timetable_period_template_view,
+        name="apply_timetable_period_template",
     ),
     
     path(

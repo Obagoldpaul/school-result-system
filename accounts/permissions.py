@@ -97,10 +97,34 @@ def is_student(user):
 
 
 def is_management(user):
+    if not user or not user.is_authenticated:
+        return False
+
+    if is_admin(user):
+        return True
+
+    management_role_names = {
+        "proprietor",
+        "proprietoress",
+        "principal",
+        "vice principal",
+        "head teacher",
+        "assistant head teacher",
+        "headmaster",
+        "headmistress",
+        "school manager",
+    }
+
+    school_role = getattr(user, "school_role", None)
+
+    if not school_role:
+        return False
+
     return (
-        is_admin(user)
-        or is_principal(user)
-        or is_proprietoress(user)
+        school_role.is_active
+        and school_role.school_id == user.school_id
+        and school_role.name.strip().lower()
+        in management_role_names
     )
 
 

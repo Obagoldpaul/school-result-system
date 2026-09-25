@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+
+{% block title %}Period Templates{% endblock %}
+
+{% block content %}
+
+<div class="container-fluid">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <div>
+            <h1>Period Templates</h1>
+
+            <p class="text-muted mb-0">
+                Create and manage reusable timetable period templates.
+            </p>
+        </div>
+
+        <div class="d-flex gap-2">
+
+            <a href="{% url 'timetable_list' %}"
+               class="btn btn-secondary">
+                Back to Timetables
+            </a>
+
+        </div>
+
+    </div>
+
+
+    <div class="row g-4">
+
+        <div class="col-lg-4">
+
+            <div class="card shadow-sm">
+
+                <div class="card-body">
+
+                    <h5 class="card-title mb-4">
+                        Create Period Template
+                    </h5>
+
+                    <form method="post">
+
+                        {% csrf_token %}
+
+                        {{ form.as_p }}
+
+                        <button type="submit"
+                                class="btn btn-primary">
+                            Create Template
+                        </button>
+
+                    </form>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="col-lg-8">
+
+            <div class="card shadow-sm">
+
+                <div class="card-body">
+
+                    <h5 class="card-title mb-4">
+                        Existing Period Templates
+                    </h5>
+
+                    {% if templates %}
+
+                    <div class="table-responsive">
+
+                        <table class="table table-hover align-middle">
+
+                            <thead>
+                                <tr>
+                                    <th>Template</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+
+                                {% for template in templates %}
+
+                                <tr>
+
+                                    <td>
+                                        <strong>
+                                            {{ template.name }}
+                                        </strong>
+                                    </td>
+
+                                    <td>
+                                        <a href="{% url 'timetable_period_template_configure' template.id %}"
+                                            class="btn btn-sm btn-primary">
+                                            Configure
+                                        </a>
+                                    </td>
+
+                                </tr>
+
+                                {% endfor %}
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                    {% else %}
+
+                    <div class="text-center py-5">
+
+                        <h5>No period templates yet</h5>
+
+                        <p class="text-muted mb-0">
+                            Create a period template to get started.
+                        </p>
+
+                    </div>
+
+                    {% endif %}
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

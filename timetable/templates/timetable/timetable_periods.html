@@ -83,6 +83,60 @@
 
         <div class="col-lg-5">
 
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Apply Period Template</h5>
+
+                    <a href="{% url 'timetable_period_templates' %}"
+                        class="btn btn-sm btn-outline-primary">
+                        Manage Templates
+                    </a>
+                </div>
+            
+                <div class="card-body">
+                    <p class="text-muted">
+                        Quickly create the timetable periods from a reusable period template.
+                    </p>
+            
+                    {% if templates %}
+                        <form method="post"
+                              action="{% url 'apply_timetable_period_template' timetable.id %}">
+                            {% csrf_token %}
+            
+                            <div class="mb-3">
+                                <label for="template_id" class="form-label">
+                                    Period Template
+                                </label>
+            
+                                <select
+                                    name="template_id"
+                                    id="template_id"
+                                    class="form-select"
+                                    required
+                                >
+                                    <option value="">Select a template</option>
+            
+                                    {% for template in templates %}
+                                        <option value="{{ template.id }}">
+                                            {{ template.name }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+            
+                            <button type="submit" class="btn btn-primary">
+                                Apply Template
+                            </button>
+                        </form>
+                    {% else %}
+                        <p class="text-muted mb-0">
+                            No active period templates are available.
+                            Create a period template first.
+                        </p>
+                    {% endif %}
+                </div>
+            </div>
+
             <div class="card shadow-sm">
 
                 <div class="card-body">
@@ -117,6 +171,16 @@
                                 </div>
                             {% endif %}
 
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.day.id_for_label }}" class="form-label">
+                                Day
+                            </label>
+                            {{ form.day }}
+                            {% for error in form.day.errors %}
+                                <div class="text-danger small">{{ error }}</div>
+                            {% endfor %}
                         </div>
 
 
@@ -236,6 +300,7 @@
                                 <thead>
                                     <tr>
                                         <th>#</th>
+                                        <th>Day</th>
                                         <th>Name</th>
                                         <th>Time</th>
                                         <th>Type</th>
@@ -252,6 +317,10 @@
                                 
                                             <td>
                                                 {{ period.period_number }}
+                                            </td>
+
+                                            <td>
+                                                {{ period.get_day_display }}
                                             </td>
                                 
                                             <td>

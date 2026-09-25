@@ -4,6 +4,8 @@ from schools.utils import get_school_subscription, is_subscription_expired
 
 from academics.models import Term
 
+from accounts.permissions import is_management
+
 
 def get_teacher(user):
     """
@@ -38,39 +40,10 @@ def is_management_user(user):
     """
     True for school administrators/management users.
 
-    ADMIN is the fundamental system-level school management role.
-    Additional management positions such as Principal,
-    Proprietoress, Vice Principal, etc. are represented
-    through SchoolRole.
+    Uses the central management-role rules defined in
+    accounts.permissions.is_management().
     """
-    if not user or not user.is_authenticated:
-        return False
-
-    if user.is_superuser:
-        return True
-
-    if user.role == user.Role.ADMIN:
-        return True
-
-    school_role = getattr(user, "school_role", None)
-
-    if school_role:
-        management_role_names = {
-            "principal",
-            "proprietoress",
-            "vice principal",
-            "headmaster",
-            "headmistress",
-            "school manager",
-        }
-
-        return (
-            school_role.name.strip().lower()
-            in management_role_names
-        )
-
-    return False
-
+    return is_management(user)
 
 def is_teacher(user):
     """

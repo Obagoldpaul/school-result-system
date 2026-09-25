@@ -15,6 +15,12 @@ urlpatterns = [
         views.bulk_add_allocation,
         name='bulk_add_allocation'
     ),
+    
+    path(
+        'carry-forward/',
+        views.carry_forward_allocations,
+        name='carry_forward_allocations'
+    ),
 
     path(
         '',

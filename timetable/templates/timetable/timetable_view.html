@@ -169,95 +169,61 @@
             <div class="table-responsive">
 
                 <table class="table table-bordered align-middle text-center">
-            
                     <thead>
                         <tr>
-            
                             <th>Day</th>
-            
-                            {% for period in periods %}
-                                <th>
-                                    {{ period.name }}
-            
-                                    <br>
-            
-                                    <small class="text-muted">
-                                        {{ period.start_time|time:"H:i" }}
-                                        -
-                                        {{ period.end_time|time:"H:i" }}
-                                    </small>
-                                </th>
-                            {% endfor %}
-            
+                            {% if grid %}
+                                {% for period in grid.0.periods %}
+                                    <th>
+                                        {{ period.name }}
+                                        <br>
+                                        <small class="text-muted">
+                                            {{ period.start_time|time:"H:i" }}
+                                            -
+                                            {{ period.end_time|time:"H:i" }}
+                                        </small>
+                                    </th>
+                                {% endfor %}
+                            {% endif %}
                         </tr>
                     </thead>
-            
-            
                     <tbody>
-            
                         {% for row in grid %}
-            
                             <tr>
-            
-                                <th class="text-start">
-                                    {{ row.day_label }}
-                                </th>
-            
-            
+                                <th class="text-start">{{ row.day_label }}</th>
+                
                                 {% for cell in row.cells %}
-            
                                     <td>
-            
                                         {% if cell.period.is_break %}
-            
                                             <strong>Break</strong>
-            
-                                            {% elif cell.entry %}
-
+                
+                                        {% elif cell.entry %}
                                             {% for entry in cell.entry %}
-                                        
                                                 <div class="mb-2">
-                                        
                                                     <strong>
                                                         {{ entry.requirement.allocation.school_class.name }}
                                                     </strong>
-                                        
                                                     <br>
-                                        
                                                     {{ entry.requirement.allocation.subject.name }}
-                                        
                                                     <br>
-                                        
                                                     <small class="text-muted">
                                                         {{ entry.requirement.allocation.teacher.user.get_full_name|default:entry.requirement.allocation.teacher.user.username }}
                                                     </small>
-                                        
                                                 </div>
-                                        
+                
                                                 {% if not forloop.last %}
                                                     <hr class="my-2">
                                                 {% endif %}
-                                        
                                             {% endfor %}
-            
+                
                                         {% else %}
-            
-                                            <span class="text-muted">
-                                                —
-                                            </span>
-            
+                                            <span class="text-muted">—</span>
                                         {% endif %}
-            
                                     </td>
-            
                                 {% endfor %}
-            
                             </tr>
-            
                         {% endfor %}
-            
                     </tbody>
-            
                 </table>
             
             </div>

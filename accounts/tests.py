@@ -3,7 +3,14 @@ from django.test import TestCase
 from accounts.models import User
 from accounts.permissions import user_has_permission
 from schools.models import School, SchoolRole, Permission
+from django.contrib.auth.models import AnonymousUser
 
+from accounts.permissions import (
+    user_has_permission,
+    is_management,
+)
+
+from accounts.utils import is_management_user
 
 class UserPermissionTests(TestCase):
 
@@ -156,3 +163,157 @@ class UserPermissionTests(TestCase):
                 "billing.view",
             )
         )
+        
+
+    def test_management_roles_are_recognized(self):
+        """
+        All approved school management roles should be
+        recognized as management users.
+        """
+
+        management_roles = [
+            "Proprietor",
+            "Proprietoress",
+            "Principal",
+            "Vice Principal",
+            "Head Teacher",
+            "Assistant Head Teacher",
+            "Headmaster",
+            "Headmistress",
+            "School Manager",
+        ]
+
+        for role_name in management_roles:
+            with self.subTest(role=role_name):
+                role = SchoolRole.objects.create(
+                    school=self.school_a,
+                    name=role_name,
+                    base_role=SchoolRole.BaseRole.ADMIN,
+                )
+
+                user = User.objects.create_user(
+                    username=(
+                        "management-"
+                        + role_name.lower().replace(" ", "-")
+                    ),
+                    password="testpass123",
+                    school=self.school_a,
+                    role=User.Role.TEACHER,
+                    school_role=role,
+                )
+
+                self.assertTrue(
+                    is_management(user)
+                )
+
+    def test_bursar_is_not_management(self):
+        """Bursar should remain separate from general management."""
+
+        self.assertFalse(
+            is_management(self.school_a_user)
+        )
+
+    def test_teacher_without_management_role_is_not_management(self):
+        """A normal teacher should not be treated as management."""
+
+        teacher = User.objects.create_user(
+            username="regular-teacher",
+            password="testpass123",
+            school=self.school_a,
+            role=User.Role.TEACHER,
+        )
+
+        self.assertFalse(
+            is_management(teacher)
+        )
+
+    def test_student_is_not_management(self):
+        """A student should not be treated as management."""
+
+        student = User.objects.create_user(
+            username="school-student",
+            password="testpass123",
+            school=self.school_a,
+            role=User.Role.STUDENT,
+        )
+
+        self.assertFalse(
+            is_management(student)
+        )
+
+    def test_inactive_management_role_is_not_management(self):
+        """An inactive management role should not grant management status."""
+
+        role = SchoolRole.objects.create(
+            school=self.school_a,
+            name="Principal",
+            base_role=SchoolRole.BaseRole.ADMIN,
+            is_active=False,
+        )
+
+        user = User.objects.create_user(
+            username="inactive-principal",
+            password="testpass123",
+            school=self.school_a,
+            role=User.Role.TEACHER,
+            school_role=role,
+        )
+
+        self.assertFalse(
+            is_management(user)
+        )
+
+    def test_management_role_must_belong_to_same_school(self):
+        """
+        A management role belonging to another school must not
+        make the user a management user.
+        """
+
+        role = SchoolRole.objects.create(
+            school=self.school_b,
+            name="Principal",
+            base_role=SchoolRole.BaseRole.ADMIN,
+        )
+
+        user = User.objects.create_user(
+            username="wrong-school-principal",
+            password="testpass123",
+            school=self.school_a,
+            role=User.Role.TEACHER,
+            school_role=role,
+        )
+
+        self.assertFalse(
+            is_management(user)
+        )
+
+    def test_unauthenticated_user_is_not_management(self):
+        self.assertFalse(
+            is_management(AnonymousUser())
+        )
+        
+    def test_is_management_user_matches_management_status(self):
+        management_role = SchoolRole.objects.create(
+            school=self.school_a,
+            name="Head Teacher",
+            base_role=SchoolRole.BaseRole.ADMIN,
+        )
+
+        management_user = User.objects.create_user(
+            username="dashboard-management",
+            password="testpass123",
+            school=self.school_a,
+            role=User.Role.TEACHER,
+            school_role=management_role,
+        )
+
+        self.assertTrue(is_management_user(management_user))
+
+        teacher = User.objects.create_user(
+            username="dashboard-teacher",
+            password="testpass123",
+            school=self.school_a,
+            role=User.Role.TEACHER,
+        )
+
+        self.assertFalse(is_management_user(teacher))

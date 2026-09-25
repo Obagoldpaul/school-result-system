@@ -5,8 +5,12 @@ from academics.models import AcademicSession, Term
 from teachers.models import Teacher
 
 from .models import (
+    Day,
     Timetable,
     TimetablePeriod,
+    TimetablePeriodTemplate,
+    TimetablePeriodTemplateBlock,
+    TimetablePeriodTemplateDay,
     TimetableRequirement,
     TeacherAvailability,
     TimetableEntry,
@@ -38,7 +42,7 @@ class TimetableForm(forms.ModelForm):
     )
     
     days = forms.MultipleChoiceField(
-        choices=TimetableEntry.Day.choices,
+        choices=Day.choices,
         widget=forms.CheckboxSelectMultiple,
         initial=[
             TimetableEntry.Day.MONDAY,
@@ -122,11 +126,149 @@ class TimetableForm(forms.ModelForm):
 
         return term
 
+class TimetablePeriodTemplateForm(forms.ModelForm):
+    class Meta:
+        model = TimetablePeriodTemplate
+        fields = [
+            "name",
+            "description",
+            "is_default",
+            "is_active",
+        ]
+        widgets = {
+            "name": forms.TextInput(
+                attrs={
+                    "class": "form-control",
+                    "placeholder": "e.g. Normal School Day",
+                }
+            ),
+            "description": forms.Textarea(
+                attrs={
+                    "class": "form-control",
+                    "rows": 3,
+                    "placeholder": "Optional description",
+                }
+            ),
+            "is_default": forms.CheckboxInput(
+                attrs={
+                    "class": "form-check-input",
+                }
+            ),
+            "is_active": forms.CheckboxInput(
+                attrs={
+                    "class": "form-check-input",
+                }
+            ),
+        }
+
+    def __init__(self, *args, school=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.school = school
+        
+    def clean_name(self):
+        name = self.cleaned_data["name"].strip()
+
+        if not self.school:
+            return name
+
+        queryset = TimetablePeriodTemplate.objects.filter(
+            school=self.school,
+            name__iexact=name,
+        )
+
+        if self.instance.pk:
+            queryset = queryset.exclude(pk=self.instance.pk)
+
+        if queryset.exists():
+            raise forms.ValidationError(
+                "A timetable period template with this name already exists for this school."
+            )
+
+        return name
+
+class TimetablePeriodTemplateDayForm(forms.ModelForm):
+    class Meta:
+        model = TimetablePeriodTemplateDay
+        fields = ["day"]
+        widgets = {
+            "day": forms.Select(
+                attrs={
+                    "class": "form-select",
+                }
+            ),
+        }
+
+    def __init__(self, *args, template=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.template = template
+
+class TimetablePeriodTemplateBlockForm(forms.ModelForm):
+    class Meta:
+        model = TimetablePeriodTemplateBlock
+        fields = [
+            "name",
+            "block_number",
+            "start_time",
+            "end_time",
+            "block_type",
+            "description",
+            "is_active",
+        ]
+        widgets = {
+            "name": forms.TextInput(
+                attrs={
+                    "class": "form-control",
+                    "placeholder": "e.g. Period 1 or Fellowship",
+                }
+            ),
+            "block_number": forms.NumberInput(
+                attrs={
+                    "class": "form-control",
+                    "min": 1,
+                }
+            ),
+            "start_time": forms.TimeInput(
+                format="%H:%M",
+                attrs={
+                    "class": "form-control",
+                    "type": "time",
+                },
+            ),
+            "end_time": forms.TimeInput(
+                format="%H:%M",
+                attrs={
+                    "class": "form-control",
+                    "type": "time",
+                },
+            ),
+            "block_type": forms.Select(
+                attrs={
+                    "class": "form-select",
+                }
+            ),
+            "description": forms.Textarea(
+                attrs={
+                    "class": "form-control",
+                    "rows": 2,
+                    "placeholder": "Optional description",
+                }
+            ),
+            "is_active": forms.CheckboxInput(
+                attrs={
+                    "class": "form-check-input",
+                }
+            ),
+        }
+
+    def __init__(self, *args, day=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.day = day
 
 class TimetablePeriodForm(forms.ModelForm):
     class Meta:
         model = TimetablePeriod
         fields = [
+            "day",
             "name",
             "period_number",
             "start_time",
@@ -135,6 +277,11 @@ class TimetablePeriodForm(forms.ModelForm):
             "is_active",
         ]
         widgets = {
+            "day": forms.Select(
+                attrs={
+                    "class": "form-select",
+                }
+            ),
             "name": forms.TextInput(
                 attrs={
                     "class": "form-control",

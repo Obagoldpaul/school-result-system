@@ -20,7 +20,7 @@ from schools.models import (
     SchoolSubscription, 
     SubscriptionPackage,
 )
-from students.models import SchoolClass
+
 from subjects.models import Subject
 from teachers.models import Teacher
 
@@ -28,11 +28,26 @@ from .models import (
     Timetable,
     TimetableEntry,
     TimetablePeriod,
+    TimetablePeriodTemplate,
+    TimetablePeriodTemplateBlock,
+    TimetablePeriodTemplateDay,
     TimetableRequirement,
     TeacherAvailability,
 )
-from .forms import TimetableForm, TimetablePeriodForm, TimetableRequirementForm
+from .forms import (
+    TimetableForm,
+    TimetablePeriodForm,
+    TimetablePeriodTemplateBlockForm,
+    TimetablePeriodTemplateDayForm,
+    TimetablePeriodTemplateForm,
+    TimetableRequirementForm,
+    TeacherAvailabilityForm,
+)
 
+from .services import (
+    sync_timetable_requirements,
+    apply_timetable_period_template,
+)
 
 User = get_user_model()
 
@@ -255,6 +270,7 @@ class TimetableModelValidationTests(TestCase):
             start_time=time(10, 00),
             end_time=time(10, 30),
             is_break=True,
+            day=TimetableEntry.Day.MONDAY,
         )
 
         requirement = TimetableRequirement.objects.create(
@@ -281,6 +297,7 @@ class TimetableModelValidationTests(TestCase):
             start_time=time(10, 00),
             end_time=time(10, 30),
             is_active=False,
+            day=TimetableEntry.Day.MONDAY,
         )
 
         requirement = TimetableRequirement.objects.create(
@@ -306,6 +323,7 @@ class TimetableModelValidationTests(TestCase):
             period_number=1,
             start_time=time(8, 00),
             end_time=time(9, 00),
+            day=TimetableEntry.Day.MONDAY,
         )
 
         requirement = TimetableRequirement.objects.create(
@@ -337,6 +355,7 @@ class TimetableModelValidationTests(TestCase):
             period_number=1,
             start_time=time(8, 00),
             end_time=time(9, 00),
+            day=TimetableEntry.Day.MONDAY,
         )
 
         entry = TimetableEntry(
@@ -387,6 +406,7 @@ class TimetableModelValidationTests(TestCase):
             period_number=1,
             start_time=time(8, 00),
             end_time=time(9, 00),
+            day=TimetableEntry.Day.MONDAY,
         )
 
         requirement = TimetableRequirement.objects.create(
@@ -404,6 +424,670 @@ class TimetableModelValidationTests(TestCase):
 
         entry.full_clean()
         
+
+class TimetablePeriodTemplateModelTests(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.school = School.objects.create(
+            name="Template Test School",
+            code="TPS",
+            school_type=School.SchoolType.PRIMARY_SECONDARY,
+        )
+
+        cls.other_school = School.objects.create(
+            name="Other Template School",
+            code="OTS",
+            school_type=School.SchoolType.PRIMARY_SECONDARY,
+        )
+
+    def test_multiple_templates_can_exist_for_same_school(self):
+        normal = TimetablePeriodTemplate.objects.create(
+            school=self.school,
+            name="Normal School Day",
+        )
+        friday = TimetablePeriodTemplate.objects.create(
+            school=self.school,
+            name="Friday Short Day",
+        )
+
+        self.assertEqual(
+            TimetablePeriodTemplate.objects.filter(
+                school=self.school
+            ).count(),
+            2,
+        )
+        self.assertNotEqual(normal.pk, friday.pk)
+
+    def test_template_name_must_be_unique_within_same_school(self):
+        TimetablePeriodTemplate.objects.create(
+            school=self.school,
+            name="Normal School Day",
+        )
+
+        duplicate = TimetablePeriodTemplate(
+            school=self.school,
+            name="Normal School Day",
+        )
+
+        with self.assertRaises(ValidationError):
+            duplicate.full_clean()
+
+    def test_same_template_name_can_exist_in_different_schools(self):
+        first = TimetablePeriodTemplate.objects.create(
+            school=self.school,
+            name="Normal School Day",
+        )
+        second = TimetablePeriodTemplate.objects.create(
+            school=self.other_school,
+            name="Normal School Day",
+        )
+
+        self.assertEqual(first.name, second.name)
+        self.assertNotEqual(first.school_id, second.school_id)
+
+    def test_school_cannot_have_two_default_templates(self):
+        TimetablePeriodTemplate.objects.create(
+            school=self.school,
+            name="Normal School Day",
+            is_default=True,
+        )
+
+        duplicate_default = TimetablePeriodTemplate(
+            school=self.school,
+            name="Friday Short Day",
+            is_default=True,
+        )
+
+        with self.assertRaises(ValidationError):
+            duplicate_default.validate_constraints()
+
+    def test_template_can_have_monday_and_friday_structures(self):
+        template = TimetablePeriodTemplate.objects.create(
+            school=self.school,
+            name="Normal School Day",
+        )
+
+        monday = TimetablePeriodTemplateDay.objects.create(
+            template=template,
+            day=TimetablePeriodTemplateDay.Day.MONDAY,
+        )
+        friday = TimetablePeriodTemplateDay.objects.create(
+            template=template,
+            day=TimetablePeriodTemplateDay.Day.FRIDAY,
+        )
+
+        self.assertEqual(template.days.count(), 2)
+        self.assertEqual(monday.day, TimetablePeriodTemplateDay.Day.MONDAY)
+        self.assertEqual(friday.day, TimetablePeriodTemplateDay.Day.FRIDAY)
+
+    def test_template_cannot_have_duplicate_day(self):
+        template = TimetablePeriodTemplate.objects.create(
+            school=self.school,
+            name="Normal School Day",
+        )
+
+        TimetablePeriodTemplateDay.objects.create(
+            template=template,
+            day=TimetablePeriodTemplateDay.Day.MONDAY,
+        )
+
+        duplicate = TimetablePeriodTemplateDay(
+            template=template,
+            day=TimetablePeriodTemplateDay.Day.MONDAY,
+        )
+
+        with self.assertRaises(ValidationError):
+            duplicate.validate_constraints()
+
+    def test_block_numbers_cannot_duplicate_within_same_template_day(self):
+        template = TimetablePeriodTemplate.objects.create(
+            school=self.school,
+            name="Normal School Day",
+        )
+        day = TimetablePeriodTemplateDay.objects.create(
+            template=template,
+            day=TimetablePeriodTemplateDay.Day.MONDAY,
+        )
+
+        TimetablePeriodTemplateBlock.objects.create(
+            day=day,
+            name="Period 1",
+            block_number=1,
+            start_time=time(8, 0),
+            end_time=time(9, 0),
+        )
+
+        duplicate = TimetablePeriodTemplateBlock(
+            day=day,
+            name="Another Period",
+            block_number=1,
+            start_time=time(9, 0),
+            end_time=time(10, 0),
+        )
+
+        with self.assertRaises(ValidationError):
+            duplicate.validate_constraints()
+
+    def test_activity_block_is_valid(self):
+        template = TimetablePeriodTemplate.objects.create(
+            school=self.school,
+            name="Normal School Day",
+        )
+        day = TimetablePeriodTemplateDay.objects.create(
+            template=template,
+            day=TimetablePeriodTemplateDay.Day.MONDAY,
+        )
+
+        block = TimetablePeriodTemplateBlock.objects.create(
+            day=day,
+            name="Fellowship",
+            block_number=4,
+            start_time=time(12, 0),
+            end_time=time(13, 0),
+            block_type=TimetablePeriodTemplateBlock.BlockType.ACTIVITY,
+            description="Whole-school Fellowship",
+        )
+
+        self.assertEqual(
+            block.block_type,
+            TimetablePeriodTemplateBlock.BlockType.ACTIVITY,
+        )
+        self.assertEqual(block.name, "Fellowship")
+
+    def test_block_rejects_invalid_time_range(self):
+        template = TimetablePeriodTemplate.objects.create(
+            school=self.school,
+            name="Normal School Day",
+        )
+        day = TimetablePeriodTemplateDay.objects.create(
+            template=template,
+            day=TimetablePeriodTemplateDay.Day.MONDAY,
+        )
+
+        block = TimetablePeriodTemplateBlock(
+            day=day,
+            name="Invalid Period",
+            block_number=1,
+            start_time=time(10, 0),
+            end_time=time(9, 0),
+        )
+
+        with self.assertRaises(ValidationError):
+            block.full_clean()
+
+    def test_active_blocks_cannot_overlap(self):
+        template = TimetablePeriodTemplate.objects.create(
+            school=self.school,
+            name="Normal School Day",
+        )
+        day = TimetablePeriodTemplateDay.objects.create(
+            template=template,
+            day=TimetablePeriodTemplateDay.Day.MONDAY,
+        )
+
+        TimetablePeriodTemplateBlock.objects.create(
+            day=day,
+            name="Period 1",
+            block_number=1,
+            start_time=time(8, 0),
+            end_time=time(9, 0),
+        )
+
+        overlapping = TimetablePeriodTemplateBlock(
+            day=day,
+            name="Period 2",
+            block_number=2,
+            start_time=time(8, 30),
+            end_time=time(9, 30),
+        )
+
+        with self.assertRaises(ValidationError):
+            overlapping.full_clean()
+
+    def test_non_overlapping_active_blocks_are_valid(self):
+        template = TimetablePeriodTemplate.objects.create(
+            school=self.school,
+            name="Normal School Day",
+        )
+        day = TimetablePeriodTemplateDay.objects.create(
+            template=template,
+            day=TimetablePeriodTemplateDay.Day.MONDAY,
+        )
+
+        TimetablePeriodTemplateBlock.objects.create(
+            day=day,
+            name="Period 1",
+            block_number=1,
+            start_time=time(8, 0),
+            end_time=time(9, 0),
+        )
+
+        second = TimetablePeriodTemplateBlock.objects.create(
+            day=day,
+            name="Period 2",
+            block_number=2,
+            start_time=time(9, 0),
+            end_time=time(10, 0),
+        )
+
+        self.assertIsNotNone(second.pk)
+
+    def test_inactive_overlapping_block_does_not_block_active_block(self):
+        template = TimetablePeriodTemplate.objects.create(
+            school=self.school,
+            name="Normal School Day",
+        )
+        day = TimetablePeriodTemplateDay.objects.create(
+            template=template,
+            day=TimetablePeriodTemplateDay.Day.MONDAY,
+        )
+
+        TimetablePeriodTemplateBlock.objects.create(
+            day=day,
+            name="Inactive Block",
+            block_number=1,
+            start_time=time(8, 0),
+            end_time=time(9, 0),
+            is_active=False,
+        )
+
+        active_block = TimetablePeriodTemplateBlock.objects.create(
+            day=day,
+            name="Active Block",
+            block_number=2,
+            start_time=time(8, 30),
+            end_time=time(9, 30),
+            is_active=True,
+        )
+
+        self.assertTrue(active_block.is_active)
+
+class TimetablePeriodTemplateViewTests(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.school = School.objects.create(
+            name="Template View School",
+            code="TVS",
+            school_type=School.SchoolType.PRIMARY_SECONDARY,
+        )
+
+        cls.other_school = School.objects.create(
+            name="Other Template View School",
+            code="OTVS",
+            school_type=School.SchoolType.PRIMARY_SECONDARY,
+        )
+
+        cls.user = User.objects.create_user(
+            username="template_view_user",
+            password="testpass123",
+        )
+        cls.user.school = cls.school
+        cls.user.save()
+
+        cls.other_user = User.objects.create_user(
+            username="other_template_view_user",
+            password="testpass123",
+        )
+        cls.other_user.school = cls.other_school
+        cls.other_user.save()
+
+        cls.role = SchoolRole.objects.create(
+            school=cls.school,
+            name="Template View Administrator",
+            base_role=SchoolRole.BaseRole.ADMIN,
+        )
+
+        cls.timetable_feature = Feature.objects.create(
+            code="TIMETABLE",
+            name="Timetable",
+            description="School timetable management.",
+            is_active=True,
+        )
+        
+        cls.subscription_package = SubscriptionPackage.objects.create(
+            name=SubscriptionPackage.PackageType.BASIC,
+        )
+
+        cls.subscription_package.features.add(
+            cls.timetable_feature,
+        )
+
+        cls.school_subscription = SchoolSubscription.objects.create(
+            school=cls.school,
+            package=cls.subscription_package,
+            start_date=timezone.localdate(),
+        )
+
+        cls.create_permission = Permission.objects.create(
+            code="timetable.create",
+            name="Create Timetables",
+            description="Create and manage school timetables.",
+            module="Timetable",
+            is_active=True,
+        )
+
+        cls.role.permissions.add(cls.create_permission)
+
+        cls.user.school_role = cls.role
+        cls.user.save()
+
+    def setUp(self):
+        self.client.force_login(self.user)
+
+    def test_get_period_templates_page(self):
+        response = self.client.get(
+            reverse("timetable_period_templates")
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(
+            response,
+            "timetable/period_templates.html",
+        )
+
+    def test_post_creates_template_for_current_school(self):
+        response = self.client.post(
+            reverse("timetable_period_templates"),
+            {
+                "name": "Normal School Day",
+            },
+        )
+
+        self.assertRedirects(
+            response,
+            reverse("timetable_period_templates"),
+        )
+
+        template = TimetablePeriodTemplate.objects.get(
+            name="Normal School Day"
+        )
+
+        self.assertEqual(template.school, self.school)
+
+    def test_period_templates_are_isolated_by_school(self):
+        own_template = TimetablePeriodTemplate.objects.create(
+            school=self.school,
+            name="My School Template",
+        )
+
+        other_template = TimetablePeriodTemplate.objects.create(
+            school=self.other_school,
+            name="Other School Template",
+        )
+
+        response = self.client.get(
+            reverse("timetable_period_templates")
+        )
+
+        self.assertEqual(response.status_code, 200)
+
+        templates = response.context["templates"]
+
+        self.assertIn(own_template, templates)
+        self.assertNotIn(other_template, templates)
+
+    def test_unauthenticated_user_cannot_access_period_templates(self):
+        self.client.logout()
+
+        response = self.client.get(
+            reverse("timetable_period_templates")
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertIn("/login/", response.url)
+        
+    def test_configure_view_creates_day_for_template(self):
+        template = TimetablePeriodTemplate.objects.create(
+            school=self.school,
+            name="Normal School Day",
+        )
+
+        response = self.client.post(
+            reverse(
+                "timetable_period_template_configure",
+                args=[template.id],
+            ),
+            {
+                "action": "add_day",
+                "day": TimetablePeriodTemplateDay.Day.MONDAY,
+            },
+        )
+
+        self.assertEqual(
+            response.status_code,
+            302,
+        )
+        self.assertEqual(
+            response.url,
+            reverse(
+                "timetable_period_template_configure",
+                args=[template.id],
+            ),
+        )
+
+        day = TimetablePeriodTemplateDay.objects.get(
+            template=template,
+            day=TimetablePeriodTemplateDay.Day.MONDAY,
+        )
+
+        self.assertEqual(day.template, template)
+        
+    def test_configure_view_creates_block_for_template_day(self):
+        template = TimetablePeriodTemplate.objects.create(
+            school=self.school,
+            name="Normal School Day",
+        )
+
+        day = TimetablePeriodTemplateDay.objects.create(
+            template=template,
+            day=TimetablePeriodTemplateDay.Day.MONDAY,
+        )
+
+        response = self.client.post(
+            reverse(
+                "timetable_period_template_configure",
+                args=[template.id],
+            ),
+            {
+                "action": "add_block",
+                "day_id": day.id,
+                "name": "Period 1",
+                "block_number": 1,
+                "start_time": "08:00",
+                "end_time": "08:40",
+                "block_type": TimetablePeriodTemplateBlock.BlockType.TEACHING,
+                "description": "",
+                "is_active": "on",
+            },
+        )
+
+        self.assertEqual(
+            response.status_code,
+            302,
+        )
+        self.assertEqual(
+            response.url,
+            reverse(
+                "timetable_period_template_configure",
+                args=[template.id],
+            ),
+        )
+
+        block = TimetablePeriodTemplateBlock.objects.get(
+            day=day,
+            block_number=1,
+        )
+
+        self.assertEqual(block.day, day)
+        self.assertEqual(block.day.template, template)
+        
+    def test_configure_view_cannot_access_other_school_template(self):
+        template = TimetablePeriodTemplate.objects.create(
+            school=self.other_school,
+            name="Other School Template",
+        )
+
+        response = self.client.get(
+            reverse(
+                "timetable_period_template_configure",
+                args=[template.id],
+            ),
+        )
+
+        self.assertEqual(response.status_code, 404)
+        
+    def test_configure_view_cannot_add_block_to_day_from_other_school(self):
+        template = TimetablePeriodTemplate.objects.create(
+            school=self.school,
+            name="Normal School Day",
+        )
+
+        other_template = TimetablePeriodTemplate.objects.create(
+            school=self.other_school,
+            name="Other School Day",
+        )
+
+        other_day = TimetablePeriodTemplateDay.objects.create(
+            template=other_template,
+            day=TimetablePeriodTemplateDay.Day.MONDAY,
+        )
+
+        response = self.client.post(
+            reverse(
+                "timetable_period_template_configure",
+                args=[template.id],
+            ),
+            {
+                "action": "add_block",
+                "day_id": other_day.id,
+                "name": "Period 1",
+                "block_number": 1,
+                "start_time": "08:00",
+                "end_time": "08:40",
+                "block_type": TimetablePeriodTemplateBlock.BlockType.TEACHING,
+                "description": "",
+                "is_active": "on",
+            },
+        )
+
+        self.assertEqual(response.status_code, 404)
+        
+    def test_configure_view_get_renders_template(self):
+        template = TimetablePeriodTemplate.objects.create(
+            school=self.school,
+            name="Normal School Day",
+        )
+
+        response = self.client.get(
+            reverse(
+                "timetable_period_template_configure",
+                args=[template.id],
+            ),
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(
+            response,
+            "timetable/period_template_configure.html",
+        )
+        self.assertEqual(response.context["template"], template)
+        
+    def test_period_templates_page_links_to_configuration(self):
+        template = TimetablePeriodTemplate.objects.create(
+            school=self.school,
+            name="Normal School Day",
+        )
+
+        response = self.client.get(
+            reverse("timetable_period_templates"),
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(
+            response,
+            reverse(
+                "timetable_period_template_configure",
+                args=[template.id],
+            ),
+        )
+        
+    def test_edit_period_template_block_updates_block(self):
+        template = TimetablePeriodTemplate.objects.create(
+            school=self.school,
+            name="Normal School Day",
+        )
+
+        day = TimetablePeriodTemplateDay.objects.create(
+            template=template,
+            day=TimetablePeriodTemplateDay.Day.MONDAY,
+        )
+
+        block = TimetablePeriodTemplateBlock.objects.create(
+            day=day,
+            name="Period 1",
+            block_number=1,
+            start_time=time(8, 0),
+            end_time=time(8, 40),
+            block_type=TimetablePeriodTemplateBlock.BlockType.TEACHING,
+        )
+
+        response = self.client.post(
+            reverse(
+                "edit_timetable_period_template_block",
+                args=[template.id, block.id],
+            ),
+            {
+                "name": "Period 1 Updated",
+                "block_number": 1,
+                "start_time": "08:00",
+                "end_time": "08:45",
+                "block_type": TimetablePeriodTemplateBlock.BlockType.TEACHING,
+                "description": "",
+                "is_active": "on",
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+
+        block.refresh_from_db()
+
+        self.assertEqual(block.name, "Period 1 Updated")
+        self.assertEqual(block.end_time, time(8, 45))
+        
+    def test_delete_period_template_block_deletes_block(self):
+        template = TimetablePeriodTemplate.objects.create(
+            school=self.school,
+            name="Normal School Day",
+        )
+
+        day = TimetablePeriodTemplateDay.objects.create(
+            template=template,
+            day=TimetablePeriodTemplateDay.Day.MONDAY,
+        )
+
+        block = TimetablePeriodTemplateBlock.objects.create(
+            day=day,
+            name="Period 1",
+            block_number=1,
+            start_time=time(8, 0),
+            end_time=time(8, 40),
+            block_type=TimetablePeriodTemplateBlock.BlockType.TEACHING,
+        )
+
+        response = self.client.post(
+            reverse(
+                "delete_timetable_period_template_block",
+                args=[template.id, block.id],
+            ),
+        )
+
+        self.assertEqual(response.status_code, 302)
+
+        self.assertFalse(
+            TimetablePeriodTemplateBlock.objects.filter(
+                pk=block.id
+            ).exists()
+        )
 
 class TimetableRequirementSyncTests(TestCase):
     @classmethod
@@ -631,6 +1315,25 @@ class TimetableFormTests(TestCase):
         )
         cls.user.school = cls.school
         cls.user.save()
+        
+        cls.timetable_feature = Feature.objects.create(
+            code="TIMETABLE",
+            name="Timetable",
+            description="School timetable management.",
+            is_active=True,
+        )
+
+        cls.package = SubscriptionPackage.objects.create(
+            name=SubscriptionPackage.PackageType.STANDARD,
+        )
+
+        cls.package.features.add(cls.timetable_feature)
+
+        SchoolSubscription.objects.create(
+            school=cls.school,
+            package=cls.package,
+            start_date=timezone.now().date(),
+        )
 
         cls.session = AcademicSession.objects.create(
             school=cls.school,
@@ -822,6 +1525,7 @@ class TimetableFormTests(TestCase):
         form = TimetablePeriodForm(
             data={
                 "name": "Period 1",
+                "day": TimetableEntry.Day.MONDAY,
                 "period_number": 1,
                 "start_time": "08:00",
                 "end_time": "09:00",
@@ -847,6 +1551,616 @@ class TimetableFormTests(TestCase):
         self.assertFalse(form.is_valid())
         self.assertIn("double_periods", form.errors)
         
+    def test_period_template_form_accepts_valid_template(self):
+        form = TimetablePeriodTemplateForm(
+            data={
+                "name": "Normal School Day",
+                "description": "Regular school timetable structure.",
+                "is_default": True,
+                "is_active": True,
+            },
+            school=self.school,
+        )
+
+        self.assertTrue(form.is_valid(), form.errors)
+    
+    def test_period_template_form_rejects_duplicate_name_for_same_school(self):
+        TimetablePeriodTemplate.objects.create(
+            school=self.school,
+            name="Normal School Day",
+            description="Existing template.",
+            is_default=True,
+            is_active=True,
+        )
+
+        form = TimetablePeriodTemplateForm(
+            data={
+                "name": "Normal School Day",
+                "description": "Another template with the same name.",
+                "is_default": False,
+                "is_active": True,
+            },
+            school=self.school,
+        )
+
+        self.assertFalse(form.is_valid())
+        self.assertIn("name", form.errors)
+        
+    def test_apply_period_template_creates_periods_for_selected_days(self):
+        template = TimetablePeriodTemplate.objects.create(
+            school=self.school,
+            name="Normal School Day",
+            is_active=True,
+        )
+        
+        self.timetable.days = [
+            TimetableEntry.Day.MONDAY,
+            TimetableEntry.Day.TUESDAY,
+        ]
+        self.timetable.save()
+
+        monday = TimetablePeriodTemplateDay.objects.create(
+            template=template,
+            day=TimetableEntry.Day.MONDAY,
+        )
+
+        tuesday = TimetablePeriodTemplateDay.objects.create(
+            template=template,
+            day=TimetableEntry.Day.TUESDAY,
+        )
+
+        TimetablePeriodTemplateBlock.objects.create(
+            day=monday,
+            name="Period 1",
+            block_number=1,
+            start_time=time(8, 0),
+            end_time=time(9, 0),
+            block_type=TimetablePeriodTemplateBlock.BlockType.TEACHING,
+            is_active=True,
+        )
+
+        TimetablePeriodTemplateBlock.objects.create(
+            day=tuesday,
+            name="Period 1",
+            block_number=1,
+            start_time=time(8, 0),
+            end_time=time(9, 0),
+            block_type=TimetablePeriodTemplateBlock.BlockType.TEACHING,
+            is_active=True,
+        )
+
+        apply_timetable_period_template(
+            timetable=self.timetable,
+            template=template,
+        )
+
+        periods = TimetablePeriod.objects.filter(
+            timetable=self.timetable,
+        ).order_by("day", "period_number")
+
+        self.assertEqual(periods.count(), 2)
+
+        monday_period = periods.get(
+            day=TimetableEntry.Day.MONDAY,
+        )
+        self.assertEqual(monday_period.name, "Period 1")
+        self.assertEqual(monday_period.period_number, 1)
+        self.assertEqual(monday_period.start_time, time(8, 0))
+        self.assertEqual(monday_period.end_time, time(9, 0))
+        self.assertFalse(monday_period.is_break)
+        self.assertTrue(monday_period.is_active)
+        
+    def test_apply_period_template_maps_block_types_correctly(self):
+        template = TimetablePeriodTemplate.objects.create(
+            school=self.school,
+            name="Mixed Day",
+            is_active=True,
+        )
+        
+        self.timetable.days = [
+            TimetableEntry.Day.MONDAY,
+        ]
+        self.timetable.save()
+
+        day = TimetablePeriodTemplateDay.objects.create(
+            template=template,
+            day=TimetableEntry.Day.MONDAY,
+        )
+
+        TimetablePeriodTemplateBlock.objects.create(
+            day=day,
+            name="Teaching",
+            block_number=1,
+            start_time=time(8, 0),
+            end_time=time(9, 0),
+            block_type=TimetablePeriodTemplateBlock.BlockType.TEACHING,
+        )
+
+        TimetablePeriodTemplateBlock.objects.create(
+            day=day,
+            name="Break",
+            block_number=2,
+            start_time=time(9, 0),
+            end_time=time(9, 30),
+            block_type=TimetablePeriodTemplateBlock.BlockType.BREAK,
+        )
+
+        TimetablePeriodTemplateBlock.objects.create(
+            day=day,
+            name="Assembly",
+            block_number=3,
+            start_time=time(9, 30),
+            end_time=time(10, 0),
+            block_type=TimetablePeriodTemplateBlock.BlockType.ACTIVITY,
+        )
+
+        apply_timetable_period_template(
+            timetable=self.timetable,
+            template=template,
+        )
+
+        periods = TimetablePeriod.objects.filter(
+            timetable=self.timetable,
+        ).order_by("period_number")
+
+        self.assertFalse(periods.get(period_number=1).is_break)
+        self.assertTrue(periods.get(period_number=2).is_break)
+        self.assertFalse(periods.get(period_number=3).is_break)
+        self.assertEqual(
+            periods.get(period_number=3).name,
+            "Assembly",
+        )
+        
+    def test_apply_period_template_excludes_inactive_blocks(self):
+        template = TimetablePeriodTemplate.objects.create(
+            school=self.school,
+            name="Active Blocks",
+            is_active=True,
+        )
+        
+        self.timetable.days = [
+            TimetableEntry.Day.MONDAY,
+        ]
+        self.timetable.save()
+
+        day = TimetablePeriodTemplateDay.objects.create(
+            template=template,
+            day=TimetableEntry.Day.MONDAY,
+        )
+
+        TimetablePeriodTemplateBlock.objects.create(
+            day=day,
+            name="Period 1",
+            block_number=1,
+            start_time=time(8, 0),
+            end_time=time(9, 0),
+            is_active=True,
+        )
+
+        TimetablePeriodTemplateBlock.objects.create(
+            day=day,
+            name="Inactive Period",
+            block_number=2,
+            start_time=time(9, 0),
+            end_time=time(10, 0),
+            is_active=False,
+        )
+
+        apply_timetable_period_template(
+            timetable=self.timetable,
+            template=template,
+        )
+
+        periods = TimetablePeriod.objects.filter(
+            timetable=self.timetable,
+        )
+
+        self.assertEqual(periods.count(), 1)
+        self.assertEqual(periods.first().name, "Period 1")
+        
+    
+    def test_apply_period_template_ignores_template_days_not_used_by_timetable(
+        self,
+    ):
+        template = TimetablePeriodTemplate.objects.create(
+            school=self.school,
+            name="Extended Week",
+            is_active=True,
+        )
+
+        monday = TimetablePeriodTemplateDay.objects.create(
+            template=template,
+            day=TimetableEntry.Day.MONDAY,
+        )
+
+        saturday = TimetablePeriodTemplateDay.objects.create(
+            template=template,
+            day=TimetableEntry.Day.SATURDAY,
+        )
+
+        TimetablePeriodTemplateBlock.objects.create(
+            day=monday,
+            name="Monday Period",
+            block_number=1,
+            start_time=time(8, 0),
+            end_time=time(9, 0),
+        )
+
+        TimetablePeriodTemplateBlock.objects.create(
+            day=saturday,
+            name="Saturday Period",
+            block_number=1,
+            start_time=time(8, 0),
+            end_time=time(9, 0),
+        )
+
+        self.timetable.days = [TimetableEntry.Day.MONDAY]
+        self.timetable.save()
+
+        apply_timetable_period_template(
+            timetable=self.timetable,
+            template=template,
+        )
+
+        periods = TimetablePeriod.objects.filter(
+            timetable=self.timetable,
+        )
+
+        self.assertEqual(periods.count(), 1)
+        self.assertEqual(
+            periods.first().day,
+            TimetableEntry.Day.MONDAY,
+        )
+        
+    def test_apply_period_template_rejects_missing_selected_day_without_partial_periods(
+        self,
+    ):
+        template = TimetablePeriodTemplate.objects.create(
+            school=self.school,
+            name="Incomplete Template",
+            is_active=True,
+        )
+
+        monday = TimetablePeriodTemplateDay.objects.create(
+            template=template,
+            day=TimetableEntry.Day.MONDAY,
+        )
+
+        TimetablePeriodTemplateBlock.objects.create(
+            day=monday,
+            name="Monday Period",
+            block_number=1,
+            start_time=time(8, 0),
+            end_time=time(9, 0),
+        )
+
+        self.timetable.days = [
+            TimetableEntry.Day.MONDAY,
+            TimetableEntry.Day.TUESDAY,
+        ]
+        self.timetable.save()
+
+        with self.assertRaises(ValidationError):
+            apply_timetable_period_template(
+                timetable=self.timetable,
+                template=template,
+            )
+
+        self.assertEqual(
+            TimetablePeriod.objects.filter(
+                timetable=self.timetable,
+            ).count(),
+            0,
+        )    
+    
+    def test_apply_period_template_rejects_timetable_with_existing_periods(
+        self,
+    ):
+        TimetablePeriod.objects.create(
+            timetable=self.timetable,
+            day=TimetableEntry.Day.MONDAY,
+            name="Existing Period",
+            period_number=1,
+            start_time=time(8, 0),
+            end_time=time(9, 0),
+        )
+
+        template = TimetablePeriodTemplate.objects.create(
+            school=self.school,
+            name="Normal Day",
+            is_active=True,
+        )
+
+        day = TimetablePeriodTemplateDay.objects.create(
+            template=template,
+            day=TimetableEntry.Day.MONDAY,
+        )
+
+        TimetablePeriodTemplateBlock.objects.create(
+            day=day,
+            name="New Period",
+            block_number=1,
+            start_time=time(9, 0),
+            end_time=time(10, 0),
+        )
+
+        with self.assertRaises(ValidationError):
+            apply_timetable_period_template(
+                timetable=self.timetable,
+                template=template,
+            )
+
+        self.assertEqual(
+            TimetablePeriod.objects.filter(
+                timetable=self.timetable,
+            ).count(),
+            1,
+        )
+
+        self.assertEqual(
+            TimetablePeriod.objects.get(
+                timetable=self.timetable,
+            ).name,
+            "Existing Period",
+        )
+        
+    def test_apply_period_template_rejects_template_from_another_school(
+        self,
+    ):
+        template = TimetablePeriodTemplate.objects.create(
+            school=self.other_school,
+            name="Other School Template",
+            is_active=True,
+        )
+
+        with self.assertRaises(ValidationError):
+            apply_timetable_period_template(
+                timetable=self.timetable,
+                template=template,
+            )
+
+        self.assertEqual(
+            TimetablePeriod.objects.filter(
+                timetable=self.timetable,
+            ).count(),
+            0,
+        )
+        
+    def test_apply_period_template_rejects_inactive_template(self):
+        template = TimetablePeriodTemplate.objects.create(
+            school=self.school,
+            name="Inactive Template",
+            is_active=False,
+        )
+
+        with self.assertRaises(ValidationError):
+            apply_timetable_period_template(
+                timetable=self.timetable,
+                template=template,
+            )
+
+        self.assertEqual(
+            TimetablePeriod.objects.filter(
+                timetable=self.timetable,
+            ).count(),
+            0,
+        )
+        
+        
+    def test_apply_period_template_view_creates_periods(self):
+        self.client.force_login(self.user)
+        self.timetable.days = [
+            TimetablePeriodTemplateDay.Day.MONDAY,
+        ]
+        self.timetable.save()
+
+        template = TimetablePeriodTemplate.objects.create(
+            school=self.school,
+            name="Standard Template",
+        )
+
+        template_day = TimetablePeriodTemplateDay.objects.create(
+            template=template,
+            day=TimetablePeriodTemplateDay.Day.MONDAY,
+        )
+
+        TimetablePeriodTemplateBlock.objects.create(
+            day=template_day,
+            name="Period 1",
+            block_number=1,
+            start_time=time(8, 0),
+            end_time=time(8, 40),
+            block_type=TimetablePeriodTemplateBlock.BlockType.TEACHING,
+        )
+
+        response = self.client.post(
+            reverse(
+                "apply_timetable_period_template",
+                args=[self.timetable.id],
+            ),
+            {
+                "template_id": template.id,
+            },
+        )
+
+        self.assertRedirects(
+            response,
+            reverse(
+                "timetable_periods",
+                args=[self.timetable.id],
+            ),
+        )
+
+        self.assertEqual(
+            self.timetable.periods.count(),
+            1,
+        )
+
+
+    def test_apply_period_template_view_rejects_template_from_another_school(self):
+        self.client.force_login(self.user)
+        template = TimetablePeriodTemplate.objects.create(
+            school=self.other_school,
+            name="Other School Template",
+        )
+
+        response = self.client.post(
+            reverse(
+                "apply_timetable_period_template",
+                args=[self.timetable.id],
+            ),
+            {
+                "template_id": template.id,
+            },
+        )
+
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(
+            self.timetable.periods.count(),
+            0,
+        )
+
+
+    def test_apply_period_template_view_rejects_inactive_template(self):
+        self.client.force_login(self.user)
+        template = TimetablePeriodTemplate.objects.create(
+            school=self.school,
+            name="Inactive Template",
+            is_active=False,
+        )
+
+        response = self.client.post(
+            reverse(
+                "apply_timetable_period_template",
+                args=[self.timetable.id],
+            ),
+            {
+                "template_id": template.id,
+            },
+        )
+
+        self.assertRedirects(
+            response,
+            reverse(
+                "timetable_periods",
+                args=[self.timetable.id],
+            ),
+        )
+
+        self.assertEqual(
+            self.timetable.periods.count(),
+            0,
+        )
+
+
+    def test_apply_period_template_view_rejects_timetable_with_existing_periods(self):
+        self.client.force_login(self.user)
+        TimetablePeriod.objects.create(
+            timetable=self.timetable,
+            day=TimetablePeriodTemplateDay.Day.MONDAY,
+            name="Existing Period",
+            period_number=1,
+            start_time=time(8, 0),
+            end_time=time(8, 40),
+        )
+
+        template = TimetablePeriodTemplate.objects.create(
+            school=self.school,
+            name="Standard Template",
+        )
+
+        response = self.client.post(
+            reverse(
+                "apply_timetable_period_template",
+                args=[self.timetable.id],
+            ),
+            {
+                "template_id": template.id,
+            },
+        )
+
+        self.assertRedirects(
+            response,
+            reverse(
+                "timetable_periods",
+                args=[self.timetable.id],
+            ),
+        )
+
+        self.assertEqual(
+            self.timetable.periods.count(),
+            1,
+        )
+
+
+    def test_apply_period_template_view_redirects_on_get(self):
+        self.client.force_login(self.user)
+        response = self.client.get(
+            reverse(
+                "apply_timetable_period_template",
+                args=[self.timetable.id],
+            ),
+        )
+
+        self.assertRedirects(
+            response,
+            reverse(
+                "timetable_periods",
+                args=[self.timetable.id],
+            ),
+        )
+        
+    def test_timetable_periods_view_shows_only_active_templates_for_current_school(self):
+        self.client.force_login(self.user)
+
+        active_template = TimetablePeriodTemplate.objects.create(
+            school=self.school,
+            name="Active Template",
+            is_active=True,
+        )
+
+        TimetablePeriodTemplate.objects.create(
+            school=self.school,
+            name="Inactive Template",
+            is_active=False,
+        )
+
+        TimetablePeriodTemplate.objects.create(
+            school=self.other_school,
+            name="Other School Template",
+            is_active=True,
+        )
+
+        response = self.client.get(
+            reverse(
+                "timetable_periods",
+                args=[self.timetable.id],
+            ),
+        )
+
+        self.assertEqual(response.status_code, 200)
+
+        templates = response.context["templates"]
+
+        self.assertIn(active_template, templates)
+
+        self.assertNotIn(
+            TimetablePeriodTemplate.objects.get(
+                school=self.school,
+                name="Inactive Template",
+            ),
+            templates,
+        )
+
+        self.assertNotIn(
+            TimetablePeriodTemplate.objects.get(
+                school=self.other_school,
+                name="Other School Template",
+            ),
+            templates,
+        )
+      
+            
 class TeacherAvailabilityModelTests(TestCase):
     @classmethod
     def setUpTestData(cls):
@@ -1414,6 +2728,7 @@ class TimetableGeneratorTests(TestCase):
         end,
         is_break=False,
         is_active=True,
+        day=TimetableEntry.Day.MONDAY,
     ):
         return TimetablePeriod.objects.create(
             timetable=timetable,
@@ -1423,17 +2738,18 @@ class TimetableGeneratorTests(TestCase):
             end_time=end,
             is_break=is_break,
             is_active=is_active,
+            day=day,
         )
 
-    def create_standard_periods(self, timetable):
+    def create_standard_periods(self, timetable, day=TimetableEntry.Day.MONDAY):
         self.create_period(
             timetable,
             1,
             "Period 1",
             time(8, 0),
             time(8, 40),
+            day=day,
         )
-
         self.create_period(
             timetable,
             2,
@@ -1441,22 +2757,23 @@ class TimetableGeneratorTests(TestCase):
             time(8, 40),
             time(9, 0),
             is_break=True,
+            day=day,
         )
-
         self.create_period(
             timetable,
             3,
             "Period 2",
             time(9, 0),
             time(9, 40),
+            day=day,
         )
-
         self.create_period(
             timetable,
             4,
             "Period 3",
             time(9, 40),
             time(10, 20),
+            day=day,
         )
 
     def create_availability(
@@ -1572,6 +2889,10 @@ class TimetableGeneratorTests(TestCase):
     def test_generated_entry_count_matches_required_lesson_frequency(self):
         timetable = self.create_timetable()
         self.create_standard_periods(timetable)
+        self.create_standard_periods(
+            timetable,
+            day=TimetableEntry.Day.TUESDAY,
+        )
         self.create_availability(self.teacher)
         self.create_availability(
             self.teacher,
@@ -1673,6 +2994,7 @@ class TimetableGeneratorTests(TestCase):
             "Period 1",
             time(8, 0),
             time(8, 40),
+            day=TimetableEntry.Day.TUESDAY,
         )
 
         self.create_availability(
@@ -2162,6 +3484,7 @@ class TimetableViewTests(TestCase):
             period_number=1,
             start_time=time(8, 0),
             end_time=time(9, 0),
+            day=TimetableEntry.Day.MONDAY,
         )
 
         period_two = TimetablePeriod.objects.create(
@@ -2170,6 +3493,16 @@ class TimetableViewTests(TestCase):
             period_number=2,
             start_time=time(9, 0),
             end_time=time(10, 0),
+            day=TimetableEntry.Day.MONDAY,
+        )
+        
+        period_three = TimetablePeriod.objects.create(
+            timetable=self.timetable,
+            name="Tuesday Period 1",
+            period_number=1,
+            start_time=time(8, 0),
+            end_time=time(9, 0),
+            day=TimetableEntry.Day.TUESDAY,
         )
 
         requirement = TimetableRequirement.objects.create(
@@ -2219,6 +3552,11 @@ class TimetableViewTests(TestCase):
             [monday_entry],
         )
 
+        self.assertEqual(
+            response.context["grid"][1]["cells"][0]["period"],
+            period_three,
+        )
+
         self.assertIsNone(
             response.context["grid"][1]["cells"][0]["entry"],
         )
@@ -2232,6 +3570,11 @@ class TimetableViewTests(TestCase):
             len(response.context["grid"][0]["cells"]),
             2,
         )
+
+        self.assertEqual(
+            len(response.context["grid"][1]["cells"]),
+            1,
+        )
         
     def test_timetable_view_filters_by_section_and_class(self):
         self.client.force_login(self.user)
@@ -2242,6 +3585,16 @@ class TimetableViewTests(TestCase):
             period_number=1,
             start_time=time(8, 0),
             end_time=time(9, 0),
+            day=TimetableEntry.Day.MONDAY,
+        )
+        
+        tuesday_period = TimetablePeriod.objects.create(
+            timetable=self.timetable,
+            name="Tuesday Period 1",
+            period_number=1,
+            start_time=time(8, 0),
+            end_time=time(9, 0),
+            day=TimetableEntry.Day.TUESDAY,
         )
 
         second_class = SchoolClass.objects.create(
@@ -2287,7 +3640,7 @@ class TimetableViewTests(TestCase):
             timetable=self.timetable,
             requirement=second_requirement,
             day=TimetableEntry.Day.TUESDAY,
-            period=period,
+            period=tuesday_period,
         )
 
         response = self.client.get(
@@ -2480,6 +3833,7 @@ class TimetableApprovalViewTests(TestCase):
             period_number=1,
             start_time=time(8, 0),
             end_time=time(9, 0),
+            day=TimetableEntry.Day.MONDAY,
         )
 
         requirement = TimetableRequirement.objects.create(
@@ -2799,6 +4153,7 @@ class TimetablePublishViewTests(TestCase):
             period_number=1,
             start_time=time(8, 0),
             end_time=time(9, 0),
+            day=TimetableEntry.Day.MONDAY,
         )
 
         requirement = TimetableRequirement.objects.create(
@@ -3148,6 +4503,7 @@ class TimetablePortalViewTests(TestCase):
             end_time=time(9, 0),
             is_break=False,
             is_active=True,
+            day=TimetableEntry.Day.MONDAY,
         )
 
         self.period_two = TimetablePeriod.objects.create(
@@ -3158,6 +4514,7 @@ class TimetablePortalViewTests(TestCase):
             end_time=time(10, 0),
             is_break=False,
             is_active=True,
+            day=TimetableEntry.Day.MONDAY,
         )
 
         self.own_requirement = TimetableRequirement.objects.create(
@@ -3203,6 +4560,7 @@ class TimetablePortalViewTests(TestCase):
             end_time=time(9, 0),
             is_break=False,
             is_active=True,
+            day=TimetableEntry.Day.MONDAY,
         )
 
         old_allocation = SubjectAllocation.objects.create(
@@ -3268,6 +4626,7 @@ class TimetablePortalViewTests(TestCase):
             end_time=time(9, 0),
             is_break=False,
             is_active=True,
+            day=TimetableEntry.Day.MONDAY,
         )
 
         other_requirement = TimetableRequirement.objects.create(

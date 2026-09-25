@@ -11,8 +11,23 @@ from teachers.models import Teacher
 from subjects.models import Subject, ClassSubject
 
 from .models import SubjectAllocation
-from .forms import SubjectAllocationForm, BulkSubjectAllocationForm
+from .forms import (
+    SubjectAllocationForm,
+    BulkSubjectAllocationForm,
+    CarryForwardAllocationForm,
+)
 
+
+from datetime import timedelta
+from django.utils import timezone
+
+from schools.models import (
+    School,
+    SchoolRole,
+    Permission,
+    SubscriptionPackage,
+    SchoolSubscription,
+)
 
 class AllocationTestMixin:
     """
@@ -350,39 +365,338 @@ class SubjectAllocationFormTests(AllocationTestMixin, TestCase):
         )     
 
 
-class BulkSubjectAllocationFormTests(AllocationTestMixin, TestCase):
+
+class CarryForwardAllocationFormTests(AllocationTestMixin, TestCase):
     """
-    Tests for the bulk allocation form.
+    Tests for the carry-forward allocation form.
     """
 
     def setUp(self):
         self.school1 = self.create_school(
             "School One",
-            "BULK001",
+            "CARRY001",
         )
 
         self.school2 = self.create_school(
             "School Two",
-            "BULK002",
+            "CARRY002",
         )
 
         self.user1 = self.create_user(
             self.school1,
-            "bulkadmin1",
+            "carryadmin1",
             User.Role.ADMIN,
         )
 
+        # ----------------------------------------
+        # CURRENT SESSION / TERMS
+        # ----------------------------------------
+
+        self.session1 = AcademicSession.objects.create(
+            school=self.school1,
+            name="2026/2027",
+            is_current=True,
+        )
+
+        self.first_term = Term.objects.create(
+            session=self.session1,
+            name=Term.TermName.FIRST,
+            is_current=False,
+        )
+
+        self.second_term = Term.objects.create(
+            session=self.session1,
+            name=Term.TermName.SECOND,
+            is_current=True,
+        )
+
+        self.third_term = Term.objects.create(
+            session=self.session1,
+            name=Term.TermName.THIRD,
+            is_current=False,
+        )
+
+        # ----------------------------------------
+        # PREVIOUS SESSION
+        # ----------------------------------------
+
+        self.session2 = AcademicSession.objects.create(
+            school=self.school1,
+            name="2025/2026",
+            is_current=False,
+        )
+
+        self.previous_third_term = Term.objects.create(
+            session=self.session2,
+            name=Term.TermName.THIRD,
+            is_current=False,
+        )
+
+        # ----------------------------------------
+        # OTHER SCHOOL
+        # ----------------------------------------
+
+        self.other_session = AcademicSession.objects.create(
+            school=self.school2,
+            name="2026/2027",
+            is_current=True,
+        )
+
+        self.other_term = Term.objects.create(
+            session=self.other_session,
+            name=Term.TermName.FIRST,
+            is_current=True,
+        )
+
+    def test_form_only_contains_same_school_sessions_and_terms(self):
+        form = CarryForwardAllocationForm(
+            user=self.user1,
+        )
+
+        self.assertIn(
+            self.session1,
+            form.fields["from_session"].queryset,
+        )
+
+        self.assertIn(
+            self.session1,
+            form.fields["to_session"].queryset,
+        )
+
+        self.assertIn(
+            self.first_term,
+            form.fields["from_term"].queryset,
+        )
+
+        self.assertIn(
+            self.second_term,
+            form.fields["to_term"].queryset,
+        )
+
+        self.assertNotIn(
+            self.other_session,
+            form.fields["from_session"].queryset,
+        )
+
+        self.assertNotIn(
+            self.other_session,
+            form.fields["to_session"].queryset,
+        )
+
+        self.assertNotIn(
+            self.other_term,
+            form.fields["from_term"].queryset,
+        )
+
+        self.assertNotIn(
+            self.other_term,
+            form.fields["to_term"].queryset,
+        )
+
+    def test_second_term_defaults_to_first_term_and_current_term(self):
+        form = CarryForwardAllocationForm(
+            user=self.user1,
+        )
+
+        self.assertEqual(
+            form.initial["from_session"],
+            self.session1,
+        )
+
+        self.assertEqual(
+            form.initial["from_term"],
+            self.first_term,
+        )
+
+        self.assertEqual(
+            form.initial["to_session"],
+            self.session1,
+        )
+
+        self.assertEqual(
+            form.initial["to_term"],
+            self.second_term,
+        )
+
+    def test_same_term_is_rejected(self):
+        form = CarryForwardAllocationForm(
+            data={
+                "from_session": self.session1.pk,
+                "from_term": self.second_term.pk,
+                "to_session": self.session1.pk,
+                "to_term": self.second_term.pk,
+            },
+            user=self.user1,
+        )
+
+        self.assertFalse(form.is_valid())
+
+        self.assertIn(
+            "__all__",
+            form.errors,
+        )
+
+    def test_cross_school_terms_are_rejected(self):
+        form = CarryForwardAllocationForm(
+            data={
+                "from_session": self.session1.pk,
+                "from_term": self.first_term.pk,
+                "to_session": self.other_session.pk,
+                "to_term": self.other_term.pk,
+            },
+            user=self.user1,
+        )
+
+        self.assertFalse(form.is_valid())
+
+        self.assertIn(
+            "to_session",
+            form.errors,
+        )
+
+        self.assertIn(
+            "to_term",
+            form.errors,
+        )
+
+    def test_term_must_belong_to_selected_session(self):
+        form = CarryForwardAllocationForm(
+            data={
+                "from_session": self.session1.pk,
+                "from_term": self.first_term.pk,
+                "to_session": self.session2.pk,
+                "to_term": self.first_term.pk,
+            },
+            user=self.user1,
+        )
+
+        self.assertFalse(form.is_valid())
+
+        self.assertIn(
+            "to_term",
+            form.errors,
+        )
+
+    def test_first_term_defaults_to_previous_session_third_term(self):
+        self.first_term.is_current = True
+        self.first_term.save(update_fields=["is_current"])
+
+        self.second_term.is_current = False
+        self.second_term.save(update_fields=["is_current"])
+
+        form = CarryForwardAllocationForm(
+            user=self.user1,
+        )
+
+        self.assertEqual(
+            form.initial["from_session"],
+            self.session2,
+        )
+
+        self.assertEqual(
+            form.initial["from_term"],
+            self.previous_third_term,
+        )
+
+        self.assertEqual(
+            form.initial["to_session"],
+            self.session1,
+        )
+
+        self.assertEqual(
+            form.initial["to_term"],
+            self.first_term,
+        )
+
+
+class CarryForwardAllocationViewTests(AllocationTestMixin, TestCase):
+    """
+    Tests for the carry-forward allocation view.
+    """
+
+    def setUp(self):
+        self.school1 = self.create_school(
+            "School One",
+            "CARRYVIEW001",
+        )
+        
+        self.subscription_package = SubscriptionPackage.objects.create(
+            name=SubscriptionPackage.PackageType.BASIC,
+        )
+
+        SchoolSubscription.objects.create(
+            school=self.school1,
+            package=self.subscription_package,
+            billing_cycle=SchoolSubscription.BillingCycle.TERMLY,
+            start_date=timezone.now().date(),
+            end_date=timezone.now().date() + timedelta(days=30),
+            is_active=True,
+        )
+
+        self.school2 = self.create_school(
+            "School Two",
+            "CARRYVIEW002",
+        )
+
+        # ----------------------------------------
+        # PERMISSION
+        # ----------------------------------------
+
+        self.assign_permission = Permission.objects.create(
+            code="subjects.assign",
+            name="Assign Subjects",
+            module="Subjects",
+        )
+
+        self.admin_role = SchoolRole.objects.create(
+            school=self.school1,
+            name="Carry Forward Admin",
+        )
+
+        self.admin_role.permissions.add(
+            self.assign_permission
+        )
+
+        self.admin1 = self.create_user(
+            self.school1,
+            "carryviewadmin1",
+            User.Role.ADMIN,
+        )
+
+        self.admin1.school_role = self.admin_role
+        self.admin1.save(update_fields=["school_role"])
+
+        self.admin_without_permission = self.create_user(
+            self.school1,
+            "carryviewadmin2",
+            User.Role.ADMIN,
+        )
+
+        # ----------------------------------------
+        # TEACHERS
+        # ----------------------------------------
+
         self.teacher1 = self.create_teacher(
             self.school1,
-            "bulkteacher1",
-            "BULK-T001",
+            "carryviewteacher1",
+            "CV-T001",
+        )
+        
+        self.teacher1_existing = self.create_teacher(
+            self.school1,
+            "carryviewteacher1existing",
+            "CV-T003",
         )
 
         self.teacher2 = self.create_teacher(
             self.school2,
-            "bulkteacher2",
-            "BULK-T002",
+            "carryviewteacher2",
+            "CV-T002",
         )
+
+        # ----------------------------------------
+        # CLASSES
+        # ----------------------------------------
 
         self.class1 = self.create_class(
             self.school1,
@@ -390,129 +704,282 @@ class BulkSubjectAllocationFormTests(AllocationTestMixin, TestCase):
         )
 
         self.class2 = self.create_class(
+            self.school1,
+            "Primary 2",
+        )
+
+        self.other_school_class = self.create_class(
             self.school2,
             "Primary 1",
         )
 
-        self.subject1 = Subject.objects.create(
+        # ----------------------------------------
+        # SUBJECTS
+        # ----------------------------------------
+
+        self.subject1 = self.create_subject(
+            self.school1,
+            "Mathematics",
+            "CV-M001",
+        )
+
+        self.subject2 = self.create_subject(
+            self.school1,
+            "English",
+            "CV-M002",
+        )
+
+        self.other_school_subject = self.create_subject(
+            self.school2,
+            "Mathematics",
+            "CV-M003",
+        )
+
+        # ----------------------------------------
+        # TERMS
+        # ----------------------------------------
+
+        self.session1 = AcademicSession.objects.create(
             school=self.school1,
-            name="Mathematics",
-            code="BULK-M001",
-            level=Subject.SubjectLevel.PRIMARY,
+            name="2026/2027",
+            is_current=True,
         )
 
-        self.subject2 = Subject.objects.create(
+        self.from_term = Term.objects.create(
+            session=self.session1,
+            name=Term.TermName.FIRST,
+            is_current=False,
+        )
+
+        self.to_term = Term.objects.create(
+            session=self.session1,
+            name=Term.TermName.SECOND,
+            is_current=True,
+        )
+
+        self.other_session = AcademicSession.objects.create(
             school=self.school2,
-            name="Mathematics",
-            code="BULK-M002",
-            level=Subject.SubjectLevel.PRIMARY,
+            name="2026/2027",
+            is_current=True,
         )
 
-        ClassSubject.objects.create(
-            school_class=self.class1,
+        self.other_term = Term.objects.create(
+            session=self.other_session,
+            name=Term.TermName.FIRST,
+            is_current=True,
+        )
+
+    def test_copies_missing_allocations(self):
+        SubjectAllocation.objects.create(
+            teacher=self.teacher1,
             subject=self.subject1,
+            school_class=self.class1,
+            term=self.from_term,
         )
 
-        ClassSubject.objects.create(
-            school_class=self.class2,
-            subject=self.subject2,
-        )
+        self.client.force_login(self.admin1)
 
-        self.term1 = self.create_term(self.school1)
-        self.term2 = self.create_term(self.school2)
+        response = self.client.post(
+            reverse("carry_forward_allocations"),
+            {
+                
+                "from_session": self.session1.pk,
+                "from_term": self.from_term.pk,
+                "to_session": self.session1.pk,
+                "to_term": self.to_term.pk,
 
-    def test_bulk_form_only_contains_same_school_classes(self):
-        form = BulkSubjectAllocationForm(
-            user=self.user1,
-        )
-
-        self.assertIn(
-            self.class1,
-            form.fields["school_class"].queryset,
-        )
-
-        self.assertNotIn(
-            self.class2,
-            form.fields["school_class"].queryset,
-        )
-
-    def test_bulk_form_only_contains_same_school_terms(self):
-        form = BulkSubjectAllocationForm(
-            user=self.user1,
-        )
-
-        self.assertIn(
-            self.term1,
-            form.fields["term"].queryset,
-        )
-
-        self.assertNotIn(
-            self.term2,
-            form.fields["term"].queryset,
-        )
-
-    def test_get_teachers_only_returns_same_school_teachers(self):
-        form = BulkSubjectAllocationForm(
-            user=self.user1,
-        )
-
-        teachers = form.get_teachers()
-
-        self.assertIn(
-            self.teacher1,
-            teachers,
-        )
-
-        self.assertNotIn(
-            self.teacher2,
-            teachers,
-        )
-
-    def test_get_subjects_returns_subjects_assigned_to_class(self):
-        form = BulkSubjectAllocationForm(
-            data={
-                "school_class": self.class1.id,
-                "term": self.term1.id,
             },
-            user=self.user1,
         )
 
-        subjects = form.get_subjects()
-
-        self.assertIn(
-            self.subject1,
-            subjects,
+        self.assertEqual(
+            response.status_code,
+            302,
         )
 
-        self.assertNotIn(
-            self.subject2,
-            subjects,
-        )
-    
-    def test_bulk_form_excludes_inactive_classes(self):
-        self.class1.is_active = False
-        self.class1.save(update_fields=["is_active"])
-
-        form = BulkSubjectAllocationForm(
-            user=self.user1,
+        allocation = SubjectAllocation.objects.get(
+            subject=self.subject1,
+            school_class=self.class1,
+            term=self.to_term,
         )
 
-        self.assertNotIn(
-            self.class1,
-            form.fields["school_class"].queryset,
+        self.assertEqual(
+            allocation.teacher,
+            self.teacher1,
         )
 
-
-    def test_bulk_form_still_includes_active_classes(self):
-        form = BulkSubjectAllocationForm(
-            user=self.user1,
+    def test_new_allocations_are_draft(self):
+        SubjectAllocation.objects.create(
+            teacher=self.teacher1,
+            subject=self.subject1,
+            school_class=self.class1,
+            term=self.from_term,
         )
 
-        self.assertIn(
-            self.class1,
-            form.fields["school_class"].queryset,
+        self.client.force_login(self.admin1)
+
+        self.client.post(
+            reverse("carry_forward_allocations"),
+            {
+                
+                "from_session": self.session1.pk,
+                "from_term": self.from_term.pk,
+                "to_session": self.session1.pk,
+                "to_term": self.to_term.pk,
+
+            },
         )
 
+        allocation = SubjectAllocation.objects.get(
+            subject=self.subject1,
+            school_class=self.class1,
+            term=self.to_term,
+        )
+
+        self.assertEqual(
+            allocation.status,
+            SubjectAllocation.Status.DRAFT,
+        )
+
+    def test_does_not_overwrite_existing_destination_allocations(self):
+        SubjectAllocation.objects.create(
+            teacher=self.teacher1,
+            subject=self.subject1,
+            school_class=self.class1,
+            term=self.from_term,
+        )
+
+        existing_destination = SubjectAllocation.objects.create(
+            teacher=self.teacher1_existing,
+            subject=self.subject1,
+            school_class=self.class1,
+            term=self.to_term,
+        )
+
+        self.client.force_login(self.admin1)
+
+        self.client.post(
+            reverse("carry_forward_allocations"),
+            {
+            
+                "from_session": self.session1.pk,
+                "from_term": self.from_term.pk,
+                "to_session": self.session1.pk,
+                "to_term": self.to_term.pk,
+
+            },
+        )
+
+        destination_allocations = SubjectAllocation.objects.filter(
+            subject=self.subject1,
+            school_class=self.class1,
+            term=self.to_term,
+        )
+
+        self.assertEqual(
+            destination_allocations.count(),
+            1,
+        )
+
+        existing_destination.refresh_from_db()
+
+        self.assertEqual(
+            existing_destination.teacher,
+            self.teacher1_existing,
+        )
+
+    def test_does_not_copy_allocations_from_another_school(self):
+        SubjectAllocation.objects.create(
+            teacher=self.teacher2,
+            subject=self.other_school_subject,
+            school_class=self.other_school_class,
+            term=self.other_term,
+        )
+
+        self.client.force_login(self.admin1)
+
+        response = self.client.post(
+            reverse("carry_forward_allocations"),
+            {
+                
+                "from_session": self.session1.pk,
+                "from_term": self.from_term.pk,
+                "to_session": self.session1.pk,
+                "to_term": self.to_term.pk,
+            },
+        )
+
+        self.assertEqual(
+            response.status_code,
+            302,
+        )
+
+        self.assertFalse(
+            SubjectAllocation.objects.filter(
+                subject=self.other_school_subject,
+                school_class=self.other_school_class,
+                term=self.to_term,
+            ).exists()
+        )
+
+    def test_same_source_and_destination_terms_are_rejected(self):
+        self.client.force_login(self.admin1)
+
+        response = self.client.post(
+            reverse("carry_forward_allocations"),
+            {
+                "from_session": self.session1.pk,
+                "from_term": self.from_term.pk,
+                "to_session": self.session1.pk,
+                "to_term": self.from_term.pk,
+            },
+        )
+
+        self.assertEqual(
+            response.status_code,
+            200,
+        )
+
+        self.assertEqual(
+            SubjectAllocation.objects.filter(
+                term=self.from_term,
+            ).count(),
+            0,
+        )
+
+    def test_view_requires_subjects_assign_permission(self):
+        SubjectAllocation.objects.create(
+            teacher=self.teacher1,
+            subject=self.subject1,
+            school_class=self.class1,
+            term=self.from_term,
+        )
+
+        self.client.force_login(
+            self.admin_without_permission
+        )
+
+        response = self.client.post(
+            reverse("carry_forward_allocations"),
+            {
+                "from_session": self.session1.pk,
+                "from_term": self.from_term.pk,
+                "to_session": self.session1.pk,
+                "to_term": self.to_term.pk,
+            },
+        )
+
+        self.assertNotEqual(
+            response.status_code,
+            302,
+        )
+
+        self.assertFalse(
+            SubjectAllocation.objects.filter(
+                subject=self.subject1,
+                school_class=self.class1,
+                term=self.to_term,
+            ).exists()
+        )
 
 class AllocationViewSecurityTests(AllocationTestMixin, TestCase):
 

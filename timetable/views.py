@@ -9,15 +9,21 @@ from accounts.utils import get_current_term
 from .forms import (
     TimetableForm,
     TimetablePeriodForm,
+    TimetablePeriodTemplateForm,
     TimetableRequirementForm,
     TeacherAvailabilityForm,
+    TimetablePeriodTemplateBlockForm,
+    TimetablePeriodTemplateDayForm,
 )
 from .models import (
     Timetable,
     TimetablePeriod,
+    TimetablePeriodTemplate,
     TimetableRequirement,
     TeacherAvailability,
     TimetableEntry,
+    TimetablePeriodTemplateDay,
+    TimetablePeriodTemplateBlock,
 )
 
 from .generator import generate_timetable, TimetableGenerationError
@@ -27,6 +33,10 @@ from django.contrib import messages
 from django.shortcuts import get_object_or_404
 from django.core.exceptions import ValidationError
 
+from .services import (
+    sync_timetable_requirements,
+    apply_timetable_period_template,
+)
 
 @management_required
 @login_required
@@ -176,8 +186,8 @@ def timetable_view(request, timetable_id):
 
     periods = timetable.periods.filter(
         is_active=True,
-    ).order_by("period_number")
-    
+    ).order_by("day", "period_number")
+
     entries = (
         timetable.entries
         .select_related(
@@ -186,7 +196,7 @@ def timetable_view(request, timetable_id):
             "requirement__allocation__teacher__user",
             "period",
         )
-        .order_by("period__period_number")
+        .order_by("period__day", "period__period_number")
     )
 
     selected_section = request.GET.get("section", "")
@@ -222,16 +232,24 @@ def timetable_view(request, timetable_id):
 
     day_labels = dict(TimetableEntry.Day.choices)
 
+    periods_by_day = {}
+
+    for period in periods:
+        periods_by_day.setdefault(period.day, []).append(period)
+
     grid = []
 
     for day_value in timetable.days:
+        day_periods = periods_by_day.get(day_value, [])
+
         row = {
             "day": day_value,
             "day_label": day_labels.get(day_value, day_value),
+            "periods": day_periods,
             "cells": [],
         }
 
-        for period in periods:
+        for period in day_periods:
             row["cells"].append({
                 "period": period,
                 "entry": entries_by_slot.get(
@@ -250,6 +268,190 @@ def timetable_view(request, timetable_id):
             "periods": periods,
             "timetable_classes": timetable_classes,
             "sections": sections,
+        },
+    )
+
+@login_required
+@feature_required("TIMETABLE")
+@school_permission_required("timetable.create")
+def timetable_period_templates(request):
+    school = request.user.school
+
+    templates = TimetablePeriodTemplate.objects.filter(
+        school=school
+    ).order_by("name")
+
+    if request.method == "POST":
+        form = TimetablePeriodTemplateForm(
+            request.POST,
+            school=school,
+        )
+
+        if form.is_valid():
+            template = form.save(commit=False)
+            template.school = school
+            template.save()
+
+            return redirect("timetable_period_templates")
+    else:
+        form = TimetablePeriodTemplateForm(
+            school=school,
+        )
+
+    return render(
+        request,
+        "timetable/period_templates.html",
+        {
+            "templates": templates,
+            "form": form,
+        },
+    )
+
+@login_required
+@feature_required("TIMETABLE")
+@school_permission_required("timetable.create")
+def timetable_period_template_configure(request, template_id):
+    template = get_object_or_404(
+        TimetablePeriodTemplate,
+        id=template_id,
+        school=request.user.school,
+    )
+
+    days = template.days.prefetch_related("blocks")
+
+    if request.method == "POST":
+        action = request.POST.get("action")
+
+        if action == "add_day":
+            form = TimetablePeriodTemplateDayForm(
+                request.POST,
+                template=template,
+            )
+
+            if form.is_valid():
+                day = form.save(commit=False)
+                day.template = template
+                day.save()
+
+                return redirect(
+                    "timetable_period_template_configure",
+                    template_id=template.id,
+                )
+
+        elif action == "add_block":
+            day_id = request.POST.get("day_id")
+
+            day = get_object_or_404(
+                TimetablePeriodTemplateDay,
+                id=day_id,
+                template=template,
+            )
+
+            form = TimetablePeriodTemplateBlockForm(
+                request.POST,
+                day=day,
+            )
+
+            if form.is_valid():
+                block = form.save(commit=False)
+                block.day = day
+                block.save()
+
+                return redirect(
+                    "timetable_period_template_configure",
+                    template_id=template.id,
+                )
+
+    return render(
+        request,
+        "timetable/period_template_configure.html",
+        {
+            "template": template,
+            "days": days,
+            "day_form": TimetablePeriodTemplateDayForm(
+                template=template,
+            ),
+            "block_form": TimetablePeriodTemplateBlockForm(),
+        },
+    )
+
+@login_required
+@feature_required("TIMETABLE")
+@school_permission_required("timetable.create")
+def edit_timetable_period_template_block(request, template_id, block_id):
+    template = get_object_or_404(
+        TimetablePeriodTemplate,
+        id=template_id,
+        school=request.user.school,
+    )
+
+    block = get_object_or_404(
+        TimetablePeriodTemplateBlock,
+        id=block_id,
+        day__template=template,
+    )
+
+    if request.method == "POST":
+        form = TimetablePeriodTemplateBlockForm(
+            request.POST,
+            instance=block,
+            day=block.day,
+        )
+
+        if form.is_valid():
+            form.save()
+
+            return redirect(
+                "timetable_period_template_configure",
+                template_id=template.id,
+            )
+    else:
+        form = TimetablePeriodTemplateBlockForm(
+            instance=block,
+            day=block.day,
+        )
+
+    return render(
+        request,
+        "timetable/period_template_block_form.html",
+        {
+            "template": template,
+            "block": block,
+            "form": form,
+            "action": "Edit",
+        },
+    )
+
+@login_required
+@feature_required("TIMETABLE")
+@school_permission_required("timetable.create")
+def delete_timetable_period_template_block(request, template_id, block_id):
+    template = get_object_or_404(
+        TimetablePeriodTemplate,
+        id=template_id,
+        school=request.user.school,
+    )
+
+    block = get_object_or_404(
+        TimetablePeriodTemplateBlock,
+        id=block_id,
+        day__template=template,
+    )
+
+    if request.method == "POST":
+        block.delete()
+
+        return redirect(
+            "timetable_period_template_configure",
+            template_id=template.id,
+        )
+
+    return render(
+        request,
+        "timetable/period_template_block_delete.html",
+        {
+            "template": template,
+            "block": block,
         },
     )
 
@@ -290,6 +492,11 @@ def timetable_periods(request, timetable_id):
 
     periods = timetable.periods.all()
 
+    templates = TimetablePeriodTemplate.objects.filter(
+        school=school,
+        is_active=True,
+    ).order_by("name")
+
     return render(
         request,
         "timetable/timetable_periods.html",
@@ -297,7 +504,58 @@ def timetable_periods(request, timetable_id):
             "timetable": timetable,
             "periods": periods,
             "form": form,
+            "templates": templates,
         },
+    )
+
+@login_required
+@feature_required("TIMETABLE")
+def apply_timetable_period_template_view(request, timetable_id):
+    school = request.user.school
+
+    timetable = get_object_or_404(
+        Timetable.objects.select_related(
+            "term",
+            "term__session",
+        ),
+        id=timetable_id,
+        school=school,
+    )
+
+    if request.method != "POST":
+        return redirect(
+            "timetable_periods",
+            timetable_id=timetable.id,
+        )
+
+    template_id = request.POST.get("template_id")
+
+    template = get_object_or_404(
+        TimetablePeriodTemplate,
+        id=template_id,
+        school=school,
+    )
+
+    try:
+        created_count = apply_timetable_period_template(
+            timetable=timetable,
+            template=template,
+        )
+    except ValidationError as exc:
+        messages.error(
+            request,
+            exc.messages[0],
+        )
+    else:
+        messages.success(
+            request,
+            f"Period template '{template.name}' was applied successfully. "
+            f"{created_count} period(s) were created.",
+        )
+
+    return redirect(
+        "timetable_periods",
+        timetable_id=timetable.id,
     )
 
 @login_required
@@ -430,7 +688,7 @@ def generate_timetable_view(request, timetable_id):
         )
 
     try:
-        entries = generate_timetable(timetable)
+        entries = generate_timetable(timetable, school)
 
     except (TimetableGenerationError, ValidationError) as exc:
         messages.error(

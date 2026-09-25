@@ -60,6 +60,21 @@
 
                 </div>
 
+                <div class="mb-3">
+                    <label for="{{ form.day.id_for_label }}"
+                           class="form-label">
+                        Day
+                    </label>
+                
+                    {{ form.day }}
+                
+                    {% if form.day.errors %}
+                        <div class="text-danger small mt-1">
+                            {{ form.day.errors }}
+                        </div>
+                    {% endif %}
+                </div>
+
 
                 <div class="mb-3">
 
