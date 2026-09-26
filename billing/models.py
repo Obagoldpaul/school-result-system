@@ -220,9 +220,10 @@ def get_fee_assignments_for_student(student, term):
         Automatically included when the assignment applies.
 
     Optional fees:
-        Included only when the student has explicitly opted in
-        through OptionalFeeEnrollment.
-
+        Included by default when the assignment applies.
+        A student can explicitly opt out through
+        OptionalFeeEnrollment.
+        
     Priority:
         1. Individual student assignment
         2. Department assignment
@@ -255,11 +256,11 @@ def get_fee_assignments_for_student(student, term):
         # OPTIONAL FEE CHECK
         # -------------------------------------------------
         #
-        # Optional fees should NOT automatically appear
-        # on every applicable student's bill.
+        # Optional fees are included by default when the
+        # assignment applies.
         #
-        # They must have an active enrollment record.
-        #
+        # A student is excluded only when they have an
+        # explicit enrollment record with opted_in=False.
 
         if assignment.fee_category.category_type == "OPTIONAL":
 

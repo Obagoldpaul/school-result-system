@@ -1424,7 +1424,7 @@ def manage_optional_fee_students(request, assignment_id):
                 "opted_in": (
                     enrollment.opted_in
                     if enrollment
-                    else False
+                    else True
                 ),
             }
         )
@@ -1536,13 +1536,6 @@ def fee_assignment_list(request):
         "department",
         "student",
         "student__user",
-    ).annotate(
-        enrollment_count=Count(
-            "optional_enrollments",
-            filter=Q(
-                optional_enrollments__opted_in=True
-            ),
-        )
     )
 
     # ---------------------------------------------------------
@@ -1651,6 +1644,55 @@ def fee_assignment_list(request):
             "term__session__name",
             "term",
             "fee_category__name",
+        )
+
+    # ---------------------------------------------------------
+    # OPTIONAL FEE ENROLLMENT COUNTS
+    # ---------------------------------------------------------
+
+    assignments = list(assignments)
+
+    for assignment in assignments:
+
+        if assignment.fee_category.category_type != "OPTIONAL":
+            assignment.enrollment_count = 0
+            continue
+
+        if assignment.student_id:
+
+            applicable_students = Student.objects.filter(
+                id=assignment.student_id,
+                is_active=True,
+            )
+
+        elif assignment.department_id:
+
+            applicable_students = Student.objects.filter(
+                school_class_id=assignment.school_class_id,
+                department_id=assignment.department_id,
+                is_active=True,
+            )
+
+        elif assignment.school_class_id:
+
+            applicable_students = Student.objects.filter(
+                school_class_id=assignment.school_class_id,
+                is_active=True,
+            )
+
+        else:
+
+            applicable_students = Student.objects.none()
+
+        opted_out_count = OptionalFeeEnrollment.objects.filter(
+            fee_assignment=assignment,
+            student__in=applicable_students,
+            opted_in=False,
+        ).count()
+
+        assignment.enrollment_count = (
+            applicable_students.count()
+            - opted_out_count
         )
 
     # ---------------------------------------------------------
