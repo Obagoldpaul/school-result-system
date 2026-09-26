@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
 from django.contrib.auth.decorators import login_required
-from requests import request
+
 from accounts.permissions import school_permission_required
 from students.models import Student, SchoolClass, Department
 from .forms import (
