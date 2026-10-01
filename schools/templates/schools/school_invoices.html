@@ -1,0 +1,193 @@
+{% extends "base.html" %}
+
+{% block title %}
+    Invoices | {{ school.name }}
+{% endblock %}
+
+{% block content %}
+
+<div class="container-fluid">
+
+    <!-- HEADER -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1>Invoices</h1>
+            <p class="text-muted mb-0">
+                Invoices issued to
+                <strong>{{ school.name }}</strong>
+                for Paul SchoolHub services.
+            </p>
+        </div>
+    
+        <div class="d-flex gap-2">
+            <a
+                href="{% url 'school_invoices' school.id %}"
+                class="btn btn-outline-secondary"
+            >
+                Back to Schools
+            </a>
+    
+            <a
+                href="{% url 'create_subscription_invoice' school.id %}"
+                class="btn btn-primary"
+            >
+                + Create Invoice
+            </a>
+        </div>
+    </div>
+
+
+    <!-- INVOICES -->
+    <div class="card shadow-sm">
+
+        <div class="card-body">
+
+            <div class="d-flex justify-content-between align-items-center mb-3">
+
+                <div>
+
+                    <h5 class="card-title mb-1">
+                        {{ school.name }} — Invoices
+                    </h5>
+
+                    <p class="text-muted mb-0">
+                        View invoices issued to this school.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div class="table-responsive">
+
+                <table class="table table-hover align-middle">
+
+                    <thead>
+
+                        <tr>
+
+                            <th>
+                                Invoice
+                            </th>
+
+                            <th>
+                                Invoice Date
+                            </th>
+
+                            <th>
+                                Due Date
+                            </th>
+
+                            <th>
+                                Total
+                            </th>
+
+                            <th>
+                                Status
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody>
+
+                        {% for invoice in invoices %}
+
+                        <tr>
+
+                            <td>
+                                <a
+                                    href="{% url 'subscription_invoice_detail' school.id invoice.id %}"
+                                    class="text-decoration-none"
+                                >
+                                    <strong>{{ invoice.invoice_number }}</strong>
+                                </a>
+                            </td>
+
+                            <td>
+                                {{ invoice.invoice_date }}
+                            </td>
+
+                            <td>
+
+                                {% if invoice.due_date %}
+
+                                    {{ invoice.due_date }}
+
+                                {% else %}
+
+                                    —
+
+                                {% endif %}
+
+                            </td>
+
+                            <td>
+                                ₦{{ invoice.total|floatformat:2 }}
+                            </td>
+
+                            <td>
+
+                                {% if invoice.status == "PAID" %}
+
+                                    <span class="badge bg-success">
+                                        Paid
+                                    </span>
+
+                                {% elif invoice.status == "PARTIALLY_PAID" %}
+
+                                    <span class="badge bg-warning text-dark">
+                                        Partially Paid
+                                    </span>
+
+                                {% elif invoice.status == "CANCELLED" %}
+
+                                    <span class="badge bg-secondary">
+                                        Cancelled
+                                    </span>
+
+                                {% else %}
+
+                                    <span class="badge bg-danger">
+                                        Unpaid
+                                    </span>
+
+                                {% endif %}
+
+                            </td>
+
+                        </tr>
+
+                        {% empty %}
+
+                        <tr>
+
+                            <td
+                                colspan="5"
+                                class="text-center text-muted py-5"
+                            >
+
+                                No invoices have been issued to this school yet.
+
+                            </td>
+
+                        </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

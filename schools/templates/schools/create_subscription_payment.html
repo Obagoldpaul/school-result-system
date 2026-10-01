@@ -1,0 +1,203 @@
+{% extends "base.html" %}
+
+{% block title %}
+    Record Payment
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1>Record Payment</h1>
+            <p class="text-muted mb-0">
+                Record a payment for
+                <strong>{{ school.name }}</strong>.
+            </p>
+        </div>
+
+        <a
+            href="{% url 'subscription_invoice_detail' school.id invoice.id %}"
+            class="btn btn-outline-secondary"
+        >
+            Back to Invoice
+        </a>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+
+            <h5 class="card-title mb-3">
+                Invoice Summary
+            </h5>
+
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <strong>Invoice Number</strong>
+                    <div>{{ invoice.invoice_number }}</div>
+                </div>
+
+                <div class="col-md-4">
+                    <strong>Invoice Total</strong>
+                    <div>
+                        ₦{{ invoice.total|floatformat:2 }}
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <strong>Status</strong>
+                    <div>
+                        {% if invoice.status == "PAID" %}
+                            <span class="badge bg-success">
+                                Paid
+                            </span>
+                        {% elif invoice.status == "PARTIALLY_PAID" %}
+                            <span class="badge bg-warning text-dark">
+                                Partially Paid
+                            </span>
+                        {% elif invoice.status == "CANCELLED" %}
+                            <span class="badge bg-secondary">
+                                Cancelled
+                            </span>
+                        {% else %}
+                            <span class="badge bg-danger">
+                                Unpaid
+                            </span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+
+            <h5 class="card-title mb-4">
+                Payment Details
+            </h5>
+
+            <form method="post">
+                {% csrf_token %}
+
+                {% if form.non_field_errors %}
+                    <div class="alert alert-danger">
+                        {{ form.non_field_errors }}
+                    </div>
+                {% endif %}
+
+                <div class="row g-3">
+
+                    <div class="col-md-6">
+                        <label
+                            for="{{ form.payment_date.id_for_label }}"
+                            class="form-label"
+                        >
+                            {{ form.payment_date.label }}
+                        </label>
+
+                        {{ form.payment_date }}
+
+                        {% for error in form.payment_date.errors %}
+                            <div class="text-danger small mt-1">
+                                {{ error }}
+                            </div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="col-md-6">
+                        <label
+                            for="{{ form.amount.id_for_label }}"
+                            class="form-label"
+                        >
+                            {{ form.amount.label }}
+                        </label>
+
+                        {{ form.amount }}
+
+                        {% for error in form.amount.errors %}
+                            <div class="text-danger small mt-1">
+                                {{ error }}
+                            </div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="col-md-6">
+                        <label
+                            for="{{ form.payment_method.id_for_label }}"
+                            class="form-label"
+                        >
+                            {{ form.payment_method.label }}
+                        </label>
+
+                        {{ form.payment_method }}
+
+                        {% for error in form.payment_method.errors %}
+                            <div class="text-danger small mt-1">
+                                {{ error }}
+                            </div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="col-md-6">
+                        <label
+                            for="{{ form.payment_reference.id_for_label }}"
+                            class="form-label"
+                        >
+                            {{ form.payment_reference.label }}
+                        </label>
+
+                        {{ form.payment_reference }}
+
+                        {% for error in form.payment_reference.errors %}
+                            <div class="text-danger small mt-1">
+                                {{ error }}
+                            </div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="col-12">
+                        <label
+                            for="{{ form.notes.id_for_label }}"
+                            class="form-label"
+                        >
+                            {{ form.notes.label }}
+                        </label>
+
+                        {{ form.notes }}
+
+                        {% for error in form.notes.errors %}
+                            <div class="text-danger small mt-1">
+                                {{ error }}
+                            </div>
+                        {% endfor %}
+                    </div>
+
+                </div>
+
+                <div class="d-flex justify-content-end gap-2 mt-4">
+
+                    <a
+                        href="{% url 'subscription_invoice_detail' school.id invoice.id %}"
+                        class="btn btn-outline-secondary"
+                    >
+                        Cancel
+                    </a>
+
+                    <button
+                        type="submit"
+                        class="btn btn-success"
+                    >
+                        Record Payment
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+
+</div>
+{% endblock %}

@@ -70,6 +70,48 @@ urlpatterns = [
     ),
     
     path(
+        "schools/<int:school_id>/invoices/",
+        views.school_invoices,
+        name="school_invoices",
+    ),
+    
+    path(
+        "schools/<int:school_id>/invoices/create/",
+        views.create_subscription_invoice,
+        name="create_subscription_invoice",
+    ),
+    
+    path(
+        "schools/<int:school_id>/invoices/<int:invoice_id>/payments/create/",
+        views.create_subscription_payment,
+        name="create_subscription_payment",
+    ),
+    
+    path(
+        "schools/<int:school_id>/payments/<int:payment_id>/receipt/",
+        views.subscription_payment_receipt,
+        name="subscription_payment_receipt",
+    ),
+    
+    path(
+        "schools/<int:school_id>/payments/<int:payment_id>/receipt/pdf/",
+        views.subscription_payment_receipt_pdf,
+        name="subscription_payment_receipt_pdf",
+    ),
+    
+    path(
+        "schools/<int:school_id>/invoices/<int:invoice_id>/",
+        views.subscription_invoice_detail,
+        name="subscription_invoice_detail",
+    ),
+    
+    path(
+        "schools/<int:school_id>/invoices/<int:invoice_id>/pdf/",
+        views.subscription_invoice_pdf,
+        name="subscription_invoice_pdf",
+    ),
+    
+    path(
         "schools/<int:school_id>/status/",
         views.toggle_school_status,
         name="toggle_school_status",
@@ -111,6 +153,24 @@ urlpatterns = [
         "features/<int:feature_id>/status/",
         views.toggle_feature_status,
         name="toggle_feature_status",
+    ),
+    
+    path(
+        "pricing/",
+        views.manage_pricing,
+        name="manage_pricing",
+    ),
+    
+    path(
+        "pricing/add/",
+        views.create_pricing,
+        name="create_pricing",
+    ),
+    
+    path(
+        "pricing/<int:pricing_id>/edit/",
+        views.edit_pricing,
+        name="edit_pricing",
     ),
     
     path(

@@ -110,6 +110,29 @@
 
                         <div class="mb-3">
 
+                            <label
+                                for="{{ form.agreed_price.id_for_label }}"
+                                class="form-label"
+                            >
+                                Agreed Price
+                            </label>
+                        
+                            {{ form.agreed_price }}
+                        
+                            {% if form.agreed_price.errors %}
+                                <div class="text-danger small mt-1">
+                                    {{ form.agreed_price.errors }}
+                                </div>
+                            {% endif %}
+                        
+                            <div class="form-text">
+                                This is the actual subscription price agreed with this school.
+                            </div>
+                        
+                        </div>
+
+                        <div class="mb-3">
+
                             <label class="form-label">
                                 End Date
                             </label>
@@ -238,6 +261,16 @@
         const endDateInput = document.getElementById(
             "subscription-end-date"
         );
+
+        const packageInput = document.getElementById(
+            "{{ form.package.id_for_label }}"
+        );
+
+        const agreedPriceInput = document.getElementById(
+            "{{ form.agreed_price.id_for_label }}"
+        );
+
+        const pricingDefaults = {{ form.pricing_defaults|safe|default:"{}" }};
     
     
         function addMonths(date, months) {
@@ -328,6 +361,26 @@
             "change",
             calculateEndDate
         );
+
+        packageInput.addEventListener(
+            "change",
+            updateAgreedPrice
+        );
+
+        billingCycleInput.addEventListener(
+            "change",
+            updateAgreedPrice
+        );
+
+        function updateAgreedPrice() {
+
+            const key =
+                `${packageInput.value}_${billingCycleInput.value}`;
+
+            if (pricingDefaults[key] !== undefined) {
+                agreedPriceInput.value = pricingDefaults[key];
+            }
+        }
     
     
         calculateEndDate();

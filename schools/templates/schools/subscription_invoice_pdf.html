@@ -1,0 +1,583 @@
+{% load humanize %}
+
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+
+
+<title>
+    Invoice {{ invoice.invoice_number }}
+</title>
+
+<style>
+    @page {
+        size: A4;
+        margin: 18mm;
+    }
+
+    body {
+        font-family: Arial, Helvetica, sans-serif;
+        font-size: 12px;
+        color: #201e1e;
+        line-height: 1.5;
+        margin: 0;
+    }
+
+    table {
+        border-collapse: collapse;
+    }
+
+    .header-table {
+        width: 100%;
+        margin-bottom: 35px;
+    }
+
+    .header-left {
+        width: 55%;
+        vertical-align: top;
+    }
+
+    .header-right {
+        width: 45%;
+        vertical-align: top;
+        text-align: right;
+    }
+
+    .logo {
+        max-width: 150px;
+        max-height: 70px;
+        margin-bottom: 10px;
+    }
+
+    .company-name {
+        font-size: 20px;
+        font-weight: bold;
+        margin-bottom: 2px;
+    }
+
+    .product-name {
+        font-size: 13px;
+        color: #666666;
+    }
+
+    .invoice-title {
+        font-size: 28px;
+        font-weight: bold;
+        margin-bottom: 12px;
+        letter-spacing: 1px;
+    }
+
+    .invoice-meta {
+        margin-left: auto;
+        font-size: 11px;
+        width: 100%;
+    }
+
+    .invoice-meta td {
+        padding: 3px 0;
+        vertical-align: top;
+    }
+
+    .invoice-meta td:first-child {
+        text-align: left;
+        padding-right: 12px;
+        white-space: nowrap;
+    }
+
+    .invoice-meta td:last-child {
+        text-align: right;
+        white-space: nowrap;
+    }
+
+    .status {
+        font-weight: bold;
+    }
+
+    .status-paid {
+        color: #198754;
+    }
+
+    .status-partial {
+        color: #856404;
+    }
+
+    .status-cancelled {
+        color: #6c757d;
+    }
+
+    .status-unpaid {
+        color: #dc3545;
+    }
+
+    .section-title {
+        font-size: 14px;
+        font-weight: bold;
+        margin-bottom: 8px;
+    }
+
+    .bill-to {
+        margin-bottom: 30px;
+    }
+
+    .bill-to p {
+        margin: 0 0 3px 0;
+    }
+
+    .items-table {
+        width: 100%;
+        margin-top: 10px;
+    }
+
+    .items-table th {
+        background: #f7f2ef;
+        border-bottom: 2px solid #201e1e;
+        padding: 9px 8px;
+        text-align: left;
+    }
+
+    .items-table td {
+        border-bottom: 1px solid #dddddd;
+        padding: 9px 8px;
+    }
+
+    .items-table th:first-child,
+    .items-table td:first-child {
+        text-align: left;
+    }
+
+    .items-table th:nth-child(2),
+    .items-table td:nth-child(2) {
+        text-align: center;
+    }
+
+    .items-table th:nth-child(3),
+    .items-table td:nth-child(3),
+    .items-table th:nth-child(4),
+    .items-table td:nth-child(4) {
+        text-align: right;
+    }
+
+    .text-center {
+        text-align: center;
+    }
+
+    .text-right {
+        text-align: right;
+    }
+
+    .totals-wrapper {
+        width: 45%;
+        margin-left: auto;
+        margin-top: 20px;
+    }
+
+    .totals-table {
+        width: 100%;
+    }
+
+    .totals-table td {
+        padding: 5px 0;
+    }
+
+    .total-row td {
+        border-top: 2px solid #201e1e;
+        padding-top: 9px;
+        font-size: 15px;
+        font-weight: bold;
+    }
+
+    .payment-summary {
+        width: 45%;
+        margin-left: auto;
+        margin-top: 30px;
+    }
+
+    .payment-summary-table {
+        width: 100%;
+    }
+
+    .payment-summary-table td {
+        padding: 5px 0;
+    }
+
+    .payment-summary-table .outstanding-row td {
+        border-top: 2px solid #201e1e;
+        padding-top: 9px;
+        font-weight: bold;
+    }
+
+    .payment-history {
+        margin-top: 30px;
+    }
+
+    .payment-history-table {
+        width: 100%;
+        margin-top: 10px;
+    }
+
+    .payment-history-table th {
+        background: #f7f2ef;
+        border-bottom: 2px solid #201e1e;
+        padding: 8px;
+        text-align: left;
+    }
+
+    .payment-history-table td {
+        border-bottom: 1px solid #dddddd;
+        padding: 8px;
+    }
+
+    .payment-history-table th:nth-child(3),
+    .payment-history-table td:nth-child(3) {
+        text-align: right;
+    }
+
+    .payment-history-table th:nth-child(2),
+    .payment-history-table td:nth-child(2) {
+        text-align: center;
+    }
+
+    .notes {
+        margin-top: 30px;
+        padding-top: 15px;
+        border-top: 1px solid #dddddd;
+    }
+
+    .footer {
+        margin-top: 40px;
+        padding-top: 12px;
+        border-top: 1px solid #dddddd;
+        text-align: center;
+        font-size: 10px;
+        color: #666666;
+    }
+</style>
+
+</head>
+
+<body>
+
+<!-- Invoice Header -->
+<table class="header-table">
+    <tr>
+        <td class="header-left">
+
+            {% if platform_settings.platform_logo %}
+                <img
+                    src="{{ platform_settings.platform_logo.url }}"
+                    alt="Paul SchoolHub"
+                    class="logo"
+                >
+            {% endif %}
+
+            <div class="company-name">
+                Paul Media Services
+            </div>
+
+            <div class="product-name">
+                Paul SchoolHub
+            </div>
+
+        </td>
+
+        <td class="header-right">
+
+            <div class="invoice-title">
+                INVOICE
+            </div>
+
+            <table class="invoice-meta">
+                <tr>
+                    <td>
+                        <strong>Invoice Number:</strong>
+                    </td>
+                    <td>
+                        {{ invoice.invoice_number }}
+                    </td>
+                </tr>
+
+                <tr>
+                    <td>
+                        <strong>Invoice Date:</strong>
+                    </td>
+                    <td>
+                        {{ invoice.invoice_date }}
+                    </td>
+                </tr>
+
+                <tr>
+                    <td>
+                        <strong>Due Date:</strong>
+                    </td>
+                    <td>
+                        {% if invoice.due_date %}
+                            {{ invoice.due_date }}
+                        {% else %}
+                            —
+                        {% endif %}
+                    </td>
+                </tr>
+
+                <tr>
+                    <td>
+                        <strong>Status:</strong>
+                    </td>
+                    <td>
+                        {% if invoice.status == "PAID" %}
+                            <span class="status status-paid">
+                                Paid
+                            </span>
+                        {% elif invoice.status == "PARTIALLY_PAID" %}
+                            <span class="status status-partial">
+                                Partially Paid
+                            </span>
+                        {% elif invoice.status == "CANCELLED" %}
+                            <span class="status status-cancelled">
+                                Cancelled
+                            </span>
+                        {% else %}
+                            <span class="status status-unpaid">
+                                Unpaid
+                            </span>
+                        {% endif %}
+                    </td>
+                </tr>
+            </table>
+
+        </td>
+    </tr>
+</table>
+
+
+<!-- Bill To -->
+<div class="bill-to">
+
+    <div class="section-title">
+        Bill To
+    </div>
+
+    <p>
+        <strong>{{ school.name }}</strong>
+    </p>
+
+    {% if school.email %}
+        <p>{{ school.email }}</p>
+    {% endif %}
+
+    {% if school.phone %}
+        <p>{{ school.phone }}</p>
+    {% endif %}
+
+    {% if school.address %}
+        <p>{{ school.address }}</p>
+    {% endif %}
+
+</div>
+
+
+<!-- Invoice Items -->
+<div class="section-title">
+    Invoice Items
+</div>
+
+<table class="items-table">
+    <thead>
+        <tr>
+            <th>Description</th>
+            <th class="text-center">Quantity</th>
+            <th class="text-right">Unit Price</th>
+            <th class="text-right">Amount</th>
+        </tr>
+    </thead>
+
+    <tbody>
+        {% for item in invoice.items.all %}
+            <tr>
+                <td>
+                    {{ item.description }}
+                </td>
+
+                <td class="text-center">
+                    {{ item.quantity }}
+                </td>
+
+                <td class="text-right">
+                    ₦{{ item.unit_price|floatformat:2|intcomma }}
+                </td>
+
+                <td class="text-right">
+                    ₦{{ item.amount|floatformat:2|intcomma }}
+                </td>
+            </tr>
+        {% empty %}
+            <tr>
+                <td colspan="4" class="text-center">
+                    No invoice items found.
+                </td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+
+<!-- Totals -->
+<div class="totals-wrapper">
+
+    <table class="totals-table">
+
+        <tr>
+            <td>
+                Subtotal
+            </td>
+
+            <td class="text-right">
+                ₦{{ invoice.subtotal|floatformat:2|intcomma }}
+            </td>
+        </tr>
+
+        <tr>
+            <td>
+                Discount
+            </td>
+
+            <td class="text-right">
+                ₦{{ invoice.discount|floatformat:2|intcomma }}
+            </td>
+        </tr>
+
+        <tr class="total-row">
+            <td>
+                Total
+            </td>
+
+            <td class="text-right">
+                ₦{{ invoice.total|floatformat:2|intcomma }}
+            </td>
+        </tr>
+
+    </table>
+
+</div>
+
+
+<!-- Payment Summary -->
+<div class="payment-summary">
+
+    <div class="section-title">
+        Payment Summary
+    </div>
+
+    <table class="payment-summary-table">
+
+        <tr>
+            <td>
+                Invoice Total
+            </td>
+
+            <td class="text-right">
+                ₦{{ invoice.total|floatformat:2|intcomma }}
+            </td>
+        </tr>
+
+        <tr>
+            <td>
+                Total Paid
+            </td>
+
+            <td class="text-right">
+                ₦{{ total_paid|floatformat:2|intcomma }}
+            </td>
+        </tr>
+
+        <tr class="outstanding-row">
+            <td>
+                Outstanding Balance
+            </td>
+
+            <td class="text-right">
+                ₦{{ outstanding_balance|floatformat:2|intcomma }}
+            </td>
+        </tr>
+
+    </table>
+
+</div>
+
+
+<!-- Payment History -->
+{% if invoice.payments.all %}
+    <div class="payment-history">
+
+        <div class="section-title">
+            Payment History
+        </div>
+
+        <table class="payment-history-table">
+
+            <thead>
+                <tr>
+                    <th>Receipt Number</th>
+                    <th>Payment Date</th>
+                    <th>Amount</th>
+                    <th>Payment Method</th>
+                    <th>Payment Reference</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for payment in invoice.payments.all %}
+                    <tr>
+                        <td>
+                            {{ payment.receipt_number }}
+                        </td>
+
+                        <td class="text-center">
+                            {{ payment.payment_date }}
+                        </td>
+
+                        <td class="text-right">
+                            ₦{{ payment.amount|floatformat:2|intcomma }}
+                        </td>
+
+                        <td>
+                            {{ payment.payment_method|default:"—" }}
+                        </td>
+
+                        <td>
+                            {{ payment.payment_reference|default:"—" }}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+
+        </table>
+
+    </div>
+{% endif %}
+
+
+<!-- Notes -->
+{% if invoice.notes %}
+    <div class="notes">
+
+        <div class="section-title">
+            Notes
+        </div>
+
+        <div>
+            {{ invoice.notes|linebreaksbr }}
+        </div>
+
+    </div>
+{% endif %}
+
+
+<!-- Footer -->
+<div class="footer">
+    Paul Media Services · Paul SchoolHub
+</div>
+
+</body>
+</html>

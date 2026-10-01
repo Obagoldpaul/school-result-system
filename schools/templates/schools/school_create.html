@@ -306,42 +306,6 @@
 
                     </div>
 
-
-                    <div class="col-md-6">
-
-                        <label for="{{ form.admin_password.id_for_label }}"
-                            class="form-label">
-                            Password
-                        </label>
-
-                        {{ form.admin_password }}
-
-                        {% for error in form.admin_password.errors %}
-                            <div class="text-danger small mt-1">
-                                {{ error }}
-                            </div>
-                        {% endfor %}
-
-                    </div>
-
-
-                    <div class="col-md-6">
-
-                        <label for="{{ form.admin_password_confirm.id_for_label }}"
-                            class="form-label">
-                            Confirm Password
-                        </label>
-
-                        {{ form.admin_password_confirm }}
-
-                        {% for error in form.admin_password_confirm.errors %}
-                            <div class="text-danger small mt-1">
-                                {{ error }}
-                            </div>
-                        {% endfor %}
-
-                    </div>
-
                 </div>
 
             </div>

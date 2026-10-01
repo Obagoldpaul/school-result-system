@@ -1,6 +1,6 @@
 SOFTWARE_NAME = "Paul SchoolHub"
 
-COMPANY_NAME = "Paul Media"
+COMPANY_NAME = "Paul Media Services"
 
 SOFTWARE_VERSION = "1.0.0"
 

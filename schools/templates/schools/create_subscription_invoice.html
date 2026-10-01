@@ -1,0 +1,427 @@
+{% extends "base.html" %}
+
+{% block title %}
+    Create Invoice | {{ school.name }}
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1>Create Invoice</h1>
+            <p class="text-muted mb-0">
+                Create an invoice for
+                <strong>{{ school.name }}</strong>
+                for Paul SchoolHub services.
+            </p>
+        </div>
+
+        <a
+            href="{% url 'school_invoices' school.id %}"
+            class="btn btn-outline-secondary"
+        >
+            Back to Invoices
+        </a>
+    </div>
+
+    <form method="post">
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+            <div class="alert alert-danger">
+                {{ form.non_field_errors }}
+            </div>
+        {% endif %}
+
+        {% if formset.non_form_errors %}
+            <div class="alert alert-danger">
+                {{ formset.non_form_errors }}
+            </div>
+        {% endif %}
+
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+                <h5 class="card-title mb-3">Invoice Details</h5>
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label
+                            for="{{ form.invoice_date.id_for_label }}"
+                            class="form-label"
+                        >
+                            {{ form.invoice_date.label }}
+                        </label>
+
+                        {{ form.invoice_date }}
+
+                        {% if form.invoice_date.errors %}
+                            <div class="text-danger small mt-1">
+                                {{ form.invoice_date.errors }}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="col-md-6">
+                        <label
+                            for="{{ form.due_date.id_for_label }}"
+                            class="form-label"
+                        >
+                            {{ form.due_date.label }}
+                        </label>
+
+                        {{ form.due_date }}
+
+                        {% if form.due_date.errors %}
+                            <div class="text-danger small mt-1">
+                                {{ form.due_date.errors }}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="col-md-6">
+                        <label
+                            for="{{ form.discount.id_for_label }}"
+                            class="form-label"
+                        >
+                            {{ form.discount.label }}
+                        </label>
+
+                        {{ form.discount }}
+
+                        {% if form.discount.errors %}
+                            <div class="text-danger small mt-1">
+                                {{ form.discount.errors }}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="col-12">
+                        <label
+                            for="{{ form.notes.id_for_label }}"
+                            class="form-label"
+                        >
+                            {{ form.notes.label }}
+                        </label>
+
+                        {{ form.notes }}
+
+                        {% if form.notes.errors %}
+                            <div class="text-danger small mt-1">
+                                {{ form.notes.errors }}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                        <h5 class="card-title mb-1">Invoice Items</h5>
+                        <p class="text-muted mb-0">
+                            Add each charge that should appear on this invoice.
+                        </p>
+                    </div>
+        
+                    <button
+                        type="button"
+                        class="btn btn-outline-primary btn-sm"
+                        id="add-invoice-item"
+                    >
+                        + Add Item
+                    </button>
+                </div>
+        
+                {{ formset.management_form }}
+        
+                <div class="table-responsive">
+                    <table class="table align-middle">
+                        <thead>
+                            <tr>
+                                <th>Description</th>
+                                <th style="width: 120px;">Quantity</th>
+                                <th style="width: 180px;">Unit Price</th>
+                                <th style="width: 160px;">Amount</th>
+                                <th style="width: 100px;">Action</th>
+                            </tr>
+                        </thead>
+        
+                        <tbody id="invoice-items">
+                            {% for item_form in formset %}
+                                <tr class="invoice-item-row">
+                                    <td>
+                                        {{ item_form.id }}
+                                        {{ item_form.description }}
+        
+                                        {% if item_form.description.errors %}
+                                            <div class="text-danger small mt-1">
+                                                {{ item_form.description.errors }}
+                                            </div>
+                                        {% endif %}
+                                    </td>
+        
+                                    <td>
+                                        {{ item_form.quantity }}
+        
+                                        {% if item_form.quantity.errors %}
+                                            <div class="text-danger small mt-1">
+                                                {{ item_form.quantity.errors }}
+                                            </div>
+                                        {% endif %}
+                                    </td>
+        
+                                    <td>
+                                        {{ item_form.unit_price }}
+        
+                                        {% if item_form.unit_price.errors %}
+                                            <div class="text-danger small mt-1">
+                                                {{ item_form.unit_price.errors }}
+                                            </div>
+                                        {% endif %}
+                                    </td>
+        
+                                    <td>
+                                        <span class="invoice-item-amount">
+                                            ₦0.00
+                                        </span>
+                                    </td>
+        
+                                    <td>
+                                        {% if item_form.DELETE %}
+                                            <div class="form-check">
+                                                {{ item_form.DELETE }}
+                                                <label
+                                                    class="form-check-label"
+                                                    for="{{ item_form.DELETE.id_for_label }}"
+                                                >
+                                                    Remove
+                                                </label>
+                                            </div>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+        
+                <div
+                    id="invoice-item-empty-form"
+                    class="d-none"
+                >
+                    <table>
+                        <tbody>
+                            <tr class="invoice-item-row">
+                                <td>
+                                    {{ formset.empty_form.id }}
+                                    {{ formset.empty_form.description }}
+                                </td>
+        
+                                <td>
+                                    {{ formset.empty_form.quantity }}
+                                </td>
+        
+                                <td>
+                                    {{ formset.empty_form.unit_price }}
+                                </td>
+        
+                                <td>
+                                    <span class="invoice-item-amount">
+                                        ₦0.00
+                                    </span>
+                                </td>
+        
+                                <td>
+                                    {{ formset.empty_form.DELETE }}
+                                    <label
+                                        for="{{ formset.empty_form.DELETE.id_for_label }}"
+                                    >
+                                        Remove
+                                    </label>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+        
+                <div class="row justify-content-end mt-4">
+                    <div class="col-md-5">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Subtotal</span>
+                            <strong id="invoice-subtotal">₦0.00</strong>
+                        </div>
+        
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Discount</span>
+                            <strong id="invoice-discount-display">₦0.00</strong>
+                        </div>
+        
+                        <hr>
+        
+                        <div class="d-flex justify-content-between">
+                            <strong>Total</strong>
+                            <strong id="invoice-total">₦0.00</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-end gap-2 mb-4">
+            <a
+                href="{% url 'school_invoices' school.id %}"
+                class="btn btn-outline-secondary"
+            >
+                Cancel
+            </a>
+
+            <button type="submit" class="btn btn-primary">
+                Save Invoice
+            </button>
+        </div>
+    </form>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const addButton = document.getElementById("add-invoice-item");
+        const itemsContainer = document.getElementById("invoice-items");
+        const totalFormsInput = document.getElementById(
+            "id_items-TOTAL_FORMS"
+        );
+        const emptyFormTemplate = document.getElementById(
+            "invoice-item-empty-form"
+        );
+        const discountInput = document.getElementById(
+            "{{ form.discount.id_for_label }}"
+        );
+    
+        function formatCurrency(value) {
+            return "₦" + value.toLocaleString("en-NG", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+        }
+    
+        function calculateTotals() {
+            let subtotal = 0;
+    
+            document.querySelectorAll(".invoice-item-row").forEach(function (row) {
+                const quantityInput = row.querySelector(
+                    'input[name$="-quantity"]'
+                );
+                const unitPriceInput = row.querySelector(
+                    'input[name$="-unit_price"]'
+                );
+                const deleteInput = row.querySelector(
+                    'input[name$="-DELETE"]'
+                );
+                const amountDisplay = row.querySelector(
+                    ".invoice-item-amount"
+                );
+    
+                if (!quantityInput || !unitPriceInput || !amountDisplay) {
+                    return;
+                }
+    
+                if (deleteInput && deleteInput.checked) {
+                    amountDisplay.textContent = "₦0.00";
+                    return;
+                }
+    
+                const quantity = parseFloat(quantityInput.value) || 0;
+                const unitPrice = parseFloat(unitPriceInput.value) || 0;
+                const amount = quantity * unitPrice;
+    
+                amountDisplay.textContent = formatCurrency(amount);
+                subtotal += amount;
+            });
+    
+            const discount = Math.max(
+                parseFloat(discountInput.value) || 0,
+                0
+            );
+    
+            const total = Math.max(subtotal - discount, 0);
+    
+            document.getElementById(
+                "invoice-subtotal"
+            ).textContent = formatCurrency(subtotal);
+    
+            document.getElementById(
+                "invoice-discount-display"
+            ).textContent = formatCurrency(discount);
+    
+            document.getElementById(
+                "invoice-total"
+            ).textContent = formatCurrency(total);
+        }
+    
+        function attachRowListeners(row) {
+            const quantityInput = row.querySelector(
+                'input[name$="-quantity"]'
+            );
+            const unitPriceInput = row.querySelector(
+                'input[name$="-unit_price"]'
+            );
+            const deleteInput = row.querySelector(
+                'input[name$="-DELETE"]'
+            );
+    
+            if (quantityInput) {
+                quantityInput.addEventListener("input", calculateTotals);
+            }
+    
+            if (unitPriceInput) {
+                unitPriceInput.addEventListener("input", calculateTotals);
+            }
+    
+            if (deleteInput) {
+                deleteInput.addEventListener("change", calculateTotals);
+            }
+        }
+    
+        document.querySelectorAll(".invoice-item-row").forEach(
+            attachRowListeners
+        );
+    
+        if (discountInput) {
+            discountInput.addEventListener("input", calculateTotals);
+        }
+    
+        if (addButton) {
+            addButton.addEventListener("click", function () {
+                const formIndex = parseInt(
+                    totalFormsInput.value,
+                    10
+                );
+    
+                const template = emptyFormTemplate.innerHTML.replace(
+                    /__prefix__/g,
+                    formIndex
+                );
+    
+                const wrapper = document.createElement("tbody");
+                wrapper.innerHTML = template;
+    
+                const newRow = wrapper.querySelector(
+                    ".invoice-item-row"
+                );
+    
+                if (newRow) {
+                    itemsContainer.appendChild(newRow);
+                    attachRowListeners(newRow);
+                }
+    
+                totalFormsInput.value = formIndex + 1;
+    
+                calculateTotals();
+            });
+        }
+    
+        calculateTotals();
+    });
+    </script>
+{% endblock %}

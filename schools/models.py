@@ -63,7 +63,7 @@ class PlatformSettings(models.Model):
 
     platform_footer = models.CharField(
         max_length=300,
-        default="Powered by Paul Media",
+        default="Powered by Paul Media Services",
     )
 
     updated_at = models.DateTimeField(
@@ -339,6 +339,64 @@ class SubscriptionPackage(models.Model):
         return self.get_name_display()
 
 
+class SubscriptionPricing(models.Model):
+    """
+    Defines the default subscription price for a package,
+    school type, and billing cycle combination.
+    """
+
+    class BillingCycle(models.TextChoices):
+        MONTHLY = "MONTHLY", "Monthly"
+        TERMLY = "TERMLY", "Termly"
+        YEARLY = "YEARLY", "Yearly"
+
+    school_type = models.CharField(
+        max_length=20,
+        choices=School.SchoolType.choices,
+    )
+
+    package = models.ForeignKey(
+        SubscriptionPackage,
+        on_delete=models.CASCADE,
+        related_name="pricing_options",
+    )
+
+    billing_cycle = models.CharField(
+        max_length=10,
+        choices=BillingCycle.choices,
+    )
+
+    price = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=0,
+    )
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=[
+                    "school_type",
+                    "package",
+                    "billing_cycle",
+                ],
+                name="unique_subscription_pricing",
+            )
+        ]
+
+        ordering = [
+            "school_type",
+            "package",
+            "billing_cycle",
+        ]
+
+    def __str__(self):
+        return (
+            f"{self.get_school_type_display()} - "
+            f"{self.package} - "
+            f"{self.get_billing_cycle_display()}"
+        )
+
 class SchoolSubscription(models.Model):
 
     class BillingCycle(models.TextChoices):
@@ -362,6 +420,12 @@ class SchoolSubscription(models.Model):
         choices=BillingCycle.choices,
         default=BillingCycle.TERMLY,
     )
+    
+    agreed_price = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=0,
+    )
 
     start_date = models.DateField()
 
@@ -380,3 +444,170 @@ class SchoolSubscription(models.Model):
 
     def __str__(self):
         return f"{self.school} - {self.package}"
+    
+    
+class SubscriptionInvoice(models.Model):
+    """
+    Invoice issued by Paul Media Services to a school
+    for Paul SchoolHub services.
+    """
+
+    class Status(models.TextChoices):
+        UNPAID = "UNPAID", "Unpaid"
+        PARTIALLY_PAID = "PARTIALLY_PAID", "Partially Paid"
+        PAID = "PAID", "Paid"
+        CANCELLED = "CANCELLED", "Cancelled"
+
+    subscription = models.ForeignKey(
+        SchoolSubscription,
+        on_delete=models.PROTECT,
+        related_name="invoices",
+    )
+
+    invoice_number = models.CharField(
+        max_length=30,
+        unique=True,
+    )
+
+    invoice_date = models.DateField()
+
+    due_date = models.DateField(
+        null=True,
+        blank=True,
+    )
+
+    subtotal = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=0,
+    )
+
+    discount = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=0,
+    )
+
+    total = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=0,
+    )
+
+    status = models.CharField(
+        max_length=20,
+        choices=Status.choices,
+        default=Status.UNPAID,
+    )
+
+    notes = models.TextField(
+        blank=True,
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+    )
+
+    updated_at = models.DateTimeField(
+        auto_now=True,
+    )
+
+    def __str__(self):
+        return (
+            f"{self.invoice_number} - "
+            f"{self.subscription.school.name}"
+        )
+
+
+class SubscriptionInvoiceItem(models.Model):
+    """
+    Individual charge included on a platform invoice.
+
+    An invoice can contain multiple items, such as:
+        - Multiple subscription terms
+        - Implementation fee
+        - Custom domain
+        - Other agreed charges
+    """
+
+    invoice = models.ForeignKey(
+        SubscriptionInvoice,
+        on_delete=models.CASCADE,
+        related_name="items",
+    )
+
+    description = models.CharField(
+        max_length=255,
+    )
+
+    quantity = models.PositiveIntegerField(
+        default=1,
+    )
+
+    unit_price = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+    )
+
+    amount = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+    )
+
+    def __str__(self):
+        return self.description
+    
+
+class SubscriptionPayment(models.Model):
+    """
+    Payment received from a school against a platform invoice.
+
+    Each payment generates a unique receipt number and is linked
+    to the invoice it settles.
+    """
+
+    invoice = models.ForeignKey(
+        SubscriptionInvoice,
+        on_delete=models.PROTECT,
+        related_name="payments",
+    )
+
+    receipt_number = models.CharField(
+        max_length=30,
+        unique=True,
+    )
+
+    payment_date = models.DateField()
+
+    amount = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+    )
+
+    payment_method = models.CharField(
+        max_length=50,
+        blank=True,
+    )
+
+    payment_reference = models.CharField(
+        max_length=100,
+        blank=True,
+    )
+
+    notes = models.TextField(
+        blank=True,
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+    )
+
+    def __str__(self):
+        return (
+            f"{self.receipt_number} - "
+            f"{self.invoice.invoice_number}"
+        )

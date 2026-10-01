@@ -15,6 +15,10 @@ from django.shortcuts import (
     render,
 )
 
+from django.http import HttpResponse
+from django.template.loader import get_template
+from weasyprint import HTML
+
 from django.views.decorators.http import require_POST
 from django.utils import timezone
 
@@ -25,6 +29,8 @@ from .forms import (
     SchoolRegistrationForm,
     EditSchoolForm,
     SchoolSubscriptionForm,
+    SubscriptionInvoiceForm,
+    SubscriptionInvoiceItemFormSet,
     SubscriptionPackageForm,
     PlatformSettingsForm,
     AssignSchoolRoleForm,
@@ -32,15 +38,20 @@ from .forms import (
     CreateSchoolUserForm,
     EditSchoolUserForm,
     FeatureForm,
+    SubscriptionPaymentForm,
+    SubscriptionPricingForm,
 )
 from .models import (
     School,
     SchoolSubscription,
+    SubscriptionInvoice,
     SubscriptionPackage,
     PlatformSettings,
     SchoolRole,
     Permission,
     Feature,
+    SubscriptionPayment,
+    SubscriptionPricing,
 )
 
 from students.models import SchoolClass
@@ -49,6 +60,52 @@ from .utils import (
     calculate_subscription_end_date,
     get_subscription_status,
 )
+
+def generate_subscription_invoice_number():
+    """
+    Generate the next Paul Media Services subscription invoice number.
+    """
+    year = timezone.now().year
+    prefix = f"PMS-INV-{year}-"
+
+    last_invoice = (
+        SubscriptionInvoice.objects
+        .filter(invoice_number__startswith=prefix)
+        .order_by("-invoice_number")
+        .first()
+    )
+
+    if last_invoice:
+        last_number = int(last_invoice.invoice_number.rsplit("-", 1)[1])
+        next_number = last_number + 1
+    else:
+        next_number = 1
+
+    return f"{prefix}{next_number:04d}"
+
+def generate_subscription_receipt_number():
+    """
+    Generate the next Paul Media Services subscription receipt number.
+    """
+    year = timezone.now().year
+    prefix = f"PMS-REC-{year}-"
+
+    last_payment = (
+        SubscriptionPayment.objects
+        .filter(receipt_number__startswith=prefix)
+        .order_by("-receipt_number")
+        .first()
+    )
+
+    if last_payment:
+        last_number = int(
+            last_payment.receipt_number.rsplit("-", 1)[1]
+        )
+        next_number = last_number + 1
+    else:
+        next_number = 1
+
+    return f"{prefix}{next_number:04d}"
 
 @login_required
 @platform_admin_required
@@ -1560,12 +1617,29 @@ def create_school(request):
                         subscription_billing_cycle,
                     )
 
+                    selected_package = form.cleaned_data["package"]
+
+                    subscription_pricing = SubscriptionPricing.objects.filter(
+                        school_type=school.school_type,
+                        package=selected_package,
+                        billing_cycle=subscription_billing_cycle,
+                    ).first()
+
+                    if subscription_pricing is None:
+                        raise ValueError(
+                            "No default subscription pricing exists for "
+                            f"{school.get_school_type_display()}, "
+                            f"{selected_package.get_name_display()}, "
+                            f"{subscription_billing_cycle}."
+                        )
+
                     SchoolSubscription.objects.create(
                         school=school,
-                        package=form.cleaned_data["package"],
+                        package=selected_package,
                         billing_cycle=subscription_billing_cycle,
                         start_date=subscription_start_date,
                         end_date=subscription_end_date,
+                        agreed_price=subscription_pricing.price,
                         is_active=True,
                     )
 
@@ -1681,6 +1755,7 @@ def edit_subscription(request, school_id):
         form = SchoolSubscriptionForm(
             request.POST,
             instance=subscription,
+            school=school,
         )
 
         if form.is_valid():
@@ -1709,6 +1784,7 @@ def edit_subscription(request, school_id):
 
         form = SchoolSubscriptionForm(
             instance=subscription,
+            school=school,
         )
 
     return render(
@@ -1720,6 +1796,423 @@ def edit_subscription(request, school_id):
             "form": form,
         },
     )
+    
+@login_required
+@platform_admin_required
+def school_invoices(request, school_id):
+    """
+    Display invoices issued to a specific school
+    for Paul SchoolHub services.
+    """
+
+    school = get_object_or_404(
+        School,
+        id=school_id,
+    )
+
+    invoices = (
+        SubscriptionInvoice.objects
+        .filter(
+            subscription__school=school,
+        )
+        .order_by("-invoice_date", "-created_at")
+    )
+
+    return render(
+        request,
+        "schools/school_invoices.html",
+        {
+            "school": school,
+            "invoices": invoices,
+        },
+    )
+    
+@login_required
+@platform_admin_required
+def create_subscription_invoice(request, school_id):
+    """
+    Create an invoice for a school's Paul SchoolHub subscription.
+    """
+    school = get_object_or_404(
+        School,
+        id=school_id,
+    )
+    subscription = get_object_or_404(
+        SchoolSubscription,
+        school=school,
+    )
+
+    if request.method == "POST":
+        form = SubscriptionInvoiceForm(request.POST)
+        formset = SubscriptionInvoiceItemFormSet(request.POST)
+
+        if form.is_valid() and formset.is_valid():
+            with transaction.atomic():
+                invoice = form.save(commit=False)
+                invoice.subscription = subscription
+                invoice.invoice_number = generate_subscription_invoice_number()
+                invoice.status = SubscriptionInvoice.Status.UNPAID
+
+                subtotal = 0
+
+                invoice.save()
+
+                items = formset.save(commit=False)
+
+                for item in items:
+                    item.invoice = invoice
+                    item.amount = item.quantity * item.unit_price
+                    subtotal += item.amount
+                    item.save()
+
+                for deleted_item in formset.deleted_objects:
+                    deleted_item.delete()
+
+                invoice.subtotal = subtotal
+                invoice.total = max(
+                    subtotal - invoice.discount,
+                    0,
+                )
+                invoice.save()
+
+            messages.success(
+                request,
+                f"Invoice {invoice.invoice_number} was created successfully."
+            )
+            return redirect(
+                "school_invoices",
+                school_id=school.id,
+            )
+    else:
+        form = SubscriptionInvoiceForm()
+
+        formset = SubscriptionInvoiceItemFormSet(
+            initial=[
+                {
+                    "description": (
+                        f"{subscription.package} Subscription — "
+                        f"{subscription.get_billing_cycle_display()}"
+                    ),
+                    "quantity": 1,
+                    "unit_price": subscription.agreed_price,
+                }
+            ]
+        )
+
+    return render(
+        request,
+        "schools/create_subscription_invoice.html",
+        {
+            "school": school,
+            "subscription": subscription,
+            "form": form,
+            "formset": formset,
+        },
+    )
+    
+@login_required
+@platform_admin_required
+def create_subscription_payment(request, school_id, invoice_id):
+    """
+    Record a payment against a school's subscription invoice.
+    """
+
+    school = get_object_or_404(
+        School,
+        id=school_id,
+    )
+
+    invoice = get_object_or_404(
+        SubscriptionInvoice,
+        id=invoice_id,
+        subscription__school=school,
+    )
+
+    if request.method == "POST":
+        form = SubscriptionPaymentForm(request.POST)
+
+        if form.is_valid():
+            with transaction.atomic():
+                invoice = get_object_or_404(
+                    SubscriptionInvoice.objects.select_for_update(),
+                    id=invoice_id,
+                    subscription__school=school,
+                )
+
+                if invoice.status == SubscriptionInvoice.Status.CANCELLED:
+                    form.add_error(
+                        None,
+                        "Payment cannot be recorded for a cancelled invoice.",
+                    )
+                else:
+                    total_paid = sum(
+                        invoice.payments.values_list(
+                            "amount",
+                            flat=True,
+                        )
+                    )
+
+                    outstanding_balance = (
+                        invoice.total - total_paid
+                    )
+
+                    if outstanding_balance <= 0:
+                        form.add_error(
+                            None,
+                            "This invoice has already been fully paid.",
+                        )
+                    elif form.cleaned_data["amount"] > outstanding_balance:
+                        form.add_error(
+                            "amount",
+                            (
+                                "Payment cannot exceed the outstanding "
+                                f"balance of ₦{outstanding_balance:,.2f}."
+                            ),
+                        )
+                    else:
+                        payment = form.save(commit=False)
+                        payment.invoice = invoice
+                        payment.receipt_number = (
+                            generate_subscription_receipt_number()
+                        )
+                        payment.save()
+
+                        new_total_paid = (
+                            total_paid + payment.amount
+                        )
+
+                        if new_total_paid >= invoice.total:
+                            invoice.status = (
+                                SubscriptionInvoice.Status.PAID
+                            )
+                        else:
+                            invoice.status = (
+                                SubscriptionInvoice.Status.PARTIALLY_PAID
+                            )
+
+                        invoice.save(
+                            update_fields=[
+                                "status",
+                                "updated_at",
+                            ]
+                        )
+
+                        messages.success(
+                            request,
+                            (
+                                f"Payment recorded successfully. "
+                                f"Receipt {payment.receipt_number} "
+                                f"was generated."
+                            ),
+                        )
+
+                        return redirect(
+                            "subscription_invoice_detail",
+                            school_id=school.id,
+                            invoice_id=invoice.id,
+                        )
+    else:
+        form = SubscriptionPaymentForm()
+
+    return render(
+        request,
+        "schools/create_subscription_payment.html",
+        {
+            "school": school,
+            "invoice": invoice,
+            "form": form,
+        },
+    ) 
+    
+@login_required
+@platform_admin_required
+def subscription_payment_receipt(request, school_id, payment_id):
+    """
+    Display a receipt for a payment made against a school's
+    Paul SchoolHub subscription invoice.
+    """
+
+    school = get_object_or_404(
+        School,
+        id=school_id,
+    )
+
+    payment = get_object_or_404(
+        SubscriptionPayment.objects.select_related(
+            "invoice",
+            "invoice__subscription",
+            "invoice__subscription__school",
+        ),
+        id=payment_id,
+        invoice__subscription__school=school,
+    )
+
+    return render(
+        request,
+        "schools/subscription_payment_receipt.html",
+        {
+            "school": school,
+            "payment": payment,
+        },
+    )
+    
+@login_required
+@platform_admin_required
+def subscription_payment_receipt_pdf(request, school_id, payment_id):
+    """
+    Generate a PDF receipt for a payment made against a school's
+    Paul SchoolHub subscription invoice.
+    """
+
+    school = get_object_or_404(
+        School,
+        id=school_id,
+    )
+
+    payment = get_object_or_404(
+        SubscriptionPayment.objects.select_related(
+            "invoice",
+            "invoice__subscription",
+            "invoice__subscription__school",
+        ),
+        id=payment_id,
+        invoice__subscription__school=school,
+    )
+
+    platform_settings = PlatformSettings.objects.first()
+
+    context = {
+        "school": school,
+        "payment": payment,
+        "platform_settings": platform_settings,
+    }
+
+    template = get_template(
+        "schools/subscription_payment_receipt_pdf.html"
+    )
+
+    html_string = template.render(
+        context,
+        request=request,
+    )
+
+    response = HttpResponse(
+        content_type="application/pdf"
+    )
+
+    response["Content-Disposition"] = (
+        f'inline; '
+        f'filename="{payment.receipt_number}.pdf"'
+    )
+
+    HTML(
+        string=html_string,
+        base_url=request.build_absolute_uri("/"),
+    ).write_pdf(response)
+
+    return response
+    
+@login_required
+@platform_admin_required
+def subscription_invoice_detail(request, school_id, invoice_id):
+    school = get_object_or_404(
+        School,
+        id=school_id,
+    )
+    invoice = get_object_or_404(
+        SubscriptionInvoice.objects.prefetch_related(
+            "items",
+            "payments",
+        ),
+        id=invoice_id,
+        subscription__school=school,
+    )
+
+    total_paid = sum(
+        payment.amount
+        for payment in invoice.payments.all()
+    )
+
+    outstanding_balance = max(
+        invoice.total - total_paid,
+        0,
+    )
+
+    return render(
+        request,
+        "schools/subscription_invoice_detail.html",
+        {
+            "school": school,
+            "invoice": invoice,
+            "total_paid": total_paid,
+            "outstanding_balance": outstanding_balance,
+        },
+    )
+    
+@login_required
+@platform_admin_required
+def subscription_invoice_pdf(request, school_id, invoice_id):
+    """
+    Generate a PDF invoice for a school's Paul SchoolHub services.
+    """
+    school = get_object_or_404(
+        School,
+        id=school_id,
+    )
+
+    invoice = get_object_or_404(
+        SubscriptionInvoice.objects.prefetch_related(
+            "items",
+            "payments",
+        ),
+        id=invoice_id,
+        subscription__school=school,
+    )
+
+    total_paid = sum(
+        payment.amount
+        for payment in invoice.payments.all()
+    )
+
+    outstanding_balance = max(
+        invoice.total - total_paid,
+        0,
+    )
+
+    platform_settings = PlatformSettings.objects.first()
+
+    context = {
+        "school": school,
+        "invoice": invoice,
+        "total_paid": total_paid,
+        "outstanding_balance": outstanding_balance,
+        "platform_settings": platform_settings,
+    }
+
+    template = get_template(
+        "schools/subscription_invoice_pdf.html"
+    )
+
+    html_string = template.render(
+        context,
+        request=request,
+    )
+
+    response = HttpResponse(
+        content_type="application/pdf"
+    )
+
+    response["Content-Disposition"] = (
+        f'inline; '
+        f'filename="{invoice.invoice_number}.pdf"'
+    )
+
+    HTML(
+        string=html_string,
+        base_url=request.build_absolute_uri("/"),
+    ).write_pdf(response)
+
+    return response
     
 @login_required
 @platform_admin_required
@@ -1944,3 +2437,98 @@ def toggle_feature_status(request, feature_id):
     )
 
     return redirect("manage_features")
+
+
+@login_required
+@platform_admin_required
+def manage_pricing(request):
+    """
+    Display default subscription pricing for
+    Platform Administrators.
+    """
+
+    pricing = (
+        SubscriptionPricing.objects
+        .select_related("package")
+        .all()
+    )
+
+    return render(
+        request,
+        "schools/manage_pricing.html",
+        {
+            "pricing": pricing,
+        },
+    )
+    
+@login_required
+@platform_admin_required
+def create_pricing(request):
+    """
+    Create a new default subscription pricing record
+    for Platform Administrators.
+    """
+
+    if request.method == "POST":
+        form = SubscriptionPricingForm(request.POST)
+
+        if form.is_valid():
+            pricing = form.save()
+
+            messages.success(
+                request,
+                "Default subscription pricing was created successfully.",
+            )
+
+            return redirect("manage_pricing")
+
+    else:
+        form = SubscriptionPricingForm()
+
+    return render(
+        request,
+        "schools/pricing_form.html",
+        {
+            "form": form,
+            "page_title": "Add Pricing",
+        },
+    )
+    
+@login_required
+@platform_admin_required
+def edit_pricing(request, pricing_id):
+    pricing = get_object_or_404(
+        SubscriptionPricing,
+        id=pricing_id,
+    )
+
+    if request.method == "POST":
+        form = SubscriptionPricingForm(
+            request.POST,
+            instance=pricing,
+        )
+
+        if form.is_valid():
+            form.save()
+
+            messages.success(
+                request,
+                "Default subscription pricing was updated successfully.",
+            )
+
+            return redirect("manage_pricing")
+
+    else:
+        form = SubscriptionPricingForm(
+            instance=pricing,
+        )
+
+    return render(
+        request,
+        "schools/pricing_form.html",
+        {
+            "form": form,
+            "pricing": pricing,
+            "page_title": "Edit Pricing",
+        },
+    )
