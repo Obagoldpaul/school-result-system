@@ -12,6 +12,33 @@ def populate_subscription_pricing(apps, schema_editor):
         "schools",
         "SubscriptionPackage",
     )
+    
+    package_defaults = {
+        "BASIC": {
+            "description": "",
+            "price": 0,
+            "is_active": True,
+        },
+        "STANDARD": {
+            "description": "",
+            "price": 0,
+            "is_active": True,
+        },
+        "PREMIUM": {
+            "description": "",
+            "price": 0,
+            "is_active": True,
+        },
+    }
+
+    packages = {}
+
+    for package_name, defaults in package_defaults.items():
+        package, _ = SubscriptionPackage.objects.get_or_create(
+            name=package_name,
+            defaults=defaults,
+        )
+        packages[package_name] = package
 
     pricing_data = [
         # Primary
@@ -38,11 +65,6 @@ def populate_subscription_pricing(apps, schema_editor):
         ("PRIMARY_SECONDARY", "PREMIUM", "TERMLY", 145000),
         ("PRIMARY_SECONDARY", "PREMIUM", "YEARLY", 365000),
     ]
-
-    packages = {
-        package.name: package
-        for package in SubscriptionPackage.objects.all()
-    }
 
     for school_type, package_name, billing_cycle, price in pricing_data:
         SubscriptionPricing.objects.get_or_create(

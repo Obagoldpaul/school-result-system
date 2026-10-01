@@ -89,6 +89,30 @@
 
                     </div>
 
+
+                    <div class="col-md-6">
+
+                        <label for="{{ form.subdomain_prefix.id_for_label }}"
+                            class="form-label">
+                            SchoolHub Subdomain Prefix
+                        </label>
+
+                        {{ form.subdomain_prefix }}
+
+                        {% if form.subdomain_prefix.help_text %}
+                            <div class="form-text">
+                                {{ form.subdomain_prefix.help_text }}
+                            </div>
+                        {% endif %}
+
+                        {% for error in form.subdomain_prefix.errors %}
+                            <div class="text-danger small mt-1">
+                                {{ error }}
+                            </div>
+                        {% endfor %}
+
+                    </div>
+
                     <div class="col-md-6">
 
                         <label for="{{ form.school_type.id_for_label }}"

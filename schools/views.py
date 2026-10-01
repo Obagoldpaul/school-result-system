@@ -43,6 +43,7 @@ from .forms import (
 )
 from .models import (
     School,
+    SchoolDomain,
     SchoolSubscription,
     SubscriptionInvoice,
     SubscriptionPackage,
@@ -1594,6 +1595,20 @@ def create_school(request):
                         email=form.cleaned_data["email"],
                         phone=form.cleaned_data["phone"].strip(),
                         address=form.cleaned_data["address"].strip(),
+                    )
+                    
+                    # -------------------------------------------------
+                    # CREATE SCHOOLHUB SUBDOMAIN
+                    # -------------------------------------------------
+
+                    SchoolDomain.objects.create(
+                        school=school,
+                        domain=(
+                            f"{form.cleaned_data['subdomain_prefix']}"
+                            ".paulschoolhub.com.ng"
+                        ),
+                        is_primary=True,
+                        is_active=True,
                     )
 
                     # -------------------------------------------------

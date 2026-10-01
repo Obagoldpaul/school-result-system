@@ -37,7 +37,7 @@ class SchoolRegistrationForm(forms.Form):
         widget=forms.TextInput(
             attrs={
                 "class": "form-control",
-                "placeholder": "e.g. Great Goshenland Blossom School",
+                "placeholder": "e.g. PaulHub Demo School",
             }
         ),
     )
@@ -48,9 +48,21 @@ class SchoolRegistrationForm(forms.Form):
         widget=forms.TextInput(
             attrs={
                 "class": "form-control",
-                "placeholder": "e.g. GGBS",
+                "placeholder": "e.g. PHDS",
             }
         ),
+    )
+    
+    subdomain_prefix = forms.CharField(
+        max_length=63,
+        label="SchoolHub Subdomain Prefix",
+        widget=forms.TextInput(
+            attrs={
+                "class": "form-control",
+                "placeholder": "e.g. phds",
+            }
+        ),
+        help_text="This will be used for your school address, e.g. phds.paulschoolhub.com.ng",
     )
     
     school_type = forms.ChoiceField(
@@ -190,6 +202,34 @@ class SchoolRegistrationForm(forms.Form):
             )
 
         return code
+    
+    def clean_subdomain_prefix(self):
+        prefix = self.cleaned_data["subdomain_prefix"].strip().lower()
+
+        if not re.fullmatch(
+            r"[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?",
+            prefix,
+        ):
+            raise forms.ValidationError(
+                "Subdomain prefix must contain only lowercase letters, "
+                "numbers, and hyphens, and must start and end with a "
+                "letter or number."
+            )
+
+        reserved_prefixes = {
+            "www",
+            "admin",
+            "mail",
+            "ftp",
+            "api",
+        }
+
+        if prefix in reserved_prefixes:
+            raise forms.ValidationError(
+                "This subdomain prefix is reserved and cannot be used."
+            )
+
+        return prefix
 
     def clean_admin_username(self):
         username = self.cleaned_data["admin_username"].strip()

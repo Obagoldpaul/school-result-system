@@ -10,6 +10,7 @@ from students.models import SchoolClass
 from schools.models import (
     School,
     SchoolRole,
+    SchoolDomain,
     SubscriptionPackage,
     SchoolSubscription,
 )
@@ -408,10 +409,8 @@ class CreateSchoolTests(TestCase):
             role=get_user_model().Role.PLATFORM_ADMIN,
         )
 
-        cls.package = SubscriptionPackage.objects.create(
+        cls.package = SubscriptionPackage.objects.get(
             name=SubscriptionPackage.PackageType.BASIC,
-            price=10000,
-            is_active=True,
         )
 
     def test_create_school_sends_first_admin_setup_link(self):
@@ -422,6 +421,7 @@ class CreateSchoolTests(TestCase):
             {
                 "school_name": "New Test College",
                 "school_code": "NEWCOLLEGE",
+                "subdomain_prefix": "newcollege",
                 "school_type": School.SchoolType.PRIMARY_SECONDARY,
                 "email": "school@example.com",
                 "phone": "0000000000",
@@ -461,6 +461,23 @@ class CreateSchoolTests(TestCase):
 
         school = School.objects.get(
             code="NEWCOLLEGE"
+        )
+        
+        domain = SchoolDomain.objects.get(
+            school=school
+        )
+
+        self.assertEqual(
+            domain.domain,
+            "newcollege.paulschoolhub.com.ng",
+        )
+
+        self.assertTrue(
+            domain.is_primary
+        )
+
+        self.assertTrue(
+            domain.is_active
         )
 
         self.assertIn(
