@@ -1,11 +1,261 @@
 {% extends 'base.html' %}
+
 {% block title %}Assign Subject to Class{% endblock %}
+
 {% block content %}
-<h1>Assign Subject to Class</h1>
-<form method="POST">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">Save Assignment</button>
-</form>
-<p><a href="{% url 'class_subject_list' %}">View all assignments</a></p>
+
+<div class="section-card">
+
+    <h1>Assign Subject to Class</h1>
+
+    <p>
+        Select a class and choose the subject that should be taught
+        to that class.
+    </p>
+
+    <form method="POST">
+
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+            <div class="alert alert-danger">
+                {{ form.non_field_errors }}
+            </div>
+        {% endif %}
+
+        <!-- CLASS -->
+        <div class="mb-4">
+
+            <label
+                for="id_school_class"
+                class="form-label"
+            >
+                Class
+            </label>
+
+            <select
+                name="school_class"
+                id="id_school_class"
+                class="form-select"
+                required
+            >
+                <option value="">
+                    ---------
+                </option>
+
+                {% for school_class in form.school_class.field.queryset %}
+
+                    <option
+                        value="{{ school_class.id }}"
+                        data-section="{{ school_class.section }}"
+                        {% if form.school_class.value|stringformat:"s" == school_class.id|stringformat:"s" %}
+                            selected
+                        {% endif %}
+                    >
+                        {{ school_class.name }}
+                    </option>
+
+                {% endfor %}
+
+            </select>
+
+            {% for error in form.school_class.errors %}
+                <div class="text-danger small mt-1">
+                    {{ error }}
+                </div>
+            {% endfor %}
+
+        </div>
+
+
+        <!-- SUBJECT -->
+        <div class="mb-4">
+
+            <label
+                for="id_subject"
+                class="form-label"
+            >
+                Subject
+            </label>
+
+            <select
+                name="subject"
+                id="id_subject"
+                class="form-select"
+                required
+            >
+
+                <option value="">
+                    ---------
+                </option>
+
+                {% for subject in form.subject.field.queryset %}
+
+                    <option
+                        value="{{ subject.id }}"
+                        data-level="{{ subject.level }}"
+                        {% if form.subject.value|stringformat:"s" == subject.id|stringformat:"s" %}
+                            selected
+                        {% endif %}
+                    >
+                        {{ subject.name }}
+                    </option>
+
+                {% endfor %}
+
+            </select>
+
+            <div
+                id="subject-level-help"
+                class="form-text"
+            >
+                Select a class to see the subjects for that level.
+            </div>
+
+            {% for error in form.subject.errors %}
+                <div class="text-danger small mt-1">
+                    {{ error }}
+                </div>
+            {% endfor %}
+
+        </div>
+
+
+        <button
+            type="submit"
+            class="btn btn-success"
+        >
+            Save Assignment
+        </button>
+
+        <a
+            href="{% url 'class_subject_list' %}"
+            class="btn btn-secondary"
+        >
+            View All Assignments
+        </a>
+
+    </form>
+
+</div>
+
+
+<script>
+
+    function getSubjectLevelForClass(classSection) {
+
+        if (
+            classSection === "PRE_PRIMARY" ||
+            classSection === "PRIMARY"
+        ) {
+            return "PRIMARY";
+        }
+
+        if (
+            classSection === "JUNIOR_SECONDARY" ||
+            classSection === "SENIOR_SECONDARY"
+        ) {
+            return "SECONDARY";
+        }
+
+        return null;
+    }
+
+
+    function filterSubjects() {
+
+        const classSelect =
+            document.getElementById("id_school_class");
+
+        const subjectSelect =
+            document.getElementById("id_subject");
+
+        const levelHelp =
+            document.getElementById("subject-level-help");
+
+        if (!classSelect || !subjectSelect) {
+            return;
+        }
+
+        const selectedOption =
+            classSelect.options[classSelect.selectedIndex];
+
+        const allowedLevel =
+            selectedOption && selectedOption.value
+                ? getSubjectLevelForClass(
+                    selectedOption.dataset.section
+                )
+                : null;
+
+
+        Array.from(subjectSelect.options).forEach(
+            option => {
+
+                if (!option.value) {
+                    option.style.display = "";
+                    return;
+                }
+
+                const subjectLevel =
+                    option.dataset.level;
+
+                if (
+                    allowedLevel &&
+                    subjectLevel === allowedLevel
+                ) {
+
+                    option.style.display = "";
+
+                } else {
+
+                    option.style.display = "none";
+
+                    if (option.selected) {
+                        option.selected = false;
+                    }
+                }
+            }
+        );
+
+
+        if (allowedLevel === "PRIMARY") {
+
+            levelHelp.textContent =
+                "Showing Primary subjects only.";
+
+        } else if (allowedLevel === "SECONDARY") {
+
+            levelHelp.textContent =
+                "Showing Secondary subjects only.";
+
+        } else {
+
+            levelHelp.textContent =
+                "Select a class to see the subjects for that level.";
+        }
+    }
+
+
+    document.addEventListener(
+        "DOMContentLoaded",
+        function () {
+
+            const classSelect =
+                document.getElementById("id_school_class");
+
+            if (!classSelect) {
+                return;
+            }
+
+            classSelect.addEventListener(
+                "change",
+                filterSubjects
+            );
+
+            filterSubjects();
+        }
+    );
+
+</script>
+
 {% endblock %}
