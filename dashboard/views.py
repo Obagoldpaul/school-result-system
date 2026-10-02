@@ -6,7 +6,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from academics.models import AcademicSession, Term
 from accounts.permissions import is_management
 from accounts.permissions import school_permission_required
-from subjects.models import Subject
+from subjects.models import ClassSubject, Subject
 
 from .services import build_dashboard
 from django.db import IntegrityError
@@ -39,6 +39,82 @@ def home(request):
         request,
         "dashboard/home.html",
         context
+    )
+
+@login_required
+def student_subjects(request):
+
+    student = getattr(
+        request.user,
+        "student_profile",
+        None,
+    )
+
+    if not student:
+        from django.core.exceptions import PermissionDenied
+
+        raise PermissionDenied(
+            "You do not have access to the student subjects page."
+        )
+
+    school = getattr(
+        request.user,
+        "school",
+        None,
+    )
+
+    if not school:
+        from django.core.exceptions import PermissionDenied
+
+        raise PermissionDenied(
+            "Your account is not associated with a school."
+        )
+
+    class_subject_ids = (
+        ClassSubject.objects
+        .filter(
+            school_class=student.school_class,
+            school_class__school=school,
+        )
+        .values_list(
+            "subject_id",
+            flat=True,
+        )
+    )
+
+    elective_subject_ids = (
+        student.elective_subjects
+        .filter(
+            school=school,
+            is_active=True,
+        )
+        .values_list(
+            "id",
+            flat=True,
+        )
+    )
+
+    registered_subject_ids = (
+        set(class_subject_ids)
+        | set(elective_subject_ids)
+    )
+
+    subjects = (
+        Subject.objects
+        .filter(
+            id__in=registered_subject_ids,
+            school=school,
+            is_active=True,
+        )
+        .order_by("name")
+    )
+
+    return render(
+        request,
+        "dashboard/student_subjects.html",
+        {
+            "student_subjects": subjects,
+        },
     )
 
 @login_required

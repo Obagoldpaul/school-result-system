@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block title %}My Subjects{% endblock %}
+
+{% block content %}
+
+<div class="container py-4">
+
+    <div class="section-card">
+
+        <div class="d-flex justify-content-between align-items-center mb-4">
+
+            <div>
+                <h3 class="mb-1">
+                    My Subjects
+                </h3>
+
+                <p class="text-muted mb-0">
+                    Subjects you are currently registered for.
+                </p>
+            </div>
+
+            <a
+                href="{% url 'dashboard_home' %}"
+                class="btn btn-outline-secondary"
+            >
+                Back to Dashboard
+            </a>
+
+        </div>
+
+
+        {% if student_subjects %}
+
+            <div class="list-group">
+
+                {% for subject in student_subjects %}
+
+                    <div class="list-group-item">
+
+                        <div class="d-flex justify-content-between align-items-center">
+
+                            <div>
+                                <strong>
+                                    {{ subject.name }}
+                                </strong>
+                            </div>
+
+                            {% if subject.code %}
+                                <span class="text-muted">
+                                    {{ subject.code }}
+                                </span>
+                            {% endif %}
+
+                        </div>
+
+                    </div>
+
+                {% endfor %}
+
+            </div>
+
+        {% else %}
+
+            <div class="text-muted">
+                No registered subjects found.
+            </div>
+
+        {% endif %}
+
+    </div>
+
+</div>
+
+{% endblock %}

@@ -687,6 +687,46 @@ def build_dashboard(user):
 
         from subjects.models import ClassSubject
 
+        class_subject_ids = (
+            ClassSubject.objects
+            .filter(
+                school_class=student.school_class,
+                school_class__school=school,
+            )
+            .values_list(
+                "subject_id",
+                flat=True,
+            )
+        )
+
+        elective_subject_ids = (
+            student.elective_subjects
+            .filter(
+                school=school,
+                is_active=True,
+            )
+            .values_list(
+                "id",
+                flat=True,
+            )
+        )
+
+        registered_subject_ids = set(
+            class_subject_ids
+        ) | set(
+            elective_subject_ids
+        )
+
+        context["student_subjects"] = (
+            Subject.objects
+            .filter(
+                id__in=registered_subject_ids,
+                school=school,
+                is_active=True,
+            )
+            .order_by("name")
+        )
+
         registered_count = (
             ClassSubject.objects
             .filter(
