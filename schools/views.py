@@ -14,6 +14,7 @@ from django.shortcuts import (
     redirect,
     render,
 )
+from django.db.models import Q
 
 from django.http import HttpResponse
 from django.template.loader import get_template
@@ -561,41 +562,134 @@ def school_users(request, school_id):
 
     User = get_user_model()
 
-    users = (
+    # ---------------------------------------------------------
+    # ALL SCHOOL USERS
+    # ---------------------------------------------------------
+
+    all_users = (
         User.objects
         .filter(school=school)
-        .select_related("school_role")
-        .order_by(
-            "role",
-            "last_name",
-            "first_name",
-            "username",
-        )
     )
+
+    # ---------------------------------------------------------
+    # FILTER VALUES
+    # ---------------------------------------------------------
+
+    search = request.GET.get(
+        "search",
+        "",
+    ).strip()
+
+    account_type = request.GET.get(
+        "account_type",
+        "",
+    ).strip()
+
+    status = request.GET.get(
+        "status",
+        "",
+    ).strip()
+
+    # ---------------------------------------------------------
+    # FILTERED USERS
+    # ---------------------------------------------------------
+
+    users = (
+        all_users
+        .select_related("school_role")
+    )
+
+    # ---------------------------------------------------------
+    # SEARCH
+    # ---------------------------------------------------------
+
+    if search:
+        users = users.filter(
+            Q(first_name__icontains=search)
+            | Q(last_name__icontains=search)
+            | Q(other_name__icontains=search)
+            | Q(username__icontains=search)
+            | Q(email__icontains=search)
+        )
+
+    # ---------------------------------------------------------
+    # ACCOUNT TYPE FILTER
+    # ---------------------------------------------------------
+
+    valid_account_types = {
+        User.Role.ADMIN,
+        User.Role.TEACHER,
+        User.Role.STUDENT,
+    }
+
+    if account_type in valid_account_types:
+        users = users.filter(
+            role=account_type
+        )
+
+    # ---------------------------------------------------------
+    # STATUS FILTER
+    # ---------------------------------------------------------
+
+    if status == "active":
+
+        users = users.filter(
+            is_active=True
+        )
+
+    elif status == "inactive":
+
+        users = users.filter(
+            is_active=False
+        )
+
+    # ---------------------------------------------------------
+    # ORDERING
+    # ---------------------------------------------------------
+
+    users = users.order_by(
+        "role",
+        "last_name",
+        "first_name",
+        "username",
+    )
+
+    # ---------------------------------------------------------
+    # DASHBOARD COUNTS
+    # These remain based on ALL school users.
+    # ---------------------------------------------------------
 
     context = {
         "school": school,
         "users": users,
 
         # -----------------------------------------
+        # FILTER VALUES
+        # -----------------------------------------
+
+        "search": search,
+        "account_type": account_type,
+        "status": status,
+
+        # -----------------------------------------
         # TOTAL USERS
         # -----------------------------------------
 
-        "total_users": users.count(),
+        "total_users": all_users.count(),
 
         # -----------------------------------------
         # SYSTEM ROLE COUNTS
         # -----------------------------------------
 
-        "total_students": users.filter(
+        "total_students": all_users.filter(
             role=User.Role.STUDENT
         ).count(),
 
-        "total_teachers": users.filter(
+        "total_teachers": all_users.filter(
             role=User.Role.TEACHER
         ).count(),
 
-        "total_management": users.filter(
+        "total_management": all_users.filter(
             role=User.Role.ADMIN
         ).count(),
 
@@ -603,11 +697,11 @@ def school_users(request, school_id):
         # USER STATUS
         # -----------------------------------------
 
-        "active_users": users.filter(
+        "active_users": all_users.filter(
             is_active=True
         ).count(),
 
-        "inactive_users": users.filter(
+        "inactive_users": all_users.filter(
             is_active=False
         ).count(),
 
@@ -760,10 +854,19 @@ def edit_school_user(request, school_id, user_id):
                 f"was updated successfully."
             )
 
-            return redirect(
+            school_users_url = reverse(
                 "school_users",
-                school_id=school.id,
+                kwargs={
+                    "school_id": school.id,
+                },
             )
+
+            query_string = request.GET.urlencode()
+
+            if query_string:
+                school_users_url = f"{school_users_url}?{query_string}"
+
+            return redirect(school_users_url)
 
     else:
 
@@ -829,9 +932,8 @@ def assign_user_school_role(request, school_id, user_id):
                 )
 
                 return redirect(
-                    "assign_user_school_role",
-                    school_id=school.id,
-                    user_id=user.id,
+                    f"{reverse('assign_user_school_role', kwargs={'school_id': school.id, 'user_id': user.id})}"
+                    f"?{request.GET.urlencode()}"
                 )
 
             form.save()
@@ -850,10 +952,19 @@ def assign_user_school_role(request, school_id, user_id):
                     f"was removed."
                 )
 
-            return redirect(
+            school_users_url = reverse(
                 "school_users",
-                school_id=school.id,
+                kwargs={
+                    "school_id": school.id,
+                },
             )
+
+            query_string = request.GET.urlencode()
+
+            if query_string:
+                school_users_url = f"{school_users_url}?{query_string}"
+
+            return redirect(school_users_url)
 
     else:
 
@@ -907,9 +1018,20 @@ def send_user_setup_link(request, school_id, user_id):
             "already has a password. Use password reset instead.",
         )
 
-        return redirect(
+        school_users_url = reverse(
             "school_users",
-            school_id=school.id,
+            kwargs={
+                "school_id": school.id,
+            },
+        )
+
+        query_string = request.GET.urlencode()
+
+        if query_string:
+            school_users_url = f"{school_users_url}?{query_string}"
+
+        return redirect(
+            f"{school_users_url}#user-{user.id}"
         )
 
     if not user.email:
@@ -919,9 +1041,20 @@ def send_user_setup_link(request, school_id, user_id):
             "does not have an email address.",
         )
 
-        return redirect(
+        school_users_url = reverse(
             "school_users",
-            school_id=school.id,
+            kwargs={
+                "school_id": school.id,
+            },
+        )
+
+        query_string = request.GET.urlencode()
+
+        if query_string:
+            school_users_url = f"{school_users_url}?{query_string}"
+
+        return redirect(
+            f"{school_users_url}#user-{user.id}"
         )
 
     # Generate a fresh one-time Django password setup token.
@@ -947,6 +1080,7 @@ def send_user_setup_link(request, school_id, user_id):
             f"Hello {user.get_full_name() or user.username},\n\n"
             f"A new password setup link has been generated for your "
             f"Paul SchoolHub account at {school.name}.\n\n"
+            f"Username: {user.username}\n\n"
             f"Set your password using this link:\n\n"
             f"{setup_url}\n\n"
             f"This link is valid for 72 hours and can only be used once.\n\n"
@@ -967,9 +1101,20 @@ def send_user_setup_link(request, school_id, user_id):
         f"{user.get_full_name() or user.username}.",
     )
 
-    return redirect(
+    school_users_url = reverse(
         "school_users",
-        school_id=school.id,
+        kwargs={
+            "school_id": school.id,
+        },
+    )
+
+    query_string = request.GET.urlencode()
+
+    if query_string:
+        school_users_url = f"{school_users_url}?{query_string}"
+
+    return redirect(
+        f"{school_users_url}#user-{user.id}"
     )
 
 @login_required

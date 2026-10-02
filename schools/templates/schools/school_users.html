@@ -189,6 +189,147 @@
             </div>
 
 
+            <!-- USER FILTERS -->
+            <form
+                method="get"
+                class="row g-3 mb-4"
+            >
+
+                <!-- SEARCH -->
+                <div class="col-md-5">
+
+                    <label
+                        for="user-search"
+                        class="form-label"
+                    >
+                        Search
+                    </label>
+
+                    <input
+                        type="text"
+                        name="search"
+                        id="user-search"
+                        class="form-control"
+                        value="{{ search }}"
+                        placeholder="Name, username, or email"
+                    >
+
+                </div>
+
+
+                <!-- ACCOUNT TYPE -->
+                <div class="col-md-3">
+
+                    <label
+                        for="account-type"
+                        class="form-label"
+                    >
+                        Account Type
+                    </label>
+
+                    <select
+                        name="account_type"
+                        id="account-type"
+                        class="form-select"
+                    >
+
+                        <option
+                            value=""
+                            {% if not account_type %}selected{% endif %}
+                        >
+                            All Account Types
+                        </option>
+
+                        <option
+                            value="ADMIN"
+                            {% if account_type == "ADMIN" %}selected{% endif %}
+                        >
+                            Admin
+                        </option>
+
+                        <option
+                            value="TEACHER"
+                            {% if account_type == "TEACHER" %}selected{% endif %}
+                        >
+                            Teacher
+                        </option>
+
+                        <option
+                            value="STUDENT"
+                            {% if account_type == "STUDENT" %}selected{% endif %}
+                        >
+                            Student
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <!-- STATUS -->
+                <div class="col-md-2">
+
+                    <label
+                        for="user-status"
+                        class="form-label"
+                    >
+                        Status
+                    </label>
+
+                    <select
+                        name="status"
+                        id="user-status"
+                        class="form-select"
+                    >
+
+                        <option
+                            value=""
+                            {% if not status %}selected{% endif %}
+                        >
+                            All Statuses
+                        </option>
+
+                        <option
+                            value="active"
+                            {% if status == "active" %}selected{% endif %}
+                        >
+                            Active
+                        </option>
+
+                        <option
+                            value="inactive"
+                            {% if status == "inactive" %}selected{% endif %}
+                        >
+                            Inactive
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <!-- ACTIONS -->
+                <div class="col-md-2 d-flex align-items-end gap-2">
+
+                    <button
+                        type="submit"
+                        class="btn btn-primary"
+                    >
+                        Filter
+                    </button>
+
+                    <a
+                        href="{% url 'school_users' school.id %}"
+                        class="btn btn-outline-secondary"
+                    >
+                        Clear
+                    </a>
+
+                </div>
+
+            </form>
+
+
             {% if users %}
 
                 <div class="table-responsive">
@@ -236,7 +377,7 @@
 
                             {% for user in users %}
 
-                                <tr>
+                                <tr id="user-{{ user.id }}">
 
                                     <!-- NUMBER -->
                                     <td>
@@ -348,7 +489,7 @@
                                         {% if user.role == "ADMIN" %}
                                     
                                             <a
-                                                href="{% url 'edit_school_user' school.id user.id %}"
+                                                href="{% url 'edit_school_user' school.id user.id %}{% querystring %}"
                                                 class="btn btn-outline-secondary btn-sm"
                                             >
                                                 Edit
@@ -362,7 +503,7 @@
 
                                                 <form
                                                     method="post"
-                                                    action="{% url 'send_user_setup_link' school.id user.id %}"
+                                                    action="{% url 'send_user_setup_link' school.id user.id %}{% querystring %}"
                                                     class="d-inline"
                                                 >
                                                     {% csrf_token %}
@@ -381,7 +522,7 @@
                                         {% endif %}
                                     
                                         <a
-                                            href="{% url 'assign_user_school_role' school.id user.id %}"
+                                            href="{% url 'assign_user_school_role' school.id user.id %}{% querystring %}"
                                             class="btn btn-outline-primary btn-sm"
                                         >
                                             Assign Role
