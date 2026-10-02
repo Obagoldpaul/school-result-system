@@ -108,7 +108,7 @@ def generate_subscription_receipt_number():
 
     return f"{prefix}{next_number:04d}"
 
-@login_required
+@login_required(login_url="platform_login")
 @platform_admin_required
 def platform_dashboard(request):
     """
