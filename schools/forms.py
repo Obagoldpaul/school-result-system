@@ -19,6 +19,11 @@ from .models import (
     SubscriptionPayment,
 )
 
+from accounts.normalization import (
+    normalize_email,
+    normalize_person_name,
+)
+
 User = get_user_model()
 
 class SchoolRegistrationForm(forms.Form):
@@ -240,6 +245,23 @@ class SchoolRegistrationForm(forms.Form):
             )
 
         return username
+    
+    def clean_admin_first_name(self):
+        return normalize_person_name(
+            self.cleaned_data["admin_first_name"]
+        )
+
+
+    def clean_admin_last_name(self):
+        return normalize_person_name(
+            self.cleaned_data["admin_last_name"]
+        )
+
+
+    def clean_admin_email(self):
+        return normalize_email(
+            self.cleaned_data["admin_email"]
+        )
 
     def clean(self):
         cleaned_data = super().clean()
@@ -762,6 +784,29 @@ class CreateSchoolUserForm(forms.ModelForm):
             )
 
         return username
+    
+    def clean_first_name(self):
+        return normalize_person_name(
+            self.cleaned_data["first_name"]
+        )
+
+
+    def clean_other_name(self):
+        return normalize_person_name(
+            self.cleaned_data.get("other_name", "")
+        )
+
+
+    def clean_last_name(self):
+        return normalize_person_name(
+            self.cleaned_data["last_name"]
+        )
+
+
+    def clean_email(self):
+        return normalize_email(
+            self.cleaned_data.get("email", "")
+        )
 
     def clean(self):
         return super().clean()

@@ -185,6 +185,27 @@ class SubjectForm(forms.ModelForm):
                 "level",
                 "This subject level is not available for your school."
             )
+        
+        # --------------------------------------------------
+        # DUPLICATE SUBJECT VALIDATION
+        # --------------------------------------------------
+
+        name = cleaned_data.get("name")
+
+        if name and level in allowed_levels:
+            duplicate_exists = Subject.objects.filter(
+                school=school,
+                name__iexact=name.strip(),
+                level=level,
+            ).exclude(
+                pk=self.instance.pk
+            ).exists()
+
+            if duplicate_exists:
+                self.add_error(
+                    "name",
+                    "A subject with this name already exists for this level."
+                )
 
         # --------------------------------------------------
         # PARENT LEVEL VALIDATION
@@ -200,7 +221,7 @@ class SubjectForm(forms.ModelForm):
                 )
 
         return cleaned_data
-
+    
     def clean_parent(self):
         parent = self.cleaned_data.get("parent")
 

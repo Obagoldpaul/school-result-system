@@ -12,6 +12,11 @@ from core.choices import (
     NIGERIAN_LGAS,
 )
 
+from accounts.normalization import (
+    normalize_email,
+    normalize_person_name,
+)
+
 User = get_user_model()
 
 
@@ -335,15 +340,17 @@ class TeacherRegistrationForm(forms.ModelForm):
 
         new_user = User(
             username=self.cleaned_data["username"],
-            first_name=self.cleaned_data["first_name"],
-            last_name=self.cleaned_data["last_name"],
-            other_name=self.cleaned_data.get(
-                "other_name",
-                ""
+            first_name=normalize_person_name(
+                self.cleaned_data["first_name"]
             ),
-            email=self.cleaned_data.get(
-                "email",
-                ""
+            last_name=normalize_person_name(
+                self.cleaned_data["last_name"]
+            ),
+            other_name=normalize_person_name(
+                self.cleaned_data.get("other_name", "")
+            ),
+            email=normalize_email(
+                self.cleaned_data.get("email", "")
             ),
             role=User.Role.TEACHER,
         )

@@ -10,6 +10,11 @@ from core.choices import (
     RELIGION_CHOICES,
 )
 
+from accounts.normalization import (
+    normalize_email,
+    normalize_person_name,
+)
+
 User = get_user_model()
 
 def generate_admission_number(school):
@@ -470,10 +475,18 @@ class StudentRegistrationForm(forms.ModelForm):
 
         user = User(
             username=self.cleaned_data["username"],
-            first_name=self.cleaned_data["first_name"],
-            last_name=self.cleaned_data["last_name"],
-            other_name=self.cleaned_data.get("other_name", ""),
-            email=self.cleaned_data.get("email", ""),
+            first_name=normalize_person_name(
+                self.cleaned_data["first_name"]
+            ),
+            last_name=normalize_person_name(
+                self.cleaned_data["last_name"]
+            ),
+            other_name=normalize_person_name(
+                self.cleaned_data.get("other_name", "")
+            ),
+            email=normalize_email(
+                self.cleaned_data.get("email", "")
+            ),
             role=User.Role.STUDENT,
             school=self.user.school,
         )
