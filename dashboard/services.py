@@ -5,6 +5,7 @@ from allocations.models import SubjectAllocation
 from accounts.permissions import (
     can_manage_billing,
     can_record_payment,
+    user_has_permission,
 )
 from billing.models import (
     Payment,
@@ -13,6 +14,7 @@ from billing.models import (
     get_student_fee_breakdown,
     get_student_account_summary,
 )
+from registrations.models import RegistrationApplication
 
 from django.db.models import Sum
 from decimal import Decimal
@@ -437,6 +439,28 @@ def build_dashboard(user):
 
     if context["is_management"] and school:
 
+        # --------------------------------------------------
+        # PENDING REGISTRATION ALERT
+        # --------------------------------------------------
+
+        if user_has_permission(user, "registrations.view"):
+            pending_registrations_count = (
+                RegistrationApplication.objects.filter(
+                    school=school,
+                    status=RegistrationApplication.Status.PENDING,
+                ).count()
+            )
+        else:
+            pending_registrations_count = 0
+
+        context["pending_registrations_count"] = (
+            pending_registrations_count
+        )
+
+        context["pending_registrations_alert"] = (
+            pending_registrations_count > 0
+        )
+        
         # --------------------------------------------------
         # TODAY'S ATTENDANCE
         # --------------------------------------------------

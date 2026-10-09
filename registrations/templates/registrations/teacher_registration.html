@@ -25,8 +25,8 @@
     <style>
 
         :root {
-            --primary: #1F4E79;
-            --secondary: #D9EAF7;
+            --primary: {{ school.settings.primary_color|default:"#1F4E79" }};
+            --secondary: {{ school.settings.secondary_color|default:"#D9EAF7" }};
         }
 
         * {

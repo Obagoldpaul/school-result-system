@@ -859,6 +859,55 @@
 
         </div>
 
+        <!-- =====================================================
+                PENDING REGISTRATIONS ALERT
+        ====================================================== -->
+
+        {% if pending_registrations_alert %}
+
+        <div class="col-md-6">
+
+            <div class="card h-100 border-primary">
+
+                <div class="card-body">
+
+                    <div class="d-flex justify-content-between align-items-start">
+
+                        <div>
+
+                            <h5 class="mb-2">
+                                Pending Registrations
+                            </h5>
+
+                            <p class="text-muted mb-3">
+                                {{ pending_registrations_count }}
+                                application{{ pending_registrations_count|pluralize }}
+                                awaiting review.
+                            </p>
+
+                        </div>
+
+                        <div style="font-size:28px;">
+                            📝
+                        </div>
+
+                    </div>
+
+                    <a
+                        href="{% url 'registration_application_list' %}"
+                        class="btn btn-primary btn-sm"
+                    >
+                        Review Registrations
+                    </a>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        {% endif %}
+
 
     </div>
 
