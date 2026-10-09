@@ -1,0 +1,314 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>
+        {{ school.name }} - Registration Submitted
+    </title>
+
+    <link rel="preconnect"
+          href="https://fonts.googleapis.com">
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+        rel="stylesheet"
+    >
+
+    <style>
+
+        :root {
+            --primary: #1F4E79;
+            --secondary: #D9EAF7;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+
+            font-family: 'Inter', Arial, sans-serif;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    var(--secondary),
+                    #f5f7f9
+                );
+
+            display: flex;
+            flex-direction: column;
+        }
+
+        .registration-wrapper {
+            flex: 1;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            padding: 30px 20px;
+        }
+
+        .registration-card {
+            width: 100%;
+            max-width: 700px;
+
+            background: #ffffff;
+
+            border-radius: 16px;
+
+            overflow: hidden;
+
+            box-shadow:
+                0 10px 35px rgba(0, 0, 0, 0.12);
+        }
+
+        .registration-header {
+            background: var(--primary);
+
+            color: white;
+
+            text-align: center;
+
+            padding: 32px 25px;
+        }
+
+        .school-logo {
+            width: 90px;
+            height: 90px;
+
+            object-fit: contain;
+
+            background: white;
+
+            padding: 6px;
+
+            border-radius: 10px;
+
+            margin-bottom: 15px;
+        }
+
+        .school-name {
+            margin: 0;
+
+            font-size: 24px;
+
+            font-weight: 700;
+
+            line-height: 1.3;
+        }
+
+        .platform-name {
+            margin-top: 10px;
+
+            font-size: 12px;
+
+            opacity: 0.85;
+        }
+
+        .success-body {
+            padding: 40px 32px;
+
+            text-align: center;
+        }
+
+        .success-icon {
+            width: 64px;
+            height: 64px;
+
+            margin: 0 auto 20px;
+
+            border-radius: 50%;
+
+            background: #e8f5e9;
+
+            color: #2e7d32;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            font-size: 32px;
+
+            font-weight: 700;
+        }
+
+        .success-title {
+            margin-bottom: 12px;
+
+            font-size: 24px;
+
+            font-weight: 700;
+
+            color: #222;
+        }
+
+        .success-message {
+            color: #666;
+
+            font-size: 14px;
+
+            line-height: 1.7;
+
+            max-width: 520px;
+
+            margin: 0 auto;
+        }
+
+        .notice {
+            margin-top: 25px;
+
+            padding: 15px;
+
+            border-radius: 8px;
+
+            background: #f8f8f8;
+
+            border: 1px solid #eeeeee;
+
+            color: #555;
+
+            font-size: 13px;
+
+            line-height: 1.6;
+        }
+
+        .registration-footer {
+            text-align: center;
+
+            padding: 18px;
+
+            background: #f8f8f8;
+
+            border-top: 1px solid #eeeeee;
+
+            color: #777;
+
+            font-size: 12px;
+        }
+
+        @media (max-width: 700px) {
+
+            .registration-wrapper {
+                padding: 15px 10px;
+            }
+
+            .success-body {
+                padding: 30px 20px;
+            }
+
+            .school-name {
+                font-size: 21px;
+            }
+
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+<div class="registration-wrapper">
+
+    <div class="registration-card">
+
+        <!-- SCHOOL HEADER -->
+
+        <div class="registration-header">
+
+            {% if school.logo %}
+
+                <img
+                    src="{{ school.logo.url }}"
+                    alt="{{ school.name }}"
+                    class="school-logo"
+                >
+
+            {% endif %}
+
+            <h1 class="school-name">
+                {{ school.name }}
+            </h1>
+
+            <div class="platform-name">
+                Teacher Registration
+            </div>
+
+        </div>
+
+
+        <!-- SUCCESS MESSAGE -->
+
+        <div class="success-body">
+
+            <div class="success-icon">
+                ✓
+            </div>
+
+            <div class="success-title">
+                Application Submitted Successfully
+            </div>
+
+            <div class="success-message">
+
+                Your teacher registration application has been
+                submitted successfully to
+                <strong>{{ school.name }}</strong>.
+
+                <br><br>
+
+                The school management will review your application.
+                If your application is approved, your school account
+                will be created and you will receive instructions for
+                setting up your password.
+
+            </div>
+
+            <div class="notice">
+
+                Please keep your email address and username available.
+                You will need them when your account is activated.
+
+            </div>
+
+        </div>
+
+
+        <!-- FOOTER -->
+
+        <div class="registration-footer">
+
+            <strong>
+                {{ school.name }}
+            </strong>
+
+            <br>
+
+            Powered by Paul Media Services
+
+            <br>
+
+            © 2026 Paul SchoolHub. All Rights Reserved.
+
+        </div>
+
+    </div>
+
+</div>
+
+</body>
+
+</html>

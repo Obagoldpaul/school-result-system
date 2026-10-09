@@ -29,7 +29,7 @@ class TeacherPermissionTests(TestCase):
             code="TEST-001",
         )
         
-        self.package = SubscriptionPackage.objects.create(
+        self.package = SubscriptionPackage.objects.get(
             name=SubscriptionPackage.PackageType.BASIC,
         )
 
@@ -125,7 +125,7 @@ class TeacherRegistrationTests(TestCase):
             code="REG-001",
         )
 
-        self.package = SubscriptionPackage.objects.create(
+        self.package = SubscriptionPackage.objects.get(
             name=SubscriptionPackage.PackageType.BASIC,
         )
 
@@ -271,7 +271,7 @@ class TeacherPassportOptimizationTests(TestCase):
             code="IMG-001",
         )
 
-        self.package = SubscriptionPackage.objects.create(
+        self.package = SubscriptionPackage.objects.get(
             name=SubscriptionPackage.PackageType.BASIC,
         )
 
@@ -350,7 +350,7 @@ class TeacherPassportEditOptimizationTests(TestCase):
             code="EDIT-IMG-001",
         )
 
-        self.package = SubscriptionPackage.objects.create(
+        self.package = SubscriptionPackage.objects.get(
             name=SubscriptionPackage.PackageType.BASIC,
         )
 

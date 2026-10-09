@@ -36,7 +36,7 @@ class SchoolProvisioningTests(TestCase):
 
         self.assertEqual(
             SchoolClass.objects.filter(school=school).count(),
-            15,
+            17,
         )
         
         self.assertFalse(
@@ -52,7 +52,7 @@ class SchoolProvisioningTests(TestCase):
         )
 
         expected_permissions = {
-            "Principal": 46,
+            "Principal": 53,
             "Bursar": 6,
             "Class Teacher": 17,
             "Teacher": 11,
@@ -100,7 +100,7 @@ class SchoolProvisioningTests(TestCase):
             school=school
         ).count()
 
-        self.assertEqual(first_class_count, 15)
+        self.assertEqual(first_class_count, 17)
         self.assertEqual(first_role_count, 4)
         self.assertEqual(second_class_count, first_class_count)
         self.assertEqual(second_role_count, first_role_count)
@@ -200,7 +200,7 @@ class SendUserSetupLinkTests(TestCase):
             reverse(
                 "school_users",
                 kwargs={"school_id": self.school.id},
-            ),
+            ) + f"#user-{self.pending_user.id}",
         )
 
         self.assertEqual(len(mail.outbox), 1)
@@ -245,7 +245,7 @@ class SendUserSetupLinkTests(TestCase):
             reverse(
                 "school_users",
                 kwargs={"school_id": self.school.id},
-            ),
+            ) + f"#user-{self.password_user.id}",
         )
 
         self.assertEqual(len(mail.outbox), 0)
@@ -268,7 +268,7 @@ class SendUserSetupLinkTests(TestCase):
             reverse(
                 "school_users",
                 kwargs={"school_id": self.school.id},
-            ),
+            ) + f"#user-{self.no_email_user.id}",
         )
 
         self.assertEqual(len(mail.outbox), 0)

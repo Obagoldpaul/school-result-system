@@ -37,10 +37,8 @@ class AnnouncementPermissionTests(TestCase):
             is_active=True,
         )
 
-        self.package = SubscriptionPackage.objects.create(
+        self.package = SubscriptionPackage.objects.get(
             name=SubscriptionPackage.PackageType.BASIC,
-            description="Test package",
-            price=0,
             is_active=True,
         )
 

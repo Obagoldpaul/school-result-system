@@ -158,6 +158,12 @@
                     Teacher Availability
                 </a>
 
+                {% if can_view_registrations %}
+                <a href="{% url 'registration_application_list' %}">
+                    Registration Applications
+                </a>
+                {% endif %}
+
                 <details>
                     <summary>Subjects</summary>
 

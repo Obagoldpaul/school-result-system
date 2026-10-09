@@ -79,6 +79,8 @@ INSTALLED_APPS = [
     "timetable",
     
     'schools',
+    'library',
+    'registrations',
 ]
 
 MIDDLEWARE = [

@@ -20,7 +20,7 @@ class SchoolLogoOptimizationTests(TestCase):
             code="LOGO-001",
         )
 
-        self.package = SubscriptionPackage.objects.create(
+        self.package = SubscriptionPackage.objects.get(
             name=SubscriptionPackage.PackageType.PREMIUM,
         )
 
@@ -104,7 +104,7 @@ class PrincipalSignatureOptimizationTests(TestCase):
             code="SIGN-001",
         )
 
-        self.package = SubscriptionPackage.objects.create(
+        self.package = SubscriptionPackage.objects.get(
             name=SubscriptionPackage.PackageType.PREMIUM,
         )
 

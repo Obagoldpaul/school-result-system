@@ -5,6 +5,7 @@ from django.conf.urls.static import static
 from django.contrib.auth import views as auth_views
 from accounts import views as account_views
 from accounts.views import PlatformLoginView
+from registrations import views as registration_views
 
 
 urlpatterns = [
@@ -39,6 +40,20 @@ urlpatterns = [
         name="password_reset_done",
     ),
     
+    path(
+        "register/student/",
+        registration_views.student_registration,
+        name="student_registration",
+    ),
+    
+    path(
+        "register/teacher/",
+        registration_views.teacher_registration,
+        name="teacher_registration",
+    ),
+    
+    path('register/', include('registrations.urls')),
+    
     path('logout/', auth_views.LogoutView.as_view(next_page='login'), name='logout'),
 
     path('', include('dashboard.urls')),
@@ -54,6 +69,7 @@ urlpatterns = [
     path('announcements/', include('announcements.urls')),
     path("maintenance/", include("maintenance.urls")),
     path('timetable/', include('timetable.urls')),
+    path('library/', include('library.urls')),
     
     path('platform/', include('schools.urls')),
 ]

@@ -35,10 +35,8 @@ class BillingConsistencyTests(TestCase):
             is_active=True,
         )
 
-        self.package = SubscriptionPackage.objects.create(
+        self.package = SubscriptionPackage.objects.get(
             name=SubscriptionPackage.PackageType.STANDARD,
-            description="Test package",
-            price=Decimal("0.00"),
             is_active=True,
         )
 

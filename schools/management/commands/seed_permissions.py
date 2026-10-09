@@ -62,6 +62,23 @@ PERMISSIONS = [
         "module": "Teachers",
         "description": "Delete teacher records.",
     },
+    
+    # =========================================================
+    # REGISTRATIONS
+    # =========================================================
+
+    {
+        "code": "registrations.view",
+        "name": "View Registration Applications",
+        "module": "Registrations",
+        "description": "View student and teacher registration applications.",
+    },
+    {
+        "code": "registrations.review",
+        "name": "Review Registration Applications",
+        "module": "Registrations",
+        "description": "Approve or reject student and teacher registration applications.",
+    },
 
     # =========================================================
     # SUBJECTS

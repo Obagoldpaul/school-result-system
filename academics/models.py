@@ -203,6 +203,16 @@ class SchoolSettings(models.Model):
         help_text="Show the student's class position on the report card.",
     )
     
+    student_registration_enabled = models.BooleanField(
+        default=True,
+        help_text="Allow students to submit public registration applications.",
+    )
+
+    teacher_registration_enabled = models.BooleanField(
+        default=True,
+        help_text="Allow teachers to submit public registration applications.",
+    )
+    
     @classmethod
     def load(cls, school):
         """

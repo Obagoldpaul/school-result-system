@@ -13,7 +13,7 @@ from students.models import Student, SchoolClass
 from academics.models import AcademicSession, Term
 from .models import Score, ReportCardExtra
 from .reports import get_class_results
-from .forms import ReportCardExtraForm
+from .forms import ReportCardExtraForm, TeacherRemarkForm
 from . import services
 from accounts.permissions import (
     school_permission_required,

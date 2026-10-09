@@ -744,7 +744,7 @@ class TimetablePeriodTemplateViewTests(TestCase):
             is_active=True,
         )
         
-        cls.subscription_package = SubscriptionPackage.objects.create(
+        cls.subscription_package = SubscriptionPackage.objects.get(
             name=SubscriptionPackage.PackageType.BASIC,
         )
 
@@ -1323,7 +1323,7 @@ class TimetableFormTests(TestCase):
             is_active=True,
         )
 
-        cls.package = SubscriptionPackage.objects.create(
+        cls.package = SubscriptionPackage.objects.get(
             name=SubscriptionPackage.PackageType.STANDARD,
         )
 
@@ -3382,7 +3382,7 @@ class TimetableViewTests(TestCase):
             is_active=True,
         )
         
-        cls.package = SubscriptionPackage.objects.create(
+        cls.package = SubscriptionPackage.objects.get(
             name=SubscriptionPackage.PackageType.STANDARD,
         )
         
@@ -3709,7 +3709,7 @@ class TimetableApprovalViewTests(TestCase):
             is_active=True,
         )
 
-        cls.package = SubscriptionPackage.objects.create(
+        cls.package = SubscriptionPackage.objects.get(
             name=SubscriptionPackage.PackageType.STANDARD,
         )
         
@@ -4015,7 +4015,7 @@ class TimetablePublishViewTests(TestCase):
             is_active=True,
         )
 
-        cls.package = SubscriptionPackage.objects.create(
+        cls.package = SubscriptionPackage.objects.get(
             name=SubscriptionPackage.PackageType.STANDARD,
         )
         
@@ -4316,7 +4316,7 @@ class TimetablePortalViewTests(TestCase):
             school_type=School.SchoolType.PRIMARY_SECONDARY,
         )
 
-        self.package = SubscriptionPackage.objects.create(
+        self.package = SubscriptionPackage.objects.get(
             name=SubscriptionPackage.PackageType.BASIC,
         )
 

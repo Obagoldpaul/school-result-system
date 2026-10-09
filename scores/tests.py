@@ -101,7 +101,7 @@ class ScorePermissionTests(ScorePermissionTestMixin, TestCase):
             "SCORE002",
         )
         
-        self.package = SubscriptionPackage.objects.create(
+        self.package = SubscriptionPackage.objects.get(
             name=SubscriptionPackage.PackageType.BASIC,
         )
 

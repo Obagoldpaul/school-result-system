@@ -25,6 +25,10 @@ def user_roles(request):
         "is_student": is_student(user),
         "can_manage_billing": can_manage_billing(user),
         "can_contact_support": user_has_permission(user, "support.contact"),
+        "can_view_registrations": user_has_permission(
+            user,
+            "registrations.view",
+        ),
     }
 
 

@@ -175,6 +175,134 @@
             {{ form.show_class_position.errors }}
         </div>
 
+    
+        <hr>
+
+        <h2>Registration Settings</h2>
+
+        <p class="text-muted">
+            Control whether students and teachers can submit public registration
+            applications for this school.
+        </p>
+
+        <div class="form-group">
+            <label>
+                {{ form.student_registration_enabled }}
+                Allow Student Registration
+            </label>
+            {{ form.student_registration_enabled.errors }}
+        </div>
+
+        <div class="form-group">
+            <label>
+                {{ form.teacher_registration_enabled }}
+                Allow Teacher Registration
+            </label>
+            {{ form.teacher_registration_enabled.errors }}
+        </div>
+
+        <hr>
+
+        <h3>Public Registration Links</h3>
+
+        {% if registration_domain %}
+
+        <p>
+            <strong>School Domain:</strong>
+            <a href="{{ registration_domain }}" target="_blank" rel="noopener noreferrer">
+                {{ registration_domain }}
+            </a>
+        </p>
+
+        <div class="form-group">
+            <label for="student-registration-url">
+                Student Registration Link
+            </label>
+
+            {% if school_settings.student_registration_enabled %}
+                <span class="text-success">Enabled</span>
+            {% else %}
+                <span class="text-danger">Disabled</span>
+            {% endif %}
+
+            <div style="display: flex; gap: 8px; margin-top: 8px;">
+                <input
+                    type="text"
+                    id="student-registration-url"
+                    value="{{ student_registration_url }}"
+                    readonly
+                    style="flex: 1; min-width: 0;"
+                >
+
+                <button
+                    type="button"
+                    onclick="copyRegistrationLink('student-registration-url', this)"
+                >
+                    Copy Link
+                </button>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="teacher-registration-url">
+                Teacher Registration Link
+            </label>
+
+            {% if school_settings.teacher_registration_enabled %}
+                <span class="text-success">Enabled</span>
+            {% else %}
+                <span class="text-danger">Disabled</span>
+            {% endif %}
+
+            <div style="display: flex; gap: 8px; margin-top: 8px;">
+                <input
+                    type="text"
+                    id="teacher-registration-url"
+                    value="{{ teacher_registration_url }}"
+                    readonly
+                    style="flex: 1; min-width: 0;"
+                >
+
+                <button
+                    type="button"
+                    onclick="copyRegistrationLink('teacher-registration-url', this)"
+                >
+                    Copy Link
+                </button>
+            </div>
+        </div>
+
+        {% else %}
+
+        <div class="alert alert-warning">
+            No active primary domain is configured for this school.
+            Registration links cannot be displayed until one is configured.
+        </div>
+
+        {% endif %}
+
+        <script>
+            async function copyRegistrationLink(inputId, button) {
+                const input = document.getElementById(inputId);
+                const originalText = button.textContent;
+
+                try {
+                    await navigator.clipboard.writeText(input.value);
+                    button.textContent = "Copied!";
+                } catch (error) {
+                    input.focus();
+                    input.select();
+
+                    const copied = document.execCommand("copy");
+                    button.textContent = copied ? "Copied!" : "Copy failed";
+                }
+
+                setTimeout(() => {
+                    button.textContent = originalText;
+                }, 2000);
+            }
+        </script>
+
         <button type="submit">
             Save School Settings
         </button>

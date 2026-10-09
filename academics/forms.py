@@ -100,6 +100,8 @@ class SchoolSettingsForm(forms.ModelForm):
             "report_card_heading",
             "school_motto",
             "show_class_position",
+            "student_registration_enabled",
+            "teacher_registration_enabled",
         ]
 
         widgets = {
@@ -175,6 +177,17 @@ class SchoolSettingsForm(forms.ModelForm):
                 }
             ),
             "show_class_position": forms.CheckboxInput(
+                attrs={
+                    "class": "form-check-input",
+                }
+            ),
+            "student_registration_enabled": forms.CheckboxInput(
+                attrs={
+                    "class": "form-check-input",
+                }
+            ),
+
+            "teacher_registration_enabled": forms.CheckboxInput(
                 attrs={
                     "class": "form-check-input",
                 }

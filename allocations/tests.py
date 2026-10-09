@@ -620,7 +620,7 @@ class CarryForwardAllocationViewTests(AllocationTestMixin, TestCase):
             "CARRYVIEW001",
         )
         
-        self.subscription_package = SubscriptionPackage.objects.create(
+        self.subscription_package = SubscriptionPackage.objects.get(
             name=SubscriptionPackage.PackageType.BASIC,
         )
 

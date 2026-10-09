@@ -4,6 +4,8 @@ from django.shortcuts import redirect, render
 from django.core.exceptions import PermissionDenied
 
 from accounts.permissions import school_permission_required
+from schools.models import SchoolDomain
+from django.conf import settings as django_settings
 
 from .forms import SchoolSettingsForm
 from .models import SchoolSettings
@@ -27,6 +29,13 @@ def school_settings(request):
             "school_name": request.user.school.name,
         },
     )
+    
+    primary_domain = SchoolDomain.objects.filter(
+        school=request.user.school,
+        is_primary=True,
+        is_active=True,
+        school__is_active=True,
+    ).first()
 
     if request.method == "POST":
         form = SchoolSettingsForm(
@@ -82,5 +91,28 @@ def school_settings(request):
         {
             "form": form,
             "school_settings": settings,
+            "registration_domain": (
+                request.build_absolute_uri("/").rstrip("/")
+                if primary_domain and request.get_host().split(":")[0] == primary_domain.domain
+                else (
+                    f"{request.scheme}://{primary_domain.domain}"
+                    if primary_domain
+                    else None
+                )
+            ),
+            "student_registration_url": (
+                f"{request.scheme}://{primary_domain.domain}"
+                f"{':' + str(request.get_port()) if django_settings.DEBUG and request.get_port() != '80' else ''}"
+                "/register/student/"
+                if primary_domain
+                else None
+            ),
+            "teacher_registration_url": (
+                f"{request.scheme}://{primary_domain.domain}"
+                f"{':' + str(request.get_port()) if django_settings.DEBUG and request.get_port() != '80' else ''}"
+                "/register/teacher/"
+                if primary_domain
+                else None
+            ),
         },
     )

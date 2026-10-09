@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+
+{% block title %}
+Registration Applications
+{% endblock %}
+
+{% block content %}
+
+<div class="container-fluid px-4 mt-4">
+
+    <div class="card shadow-lg border-0">
+
+        <div class="card-header school-header d-flex justify-content-between align-items-center">
+
+            <h3 class="mb-0">
+                Registration Applications
+            </h3>
+
+        </div>
+
+        <div class="card-body p-4">
+
+            <div class="table-responsive">
+
+                <table class="table table-hover table-bordered align-middle">
+
+                    <thead class="table-success">
+                        <tr>
+                            <th>Applicant</th>
+                            <th>Role</th>
+                            <th>Username</th>
+                            <th>Email</th>
+                            <th>Class / Department</th>
+                            <th>Status</th>
+                            <th>Submitted</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                        {% for application in applications %}
+
+                        <tr>
+
+                            <td>
+                                <strong>
+                                    {{ application.get_full_name }}
+                                </strong>
+                            </td>
+
+                            <td>
+                                {{ application.get_role_display }}
+                            </td>
+
+                            <td>
+                                {{ application.username }}
+                            </td>
+
+                            <td>
+                                {{ application.email }}
+                            </td>
+
+                            <td>
+                                {% if application.role == "STUDENT" %}
+                                    {{ application.requested_class|default:"-" }}
+
+                                    {% if application.requested_department %}
+                                        <br>
+                                        <small class="text-muted">
+                                            {{ application.requested_department }}
+                                        </small>
+                                    {% endif %}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+
+                            <td>
+                                {% if application.status == "PENDING" %}
+                                    <span class="badge bg-warning text-dark">
+                                        Pending
+                                    </span>
+                                {% elif application.status == "APPROVED" %}
+                                    <span class="badge bg-success">
+                                        Approved
+                                    </span>
+                                {% elif application.status == "REJECTED" %}
+                                    <span class="badge bg-danger">
+                                        Rejected
+                                    </span>
+                                {% endif %}
+                            </td>
+
+                            <td>
+                                {{ application.submitted_at|date:"d M Y, g:i A" }}
+                            </td>
+                            
+                            <td>
+                                <a
+                                    href="{% url 'registration_application_detail' application.id %}"
+                                    class="btn btn-sm btn-primary"
+                                >
+                                    View
+                                </a>
+                            </td>
+
+                        </tr>
+
+                        {% empty %}
+
+                        <tr>
+                            <td colspan="8" class="text-center text-muted py-5">
+                                No registration applications found.
+                            </td>
+                        </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

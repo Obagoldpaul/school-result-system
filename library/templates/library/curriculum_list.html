@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+
+{% block title %}Curriculums{% endblock %}
+
+{% block content %}
+
+<div class="container-fluid">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <div>
+            <h1>Curriculums</h1>
+
+            <p class="text-muted mb-0">
+                View curriculum sources available to your school.
+            </p>
+        </div>
+
+        <div class="d-flex gap-2">
+
+            <a href="{% url 'dashboard_home' %}"
+               class="btn btn-secondary">
+                Back to Dashboard
+            </a>
+
+        </div>
+
+    </div>
+
+
+    <div class="card shadow-sm">
+
+        <div class="card-body">
+
+            <h5 class="card-title mb-4">
+                Available Curriculums
+            </h5>
+
+
+            {% if curriculums %}
+
+            <div class="table-responsive">
+
+                <table class="table table-hover align-middle">
+
+                    <thead>
+                        <tr>
+                            <th>Curriculum</th>
+                            <th>Provider</th>
+                            <th>Version</th>
+                            <th>Type</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                        {% for curriculum in curriculums %}
+
+                        <tr>
+
+                            <td>
+                                <strong>
+                                    {{ curriculum.name }}
+                                </strong>
+
+                                {% if curriculum.description %}
+                                    <div class="text-muted small mt-1">
+                                        {{ curriculum.description|truncatewords:20 }}
+                                    </div>
+                                {% endif %}
+                            </td>
+
+                            <td>
+                                {{ curriculum.provider }}
+                            </td>
+
+                            <td>
+                                {% if curriculum.version %}
+                                    {{ curriculum.version }}
+                                {% else %}
+                                    —
+                                {% endif %}
+                            </td>
+
+                            <td>
+                                {% if curriculum.is_system %}
+                                    <span class="badge bg-primary">
+                                        System
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-secondary">
+                                        School
+                                    </span>
+                                {% endif %}
+                            </td>
+
+                            <td>
+                                {% if curriculum.is_active %}
+                                    <span class="badge bg-success">
+                                        Active
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-secondary">
+                                        Inactive
+                                    </span>
+                                {% endif %}
+                            </td>
+
+                            <td>
+                                <span class="text-muted">
+                                    Coming soon
+                                </span>
+                            </td>
+
+                        </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+            {% else %}
+
+            <div class="text-center py-5">
+
+                <h5>No curriculums available</h5>
+
+                <p class="text-muted mb-0">
+                    There are currently no active curriculums
+                    available for your school.
+                </p>
+
+            </div>
+
+            {% endif %}
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}
