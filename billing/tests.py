@@ -16,6 +16,7 @@ from billing.models import (
     Payment,
     PaymentAllocation,
     get_fee_assignments_for_student,
+    get_student_fee_breakdown,
 )
 
 from schools.models import (
@@ -368,7 +369,96 @@ class BillingConsistencyTests(TestCase):
             assignment,
             ss1_assignments,
         )
+    
+    
+    def test_department_fee_does_not_apply_to_another_department_in_same_class(self):
+        science = Department.objects.create(
+            school=self.school,
+            name="Science",
+        )
+        humanities = Department.objects.create(
+            school=self.school,
+            name="Humanities",
+        )
+
+        ss2 = SchoolClass.objects.create(
+            school=self.school,
+            name="SS2",
+        )
+
+        science_user = User.objects.create_user(
+            username="ss2_science_fee_student",
+            password="password123",
+            school=self.school,
+        )
+        science_student = Student.objects.create(
+            user=science_user,
+            school_class=ss2,
+            department=science,
+        )
+
+        tuition = FeeCategory.objects.create(
+            school=self.school,
+            name="Department Tuition",
+            category_type="COMPULSORY",
+        )
+
+        humanities_assignment = FeeAssignment.objects.create(
+            fee_category=tuition,
+            term=self.term,
+            school_class=ss2,
+            department=humanities,
+            amount=Decimal("46000.00"),
+        )
+        science_assignment = FeeAssignment.objects.create(
+            fee_category=tuition,
+            term=self.term,
+            school_class=ss2,
+            department=science,
+            amount=Decimal("52000.00"),
+        )
+
+        assignments = get_fee_assignments_for_student(
+            science_student,
+            self.term,
+        )
+
+        tuition_assignments = [
+            assignment
+            for assignment in assignments
+            if assignment.fee_category_id == tuition.id
+        ]
+
+        self.assertEqual(len(tuition_assignments), 1)
+        self.assertEqual(tuition_assignments[0], science_assignment)
+        self.assertNotIn(humanities_assignment, assignments)
+        self.assertEqual(
+            tuition_assignments[0].amount,
+            Decimal("52000.00"),
+        )
         
+        breakdown = get_student_fee_breakdown(
+            science_student,
+            self.term,
+        )
+
+        tuition_breakdown = [
+            item
+            for item in breakdown
+            if item["fee_category"].id == tuition.id
+        ]
+        
+        self.assertEqual(len(tuition_breakdown), 1)
+        self.assertEqual(
+            tuition_breakdown[0]["amount"],
+            Decimal("52000.00"),
+        )
+        self.assertEqual(
+            tuition_breakdown[0]["balance"],
+            Decimal("52000.00"),
+        )
+
+  
 
     def test_optional_fee_is_included_by_default_without_enrollment(self):
         optional_category = FeeCategory.objects.create(
