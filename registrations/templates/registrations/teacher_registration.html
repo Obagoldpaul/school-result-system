@@ -190,41 +190,60 @@
             color: #333;
         }
 
-        .form-control,
-        .form-select {
+
+        .registration-body input:not([type="file"]):not([type="checkbox"]):not([type="radio"]),
+        .registration-body select,
+        .registration-body textarea {
+            display: block;
             width: 100%;
+            min-height: 50px;
+            padding: 13px 15px;
 
-            padding: 11px 12px;
-
-            border: 1px solid #d5d5d5;
-
-            border-radius: 8px;
+            border: 1px solid #cbd2d9;
+            border-radius: 10px;
 
             font-family: inherit;
+            font-size: 15px;
+            line-height: 1.5;
 
-            font-size: 14px;
-
-            background: #fff;
+            color: #252a31;
+            background-color: #fff;
 
             outline: none;
+
+            transition:
+                border-color 0.2s ease,
+                box-shadow 0.2s ease,
+                background-color 0.2s ease;
         }
 
-        textarea.form-control {
+        .registration-body input:not([type="file"]):not([type="checkbox"]):not([type="radio"])::placeholder,
+        .registration-body textarea::placeholder {
+            color: #9299a2;
+            opacity: 1;
+        }
+
+        .registration-body input:not([type="file"]):not([type="checkbox"]):not([type="radio"]):hover,
+        .registration-body select:hover,
+        .registration-body textarea:hover {
+            border-color: #a6adb5;
+        }
+
+        .registration-body input:not([type="file"]):not([type="checkbox"]):not([type="radio"]):focus,
+        .registration-body select:focus,
+        .registration-body textarea:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px
+                color-mix(in srgb, var(--primary) 16%, transparent);
+        }
+
+        .registration-body textarea {
+            height: 70px;
+            min-height: 70px;
+            padding: 10px 12px;
             resize: vertical;
         }
 
-        .form-control:focus,
-        .form-select:focus {
-            border-color: var(--primary);
-
-            box-shadow:
-                0 0 0 3px
-                color-mix(
-                    in srgb,
-                    var(--primary) 15%,
-                    transparent
-                );
-        }
 
         .field-error {
             color: #b42318;

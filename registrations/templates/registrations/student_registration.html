@@ -190,40 +190,55 @@
             color: #333;
         }
 
-        .form-control,
-        .form-select {
+        
+        .registration-body input:not([type="file"]):not([type="checkbox"]):not([type="radio"]),
+        .registration-body select,
+        .registration-body textarea {
+            display: block;
             width: 100%;
+            min-height: 50px;
+            padding: 13px 15px;
 
-            padding: 11px 12px;
-
-            border: 1px solid #d5d5d5;
-
-            border-radius: 8px;
+            border: 1px solid #cbd2d9;
+            border-radius: 10px;
 
             font-family: inherit;
+            font-size: 15px;
+            line-height: 1.5;
 
-            font-size: 14px;
-
-            background: #fff;
+            color: #252a31;
+            background-color: #fff;
 
             outline: none;
+
+            transition:
+                border-color 0.2s ease,
+                box-shadow 0.2s ease,
+                background-color 0.2s ease;
         }
 
-        textarea.form-control {
-            resize: vertical;
+        .form-control::placeholder {
+            color: #9299a2;
+            opacity: 1;
+        }
+
+        .form-control:hover,
+        .form-select:hover {
+            border-color: #a6adb5;
         }
 
         .form-control:focus,
         .form-select:focus {
             border-color: var(--primary);
+            box-shadow: 0 0 0 3px
+                color-mix(in srgb, var(--primary) 16%, transparent);
+        }
 
-            box-shadow:
-                0 0 0 3px
-                color-mix(
-                    in srgb,
-                    var(--primary) 15%,
-                    transparent
-                );
+        .registration-body textarea {
+            height: 70px;
+            min-height: 70px;
+            padding: 10px 12px;
+            resize: vertical;
         }
 
         .field-error {
@@ -264,8 +279,21 @@
             cursor: pointer;
         }
 
+        .submit-button {
+            transition:
+                opacity 0.2s ease,
+                box-shadow 0.2s ease,
+                transform 0.2s ease;
+        }
+
         .submit-button:hover {
-            opacity: 0.9;
+            opacity: 0.92;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+        }
+
+        .submit-button:focus-visible {
+            outline: 3px solid var(--secondary);
+            outline-offset: 3px;
         }
 
         .registration-footer {
@@ -407,6 +435,7 @@
                                         {% endif %}
                                     </label>
 
+
                                     {{ field }}
 
                                     {% if field.help_text %}
@@ -449,7 +478,11 @@
                                 <div class="form-group">
 
                                     <label for="{{ field.id_for_label }}">
-                                        {{ field.label }}
+                                        {% if field.name == "requested_department" %}
+                                            Department (if applicable)
+                                        {% else %}
+                                            {{ field.label }}
+                                        {% endif %}
                                         {% if field.name == "passport" or field.field.required %}
                                             <span style="color: #dc3545;" aria-label="required">*</span>
                                         {% endif %}
@@ -591,6 +624,39 @@
     </div>
 
 </div>
+
+{{ nigerian_lgas|json_script:"nigerian-lgas-data" }}
+
+<script>
+    const stateField = document.getElementById("id_state_of_origin");
+    const lgaField = document.getElementById("id_local_government");
+    const lgaData = JSON.parse(
+        document.getElementById("nigerian-lgas-data").textContent
+    );
+
+    function updateLgaChoices() {
+        const selectedState = stateField.value;
+        const lgas = lgaData[selectedState] || [];
+
+        lgaField.innerHTML = "";
+
+        const defaultOption = document.createElement("option");
+        defaultOption.value = "";
+        defaultOption.textContent = "Select local government";
+        lgaField.appendChild(defaultOption);
+
+        lgas.forEach(function (lga) {
+            const option = document.createElement("option");
+            option.value = lga;
+            option.textContent = lga;
+            lgaField.appendChild(option);
+        });
+    }
+
+    stateField.addEventListener("change", updateLgaChoices);
+
+    updateLgaChoices();
+</script>
 
 </body>
 
