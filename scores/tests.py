@@ -1,6 +1,7 @@
 from django.test import TestCase
 from django.urls import reverse
-from students.models import Student
+from students.models import Student, Department
+from .services import get_students_for_allocation
 from .models import Score
 from academics.models import SchoolSettings
 
@@ -16,8 +17,7 @@ from django.utils import timezone
 from academics.models import AcademicSession, Term
 from students.models import SchoolClass
 from teachers.models import Teacher
-from subjects.models import Subject
-
+from subjects.models import Subject, ClassSubject
 from allocations.models import SubjectAllocation
 
 
@@ -602,3 +602,203 @@ class ScorePermissionTests(ScorePermissionTestMixin, TestCase):
             self.allocation.status,
             SubjectAllocation.Status.PUBLISHED,
         )
+        
+class ScoreEntryEligibilityTests(ScorePermissionTestMixin, TestCase):
+
+    def setUp(self):
+        self.school = self.create_school(
+            "Eligibility Test School",
+            "ELIG001",
+        )
+
+        self.teacher = self.create_teacher(
+            self.school,
+            "eligibility_teacher",
+            "ELIG-T001",
+        )
+
+        self.school_class = self.create_class(
+            self.school,
+            "Primary 1",
+        )
+
+        self.term = self.create_term(self.school)
+
+        self.department_a = Department.objects.create(
+            school=self.school,
+            name="Department A",
+        )
+
+        self.department_b = Department.objects.create(
+            school=self.school,
+            name="Department B",
+        )
+
+        self.student_a = self.create_student(
+            "eligibility_student_a",
+            "ELIG-ST001",
+            department=self.department_a,
+        )
+
+        self.student_b = self.create_student(
+            "eligibility_student_b",
+            "ELIG-ST002",
+            department=self.department_b,
+        )
+
+        self.student_without_department = self.create_student(
+            "eligibility_student_c",
+            "ELIG-ST003",
+        )
+
+    def create_student(
+        self,
+        username,
+        admission_number,
+        department=None,
+    ):
+        user = self.create_user(
+            self.school,
+            username,
+            User.Role.STUDENT,
+        )
+
+        return Student.objects.create(
+            user=user,
+            school_class=self.school_class,
+            department=department,
+            admission_number=admission_number,
+        )
+
+    def create_primary_subject(
+        self,
+        name,
+        code,
+        is_elective=False,
+    ):
+        return Subject.objects.create(
+            school=self.school,
+            level=Subject.SubjectLevel.PRIMARY,
+            name=name,
+            code=code,
+            is_elective=is_elective,
+        )
+
+    def create_allocation(self, subject):
+        return SubjectAllocation.objects.create(
+            teacher=self.teacher,
+            subject=subject,
+            school_class=self.school_class,
+            term=self.term,
+        )
+
+    def test_compulsory_subject_is_available_to_all_class_students(self):
+        subject = self.create_primary_subject(
+            "Compulsory English",
+            "ELIG-ENG",
+        )
+        ClassSubject.objects.create(
+            school_class=self.school_class,
+            subject=subject,
+        )
+        allocation = self.create_allocation(subject)
+
+        students = get_students_for_allocation(allocation)
+
+        self.assertSetEqual(
+            set(students),
+            {
+                self.student_a,
+                self.student_b,
+                self.student_without_department,
+            },
+        )
+
+    def test_unselected_elective_is_excluded(self):
+        subject = self.create_primary_subject(
+            "Elective Subject A",
+            "ELIG-EA",
+            is_elective=True,
+        )
+        ClassSubject.objects.create(
+            school_class=self.school_class,
+            subject=subject,
+        )
+        allocation = self.create_allocation(subject)
+
+        students = get_students_for_allocation(allocation)
+
+        self.assertFalse(students.exists())
+
+    def test_selected_elective_is_included(self):
+        subject = self.create_primary_subject(
+            "Elective Subject B",
+            "ELIG-EB",
+            is_elective=True,
+        )
+        ClassSubject.objects.create(
+            school_class=self.school_class,
+            subject=subject,
+        )
+        self.student_a.elective_subjects.add(subject)
+        allocation = self.create_allocation(subject)
+
+        students = get_students_for_allocation(allocation)
+
+        self.assertSetEqual(
+            set(students),
+            {self.student_a},
+        )
+
+    def test_class_subject_assignment_does_not_restrict_students(self):
+        subject = self.create_primary_subject(
+            "Department A Subject",
+            "ELIG-DA",
+        )
+        ClassSubject.objects.create(
+            school_class=self.school_class,
+            subject=subject,
+        )
+        allocation = self.create_allocation(subject)
+
+        students = get_students_for_allocation(allocation)
+
+        self.assertSetEqual(
+            set(students),
+            {
+                self.student_a,
+                self.student_b,
+                self.student_without_department,
+            },
+        )
+
+    def test_subject_not_assigned_to_class_is_excluded(self):
+        subject = self.create_primary_subject(
+            "Unassigned Subject",
+            "ELIG-UN",
+        )
+        allocation = self.create_allocation(subject)
+
+        students = get_students_for_allocation(allocation)
+
+        self.assertFalse(students.exists())
+
+    def test_inactive_students_are_excluded(self):
+        subject = self.create_primary_subject(
+            "Active Class Subject",
+            "ELIG-ACT",
+        )
+        ClassSubject.objects.create(
+            school_class=self.school_class,
+            subject=subject,
+        )
+
+        self.student_a.is_active = False
+        self.student_a.save(update_fields=["is_active"])
+
+        allocation = self.create_allocation(subject)
+
+        students = get_students_for_allocation(allocation)
+
+        self.assertNotIn(self.student_a, students)
+        self.assertIn(self.student_b, students)

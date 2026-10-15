@@ -1,7 +1,7 @@
 from django import forms
 
 from .models import Subject, ClassSubject
-from students.models import SchoolClass
+from students.models import SchoolClass, Department
 
 
 class SubjectForm(forms.ModelForm):

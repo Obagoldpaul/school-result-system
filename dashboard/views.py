@@ -8,7 +8,10 @@ from accounts.permissions import is_management
 from accounts.permissions import school_permission_required
 from subjects.models import ClassSubject, Subject
 
-from .services import build_dashboard
+from .services import (
+    build_dashboard,
+    get_registered_subjects_for_student,
+)
 from django.db import IntegrityError
 from students.models import Student, SchoolClass, Department
 from schools.utils import school_has_feature
@@ -43,7 +46,6 @@ def home(request):
 
 @login_required
 def student_subjects(request):
-
     student = getattr(
         request.user,
         "student_profile",
@@ -63,50 +65,17 @@ def student_subjects(request):
         None,
     )
 
-    if not school:
-        from django.core.exceptions import PermissionDenied
-
-        raise PermissionDenied(
-            "Your account is not associated with a school."
-        )
-
-    class_subject_ids = (
-        ClassSubject.objects
-        .filter(
-            school_class=student.school_class,
-            school_class__school=school,
-        )
-        .values_list(
-            "subject_id",
-            flat=True,
-        )
+    subjects = get_registered_subjects_for_student(
+        student,
+        school,
     )
 
-    elective_subject_ids = (
-        student.elective_subjects
-        .filter(
-            school=school,
-            is_active=True,
-        )
-        .values_list(
-            "id",
-            flat=True,
-        )
+    compulsory_subjects = subjects.filter(
+        is_elective=False,
     )
 
-    registered_subject_ids = (
-        set(class_subject_ids)
-        | set(elective_subject_ids)
-    )
-
-    subjects = (
-        Subject.objects
-        .filter(
-            id__in=registered_subject_ids,
-            school=school,
-            is_active=True,
-        )
-        .order_by("name")
+    elective_subjects = subjects.filter(
+        is_elective=True,
     )
 
     return render(
@@ -114,8 +83,16 @@ def student_subjects(request):
         "dashboard/student_subjects.html",
         {
             "student_subjects": subjects,
+            "compulsory_subjects": compulsory_subjects,
+            "elective_subjects": elective_subjects,
+            "total_subject_count": subjects.count(),
+            "compulsory_subject_count": compulsory_subjects.count(),
+            "elective_subject_count": elective_subjects.count(),
+            "student_profile": student,
         },
     )
+
+
 
 @login_required
 @school_permission_required("academics.manage")

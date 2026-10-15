@@ -1,75 +1,382 @@
-{% extends "base.html" %}
+
+{% extends 'base.html' %}
 
 {% block title %}My Subjects{% endblock %}
 
 {% block content %}
 
-<div class="container py-4">
+<div class="container-fluid py-4">
 
-    <div class="section-card">
+    <!-- Page Header -->
+    <div class="mb-4">
+        <h2 class="fw-bold mb-1">
+            My Subjects
+        </h2>
 
-        <div class="d-flex justify-content-between align-items-center mb-4">
-
-            <div>
-                <h3 class="mb-1">
-                    My Subjects
-                </h3>
-
-                <p class="text-muted mb-0">
-                    Subjects you are currently registered for.
-                </p>
-            </div>
-
-            <a
-                href="{% url 'dashboard_home' %}"
-                class="btn btn-outline-secondary"
-            >
-                Back to Dashboard
-            </a>
-
-        </div>
+        <p class="text-muted mb-0">
+            View your registered subjects and selected electives.
+        </p>
+    </div>
 
 
-        {% if student_subjects %}
+    <!-- Student Information -->
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body">
 
-            <div class="list-group">
+            <div class="row align-items-center">
 
-                {% for subject in student_subjects %}
+                <div class="col-md-8">
 
-                    <div class="list-group-item">
+                    <h5 class="fw-bold mb-2">
+                        {{ request.user.get_full_name|default:request.user.username }}
+                    </h5>
 
-                        <div class="d-flex justify-content-between align-items-center">
+                    <div class="text-muted">
 
-                            <div>
-                                <strong>
-                                    {{ subject.name }}
-                                </strong>
-                            </div>
+                        <div class="mb-1">
+                            <strong>Admission No:</strong>
+                            {{ student_profile.admission_number|default:"Not provided" }}
+                        </div>
 
-                            {% if subject.code %}
-                                <span class="text-muted">
-                                    {{ subject.code }}
-                                </span>
-                            {% endif %}
+                        <div class="mb-1">
+                            <strong>Class:</strong>
+                            {{ student_profile.school_class|default:"Not assigned" }}
+                        </div>
 
+                        <div>
+                            <strong>Department:</strong>
+                            {{ student_profile.department|default:"Not assigned" }}
                         </div>
 
                     </div>
 
-                {% endfor %}
+                </div>
+
+                <div class="col-md-4 text-md-end mt-3 mt-md-0">
+
+                    {% if student_profile.passport %}
+                        <img
+                            src="{{ student_profile.passport.url }}"
+                            alt="Student Passport"
+                            class="rounded"
+                            style="
+                                width: 70px;
+                                height: 85px;
+                                object-fit: cover;
+                            "
+                        >
+                    {% endif %}
+
+                </div>
 
             </div>
 
-        {% else %}
+        </div>
+    </div>
 
-            <div class="text-muted">
-                No registered subjects found.
+
+    <!-- Subject Summary -->
+    <div class="row g-3 mb-4">
+
+        <div class="col-md-4">
+
+            <div class="card h-100 border shadow-sm summary-card">
+                <div class="card-body">
+
+                    <div class="text-muted small mb-2">
+                        Total Registered Subjects
+                    </div>
+
+                    <h2 class="fw-bold mb-1">
+                        {{ total_subject_count }}
+                    </h2>
+
+                    <p class="text-muted small mb-0">
+                        All your registered subjects
+                    </p>
+
+                </div>
             </div>
 
-        {% endif %}
+        </div>
+
+        <div class="col-md-4">
+
+            <div class="card h-100 border shadow-sm summary-card">
+                <div class="card-body">
+
+                    <div class="text-muted small mb-2">
+                        Compulsory Subjects
+                    </div>
+
+                    <h2 class="fw-bold mb-1">
+                        {{ compulsory_subject_count }}
+                    </h2>
+
+                    <p class="text-muted small mb-0">
+                        Subjects assigned to your class
+                    </p>
+
+                </div>
+            </div>
+
+        </div>
+
+        <div class="col-md-4">
+
+            <div class="card h-100 border shadow-sm summary-card">
+                <div class="card-body">
+
+                    <div class="text-muted small mb-2">
+                        Selected Electives
+                    </div>
+
+                    <h2 class="fw-bold mb-1">
+                        {{ elective_subject_count }}
+                    </h2>
+
+                    <p class="text-muted small mb-0">
+                        Electives you have selected
+                    </p>
+
+                </div>
+            </div>
+
+        </div>
 
     </div>
 
+
+    {% if student_subjects %}
+
+        <!-- Compulsory Subjects -->
+        <div class="card shadow-sm border-0 mb-4">
+
+            <div class="card-header bg-white py-3">
+
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+
+                    <div>
+                        <h5 class="mb-1 fw-bold">
+                            Compulsory Subjects
+                        </h5>
+
+                        <p class="text-muted small mb-0">
+                            Subjects assigned to your class.
+                        </p>
+                    </div>
+
+                    <span class="badge bg-secondary">
+                        {{ compulsory_subject_count }} subjects
+                    </span>
+
+                </div>
+
+            </div>
+
+            <div class="card-body">
+
+                {% if compulsory_subjects %}
+
+                    <div class="row g-3">
+
+                        {% for subject in compulsory_subjects %}
+
+                            <div class="col-md-6 col-lg-4">
+
+                                <div class="card h-100 border shadow-sm subject-card">
+
+                                    <div class="card-body">
+
+                                        <div class="d-flex justify-content-between align-items-start gap-2">
+
+                                            <h6 class="fw-bold mb-2 text-dark">
+                                                {{ subject.name }}
+                                            </h6>
+
+                                            <span class="badge bg-secondary">
+                                                Compulsory
+                                            </span>
+
+                                        </div>
+
+                                        {% if subject.code %}
+                                            <p class="text-muted small mb-0">
+                                                <strong>Subject Code:</strong>
+                                                {{ subject.code }}
+                                            </p>
+                                        {% endif %}
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                        {% endfor %}
+
+                    </div>
+
+                {% else %}
+
+                    <div class="text-center py-4">
+
+                        <p class="text-muted mb-0">
+                            No compulsory subjects are currently registered.
+                        </p>
+
+                    </div>
+
+                {% endif %}
+
+            </div>
+
+        </div>
+
+
+        <!-- Selected Electives -->
+        <div class="card shadow-sm border-0">
+
+            <div class="card-header bg-white py-3">
+
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+
+                    <div>
+                        <h5 class="mb-1 fw-bold">
+                            My Selected Electives
+                        </h5>
+
+                        <p class="text-muted small mb-0">
+                            Elective subjects you have selected.
+                        </p>
+                    </div>
+
+                    <span class="badge bg-primary">
+                        {{ elective_subject_count }} subjects
+                    </span>
+
+                </div>
+
+            </div>
+
+            <div class="card-body">
+
+                {% if elective_subjects %}
+
+                    <div class="row g-3">
+
+                        {% for subject in elective_subjects %}
+
+                            <div class="col-md-6 col-lg-4">
+
+                                <div class="card h-100 border shadow-sm subject-card">
+
+                                    <div class="card-body">
+
+                                        <div class="d-flex justify-content-between align-items-start gap-2">
+
+                                            <h6 class="fw-bold mb-2 text-dark">
+                                                {{ subject.name }}
+                                            </h6>
+
+                                            <span class="badge bg-primary">
+                                                Elective
+                                            </span>
+
+                                        </div>
+
+                                        {% if subject.code %}
+                                            <p class="text-muted small mb-0">
+                                                <strong>Subject Code:</strong>
+                                                {{ subject.code }}
+                                            </p>
+                                        {% endif %}
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                        {% endfor %}
+
+                    </div>
+
+                {% else %}
+
+                    <div class="text-center py-4">
+
+                        <div style="font-size: 32px;">
+                            📚
+                        </div>
+
+                        <h6 class="fw-bold mt-3">
+                            No Selected Electives
+                        </h6>
+
+                        <p class="text-muted mb-0">
+                            You have not selected any elective subjects.
+                        </p>
+
+                    </div>
+
+                {% endif %}
+
+            </div>
+
+        </div>
+
+    {% else %}
+
+        <!-- Empty State -->
+        <div class="card shadow-sm border-0">
+
+            <div class="card-body text-center py-5">
+
+                <div style="font-size: 40px;">
+                    📚
+                </div>
+
+                <h5 class="fw-bold mt-3">
+                    No Registered Subjects
+                </h5>
+
+                <p class="text-muted mb-0">
+                    No registered subjects were found for your account.
+                    Please contact your school administrator if you think this is incorrect.
+                </p>
+
+            </div>
+
+        </div>
+
+    {% endif %}
+
+
+    <!-- Back to Dashboard -->
+    <div class="mt-4">
+        <a
+            href="{% url 'dashboard_home' %}"
+            class="btn btn-outline-secondary"
+        >
+            Back to Dashboard
+        </a>
+    </div>
+
 </div>
+
+
+<style>
+    .summary-card,
+    .subject-card {
+        transition: 0.2s;
+    }
+
+    .summary-card:hover,
+    .subject-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.10) !important;
+    }
+</style>
 
 {% endblock %}

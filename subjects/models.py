@@ -66,12 +66,12 @@ class Subject(models.Model):
 class ClassSubject(models.Model):
     school_class = models.ForeignKey(
         'students.SchoolClass',
-        on_delete=models.CASCADE
+        on_delete=models.CASCADE,
     )
 
     subject = models.ForeignKey(
         Subject,
-        on_delete=models.CASCADE
+        on_delete=models.CASCADE,
     )
 
     class Meta:
@@ -89,12 +89,9 @@ class ClassSubject(models.Model):
                 "The class and subject must belong to the same school."
             )
 
-        # --------------------------------------------------
         # CLASS SECTION → SUBJECT LEVEL VALIDATION
-        # --------------------------------------------------
 
         if self.school_class_id and self.subject_id:
-
             section = self.school_class.section
             subject_level = self.subject.level
 

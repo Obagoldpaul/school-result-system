@@ -1420,6 +1420,7 @@ STUDENT PROFILE
                 </div>
 
 
+                
                 <div class="col-md-6">
 
                     <strong>
@@ -1427,10 +1428,24 @@ STUDENT PROFILE
                     </strong>
 
                     <p class="text-muted mb-0">
-                        {{ request.user.student_profile.school_class }}
+                        {{ request.user.student_profile.school_class|default:"Not assigned" }}
                     </p>
 
                 </div>
+
+
+                <div class="col-md-6">
+
+                    <strong>
+                        Department
+                    </strong>
+
+                    <p class="text-muted mb-0">
+                        {{ request.user.student_profile.department|default:"Not assigned" }}
+                    </p>
+
+                </div>
+
 
 
                 <div class="col-md-6">

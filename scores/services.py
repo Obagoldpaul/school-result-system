@@ -5,7 +5,7 @@ from .reports import get_cumulative_report_rows, get_class_results
 from students.models import Student
 from .models import Score
 from .exceptions import ScoreValidationError
-
+from dashboard.services import get_registered_subjects_for_student
 
 
 
@@ -167,20 +167,46 @@ def publish_allocation_results(allocation, user=None):
 
 def get_students_for_allocation(allocation):
     """
-    Returns the students that should receive scores for a subject allocation.
-    Handles elective subjects automatically.
+    Return active students eligible to receive scores for an allocation.
+
+    Applies the same registration rules as the student dashboard,
+    using database filters rather than checking each student individually.
     """
+    from subjects.models import ClassSubject
+
+    school = allocation.school_class.school
+
     students = Student.objects.filter(
         school_class=allocation.school_class,
-        is_active=True
+        school_class__school=school,
+        user__school=school,
+        is_active=True,
     )
 
+    # Confirm that this active subject is assigned to the student's class.
+    class_subject_exists = ClassSubject.objects.filter(
+        school_class=allocation.school_class,
+        school_class__school=school,
+        subject=allocation.subject,
+        subject__school=school,
+        subject__is_active=True,
+    ).exists()
+
+    # A subject not assigned to the class is not eligible for score entry.
+    if not class_subject_exists:
+        return students.none()
+
+    # Elective subjects require the student to have selected them.
     if allocation.subject.is_elective:
         students = students.filter(
-            elective_subjects=allocation.subject
+            elective_subjects=allocation.subject,
         )
 
-    return students
+    return students.distinct()
+
+
+
+
 
 
 def save_scores(allocation, students, post_data):
