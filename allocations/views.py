@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.db.models import F
 
 from .forms import (
     SubjectAllocationForm,
@@ -447,10 +448,11 @@ def allocation_list(request):
     # ----------------------------
 
     allocations = SubjectAllocation.objects.filter(
-        school_class__school=school,
-        subject__school=school,
-        teacher__user__school=school,
-        term__session__school=school,
+    school_class__school=school,
+    subject__school=school,
+    teacher__user__school=school,
+    term__session__school=school,
+    school_class__classsubject__subject_id=F("subject_id"),
     ).select_related(
         'teacher',
         'subject',

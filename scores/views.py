@@ -21,6 +21,7 @@ from accounts.permissions import (
     can_edit_report_extra,
 )
 from django.core.exceptions import PermissionDenied
+from django.db.models import F
 
 
 
@@ -32,14 +33,28 @@ def select_allocation(request):
 
     teacher = get_teacher(request.user)
 
-    if teacher:
+    allocation_filters = {
+        "school_class__school": school,
+        "subject__school": school,
+        "school_class__classsubject__subject_id": F("subject_id"),
+    }
+
+    if teacher and teacher.is_class_teacher:
+        # Class teachers see all allocations for their assigned class.
         allocations = SubjectAllocation.objects.filter(
+            **allocation_filters,
+            school_class_id=teacher.assigned_class_id,
+        )
+    elif teacher:
+        # Subject teachers see only their own allocations.
+        allocations = SubjectAllocation.objects.filter(
+            **allocation_filters,
             teacher=teacher,
-            school_class__school=school,
         )
     else:
+        # Management retains the school-wide allocation view.
         allocations = SubjectAllocation.objects.filter(
-            school_class__school=school,
+            **allocation_filters,
         )
 
     class_id = request.GET.get('class')
@@ -228,7 +243,17 @@ def enter_scores(request, allocation_id):
         school_class__school=request.user.school,
         school_class__is_active=True,
         )
-    services.check_allocation_ownership(request.user, allocation)
+    teacher = get_teacher(request.user)
+
+    is_assigned_class_teacher = (
+        teacher is not None
+        and teacher.is_class_teacher
+        and teacher.assigned_class_id == allocation.school_class_id
+    )
+
+    if not is_assigned_class_teacher:
+        services.check_allocation_ownership(request.user, allocation)
+
     can_edit = services.can_edit_allocation(request.user, allocation)
 
     students = services.get_students_for_allocation(allocation)
@@ -296,7 +321,13 @@ def submit_allocation(request, allocation_id):
         user=request.user,
     )
 
+    messages.success(
+        request,
+        f"{allocation.subject} scores successfully submitted for review.",
+    )
+
     return _redirect_with_query(request)
+
 
 
 @staff_required

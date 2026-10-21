@@ -16,7 +16,7 @@ from billing.models import (
 )
 from registrations.models import RegistrationApplication
 
-from django.db.models import Sum, Q
+from django.db.models import Sum, Q, F
 from decimal import Decimal
 
 from accounts.utils import (
@@ -411,6 +411,9 @@ def build_dashboard(user):
             .filter(
                 school_class__school=school,
                 teacher=teacher,
+                subject__school=school,
+                term=current_term,
+                school_class__classsubject__subject_id=F("subject_id"),
             )
         )
 

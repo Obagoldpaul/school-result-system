@@ -988,11 +988,32 @@ class AllocationViewSecurityTests(AllocationTestMixin, TestCase):
             "School One",
             "VIEW001",
         )
+        
+        self.subscription_package = SubscriptionPackage.objects.get(
+            name=SubscriptionPackage.PackageType.BASIC,
+        )
+
+        SchoolSubscription.objects.create(
+            school=self.school1,
+            package=self.subscription_package,
+            billing_cycle=SchoolSubscription.BillingCycle.TERMLY,
+            start_date=timezone.now().date(),
+            end_date=timezone.now().date() + timedelta(days=30),
+            is_active=True,
+        )
 
         self.school2 = self.create_school(
             "School Two",
             "VIEW002",
         )
+        
+        self.subject1 = self.create_subject(
+            self.school1,
+            "Mathematics",
+            "VIEW-M001",
+        )
+        self.subject1.level = Subject.SubjectLevel.PRIMARY
+        self.subject1.save(update_fields=["level"])
 
         # ----------------------------------------
         # PERMISSION / SCHOOL ROLE
@@ -1056,12 +1077,6 @@ class AllocationViewSecurityTests(AllocationTestMixin, TestCase):
         # SUBJECTS
         # ----------------------------------------
 
-        self.subject1 = self.create_subject(
-            self.school1,
-            "Mathematics",
-            "VIEW-M001",
-        )
-
         self.subject2 = self.create_subject(
             self.school2,
             "English",
@@ -1078,6 +1093,13 @@ class AllocationViewSecurityTests(AllocationTestMixin, TestCase):
         # ----------------------------------------
         # ALLOCATIONS
         # ----------------------------------------
+        
+        # This test uses a Primary class, so its subject must be Primary.
+    
+        ClassSubject.objects.create(
+            school_class=self.class1,
+            subject=self.subject1,
+        )
 
         self.allocation1 = SubjectAllocation.objects.create(
             teacher=self.teacher1,
@@ -1092,28 +1114,32 @@ class AllocationViewSecurityTests(AllocationTestMixin, TestCase):
             school_class=self.class2,
             term=self.term2,
         )
+        
+    def test_allocation_list_only_shows_current_school_allocations(self):
+        self.client.force_login(self.admin1)
 
-def test_allocation_list_only_shows_current_school_allocations(self):
-    self.client.force_login(self.admin1)
+        response = self.client.get(reverse("allocation_list"))
 
-    response = self.client.get(
-        reverse("allocation_list")
-    )
+        self.assertEqual(response.status_code, 200)
 
-    self.assertEqual(
-        response.status_code,
-        200,
-    )
+        content = response.content.decode()
+        self.assertIn(self.subject1.name, content)
+        self.assertNotIn(self.subject2.name, content)
 
-    content = response.content.decode()
+    def test_allocation_list_hides_unassigned_subject_without_deleting_history(self):
+        self.client.force_login(self.admin1)
 
-    self.assertIn(
-        self.subject1.name,
-        content,
-    )
+        ClassSubject.objects.filter(
+            school_class=self.class1,
+            subject=self.subject1,
+        ).delete()
 
-    self.assertNotIn(
-        self.subject2.name,
-        content,
-    )
+        response = self.client.get(reverse("allocation_list"))
 
+        self.assertEqual(response.status_code, 200)
+        self.assertNotIn(self.subject1.name, response.content.decode())
+
+        # Hiding the allocation must not delete its historical record.
+        self.assertTrue(
+            SubjectAllocation.objects.filter(pk=self.allocation1.pk).exists()
+        )
