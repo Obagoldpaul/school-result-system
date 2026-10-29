@@ -3,8 +3,138 @@ from io import BytesIO
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from PIL import Image
+import json
 
 from core.utils.image_optimizer import optimize_image
+
+from unittest.mock import patch
+
+from django.conf import settings
+from django.core.mail import EmailMessage
+from django.test import SimpleTestCase
+
+from core.services.brevo_email_backend import BrevoEmailBackend
+
+class BrevoEmailBackendSenderTests(SimpleTestCase):
+
+    @patch("core.services.brevo_email_backend.urllib.request.urlopen")
+    def test_custom_sender_name_is_used_with_configured_address(
+        self,
+        mock_urlopen,
+    ):
+        mock_urlopen.return_value.__enter__.return_value.status = 201
+
+        message = EmailMessage(
+            subject="Set Up Your Password",
+            body="Password setup link",
+            from_email=(
+                f"Great Goshenland Blossom School via Paul SchoolHub "
+                f"<{settings.DEFAULT_FROM_EMAIL.split('<')[-1].rstrip('>')}>"
+            ),
+            to=["student@example.com"],
+        )
+
+        backend = BrevoEmailBackend()
+        backend.send_messages([message])
+
+        import json
+
+        request = mock_urlopen.call_args.args[0]
+        payload = json.loads(request.data.decode("utf-8"))
+
+        self.assertEqual(
+            payload["sender"]["name"],
+            "Great Goshenland Blossom School via Paul SchoolHub",
+        )
+        self.assertEqual(
+            payload["sender"]["email"],
+            settings.DEFAULT_FROM_EMAIL.split("<")[-1].rstrip(">"),
+        )
+
+    @patch("core.services.brevo_email_backend.urllib.request.urlopen")
+    def test_default_sender_name_is_preserved_for_other_emails(
+        self,
+        mock_urlopen,
+    ):
+        mock_urlopen.return_value.__enter__.return_value.status = 201
+
+        message = EmailMessage(
+            subject="Ordinary email",
+            body="Test message",
+            from_email=None,
+            to=["recipient@example.com"],
+        )
+
+        backend = BrevoEmailBackend()
+        backend.send_messages([message])
+
+        import json
+
+        request = mock_urlopen.call_args.args[0]
+        payload = json.loads(request.data.decode("utf-8"))
+
+        self.assertEqual(payload["sender"]["name"], "Paul SchoolHub")
+        
+
+    @patch("core.services.brevo_email_backend.urllib.request.urlopen")
+    def test_reply_to_and_cc_are_included_in_brevo_payload(
+        self,
+        mock_urlopen,
+    ):
+        mock_urlopen.return_value.__enter__.return_value.status = 201
+
+        message = EmailMessage(
+            subject="Set Up Your Password",
+            body="Password setup link",
+            from_email=(
+                "Great Goshenland Blossom School via Paul SchoolHub "
+                "<noreply@paulschoolhub.com.ng>"
+            ),
+            to=["student@example.com"],
+            cc=["noreply@paulschoolhub.com.ng"],
+            headers={
+                "Reply-To": "school@example.com",
+            },
+        )
+
+        backend = BrevoEmailBackend()
+        backend.send_messages([message])
+
+        request = mock_urlopen.call_args.args[0]
+        payload = json.loads(request.data.decode("utf-8"))
+
+        self.assertEqual(
+            payload["replyTo"],
+            {"email": "school@example.com"},
+        )
+        self.assertEqual(
+            payload["cc"],
+            [{"email": "noreply@paulschoolhub.com.ng"}],
+        )
+
+    @patch("core.services.brevo_email_backend.urllib.request.urlopen")
+    def test_emails_without_reply_to_or_cc_keep_payload_unchanged(
+        self,
+        mock_urlopen,
+    ):
+        mock_urlopen.return_value.__enter__.return_value.status = 201
+
+        message = EmailMessage(
+            subject="Ordinary email",
+            body="Test message",
+            to=["recipient@example.com"],
+        )
+
+        backend = BrevoEmailBackend()
+        backend.send_messages([message])
+
+        request = mock_urlopen.call_args.args[0]
+        payload = json.loads(request.data.decode("utf-8"))
+
+        self.assertNotIn("replyTo", payload)
+        self.assertNotIn("cc", payload)
+
+
 
 
 class ImageOptimizerTests(TestCase):

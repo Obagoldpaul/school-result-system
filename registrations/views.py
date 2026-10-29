@@ -15,7 +15,7 @@ from .models import RegistrationApplication
 
 
 from django.contrib.auth.tokens import default_token_generator
-from django.core.mail import send_mail
+from django.core.mail import EmailMessage, send_mail
 from django.urls import reverse
 
 from django.utils.encoding import force_bytes
@@ -52,9 +52,9 @@ def send_password_setup_email(request, user, school, account_type):
         )
     )
 
-    send_mail(
-        subject="Set Up Your Paul SchoolHub Password",
-        message=(
+    email_message = EmailMessage(
+        subject=f"{school.name} - Set Up Your Password",
+        body=(
             f"Hello {user.get_full_name()},\n\n"
             f"Your {account_type} account has been created on "
             f"Paul SchoolHub for {school.name}.\n\n"
@@ -63,16 +63,29 @@ def send_password_setup_email(request, user, school, account_type):
             f"{setup_url}\n\n"
             f"This link is valid for 72 hours and can only be "
             f"used once.\n\n"
+            f"For further enquiries, you can contact {school.name}:\n"
+            f"{'Email: ' + school.email + chr(10) if school.email else ''}"
+            f"{'Phone: ' + school.phone + chr(10) if school.phone else ''}\n"
             f"If you did not expect this email, please contact "
             f"{school.name}.\n\n"
             f"Regards,\n"
             f"{school.name}\n"
             f"Powered by Paul SchoolHub"
         ),
-        from_email=None,
-        recipient_list=[user.email],
-        fail_silently=True,
+        from_email=(
+            f"{school.name} via Paul SchoolHub "
+            f"<noreply@paulschoolhub.com.ng>"
+        ),
+        to=[user.email],
+        cc=["noreply@paulschoolhub.com.ng"],
+        headers=(
+            {"Reply-To": school.email}
+            if school.email
+            else {}
+        ),
     )
+
+    email_message.send(fail_silently=True)
 
 
 def student_registration(request):

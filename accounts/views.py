@@ -20,6 +20,9 @@ from django.contrib.auth.views import (
     PasswordResetConfirmView,
 )
 
+from django.core.mail import EmailMultiAlternatives
+from django.template import loader
+
 
 class SchoolHubLoginView(LoginView):
     """
@@ -269,6 +272,7 @@ class PlatformPasswordResetForm(PasswordResetForm):
     """
     Password reset form for Paul SchoolHub.
 
+
     Reset links always use the platform domain, regardless
     of the school domain from which the request originated.
     """
@@ -276,8 +280,79 @@ class PlatformPasswordResetForm(PasswordResetForm):
     def save(self, **kwargs):
         kwargs["domain_override"] = "paulschoolhub.com.ng"
         kwargs["use_https"] = True
+        kwargs.setdefault(
+            "from_email",
+            "Paul SchoolHub <noreply@paulschoolhub.com.ng>",
+        )
 
         return super().save(**kwargs)
+
+    def send_mail(
+        self,
+        subject_template_name,
+        email_template_name,
+        context,
+        from_email,
+        to_email,
+        html_email_template_name=None,
+    ):
+        user = context["user"]
+        school = getattr(user, "school", None)
+
+        subject = loader.render_to_string(
+            subject_template_name,
+            context,
+        )
+        subject = "".join(subject.splitlines())
+
+        body = loader.render_to_string(
+            email_template_name,
+            context,
+        )
+
+        if school:
+            sender_name = f"{school.name} via Paul SchoolHub"
+        else:
+            sender_name = "Paul SchoolHub"
+
+        email_message = EmailMultiAlternatives(
+            subject=subject,
+            body=body,
+            from_email=(
+                f"{sender_name} <noreply@paulschoolhub.com.ng>"
+            ),
+            to=[to_email],
+            cc=["noreply@paulschoolhub.com.ng"],
+            headers=(
+                {"Reply-To": school.email}
+                if school and school.email
+                else {}
+            ),
+        )
+
+        if html_email_template_name is not None:
+            html_email = loader.render_to_string(
+                html_email_template_name,
+                context,
+            )
+            email_message.attach_alternative(
+                html_email,
+                "text/html",
+            )
+
+        try:
+            email_message.send()
+        except Exception:
+            import logging
+
+            logging.getLogger(__name__).exception(
+                "Failed to send password reset email to user %s",
+                user.pk,
+            )
+
+
+    
+
 
 class PasswordResetRequestView(PasswordResetView):
     """

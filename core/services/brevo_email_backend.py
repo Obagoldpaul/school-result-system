@@ -30,12 +30,24 @@ class BrevoEmailBackend(BaseEmailBackend):
         if not message.recipients():
             return False
 
-        sender_email = settings.DEFAULT_FROM_EMAIL
+        default_from_email = settings.DEFAULT_FROM_EMAIL
+        sender_email = default_from_email
         sender_name = "Paul SchoolHub"
 
-        if "<" in sender_email and ">" in sender_email:
-            sender_name = sender_email.split("<", 1)[0].strip()
-            sender_email = sender_email.split("<", 1)[1].split(">", 1)[0].strip()
+        if "<" in default_from_email and ">" in default_from_email:
+            sender_name = default_from_email.split("<", 1)[0].strip()
+            sender_email = (
+                default_from_email.split("<", 1)[1].split(">", 1)[0].strip()
+            )
+
+        if message.from_email and "<" in message.from_email and ">" in message.from_email:
+            requested_sender_name = message.from_email.split("<", 1)[0].strip()
+            requested_sender_email = (
+                message.from_email.split("<", 1)[1].split(">", 1)[0].strip()
+            )
+
+            if requested_sender_email == sender_email:
+                sender_name = requested_sender_name
 
         payload = {
             "sender": {
@@ -44,11 +56,29 @@ class BrevoEmailBackend(BaseEmailBackend):
             },
             "to": [
                 {"email": recipient}
-                for recipient in message.recipients()
+                for recipient in message.to
             ],
             "subject": message.subject,
             "textContent": message.body,
         }
+
+        if message.cc:
+            payload["cc"] = [
+                {"email": recipient}
+                for recipient in message.cc
+            ]
+
+        if message.bcc:
+            payload["bcc"] = [
+                {"email": recipient}
+                for recipient in message.bcc
+            ]
+
+        reply_to_email = message.extra_headers.get("Reply-To")
+        if reply_to_email:
+            payload["replyTo"] = {
+                "email": reply_to_email,
+            }
 
         if message.content_subtype == "html":
             payload["htmlContent"] = message.body

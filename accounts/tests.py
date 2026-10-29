@@ -326,6 +326,8 @@ class PasswordResetEmailTests(TestCase):
         self.school = School.objects.create(
             name="Great Goshenland Blossom School",
             code="GGBS",
+            email="office@ggbs.example",
+            phone="08012345678",
         )
 
         self.user = User.objects.create_user(
@@ -359,6 +361,26 @@ class PasswordResetEmailTests(TestCase):
             "https://paulschoolhub.com.ng/set-password/",
             email.body,
         )
+        
+        self.assertEqual(
+            email.from_email,
+            "Great Goshenland Blossom School via Paul SchoolHub "
+            "<noreply@paulschoolhub.com.ng>",
+        )
+
+        self.assertEqual(
+            email.extra_headers.get("Reply-To"),
+            "office@ggbs.example",
+        )
+
+        self.assertEqual(
+            email.cc,
+            ["noreply@paulschoolhub.com.ng"],
+        )
+
+        self.assertIn("office@ggbs.example", email.body)
+        self.assertIn("08012345678", email.body)
+
 
     @override_settings(
         EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend"
@@ -383,3 +405,18 @@ class PasswordResetEmailTests(TestCase):
             mail.outbox[0].subject,
             "Paul SchoolHub - Reset Your Password",
         )
+        
+        email = mail.outbox[0]
+
+        self.assertEqual(
+            email.from_email,
+            "Paul SchoolHub <noreply@paulschoolhub.com.ng>",
+        )
+
+        self.assertEqual(
+            email.cc,
+            ["noreply@paulschoolhub.com.ng"],
+        )
+
+        self.assertEqual(email.reply_to, [])
+

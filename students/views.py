@@ -7,7 +7,7 @@ from accounts.decorators import staff_required, management_required
 from accounts.permissions import school_permission_required
 from django.db import models
 from subjects.models import Subject
-from django.core.mail import send_mail
+from django.core.mail import EmailMessage, send_mail
 from django.db.models.functions import Lower
 
 from django.contrib.auth.tokens import default_token_generator
@@ -72,28 +72,43 @@ def register_student(request):
                     )
                 )
 
-                send_mail(
-                    subject="Set Up Your Paul SchoolHub Password",
-                    message=(
+                school = request.user.school
+
+                email_message = EmailMessage(
+                    subject=f"{school.name} - Set Up Your Password",
+                    body=(
                         f"Hello {student.user.get_full_name()},\n\n"
                         f"Your student account has been created on "
-                        f"Paul SchoolHub for "
-                        f"{request.user.school.name}.\n\n"
+                        f"Paul SchoolHub for {school.name}.\n\n"
                         f"Username: {student.user.username}\n\n"
                         f"Set your password using this link:\n\n"
                         f"{setup_url}\n\n"
                         f"This link is valid for 72 hours and can only be "
                         f"used once.\n\n"
+                        f"For further enquiries, you can contact "
+                        f"{school.name}:\n"
+                        f"{'Email: ' + school.email + chr(10) if school.email else ''}"
+                        f"{'Phone: ' + school.phone + chr(10) if school.phone else ''}\n"
                         f"If you did not expect this email, please contact "
-                        f"{request.user.school.name}.\n\n"
+                        f"{school.name}.\n\n"
                         f"Regards,\n"
-                        f"{request.user.school.name}\n"
+                        f"{school.name}\n"
                         f"Powered by Paul SchoolHub"
                     ),
-                    from_email=None,
-                    recipient_list=[student.user.email],
-                    fail_silently=True,
+                    from_email=(
+                        f"{school.name} via Paul SchoolHub "
+                        f"<noreply@paulschoolhub.com.ng>"
+                    ),
+                    to=[student.user.email],
+                    cc=["noreply@paulschoolhub.com.ng"],
+                    headers=(
+                        {"Reply-To": school.email}
+                        if school.email
+                        else {}
+                    ),
                 )
+
+                email_message.send(fail_silently=True)
 
             return redirect("student_list")
 

@@ -531,7 +531,7 @@ class CreateSchoolTests(TestCase):
 
         self.assertEqual(
             email.subject,
-            f"{self.school.name} - Set Up Your Password",
+            "New Test College - Set Up Your Password",
         )
 
         self.assertIn(

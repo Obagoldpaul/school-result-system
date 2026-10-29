@@ -245,7 +245,7 @@ class TeacherRegistrationTests(TestCase):
 
         self.assertEqual(
             email.subject,
-            "Set Up Your Paul SchoolHub Password",
+            "Registration Test School - Set Up Your Password",
         )
 
         self.assertIn(

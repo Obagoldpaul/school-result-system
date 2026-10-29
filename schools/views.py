@@ -1,7 +1,7 @@
 from django.contrib import messages
 from django.contrib.auth.tokens import default_token_generator
 from django.urls import reverse
-from django.core.mail import send_mail
+from django.core.mail import EmailMessage, send_mail
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
 from django.urls import reverse
@@ -759,9 +759,9 @@ def create_school_user(request, school_id):
                     )
                 )
 
-                send_mail(
+                email_message = EmailMessage(
                     subject=f"{school.name} - Set Up Your Password",
-                    message=(
+                    body=(
                         f"Hello {user.get_full_name() or user.username},\n\n"
                         f"Your administrative account has been created on "
                         f"Paul SchoolHub for {school.name}.\n\n"
@@ -770,16 +770,30 @@ def create_school_user(request, school_id):
                         f"{setup_url}\n\n"
                         f"This link is valid for 72 hours and can only be "
                         f"used once.\n\n"
+                        f"For further enquiries, you can contact "
+                        f"{school.name}:\n"
+                        f"{'Email: ' + school.email + chr(10) if school.email else ''}"
+                        f"{'Phone: ' + school.phone + chr(10) if school.phone else ''}\n"
                         f"If you did not expect this email, please contact "
                         f"{school.name}.\n\n"
                         f"Regards,\n"
                         f"{school.name}\n"
                         f"Powered by Paul SchoolHub"
                     ),
-                    from_email=None,
-                    recipient_list=[user.email],
-                    fail_silently=True,
+                    from_email=(
+                        f"{school.name} via Paul SchoolHub "
+                        f"<noreply@paulschoolhub.com.ng>"
+                    ),
+                    to=[user.email],
+                    cc=["noreply@paulschoolhub.com.ng"],
+                    headers=(
+                        {"Reply-To": school.email}
+                        if school.email
+                        else {}
+                    ),
                 )
+
+                email_message.send(fail_silently=True)
 
             messages.success(
                 request,
@@ -1090,9 +1104,9 @@ def send_user_setup_link(request, school_id, user_id):
         )
     )
 
-    send_mail(
+    email_message = EmailMessage(
         subject=f"{school.name} - Set Up Your Password",
-        message=(
+        body=(
             f"Hello {user.get_full_name() or user.username},\n\n"
             f"A new password setup link has been generated for your "
             f"Paul SchoolHub account at {school.name}.\n\n"
@@ -1100,16 +1114,29 @@ def send_user_setup_link(request, school_id, user_id):
             f"Set your password using this link:\n\n"
             f"{setup_url}\n\n"
             f"This link is valid for 72 hours and can only be used once.\n\n"
+            f"For further enquiries, you can contact {school.name}:\n"
+            f"{'Email: ' + school.email + chr(10) if school.email else ''}"
+            f"{'Phone: ' + school.phone + chr(10) if school.phone else ''}\n"
             f"If you did not expect this email, please contact "
             f"{school.name}.\n\n"
             f"Regards,\n"
             f"{school.name}\n"
             f"Powered by Paul SchoolHub"
         ),
-        from_email=None,
-        recipient_list=[user.email],
-        fail_silently=True,
+        from_email=(
+            f"{school.name} via Paul SchoolHub "
+            f"<noreply@paulschoolhub.com.ng>"
+        ),
+        to=[user.email],
+        cc=["noreply@paulschoolhub.com.ng"],
+        headers=(
+            {"Reply-To": school.email}
+            if school.email
+            else {}
+        ),
     )
+
+    email_message.send(fail_silently=True)
 
     messages.success(
         request,
@@ -1844,9 +1871,9 @@ def create_school(request):
                             )
                         )
 
-                        send_mail(
+                        email_message = EmailMessage(
                             subject=f"{school.name} - Set Up Your Password",
-                            message=(
+                            body=(
                                 f"Hello "
                                 f"{administrator.get_full_name() or administrator.username},\n\n"
                                 f"Your administrative account has been created "
@@ -1856,16 +1883,31 @@ def create_school(request):
                                 f"{setup_url}\n\n"
                                 f"This link is valid for 72 hours and can only "
                                 f"be used once.\n\n"
+                                f"For further enquiries, you can contact "
+                                f"{school.name}:\n"
+                                f"{'Email: ' + school.email + chr(10) if school.email else ''}"
+                                f"{'Phone: ' + school.phone + chr(10) if school.phone else ''}\n"
                                 f"If you did not expect this email, please contact "
                                 f"{school.name}.\n\n"
                                 f"Regards,\n"
                                 f"{school.name}\n"
                                 f"Powered by Paul SchoolHub"
                             ),
-                            from_email=None,
-                            recipient_list=[administrator.email],
-                            fail_silently=True,
+                            from_email=(
+                                f"{school.name} via Paul SchoolHub "
+                                f"<noreply@paulschoolhub.com.ng>"
+                            ),
+                            to=[administrator.email],
+                            cc=["noreply@paulschoolhub.com.ng"],
+                            headers=(
+                                {"Reply-To": school.email}
+                                if school.email
+                                else {}
+                            ),
                         )
+
+                        email_message.send(fail_silently=True)
+
 
                 messages.success(
                     request,
