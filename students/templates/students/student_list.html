@@ -81,6 +81,28 @@ Student Management
 
                 </div>
 
+                
+                <div class="col-md-3">
+
+                    <select name="account_status" class="form-select">
+
+                        <option value="all" {% if selected_account_status == "all" %}selected{% endif %}>
+                            All Account Statuses
+                        </option>
+
+                        <option value="active" {% if selected_account_status == "active" %}selected{% endif %}>
+                            Active
+                        </option>
+
+                        <option value="deactivated" {% if selected_account_status == "deactivated" %}selected{% endif %}>
+                            Deactivated
+                        </option>
+
+                    </select>
+
+                </div>
+
+
                 <div class="col-md-2">
 
                     <button class="btn btn-success w-100">
@@ -135,7 +157,7 @@ Student Management
 
                         {% for student in students %}
 
-                        <tr>
+                        <tr class="{% if is_management and not student.user.has_usable_password and student.user.email %}table-warning{% endif %}">
 
                             <!-- Photo -->
                             <td class="text-center">
@@ -148,11 +170,22 @@ Student Management
                                             object-fit:cover;
                                          ">
 
+                                
                                 {% else %}
 
-                                <img src="https://via.placeholder.com/55" class="rounded-circle border">
+                                <div class="rounded-circle border d-inline-flex align-items-center justify-content-center"
+                                    style="width:55px;height:55px;background-color:#f0f0f0;color:#555555;font-weight:700;font-size:16px;border-color:#dddddd !important;"
+                                    aria-label="{{ student.user.get_full_name }}">
+
+                                        {% with first_name=student.user.first_name last_name=student.user.last_name %}
+                                            {{ first_name|first|upper }}{{ last_name|first|upper }}
+                                        {% endwith %}
+
+                                    </div>
 
                                 {% endif %}
+                            
+
 
                             </td>
 
@@ -160,19 +193,32 @@ Student Management
                             <!-- Student -->
                             <td>
 
+                            
                                 <strong>
-
                                     {{ student.user.get_full_name }}
-
                                 </strong>
 
                                 <br>
 
                                 <small class="text-muted">
-
                                     {{ student.admission_number }}
-
                                 </small>
+
+                                <br>
+
+                                {% if is_management %}
+                                    <small class="text-muted">
+                                        Username: {{ student.user.username }}
+                                    </small>
+
+                                    <br>
+
+                                    <small class="text-muted">
+                                        Email: {{ student.user.email|default:"-" }}
+                                    </small>
+                                {% endif %}
+                                
+
 
                             </td>
 
@@ -208,62 +254,127 @@ Student Management
                             <!-- Status -->
                             <td>
 
-                                {% if student.admission_status == "ACTIVE" %}
+                                {% if student.admission_status == "GRADUATED" %}
 
-                                <span class="badge bg-success">
-                                    Active
-                                </span>
+                                    <span class="badge bg-primary">
+                                        Graduated
+                                    </span>
 
+                                {% elif not student.is_active %}
 
-                                {% elif student.admission_status == "GRADUATED" %}
+                                    <span class="badge bg-danger">
+                                        Deactivated
+                                    </span>
 
-                                <span class="badge bg-primary">
-                                    Graduated
-                                </span>
+                                {% elif student.admission_status == "ACTIVE" %}
 
+                                    <span class="badge bg-success">
+                                        Active
+                                    </span>
 
                                 {% else %}
 
-                                <span class="badge bg-secondary">
-
-                                    {{ student.admission_status }}
-
-                                </span>
+                                    <span class="badge bg-secondary">
+                                        {{ student.admission_status }}
+                                    </span>
 
                                 {% endif %}
 
                             </td>
 
 
+
+                        
                             <!-- Actions -->
                             <td class="text-center">
 
-                                <div class="btn-group btn-group-sm" role="group">
+                                <div class="dropdown">
 
-                                    <a href="{% url 'student_profile' student.id %}" class="btn btn-outline-primary"
-                                        title="View">
+                                    <button
+                                        class="btn btn-outline-dark btn-sm dropdown-toggle"
+                                        type="button"
+                                        data-bs-toggle="dropdown"
+                                        aria-expanded="false">
+                                        Actions
+                                    </button>
 
-                                        👁
+                                    <ul class="dropdown-menu dropdown-menu-end">
 
-                                    </a>
+                                        <li>
+                                            <a class="dropdown-item"
+                                            href="{% url 'student_profile' student.id %}">
+                                                View Profile
+                                            </a>
+                                        </li>
 
-                                    <a href="{% url 'edit_student' student.id %}" class="btn btn-outline-warning"
-                                        title="Edit">
+                                        <li>
+                                            <a class="dropdown-item"
+                                            href="{% url 'edit_student' student.id %}">
+                                                Edit Student
+                                            </a>
+                                        </li>
 
-                                        ✏
+                                        <li><hr class="dropdown-divider"></li>
 
-                                    </a>
+                                        {% if student.is_active %}
+                                            <li>
+                                                <form method="post"
+                                                      action="{% url 'deactivate_student' student.id %}"
+                                                      onsubmit="return confirm('Deactivate this student?');">
+                                                    {% csrf_token %}
+                                                    <button type="submit"
+                                                            class="dropdown-item text-danger">
+                                                        Deactivate Student
+                                                    </button>
+                                                </form>
+                                            </li>
+                                        {% else %}
+                                            <li>
+                                                <form method="post"
+                                                      action="{% url 'activate_student' student.id %}"
+                                                      onsubmit="return confirm('Activate this student?');">
+                                                    {% csrf_token %}
+                                                    <button type="submit"
+                                                            class="dropdown-item text-success">
+                                                        Activate Student
+                                                    </button>
+                                                </form>
+                                            </li>
+                                        {% endif %}
 
-                                    <a href="{% url 'select_report_term' student.id %}" class="btn btn-outline-success"
-                                        title="Report Card">
+                                        <li>
+                                            <a class="dropdown-item"
+                                            href="{% url 'select_report_term' student.id %}">
+                                                Report Card
+                                            </a>
+                                        </li>
 
-                                        📄
+                                        {% if is_management and not student.user.has_usable_password and student.user.email %}
+                                        
+                                            <li><hr class="dropdown-divider"></li>
 
-                                    </a>
+                                            <li>
+                                                <form method="post"
+                                                    action="{% url 'send_user_setup_link' school_id=student.user.school_id user_id=student.user.id %}?{{ request.GET.urlencode }}">
+                                                    {% csrf_token %}
+                                                    <input type="hidden" name="return_to" value="student_list">
+
+                                                    <button type="submit"
+                                                            class="dropdown-item fw-bold"
+                                                            style="background-color: #ffc837; color: #201e1e;">
+                                                        🔑 Send Password Setup Link
+                                                    </button>
+                                                </form>
+                                            </li>
+
+                                        {% endif %}
+
+                                    </ul>
 
                                 </div>
 
                             </td>
+
 
                         </tr>
 
@@ -286,6 +397,74 @@ Student Management
                 </table>
 
             </div>
+
+            {% if students.paginator.num_pages > 1 %}
+
+                <div class="d-flex flex-column flex-md-row justify-content-between align-items-center mt-4 gap-3">
+
+                    <div class="text-muted">
+                        Showing {{ students.start_index }}–{{ students.end_index }}
+                        of {{ students.paginator.count }} students
+                    </div>
+
+                    <nav aria-label="Student list pagination">
+
+                        <ul class="pagination mb-0">
+
+                            {% if students.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link"
+                                    href="?{% if request.GET.urlencode %}{{ request.GET.urlencode }}&{% endif %}page={{ students.previous_page_number }}">
+                                        Previous
+                                    </a>
+                                </li>
+                            {% else %}
+                                <li class="page-item disabled">
+                                    <span class="page-link">Previous</span>
+                                </li>
+                            {% endif %}
+
+                            {% for page_number in students.paginator.page_range %}
+
+                                {% if page_number == students.number %}
+
+                                    <li class="page-item active" aria-current="page">
+                                        <span class="page-link">{{ page_number }}</span>
+                                    </li>
+
+                                {% elif page_number >= students.number|add:"-2" and page_number <= students.number|add:"2" %}
+
+                                    <li class="page-item">
+                                        <a class="page-link"
+                                        href="?{% if request.GET.urlencode %}{{ request.GET.urlencode }}&{% endif %}page={{ page_number }}">
+                                            {{ page_number }}
+                                        </a>
+                                    </li>
+
+                                {% endif %}
+
+                            {% endfor %}
+
+                            {% if students.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link"
+                                    href="?{% if request.GET.urlencode %}{{ request.GET.urlencode }}&{% endif %}page={{ students.next_page_number }}">
+                                        Next
+                                    </a>
+                                </li>
+                            {% else %}
+                                <li class="page-item disabled">
+                                    <span class="page-link">Next</span>
+                                </li>
+                            {% endif %}
+
+                        </ul>
+
+                    </nav>
+
+                </div>
+
+            {% endif %}
 
         </div>
 

@@ -15,4 +15,14 @@ urlpatterns = [
     ),
     path('', views.student_list, name='student_list'),
     path("profile/<int:student_id>/", views.student_profile, name="student_profile"),
+    path(
+        "activate/<int:student_id>/",
+        views.activate_student,
+        name="activate_student",
+    ),
+    path(
+        "deactivate/<int:student_id>/",
+        views.deactivate_student,
+        name="deactivate_student",
+    ),
 ]

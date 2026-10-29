@@ -171,7 +171,8 @@ Teacher Management
 
                         {% for teacher in teachers %}
 
-                        <tr>
+                        <tr class="{% if is_management and not teacher.user.has_usable_password and teacher.user.email %}table-warning{% endif %}">
+
 
                             <td>
 
@@ -181,13 +182,22 @@ Teacher Management
                                          class="rounded-circle border"
                                          style="width:50px;height:50px;object-fit:cover;">
 
+                                
                                 {% else %}
 
-                                    <span class="text-muted">
-                                        No Photo
-                                    </span>
+                                    <div class="rounded-circle border d-inline-flex align-items-center justify-content-center"
+                                        style="width:50px;height:50px;background-color:#f0f0f0;color:#555555;font-weight:700;font-size:15px;border-color:#dddddd !important;"
+                                        aria-label="{{ teacher.user.get_full_name }}">
+
+                                        {% with first_name=teacher.user.first_name last_name=teacher.user.last_name %}
+                                            {{ first_name|first|upper }}{{ last_name|first|upper }}
+                                        {% endwith %}
+
+                                    </div>
 
                                 {% endif %}
+                    
+
 
                             </td>
 
@@ -199,19 +209,32 @@ Teacher Management
 
                             <td>
 
+                                
                                 <strong>
-
                                     {{ teacher.user.get_full_name }}
-
                                 </strong>
 
                                 <br>
 
                                 <small class="text-muted">
-
                                     {{ teacher.phone_number }}
-
                                 </small>
+
+                                <br>
+
+                            
+                                {% if is_management %}
+                                    <small class="text-muted">
+                                        Username: {{ teacher.user.username }}
+                                    </small>
+
+                                    <br>
+
+                                    <small class="text-muted">
+                                        Email: {{ teacher.user.email|default:"-" }}
+                                    </small>
+                                {% endif %}
+
 
                             </td>
 
@@ -245,53 +268,78 @@ Teacher Management
 
                             </td>
 
+                            
                             <td class="text-center">
 
-                                <div class="btn-group">
+                                <div class="dropdown">
 
-                                    <a href="{% url 'teacher_profile' teacher.id %}"
-                                       class="btn btn-outline-primary btn-sm"
-                                       title="View">
-                                
-                                        👁
-                                
-                                    </a>
-                                
-                                    <a href="{% url 'edit_teacher' teacher.id %}"
-                                       class="btn btn-outline-warning btn-sm"
-                                       title="Edit">
-                                
-                                        ✏
-                                
-                                    </a>
-                                
-                                    {% if teacher.is_active %}
-                                
-                                        <a href="{% url 'deactivate_teacher' teacher.id %}"
-                                           class="btn btn-outline-danger btn-sm"
-                                           onclick="return confirm('Deactivate this teacher?')"
-                                           title="Deactivate">
-                                
-                                            🚫
-                                
-                                        </a>
-                                
-                                    {% else %}
-                                
-                                        <a href="{% url 'activate_teacher' teacher.id %}"
-                                           class="btn btn-outline-success btn-sm"
-                                           onclick="return confirm('Activate this teacher?')"
-                                           title="Activate">
-                                
-                                            ✔
-                                
-                                        </a>
-                                
-                                    {% endif %}
-                                
+                                    <button
+                                        class="btn btn-outline-dark btn-sm dropdown-toggle"
+                                        type="button"
+                                        data-bs-toggle="dropdown"
+                                        aria-expanded="false">
+                                        Actions
+                                    </button>
+
+                                    <ul class="dropdown-menu dropdown-menu-end">
+
+                                        <li>
+                                            <a class="dropdown-item"
+                                            href="{% url 'teacher_profile' teacher.id %}">
+                                                View Profile
+                                            </a>
+                                        </li>
+
+                                        <li>
+                                            <a class="dropdown-item"
+                                            href="{% url 'edit_teacher' teacher.id %}">
+                                                Edit Teacher
+                                            </a>
+                                        </li>
+
+                                        <li><hr class="dropdown-divider"></li>
+
+                                        {% if teacher.is_active %}
+                                            <li>
+                                                <a class="dropdown-item text-danger"
+                                                href="{% url 'deactivate_teacher' teacher.id %}"
+                                                onclick="return confirm('Deactivate this teacher?')">
+                                                    Deactivate Teacher
+                                                </a>
+                                            </li>
+                                        {% else %}
+                                            <li>
+                                                <a class="dropdown-item text-success"
+                                                href="{% url 'activate_teacher' teacher.id %}">
+                                                    Activate Teacher
+                                                </a>
+                                            </li>
+                                        {% endif %}
+
+                                        {% if is_management and not teacher.user.has_usable_password and teacher.user.email %}
+                                            <li><hr class="dropdown-divider"></li>
+
+                                            <li>
+                                                <form method="post"
+                                                    action="{% url 'send_user_setup_link' school_id=teacher.user.school_id user_id=teacher.user.id %}?{{ request.GET.urlencode }}">
+                                                    {% csrf_token %}
+                                                    <input type="hidden" name="return_to" value="teacher_list">
+
+                                                    <button type="submit"
+                                                            class="dropdown-item fw-bold"
+                                                            style="background-color: #ffc837; color: #201e1e;">
+                                                        🔑 Send Password Setup Link
+                                                    </button>
+                                                </form>
+                                            </li>
+                                        {% endif %}
+
+                                    </ul>
+
                                 </div>
 
                             </td>
+
 
                         </tr>
 
@@ -315,6 +363,74 @@ Teacher Management
                 </table>
 
             </div>
+
+            {% if teachers.paginator.num_pages > 1 %}
+
+                <div class="d-flex flex-column flex-md-row justify-content-between align-items-center mt-4 gap-3">
+
+                    <div class="text-muted">
+                        Showing {{ teachers.start_index }}–{{ teachers.end_index }}
+                        of {{ teachers.paginator.count }} teachers
+                    </div>
+
+                    <nav aria-label="Teacher list pagination">
+
+                        <ul class="pagination mb-0">
+
+                            {% if teachers.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link"
+                                    href="?{% if request.GET.urlencode %}{{ request.GET.urlencode }}&{% endif %}page={{ teachers.previous_page_number }}">
+                                        Previous
+                                    </a>
+                                </li>
+                            {% else %}
+                                <li class="page-item disabled">
+                                    <span class="page-link">Previous</span>
+                                </li>
+                            {% endif %}
+
+                            {% for page_number in teachers.paginator.page_range %}
+
+                                {% if page_number == teachers.number %}
+
+                                    <li class="page-item active" aria-current="page">
+                                        <span class="page-link">{{ page_number }}</span>
+                                    </li>
+
+                                {% elif page_number >= teachers.number|add:"-2" and page_number <= teachers.number|add:"2" %}
+
+                                    <li class="page-item">
+                                        <a class="page-link"
+                                        href="?{% if request.GET.urlencode %}{{ request.GET.urlencode }}&{% endif %}page={{ page_number }}">
+                                            {{ page_number }}
+                                        </a>
+                                    </li>
+
+                                {% endif %}
+
+                            {% endfor %}
+
+                            {% if teachers.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link"
+                                    href="?{% if request.GET.urlencode %}{{ request.GET.urlencode }}&{% endif %}page={{ teachers.next_page_number }}">
+                                        Next
+                                    </a>
+                                </li>
+                            {% else %}
+                                <li class="page-item disabled">
+                                    <span class="page-link">Next</span>
+                                </li>
+                            {% endif %}
+
+                        </ul>
+
+                    </nav>
+
+                </div>
+
+            {% endif %}
 
         </div>
 

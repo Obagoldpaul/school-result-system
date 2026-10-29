@@ -8,12 +8,14 @@ from accounts.permissions import school_permission_required
 from django.db import models
 from subjects.models import Subject
 from django.core.mail import send_mail
+from django.db.models.functions import Lower
 
 from django.contrib.auth.tokens import default_token_generator
 from django.urls import reverse
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
 from core.utils.image_optimizer import optimize_image
+from django.core.paginator import Paginator
 
 from django.views.decorators.http import require_POST
 
@@ -126,7 +128,19 @@ def student_list(request):
         "user",
         "school_class",
         "department"
+    ).order_by(
+        Lower("user__last_name"),
+        Lower("user__first_name"),
+        "id",
     )
+
+    account_status = request.GET.get("account_status", "all")
+
+    if account_status == "active":
+        students = students.filter(is_active=True)
+    elif account_status == "deactivated":
+        students = students.filter(is_active=False)
+
 
     class_id = request.GET.get("class")
 
@@ -144,6 +158,10 @@ def student_list(request):
             models.Q(admission_number__icontains=search) |
             models.Q(lin__icontains=search)
         )
+    
+    paginator = Paginator(students, 25)
+    page_number = request.GET.get("page")
+    students = paginator.get_page(page_number)
 
     classes = SchoolClass.objects.filter(
         school=request.user.school
@@ -190,6 +208,7 @@ def student_list(request):
             "search": search,
             "selected_status": status,
             "status_choices": status_choices,
+            "selected_account_status": account_status,
         },
     )
     
@@ -667,3 +686,39 @@ def student_profile(request, student_id):
             "student": student,
         },
     )
+    
+@management_required
+@school_permission_required("students.change")
+@login_required
+@require_POST
+def deactivate_student(request, student_id):
+
+    student = get_object_or_404(
+        Student,
+        id=student_id,
+        user__school=request.user.school,
+    )
+
+    student.is_active = False
+    student.save(update_fields=["is_active"])
+
+    return redirect("student_list")
+
+
+@management_required
+@school_permission_required("students.change")
+@login_required
+@require_POST
+def activate_student(request, student_id):
+
+    student = get_object_or_404(
+        Student,
+        id=student_id,
+        user__school=request.user.school,
+    )
+
+    student.is_active = True
+    student.save(update_fields=["is_active"])
+
+    return redirect("student_list")
+    

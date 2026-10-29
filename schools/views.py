@@ -15,6 +15,7 @@ from django.shortcuts import (
     render,
 )
 from django.db.models import Q
+from accounts.permissions import is_management, is_platform_admin
 
 from django.http import HttpResponse
 from django.template.loader import get_template
@@ -759,7 +760,7 @@ def create_school_user(request, school_id):
                 )
 
                 send_mail(
-                    subject="Set Up Your Paul SchoolHub Password",
+                    subject=f"{school.name} - Set Up Your Password",
                     message=(
                         f"Hello {user.get_full_name() or user.username},\n\n"
                         f"Your administrative account has been created on "
@@ -985,18 +986,28 @@ def assign_user_school_role(request, school_id, user_id):
     )
     
 @login_required
-@platform_admin_required
 @require_POST
 def send_user_setup_link(request, school_id, user_id):
     """
     Generate and send a fresh password-setup link for a user
     who has not yet created a usable password.
 
-    Platform administrators only.
-    The user must belong to the specified school.
+    Platform administrators can manage any school's users.
+    School management users can manage users in their own school.
+    The target user must belong to the specified school.
     """
 
     User = get_user_model()
+
+    # Platform administrators retain their existing access.
+    # Other users must be school management users acting
+    # within their own school.
+    if not is_platform_admin(request.user):
+        if (
+            not is_management(request.user)
+            or request.user.school_id != school_id
+        ):
+            return HttpResponse(status=403)
 
     school = get_object_or_404(
         School,
@@ -1008,6 +1019,25 @@ def send_user_setup_link(request, school_id, user_id):
         id=user_id,
         school=school,
     )
+    
+    return_to = request.POST.get("return_to", "")
+
+    if return_to == "student_list":
+        return_url = reverse("student_list")
+    elif return_to == "teacher_list":
+        return_url = reverse("teacher_list")
+    else:
+        return_url = reverse(
+            "school_users",
+            kwargs={"school_id": school.id},
+        )
+
+    query_string = request.GET.urlencode()
+    if query_string:
+        return_url = f"{return_url}?{query_string}"
+
+    if return_to not in ("student_list", "teacher_list"):
+        return_url = f"{return_url}#user-{user.id}"
 
     # Setup links are only for accounts that have not
     # created a usable password yet.
@@ -1041,21 +1071,7 @@ def send_user_setup_link(request, school_id, user_id):
             "does not have an email address.",
         )
 
-        school_users_url = reverse(
-            "school_users",
-            kwargs={
-                "school_id": school.id,
-            },
-        )
-
-        query_string = request.GET.urlencode()
-
-        if query_string:
-            school_users_url = f"{school_users_url}?{query_string}"
-
-        return redirect(
-            f"{school_users_url}#user-{user.id}"
-        )
+        return redirect(return_url)
 
     # Generate a fresh one-time Django password setup token.
     token = default_token_generator.make_token(user)
@@ -1075,7 +1091,7 @@ def send_user_setup_link(request, school_id, user_id):
     )
 
     send_mail(
-        subject="Set Up Your Paul SchoolHub Password",
+        subject=f"{school.name} - Set Up Your Password",
         message=(
             f"Hello {user.get_full_name() or user.username},\n\n"
             f"A new password setup link has been generated for your "
@@ -1101,21 +1117,7 @@ def send_user_setup_link(request, school_id, user_id):
         f"{user.get_full_name() or user.username}.",
     )
 
-    school_users_url = reverse(
-        "school_users",
-        kwargs={
-            "school_id": school.id,
-        },
-    )
-
-    query_string = request.GET.urlencode()
-
-    if query_string:
-        school_users_url = f"{school_users_url}?{query_string}"
-
-    return redirect(
-        f"{school_users_url}#user-{user.id}"
-    )
+    return redirect(return_url)
 
 @login_required
 @platform_admin_required
@@ -1843,7 +1845,7 @@ def create_school(request):
                         )
 
                         send_mail(
-                            subject="Set Up Your Paul SchoolHub Password",
+                            subject=f"{school.name} - Set Up Your Password",
                             message=(
                                 f"Hello "
                                 f"{administrator.get_full_name() or administrator.username},\n\n"

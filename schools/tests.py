@@ -212,9 +212,9 @@ class SendUserSetupLinkTests(TestCase):
             ["pending@example.com"],
         )
 
-        self.assertIn(
-            "Set Up Your Paul SchoolHub Password",
+        self.assertEqual(
             email.subject,
+            f"{self.school.name} - Set Up Your Password",
         )
 
         self.assertIn(
@@ -305,6 +305,86 @@ class SendUserSetupLinkTests(TestCase):
         self.assertEqual(response.status_code, 405)
         self.assertEqual(len(mail.outbox), 0)
         
+    def test_school_admin_can_send_setup_link_within_own_school(self):
+        User = get_user_model()
+        school_admin = User.objects.create_user(
+            username="school_setup_admin",
+            email="school-admin@example.com",
+            password="AdminPassword123!",
+            role=User.Role.ADMIN,
+            school=self.school,
+        )
+
+        self.client.force_login(school_admin)
+
+        response = self.client.post(
+            reverse(
+                "send_user_setup_link",
+                kwargs={
+                    "school_id": self.school.id,
+                    "user_id": self.pending_user.id,
+                },
+            )
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(
+            mail.outbox[0].to,
+            ["pending@example.com"],
+        )
+
+    def test_school_admin_cannot_send_setup_link_for_another_school(self):
+        User = get_user_model()
+        school_admin = User.objects.create_user(
+            username="school_setup_admin_other",
+            email="school-admin-other@example.com",
+            password="AdminPassword123!",
+            role=User.Role.ADMIN,
+            school=self.school,
+        )
+
+        self.client.force_login(school_admin)
+
+        response = self.client.post(
+            reverse(
+                "send_user_setup_link",
+                kwargs={
+                    "school_id": self.other_school.id,
+                    "user_id": self.other_school_user.id,
+                },
+            )
+        )
+
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(len(mail.outbox), 0)
+
+    def test_ordinary_teacher_cannot_send_setup_link(self):
+        User = get_user_model()
+        teacher = User.objects.create_user(
+            username="ordinary_setup_teacher",
+            email="ordinary-teacher@example.com",
+            password="TeacherPassword123!",
+            role=User.Role.TEACHER,
+            school=self.school,
+        )
+
+        self.client.force_login(teacher)
+
+        response = self.client.post(
+            reverse(
+                "send_user_setup_link",
+                kwargs={
+                    "school_id": self.school.id,
+                    "user_id": self.pending_user.id,
+                },
+            )
+        )
+
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(len(mail.outbox), 0)
+
+        
 
 class CreateSchoolUserTests(TestCase):
 
@@ -363,9 +443,9 @@ class CreateSchoolUserTests(TestCase):
             ["newadmin@example.com"],
         )
 
-        self.assertIn(
-            "Set Up Your Paul SchoolHub Password",
+        self.assertEqual(
             email.subject,
+            f"{self.school.name} - Set Up Your Password",
         )
 
         self.assertIn(
@@ -449,9 +529,9 @@ class CreateSchoolTests(TestCase):
             ["firstadmin@example.com"],
         )
 
-        self.assertIn(
-            "Set Up Your Paul SchoolHub Password",
+        self.assertEqual(
             email.subject,
+            f"{self.school.name} - Set Up Your Password",
         )
 
         self.assertIn(

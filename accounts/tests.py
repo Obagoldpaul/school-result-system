@@ -1,5 +1,7 @@
 from django.test import TestCase
-
+from django.core import mail
+from django.urls import reverse
+from django.test import override_settings
 from accounts.models import User
 from accounts.permissions import user_has_permission
 from schools.models import School, SchoolRole, Permission
@@ -317,3 +319,67 @@ class UserPermissionTests(TestCase):
         )
 
         self.assertFalse(is_management_user(teacher))
+        
+        
+class PasswordResetEmailTests(TestCase):
+    def setUp(self):
+        self.school = School.objects.create(
+            name="Great Goshenland Blossom School",
+            code="GGBS",
+        )
+
+        self.user = User.objects.create_user(
+            username="reset-test-user",
+            email="reset-test@example.com",
+            password="ExistingPassword123!",
+            school=self.school,
+            role=User.Role.TEACHER,
+        )
+
+    @override_settings(
+        EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend"
+    )
+    def test_reset_email_uses_school_name_and_platform_domain(self):
+        response = self.client.post(
+            reverse("password_reset"),
+            {"email": self.user.email},
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(len(mail.outbox), 1)
+
+        email = mail.outbox[0]
+
+        self.assertEqual(
+            email.subject,
+            "Great Goshenland Blossom School - Reset Your Password",
+        )
+
+        self.assertIn(
+            "https://paulschoolhub.com.ng/set-password/",
+            email.body,
+        )
+
+    @override_settings(
+        EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend"
+    )
+    def test_reset_email_uses_fallback_without_school(self):
+        user_without_school = User.objects.create_user(
+            username="no-school-reset-user",
+            email="no-school-reset@example.com",
+            password="ExistingPassword123!",
+            school=None,
+            role=User.Role.TEACHER,
+        )
+
+        self.client.post(
+            reverse("password_reset"),
+            {"email": user_without_school.email},
+        )
+
+        self.assertEqual(len(mail.outbox), 1)
+
+        self.assertEqual(
+            mail.outbox[0].subject,
+            "Paul SchoolHub - Reset Your Password",
+        )

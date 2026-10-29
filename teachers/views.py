@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
+from django.db.models.functions import Lower
 from core.utils.image_optimizer import optimize_image
 from django.contrib.auth.tokens import default_token_generator
 from django.urls import reverse
@@ -13,6 +14,7 @@ from .models import Teacher
 from accounts.decorators import staff_required, management_required
 from accounts.permissions import school_permission_required
 from django.core.mail import send_mail
+from django.core.paginator import Paginator
 
 from core.choices import (
     NIGERIAN_STATES,
@@ -111,7 +113,13 @@ def register_teacher(request):
 @login_required
 def teacher_list(request):
 
-    teachers = Teacher.objects.filter(user__school=request.user.school)
+    teachers = Teacher.objects.filter(
+        user__school=request.user.school
+    ).order_by(
+        Lower("user__last_name"),
+        Lower("user__first_name"),
+        "id",
+    )
 
     search = request.GET.get("search")
     filter_type = request.GET.get("filter")
@@ -139,6 +147,14 @@ def teacher_list(request):
         teachers = teachers.filter(
             is_active=False
         )
+    
+    # Keep the filtered queryset for statistics.
+    teacher_queryset = teachers
+
+    # Paginate the filtered teacher list.
+    paginator = Paginator(teacher_queryset, 25)
+    page_number = request.GET.get("page")
+    teachers = paginator.get_page(page_number)
 
     context = {
 
@@ -148,20 +164,20 @@ def teacher_list(request):
 
         "filter": filter_type or "",
 
-        "total_teachers": teachers.count(),
+        "total_teachers": teacher_queryset.count(),
 
         "class_teacher_count":
-            teachers.filter(
+            teacher_queryset.filter(
                 is_class_teacher=True
             ).count(),
 
         "assigned_count":
-            teachers.exclude(
+            teacher_queryset.exclude(
                 assigned_class__isnull=True
             ).count(),
 
         "inactive_count":
-            teachers.filter(
+            teacher_queryset.filter(
                 is_active=False
             ).count(),
     }
