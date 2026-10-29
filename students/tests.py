@@ -7,7 +7,15 @@ from django.urls import reverse
 from accounts.models import User
 from schools.models import School, SchoolRole, Permission
 from students.models import Student, SchoolClass
-from students.forms import StudentRegistrationForm
+from students.forms import (
+    StudentRegistrationForm,
+    generate_admission_number,
+)
+
+from django.core.management import call_command
+from django.core.management.base import CommandError
+from django.utils import timezone
+from io import StringIO
 
 from io import BytesIO
 
@@ -586,3 +594,249 @@ class StudentPassportEditOptimizationTests(TestCase):
                 passport_file.size,
                 2 * 1024 * 1024,
             )
+            
+class AdmissionNumberGenerationTests(TestCase):
+
+    def setUp(self):
+        self.school_a = School.objects.create(
+            name="Admission Test School A",
+            code="SCHA",
+        )
+
+        self.school_b = School.objects.create(
+            name="Admission Test School B",
+            code="SCHB",
+        )
+
+    def test_first_admission_number_includes_year(self):
+        from django.utils import timezone
+
+        year = timezone.localdate().year
+
+        admission_number = generate_admission_number(
+            self.school_a
+        )
+
+        self.assertEqual(
+            admission_number,
+            f"SCHA-{year}-STU-001",
+        )
+
+    def test_sequence_continues_for_same_school_and_year(self):
+        from django.utils import timezone
+
+        year = timezone.localdate().year
+
+        user = User.objects.create_user(
+            username="admission_test_student",
+            password="testpassword123",
+            school=self.school_a,
+            role=User.Role.STUDENT,
+        )
+
+        school_class = SchoolClass.objects.create(
+            school=self.school_a,
+            name="Test Primary 1",
+        )
+
+        Student.objects.create(
+            user=user,
+            school_class=school_class,
+            admission_number=f"SCHA-{year}-STU-007",
+        )
+
+        admission_number = generate_admission_number(
+            self.school_a
+        )
+
+        self.assertEqual(
+            admission_number,
+            f"SCHA-{year}-STU-008",
+        )
+
+    def test_each_school_has_its_own_sequence(self):
+        from django.utils import timezone
+
+        year = timezone.localdate().year
+
+        admission_number = generate_admission_number(
+            self.school_b
+        )
+
+        self.assertEqual(
+            admission_number,
+            f"SCHB-{year}-STU-001",
+        )
+
+class AdmissionNumberUpdateCommandTests(TestCase):
+    def setUp(self):
+        self.school = School.objects.create(
+            name="Admission Update Test School",
+            code="SCHA",
+        )
+
+        self.school_class = SchoolClass.objects.create(
+            school=self.school,
+            name="Test Class",
+        )
+
+        self.user_counter = 0
+
+    def create_student(self, admission_number, school=None):
+        school = school or self.school
+        self.user_counter += 1
+
+        user = User.objects.create_user(
+            username=f"admission_update_test_{self.user_counter}",
+            password="testpassword123",
+            school=school,
+            role=User.Role.STUDENT,
+        )
+
+        return Student.objects.create(
+            user=user,
+            school_class=self.school_class,
+            admission_number=admission_number,
+        )
+
+    def test_preview_does_not_change_admission_numbers(self):
+        student = self.create_student("SCHA-STU-001")
+        output = StringIO()
+
+        call_command(
+            "update_admission_numbers",
+            year=2026,
+            stdout=output,
+        )
+
+        student.refresh_from_db()
+
+        self.assertEqual(student.admission_number, "SCHA-STU-001")
+        self.assertIn("PREVIEW ONLY", output.getvalue())
+        self.assertIn(
+            "SCHA-STU-001 -> SCHA-2026-STU-001",
+            output.getvalue(),
+        )
+
+    def test_apply_updates_eligible_admission_numbers(self):
+        student = self.create_student("SCHA-STU-015")
+
+        call_command(
+            "update_admission_numbers",
+            year=2026,
+            apply=True,
+            stdout=StringIO(),
+        )
+
+        student.refresh_from_db()
+
+        self.assertEqual(
+            student.admission_number,
+            "SCHA-2026-STU-015",
+        )
+
+    def test_existing_year_based_number_is_skipped(self):
+        student = self.create_student("SCHA-2026-STU-004")
+        output = StringIO()
+
+        call_command(
+            "update_admission_numbers",
+            year=2026,
+            apply=True,
+            stdout=output,
+        )
+
+        student.refresh_from_db()
+
+        self.assertEqual(
+            student.admission_number,
+            "SCHA-2026-STU-004",
+        )
+        self.assertIn("already contains a year", output.getvalue())
+
+    def test_conflict_prevents_all_updates(self):
+        eligible_student = self.create_student("SCHA-STU-001")
+        self.create_student("SCHA-2026-STU-001")
+        output = StringIO()
+
+        with self.assertRaises(CommandError):
+            call_command(
+                "update_admission_numbers",
+                year=2026,
+                apply=True,
+                stdout=output,
+            )
+
+        eligible_student.refresh_from_db()
+
+        self.assertEqual(
+            eligible_student.admission_number,
+            "SCHA-STU-001",
+        )
+        self.assertIn("Conflicts found", output.getvalue())
+
+    def test_overlength_proposed_number_is_skipped(self):
+        long_code = "ABCDEFGHIJKL"
+
+        long_school = School.objects.create(
+            name="Long Code Test School",
+            code=long_code,
+        )
+
+        long_class = SchoolClass.objects.create(
+            school=long_school,
+            name="Long Code Class",
+        )
+
+        user = User.objects.create_user(
+            username="admission_update_long_code",
+            password="testpassword123",
+            school=long_school,
+            role=User.Role.STUDENT,
+        )
+
+        student = Student.objects.create(
+            user=user,
+            school_class=long_class,
+            admission_number=f"{long_code}-STU-001",
+        )
+
+        output = StringIO()
+
+        call_command(
+            "update_admission_numbers",
+            year=2026,
+            apply=True,
+            stdout=output,
+        )
+
+        student.refresh_from_db()
+
+        self.assertEqual(
+            student.admission_number,
+            f"{long_code}-STU-001",
+        )
+        self.assertIn("TOO LONG", output.getvalue())
+        self.assertIn(
+            "proposed number exceeds field length",
+            output.getvalue(),
+        )
+
+    def test_unrecognized_format_is_left_unchanged(self):
+        student = self.create_student("ADM001")
+        output = StringIO()
+
+        call_command(
+            "update_admission_numbers",
+            year=2026,
+            apply=True,
+            stdout=output,
+        )
+
+        student.refresh_from_db()
+
+        self.assertEqual(student.admission_number, "ADM001")
+        self.assertIn(
+            "does not match the expected format",
+            output.getvalue(),
+        )

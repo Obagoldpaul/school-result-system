@@ -2,6 +2,7 @@ from django import forms
 from django.contrib.auth import get_user_model
 from core.utils.image_optimizer import optimize_image
 import re
+from django.utils import timezone
 from .models import Student, SchoolClass, Department
 from core.choices import (
     NIGERIAN_STATES,
@@ -18,7 +19,8 @@ from accounts.normalization import (
 User = get_user_model()
 
 def generate_admission_number(school):
-    prefix = f"{school.code.upper()}-STU-"
+    year = timezone.localdate().year
+    prefix = f"{school.code.upper()}-{year}-STU-"
 
     existing_numbers = Student.objects.filter(
         user__school=school
