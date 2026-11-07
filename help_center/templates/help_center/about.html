@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+
+{% block title %}About Paul SchoolHub{% endblock %}
+
+{% block content %}
+
+<div class="container-fluid">
+
+    <div class="mb-4">
+        <h1>About Paul SchoolHub</h1>
+        <p class="text-muted">
+            A smarter way to organise and manage school operations.
+        </p>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-body p-4">
+
+            <h3>What is Paul SchoolHub?</h3>
+
+            <p>
+                Paul SchoolHub is a web-based School Management System
+                developed to help schools manage their academic and
+                administrative activities from one central platform.
+            </p>
+
+            <p>
+                It provides digital tools for managing students, teachers,
+                classes, subjects, attendance, academic results, school fees,
+                announcements, timetables and other essential school
+                operations.
+            </p>
+
+            <p>
+                The platform also provides a Student and Parent Portal,
+                giving authorised users access to relevant academic and
+                school information.
+            </p>
+
+            <p class="mb-0">
+                Available features may vary depending on the school's
+                subscription package and enabled settings.
+            </p>
+
+        </div>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-body p-4">
+
+            <h3>Developed by Paul Media Services</h3>
+
+            <p>
+                Paul SchoolHub is a product of
+                <strong>Paul Media Services</strong>, a registered business
+                providing digital, creative and technology services.
+            </p>
+
+            <p class="mb-0">
+                Through Paul SchoolHub, Paul Media Services aims to make
+                practical digital solutions available to schools, helping
+                them organise their operations and manage important
+                information more efficiently.
+            </p>
+
+        </div>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-body p-4">
+
+            <h3>Our Mission</h3>
+
+            <p class="mb-0">
+                Our mission is to simplify school administration through
+                accessible and practical technology, improve the
+                organisation of academic records, and support better
+                coordination among authorised school users.
+            </p>
+
+        </div>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-body p-4">
+
+            <h3>Our Commitment</h3>
+
+            <p class="mb-0">
+                We are committed to continually improving Paul SchoolHub
+                by developing useful features, enhancing the user
+                experience and providing schools with digital tools that
+                support their day-to-day activities.
+            </p>
+
+        </div>
+    </div>
+
+    <div class="alert alert-info">
+        <strong>Need help?</strong>
+        Visit the
+        <a href="{% url 'help_center:home' %}">
+            Help & User Guide
+        </a>
+        for platform instructions. For school-specific questions,
+        contact your school's administrator.
+    </div>
+
+</div>
+
+{% endblock %}

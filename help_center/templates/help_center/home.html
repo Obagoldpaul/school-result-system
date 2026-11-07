@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+
+{% block title %}Help & User Guide | Paul SchoolHub{% endblock %}
+
+{% block content %}
+
+<div class="container-fluid">
+
+    <div class="mb-4">
+        <h1>Help & User Guide</h1>
+        <p class="text-muted">
+            Welcome to the Paul SchoolHub Help Centre.
+            Find instructions and guidance to help you use the platform
+            effectively.
+        </p>
+    </div>
+
+    <div class="row g-4">
+
+        <div class="col-md-6 col-lg-4">
+            <a href="{% url 'help_center:getting_started' %}"
+               class="text-decoration-none text-dark">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title">Getting Started</h5>
+                        <p class="card-text">
+                            Learn how to access your account and navigate
+                            the platform.
+                        </p>
+                        <span class="text-primary">Read guide &rarr;</span>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-md-6 col-lg-4">
+            <a href="{% url 'help_center:school_administration' %}"
+               class="text-decoration-none text-dark">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title">School Administration</h5>
+                        <p class="card-text">
+                            Guidance on managing students, teachers,
+                            classes and academic information.
+                        </p>
+                        <span class="text-primary">Read guide &rarr;</span>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-md-6 col-lg-4">
+            <a href="{% url 'help_center:teaching_academics' %}"
+               class="text-decoration-none text-dark">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title">Teaching & Academics</h5>
+                        <p class="card-text">
+                            Learn about subject allocations, score entry,
+                            result management, attendance and academic records.
+                        </p>
+                        <span class="text-primary">Read guide &rarr;</span>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-md-6 col-lg-4">
+            <a href="{% url 'help_center:fees_payments' %}"
+               class="text-decoration-none text-dark">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title">Fees & Payments</h5>
+                        <p class="card-text">
+                            Understand billing, payment records and
+                            available financial information.
+                        </p>
+                        <span class="text-primary">Read guide &rarr;</span>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-md-6 col-lg-4">
+            <a href="{% url 'help_center:student_parent_portal' %}"
+               class="text-decoration-none text-dark">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title">Student & Parent Portal</h5>
+                        <p class="card-text">
+                            Learn about student profiles, academic information,
+                            attendance, fees and payment history.
+                        </p>
+                        <span class="text-primary">Read guide &rarr;</span>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Other Platform Features</h5>
+                    <p class="card-text">
+                        Explore guidance on announcements, timetables,
+                        reports and other available features.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="alert alert-info mt-4">
+        <strong>Need assistance?</strong>
+        Contact your school's administrator for account or
+        school-specific questions.
+    </div>
+
+</div>
+
+{% endblock %}

@@ -11,7 +11,11 @@
             <p class="mb-0"><strong>{{ student.user.get_full_name|default:student.admission_number }}</strong> &mdash;
                 {{ student.admission_number }}</p>
         </div>
-        <a class="btn btn-outline-secondary" href="{% url 'student_payment_history' student.id %}">Payment History</a>
+        {% if is_student_portal %}
+            <a class="btn btn-outline-secondary" href="{% url 'my_payment_history' %}">Payment History</a>
+        {% else %}
+            <a class="btn btn-outline-secondary" href="{% url 'student_payment_history' student.id %}">Payment History</a>
+        {% endif %}
     </div>
 
     <div class="row g-3 mb-4">

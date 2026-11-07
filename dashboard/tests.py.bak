@@ -1,0 +1,247 @@
+from django.test import TestCase
+from django.contrib.auth import get_user_model
+
+from schools.models import School
+from students.models import Department, SchoolClass, Student
+from subjects.models import ClassSubject, Subject
+
+from .services import get_registered_subjects_for_student
+
+User = get_user_model()
+
+class RegisteredSubjectsTests(TestCase):
+@classmethod
+def setUpTestData(cls):
+cls.school = School.objects.create(
+name="Test School",
+code="TST001",
+school_type=School.SchoolType.SECONDARY,
+)
+
+    cls.other_school = School.objects.create(
+        name="Other Test School",
+        code="TST002",
+        school_type=School.SchoolType.SECONDARY,
+    )
+
+    cls.school_class = SchoolClass.objects.create(
+        school=cls.school,
+        name="SS 1",
+        section=SchoolClass.Section.SENIOR_SECONDARY,
+    )
+
+    cls.science_department = Department.objects.create(
+        school=cls.school,
+        name="Science",
+    )
+
+    cls.arts_department = Department.objects.create(
+        school=cls.school,
+        name="Arts",
+    )
+
+    cls.science_student = cls.create_student(
+        username="science_student",
+        admission_number="TST001",
+        school=cls.school,
+        school_class=cls.school_class,
+        department=cls.science_department,
+    )
+
+    cls.arts_student = cls.create_student(
+        username="arts_student",
+        admission_number="TST002",
+        school=cls.school,
+        school_class=cls.school_class,
+        department=cls.arts_department,
+    )
+
+    cls.compulsory_subject = cls.create_subject(
+        name="English Language",
+        code="TST-ENG",
+        school=cls.school,
+    )
+
+    cls.elective_subject = cls.create_subject(
+        name="Physics",
+        code="TST-PHY",
+        school=cls.school,
+        is_elective=True,
+    )
+
+    cls.science_subject = cls.create_subject(
+        name="Chemistry",
+        code="TST-CHEM",
+        school=cls.school,
+    )
+
+    cls.arts_subject = cls.create_subject(
+        name="Literature",
+        code="TST-LIT",
+        school=cls.school,
+    )
+
+    cls.inactive_subject = cls.create_subject(
+        name="Inactive Subject",
+        code="TST-INACT",
+        school=cls.school,
+        is_active=False,
+    )
+
+    ClassSubject.objects.create(
+        school_class=cls.school_class,
+        subject=cls.compulsory_subject,
+    )
+
+    ClassSubject.objects.create(
+        school_class=cls.school_class,
+        subject=cls.elective_subject,
+    )
+
+    ClassSubject.objects.create(
+        school_class=cls.school_class,
+        subject=cls.science_subject,
+        department=cls.science_department,
+    )
+
+    ClassSubject.objects.create(
+        school_class=cls.school_class,
+        subject=cls.arts_subject,
+        department=cls.arts_department,
+    )
+
+    ClassSubject.objects.create(
+        school_class=cls.school_class,
+        subject=cls.inactive_subject,
+    )
+
+@classmethod
+def create_student(
+    cls,
+    username,
+    admission_number,
+    school,
+    school_class,
+    department,
+):
+    user = User.objects.create_user(
+        username=username,
+        password="test-password",
+        school=school,
+        role=User.Role.STUDENT,
+    )
+
+    return Student.objects.create(
+        user=user,
+        school_class=school_class,
+        department=department,
+        admission_number=admission_number,
+    )
+
+@classmethod
+def create_subject(
+    cls,
+    name,
+    code,
+    school,
+    is_elective=False,
+    is_active=True,
+):
+    return Subject.objects.create(
+        name=name,
+        code=code,
+        school=school,
+        level=Subject.SubjectLevel.SECONDARY,
+        is_elective=is_elective,
+        is_active=is_active,
+    )
+
+def get_subject_ids(self, student):
+    return set(
+        get_registered_subjects_for_student(
+            student,
+            self.school,
+        ).values_list("id", flat=True)
+    )
+
+def test_compulsory_subject_is_included_automatically(self):
+    subject_ids = self.get_subject_ids(self.science_student)
+
+    self.assertIn(
+        self.compulsory_subject.id,
+        subject_ids,
+    )
+
+def test_unselected_elective_is_excluded(self):
+    subject_ids = self.get_subject_ids(self.science_student)
+
+    self.assertNotIn(
+        self.elective_subject.id,
+        subject_ids,
+    )
+
+def test_selected_eligible_elective_is_included(self):
+    self.science_student.elective_subjects.add(
+        self.elective_subject
+    )
+
+    subject_ids = self.get_subject_ids(self.science_student)
+
+    self.assertIn(
+        self.elective_subject.id,
+        subject_ids,
+    )
+
+def test_department_specific_subject_is_restricted(self):
+    science_subject_ids = self.get_subject_ids(
+        self.science_student
+    )
+    arts_subject_ids = self.get_subject_ids(
+        self.arts_student
+    )
+
+    self.assertIn(
+        self.science_subject.id,
+        science_subject_ids,
+    )
+    self.assertNotIn(
+        self.science_subject.id,
+        arts_subject_ids,
+    )
+
+    self.assertIn(
+        self.arts_subject.id,
+        arts_subject_ids,
+    )
+    self.assertNotIn(
+        self.arts_subject.id,
+        science_subject_ids,
+    )
+
+def test_inactive_subject_is_excluded(self):
+    subject_ids = self.get_subject_ids(self.science_student)
+
+    self.assertNotIn(
+        self.inactive_subject.id,
+        subject_ids,
+    )
+
+def test_registered_subject_count_has_no_duplicates(self):
+    self.science_student.elective_subjects.add(
+        self.elective_subject
+    )
+
+    subjects = get_registered_subjects_for_student(
+        self.science_student,
+        self.school,
+    )
+
+    subject_ids = list(
+        subjects.values_list("id", flat=True)
+    )
+
+    self.assertEqual(
+        len(subject_ids),
+        len(set(subject_ids)),
+    )
+

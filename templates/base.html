@@ -154,10 +154,6 @@
                     Teachers
                 </a>
 
-                <a href="{% url 'teacher_availability' %}">
-                    Teacher Availability
-                </a>
-
                 {% if can_view_registrations %}
                 <a href="{% url 'registration_application_list' %}">
                     Registration Applications
@@ -439,40 +435,52 @@
             <footer class="text-center mt-4 py-3">
 
                 <small class="text-muted">
-
+            
                     {% if is_platform_admin %}
-
+            
                     <strong>
                         {{ platform_settings.platform_name|default:"Paul SchoolHub" }}
                     </strong>
-
+            
                     <br>
-
+            
                     {{ platform_settings.platform_footer|default:"Powered by Paul Media Services" }}
-
+            
                     <br>
-
+            
                     © 2026 Paul SchoolHub. All Rights Reserved.
-
+            
                     {% else %}
-
+            
                     Powered by <strong>Paul Media Services</strong>
-
+            
                     <br>
-
+            
                     Licensed to:
                     <strong>
                         {{ school_settings.school_name }}
                     </strong>
-
+            
                     <br>
-
+            
                     © 2026 Paul SchoolHub. All Rights Reserved.
-
+            
                     {% endif %}
-
+            
+                    <br>
+            
+                    <a href="{% url 'help_center:home' %}" class="text-muted text-decoration-none">
+                        Help & User Guide
+                    </a>
+            
+                    <span class="mx-2">|</span>
+            
+                    <a href="{% url 'help_center:about' %}" class="text-muted text-decoration-none">
+                        About Paul SchoolHub
+                    </a>
+            
                 </small>
-
+            
             </footer>
 
             {% if can_contact_support %}

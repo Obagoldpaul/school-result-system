@@ -1,0 +1,261 @@
+{% extends "base.html" %}
+
+{% block title %}Getting Started | Paul SchoolHub{% endblock %}
+
+{% block content %}
+
+<div class="container-fluid">
+
+    <div class="mb-3">
+        <a href="{% url 'help_center:home' %}"
+           class="btn btn-outline-secondary">
+            &larr; Back to Help & User Guide
+        </a>
+    </div>
+
+    <div class="mb-4">
+        <h1>Getting Started</h1>
+        <p class="text-muted">
+            A guide to accessing your Paul SchoolHub account,
+            understanding your dashboard and getting started with
+            the platform.
+        </p>
+    </div>
+
+    <!-- Introduction -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <h4>Welcome to Paul SchoolHub</h4>
+            <p class="mb-0">
+                Paul SchoolHub provides a central platform for managing
+                school activities, academic records and communication.
+                The features available to you depend on your account
+                role, assigned permissions and your school's enabled
+                features.
+            </p>
+        </div>
+    </div>
+
+    <!-- 1. Logging In -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <h4>1. Logging In to Your Account</h4>
+
+            <p>
+                To access Paul SchoolHub, open the login address provided
+                by your school administrator.
+            </p>
+
+            <ol>
+                <li>Open your school's Paul SchoolHub login page.</li>
+                <li>Enter your assigned username.</li>
+                <li>Enter your password.</li>
+                <li>Click the login button to access your account.</li>
+            </ol>
+
+            <div class="alert alert-info mb-0">
+                <strong>Important:</strong>
+                School users should use the login address supplied by
+                their school. Platform administrators use the separate
+                platform administration login page.
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. First-Time Password Setup -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <h4>2. Setting Up Your Password for the First Time</h4>
+
+            <p>
+                When a school administrator creates an account and
+                provides an email address, a password setup link may
+                be sent to that address.
+            </p>
+
+            <ol>
+                <li>Open the password setup email.</li>
+                <li>Follow the link provided in the email.</li>
+                <li>Choose and confirm your password.</li>
+                <li>Return to the school login page and sign in.</li>
+            </ol>
+
+            <p>
+                Password setup links are valid for 72 hours and can
+                only be used once.
+            </p>
+
+            <p class="mb-0">
+                If you do not receive the email, check your spam folder
+                or contact your school administrator.
+            </p>
+        </div>
+    </div>
+
+    <!-- 3. Forgot Password -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <h4>3. Resetting a Forgotten Password</h4>
+
+            <p>
+                If you already have an account but cannot remember
+                your password:
+            </p>
+
+            <ol>
+                <li>Open your school's login page.</li>
+                <li>Click <strong>Forgot your password?</strong></li>
+                <li>Follow the instructions provided.</li>
+                <li>Use the password reset link sent to your email
+                    to choose a new password.</li>
+            </ol>
+
+            <p class="mb-0">
+                If you no longer have access to your registered email
+                address, contact your school administrator for assistance.
+            </p>
+        </div>
+    </div>
+
+    <!-- 4. Understanding the Dashboard -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <h4>4. Understanding Your Dashboard</h4>
+
+            <p>
+                After logging in, you will be taken to your dashboard.
+                It provides access to the information and tools available
+                to your account.
+            </p>
+
+            <p>
+                The dashboard and navigation menu may differ depending
+                on whether you are a school administrator, teacher,
+                student or another authorised user.
+            </p>
+
+            <ul>
+                <li>
+                    <strong>School administrators:</strong>
+                    Access school management and administrative tools
+                    permitted by their account.
+                </li>
+                <li>
+                    <strong>Teachers:</strong>
+                    Access teaching-related tools and assigned
+                    academic responsibilities.
+                </li>
+                <li>
+                    <strong>Students:</strong>
+                    Access available student portal features and
+                    their own school information.
+                </li>
+                <li>
+                    <strong>Platform administrators:</strong>
+                    Access platform-level administration tools.
+                </li>
+            </ul>
+
+            <p class="mb-0">
+                Use the navigation menu to open the sections available
+                to your account.
+            </p>
+        </div>
+    </div>
+
+    <!-- 5. Student Registration -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <h4>5. Registering Students</h4>
+
+            <p>
+                Authorised school users can register students through
+                the student management section.
+            </p>
+
+            <ol>
+                <li>Open the Students section from the navigation menu.</li>
+                <li>Select the option to register a new student.</li>
+                <li>Enter the student's required personal and academic
+                    information.</li>
+                <li>Complete the form and submit it.</li>
+            </ol>
+
+            <p>
+                The system generates an admission number for the
+                registered student.
+            </p>
+
+            <p class="mb-0">
+                Where an email address is provided, the student can
+                receive a password setup link. The student can then
+                use the account to access the available student portal
+                features.
+            </p>
+        </div>
+    </div>
+
+    <!-- 6. Teacher Registration -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <h4>6. Registering Teachers</h4>
+
+            <p>
+                Authorised school management users can register teachers
+                through the teacher management section.
+            </p>
+
+            <ol>
+                <li>Open the Teachers section.</li>
+                <li>Select the option to register a new teacher.</li>
+                <li>Enter the teacher's personal and professional details.</li>
+                <li>Provide the relevant employment and assignment
+                    information.</li>
+                <li>Submit the registration form.</li>
+            </ol>
+
+            <p>
+                The system generates a staff ID for the registered
+                teacher.
+            </p>
+
+            <p class="mb-0">
+                If an email address is provided, a password setup link
+                can be sent to the teacher so they can set up their
+                account.
+            </p>
+        </div>
+    </div>
+
+    <!-- 7. Account Security -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <h4>7. Keeping Your Account Secure</h4>
+
+            <ul class="mb-0">
+                <li>Keep your username and password private.</li>
+                <li>Choose a strong password that others cannot easily guess.</li>
+                <li>Do not share your login details with other users.</li>
+                <li>Always log out when using a shared or public computer.</li>
+                <li>Contact your school administrator if you suspect
+                    someone has accessed your account without permission.</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Assistance -->
+    <div class="alert alert-info mt-4">
+        <strong>Need assistance?</strong>
+        Contact your school's administrator for help with account
+        access, registration or school-specific questions.
+    </div>
+
+    <div class="mt-4">
+        <a href="{% url 'help_center:home' %}" class="btn btn-outline-secondary">
+            Back to Help Centre
+        </a>
+    </div>
+
+</div>
+
+{% endblock %}

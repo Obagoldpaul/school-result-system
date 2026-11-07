@@ -1,0 +1,423 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}Student & Parent Portal Guide | Paul SchoolHub{% endblock %}
+
+{% block content %}
+
+<div class="container py-4">
+
+    <div class="mb-3">
+        <a href="{% url 'help_center:home' %}"
+           class="btn btn-outline-secondary">
+            &larr; Back to Help & User Guide
+        </a>
+    </div>
+
+    <div class="mb-4">
+        <h1>Student & Parent Portal</h1>
+        <p class="text-muted">
+            Learn how to access student information, view academic records,
+            check attendance, review school fees and access payment information.
+        </p>
+    </div>
+
+    <!-- Portal Access -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+
+            <h3>1. Accessing the Student Portal</h3>
+
+            <p>
+                The Student Portal provides students with access to their
+                personal, academic, attendance and financial information.
+            </p>
+
+            <ol>
+                <li>Open your school's Paul SchoolHub login page.</li>
+                <li>Enter your assigned username and password.</li>
+                <li>Select the login option to access your dashboard.</li>
+                <li>After logging in, use the <strong>Student Portal</strong>
+                    navigation menu to access the available sections.</li>
+            </ol>
+
+            <div class="alert alert-info">
+                <strong>Important:</strong>
+                The current portal uses student accounts. It does not
+                provide a separate parent login or independent parent
+                dashboard. Parents and guardians can review the available
+                information with the student using the student's account.
+            </div>
+
+        </div>
+    </div>
+
+    <!-- My Profile -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+
+            <h3>2. Viewing My Profile</h3>
+
+            <p>
+                The <strong>My Profile</strong> section displays the
+                personal information associated with the student's account.
+            </p>
+
+            <p>The information may include:</p>
+
+            <ul>
+                <li>Passport photograph.</li>
+                <li>Full name.</li>
+                <li>Admission number.</li>
+                <li>Class and department.</li>
+                <li>Date of birth and gender.</li>
+                <li>Nationality.</li>
+                <li>Guardian's name and phone number.</li>
+            </ul>
+
+            <p>
+                If any information is missing or incorrect, contact the
+                school administration for assistance.
+            </p>
+
+        </div>
+    </div>
+
+    <!-- Academic Summary and Subjects -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+
+            <h3>3. Viewing Academic Information and Subjects</h3>
+
+            <p>
+                The <strong>Academic Summary</strong> section provides an
+                overview of the student's academic records.
+            </p>
+
+            <p>It displays:</p>
+
+            <ul>
+                <li>The number of registered subjects.</li>
+                <li>The publication status of the latest results.</li>
+                <li>A link to view registered subjects.</li>
+                <li>A link to view report cards.</li>
+            </ul>
+
+            <h5 class="mt-4">Viewing My Subjects</h5>
+
+            <ol>
+                <li>Select <strong>My Subjects</strong> from the academic
+                    section of the dashboard.</li>
+                <li>Review the total number of registered subjects.</li>
+                <li>Check the list of compulsory subjects.</li>
+                <li>Check the list of selected elective subjects.</li>
+            </ol>
+
+            <p>
+                The page also displays the student's name, admission number,
+                class and department.
+            </p>
+
+            <div class="alert alert-info">
+                If an expected subject is missing, contact the school
+                administration for clarification.
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Report Cards -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+
+            <h3>4. Viewing My Report Card</h3>
+
+            <p>
+                Students can use the report card section to view their
+                academic performance for available academic terms.
+            </p>
+
+            <ol>
+                <li>Select <strong>My Report Card</strong> from the Academics
+                    menu or Academic Summary section.</li>
+                <li>Choose the academic term you want to view.</li>
+                <li>Select <strong>View Report Card</strong>.</li>
+                <li>Review the displayed academic results and performance
+                    information.</li>
+            </ol>
+
+            <p>A report card may contain:</p>
+
+            <ul>
+                <li>Student and school information.</li>
+                <li>Subject scores, grades and remarks.</li>
+                <li>Continuous Assessment and examination scores.</li>
+                <li>Overall and cumulative performance.</li>
+                <li>Class position, where enabled by the school.</li>
+                <li>Social habits and behavioural ratings.</li>
+                <li>Attendance summary.</li>
+                <li>Class teacher's comment and principal's remark.</li>
+            </ul>
+
+            <div class="alert alert-warning">
+                <strong>Note:</strong>
+                Students can only view results after the school's results
+                for the relevant class and term have been fully published.
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Timetable -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+
+            <h3>5. Viewing My Timetable</h3>
+
+            <p>
+                The <strong>My Timetable</strong> section displays the
+                published timetable for the student's current class.
+            </p>
+
+            <ol>
+                <li>Select <strong>My Timetable</strong> from the Student
+                    Portal navigation menu.</li>
+                <li>Check the academic session and term displayed.</li>
+                <li>Review the timetable by day and period.</li>
+            </ol>
+
+            <p>The timetable may show:</p>
+
+            <ul>
+                <li>Days of the school week.</li>
+                <li>Period names and times.</li>
+                <li>Subjects scheduled for each period.</li>
+                <li>Assigned teachers.</li>
+                <li>Break periods.</li>
+            </ul>
+
+            <div class="alert alert-info">
+                The timetable must be published by the school before it
+                becomes available to students.
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Attendance -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+
+            <h3>6. Checking My Attendance</h3>
+
+            <p>
+                The <strong>My Attendance</strong> section provides an
+                overview of the student's attendance for the current term.
+            </p>
+
+            <p>The dashboard displays:</p>
+
+            <ul>
+                <li>Days Present.</li>
+                <li>Days Marked.</li>
+                <li>Attendance Rate.</li>
+                <li>Current Term.</li>
+            </ul>
+
+            <h5 class="mt-4">Viewing Attendance History</h5>
+
+            <ol>
+                <li>Open the <strong>My Attendance</strong> section.</li>
+                <li>Select <strong>View Attendance History</strong>.</li>
+                <li>Review the attendance summary.</li>
+                <li>Check individual attendance records by date, day
+                    and status.</li>
+            </ol>
+
+            <p>
+                Attendance records show whether the student was marked
+                <strong>Present</strong> or <strong>Absent</strong>.
+            </p>
+
+            <div class="alert alert-info">
+                When the current term has configured start and end dates,
+                the history page displays records within that term.
+                Otherwise, it displays the available attendance history.
+            </div>
+
+        </div>
+    </div>
+
+    <!-- School Fees -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+
+            <h3>7. Checking My School Fee Account</h3>
+
+            <p>
+                The <strong>My School Fee Account</strong> section provides
+                an overview of the student's school fee obligations and
+                payment position.
+            </p>
+
+            <h5 class="mt-4">Current Term Summary</h5>
+
+            <p>The dashboard displays:</p>
+
+            <ul>
+                <li><strong>Current Term Charges:</strong> Total fees
+                    assigned to the student for the current term.</li>
+                <li><strong>Current Term Paid:</strong> Payments allocated
+                    towards the student's current term charges.</li>
+                <li><strong>Current Term Balance:</strong> The remaining
+                    balance for the current term.</li>
+            </ul>
+
+            <h5 class="mt-4">Total Account Arrears</h5>
+
+            <p>
+                The account position section displays the student's total
+                outstanding arrears, including current and previous
+                outstanding balances.
+            </p>
+
+            <h5 class="mt-4">Viewing the Full Account Statement</h5>
+
+            <ol>
+                <li>Select <strong>View Full Account Statement</strong>.</li>
+                <li>Review the student's financial summary.</li>
+                <li>Check charges, allocated payments and outstanding
+                    balances across academic sessions.</li>
+                <li>Review any opening balance information where applicable.</li>
+            </ol>
+
+            <h5 class="mt-4">Downloading the School Bill</h5>
+
+            <p>
+                Select <strong>Download School Bill</strong> to download
+                the student's fee bill for the displayed term.
+            </p>
+
+            <div class="alert alert-info">
+                The school fee account reflects fee assignments and
+                payments recorded by the school.
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Payment History -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+
+            <h3>8. Viewing Payment History and Receipts</h3>
+
+            <p>
+                The <strong>Payment History</strong> section provides
+                access to payment records associated with the student's
+                school fee account.
+            </p>
+
+            <ol>
+                <li>Open the <strong>Payment History</strong> section
+                    on the dashboard.</li>
+                <li>Select <strong>View My Payment History</strong>.</li>
+                <li>Review the available payment records.</li>
+            </ol>
+
+            <p>Payment records may display:</p>
+
+            <ul>
+                <li>Payment date.</li>
+                <li>Amount paid.</li>
+                <li>Academic term.</li>
+                <li>Payment method.</li>
+                <li>Payment reference.</li>
+                <li>Receipt action.</li>
+            </ul>
+
+            <h5 class="mt-4">Printing a Payment Receipt</h5>
+
+            <p>
+                Select <strong>Print Receipt</strong> beside a payment
+                record to download its PDF receipt.
+            </p>
+
+            <div class="alert alert-info">
+                Payment records and receipts accessed through the student
+                portal are restricted to the student's own account.
+            </div>
+
+        </div>
+    </div>
+
+    <!-- School Payment Account -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+
+            <h3>9. Viewing School Payment Information</h3>
+
+            <p>
+                When the school has configured its payment details, the
+                dashboard displays a <strong>School Payment Account</strong>
+                section.
+            </p>
+
+            <p>The information may include:</p>
+
+            <ul>
+                <li>Bank name.</li>
+                <li>Account name.</li>
+                <li>Account number.</li>
+            </ul>
+
+            <div class="alert alert-warning">
+                <strong>Important:</strong>
+                Always confirm the displayed payment details before
+                making a bank transfer. Contact the school if you are
+                unsure about any payment instruction.
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Parent and Guardian Information -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+
+            <h3>10. Information for Parents and Guardians</h3>
+
+            <p>
+                The student's profile includes parent or guardian
+                information, such as the guardian's name and phone number,
+                where these details have been provided to the school.
+            </p>
+
+            <p>
+                Parents and guardians can review the student's available
+                academic, attendance and fee information together with
+                the student through the student's portal account.
+            </p>
+
+            <div class="alert alert-info">
+                The current system provides a student-account-based portal.
+                For account access, corrections to student information or
+                questions about school records, contact the school
+                administration.
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Access Notice -->
+    <div class="alert alert-secondary">
+        <strong>Access and availability:</strong>
+        The availability of portal pages depends on the school's
+        enabled features and the student's account. If a page is
+        unavailable or information appears incorrect, contact the
+        school administration for assistance.
+    </div>
+
+</div>
+
+{% endblock %}

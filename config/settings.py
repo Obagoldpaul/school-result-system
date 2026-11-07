@@ -81,6 +81,7 @@ INSTALLED_APPS = [
     'schools',
     'library',
     'registrations',
+    'help_center',
 ]
 
 MIDDLEWARE = [

@@ -1,0 +1,920 @@
+{% extends 'base.html' %}
+
+{% block title %}School Administration Guide{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+    <div class="mb-3">
+        <a href="{% url 'help_center:home' %}"
+           class="btn btn-outline-secondary">
+            &larr; Back to Help & User Guide
+        </a>
+    </div>
+
+    <div class="mb-4">
+        <h1>School Administration</h1>
+        <p class="text-muted">
+            Learn how to manage classes and oversee important
+            school administration activities in Paul SchoolHub.
+        </p>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <h3>1. Class Management</h3>
+
+            <p>
+                The Class Management section allows authorised school
+                users to organise classes, monitor student numbers
+                and manage class progression.
+            </p>
+
+            <h5 class="mt-4">Viewing Classes</h5>
+            <ol>
+                <li>Open <strong>Class Management</strong> from your school navigation menu.</li>
+                <li>Classes are organised into sections: Pre-Primary, Primary, Junior Secondary and Senior Secondary.</li>
+                <li>Each class card displays the class name, section, number of students and current status.</li>
+            </ol>
+
+            <h5 class="mt-4">Adding a New Class</h5>
+            <ol>
+                <li>Open the Class Management page.</li>
+                <li>Select <strong>Add Class</strong>.</li>
+                <li>Enter the class name, for example, BASIC 1 or JSS 1.</li>
+                <li>Select the appropriate section.</li>
+                <li>Submit the form to save the new class.</li>
+            </ol>
+
+            <h5 class="mt-4">Editing a Class</h5>
+            <ol>
+                <li>Locate the class you want to update.</li>
+                <li>Select <strong>Edit Class</strong>.</li>
+                <li>Update the class name or section as necessary.</li>
+                <li>Save your changes.</li>
+            </ol>
+
+            <h5 class="mt-4">Activating and Deactivating Classes</h5>
+            <p>
+                Each class has an active or inactive status.
+                Authorised users can change this status from the
+                Class Management page.
+            </p>
+            <ul>
+                <li><strong>Active:</strong> The class is marked as active.</li>
+                <li><strong>Inactive:</strong> The class is marked as inactive.</li>
+            </ul>
+
+            <p class="text-muted">
+                Before deactivating a class, consider its current use
+                in your school's operations.
+            </p>
+        </div>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <h3>2. Promoting Students</h3>
+
+            <p>
+                Class promotion allows a school to move active students
+                from one class to another.
+            </p>
+
+            <ol>
+                <li>Open <strong>Class Management</strong>.</li>
+                <li>Select <strong>Promote / Graduate Students</strong>.</li>
+                <li>Choose <strong>Promote</strong> as the action.</li>
+                <li>Select the source class under <strong>From Class</strong>.</li>
+                <li>Select the destination class under <strong>To Class</strong>.</li>
+                <li>Review your selections carefully.</li>
+                <li>Select <strong>Continue</strong> and confirm the browser prompt.</li>
+            </ol>
+
+            <div class="alert alert-warning">
+                <strong>Important:</strong>
+                Promotion moves all active students in the selected
+                source class to the destination class. It is not an
+                individual-student promotion process. Verify both
+                classes before proceeding.
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <h3>3. Graduating Students</h3>
+
+            <p>
+                The graduation option allows a school to mark all active
+                students in a selected class as graduated.
+            </p>
+
+            <ol>
+                <li>Open <strong>Class Management</strong>.</li>
+                <li>Select <strong>Promote / Graduate Students</strong>.</li>
+                <li>Choose <strong>Graduate</strong> as the action.</li>
+                <li>Select the class whose students are graduating.</li>
+                <li>Carefully review your selection.</li>
+                <li>Select <strong>Continue</strong> and confirm the browser prompt.</li>
+            </ol>
+
+            <div class="alert alert-warning">
+                <strong>Important:</strong>
+                Graduation affects all active students in the selected
+                class. Their admission status is changed to
+                <strong>Graduated</strong>, and their student records
+                are marked inactive. Confirm that you have selected
+                the correct class before proceeding.
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <h3>4. Managing Academic Sessions and Terms</h3>
+    
+            <p>
+                Academic sessions and terms help schools organise
+                their academic calendar and manage academic activities
+                for different periods.
+            </p>
+    
+            <h5 class="mt-4">Accessing Academic Management</h5>
+            <ol>
+                <li>Open your school dashboard.</li>
+                <li>Select <strong>Academic Management</strong> from the navigation menu.</li>
+                <li>The page displays the current academic session, available sessions and their terms.</li>
+            </ol>
+    
+            <h5 class="mt-4">Creating an Academic Session</h5>
+            <ol>
+                <li>On the Academic Management page, select <strong>Create Session</strong>.</li>
+                <li>Enter the academic session, for example, 2026/2027.</li>
+                <li>Select <strong>Create Session</strong> to save it.</li>
+            </ol>
+    
+            <p class="text-muted">
+                Creating a session does not automatically make it the
+                current academic session.
+            </p>
+    
+            <h5 class="mt-4">Viewing and Managing Sessions</h5>
+            <p>
+                The Academic Sessions table displays the sessions created
+                for your school and indicates which one is current.
+            </p>
+            <ul>
+                <li><strong>Current:</strong> The session currently in use.</li>
+                <li><strong>Inactive:</strong> A session that is not currently selected.</li>
+            </ul>
+            <p>
+                To view the terms belonging to another session, select
+                <strong>Manage</strong> beside that session.
+            </p>
+    
+            <h5 class="mt-4">Creating Academic Terms</h5>
+            <ol>
+                <li>Select the academic session you want to manage.</li>
+                <li>Under the Terms section, select <strong>Create Term</strong>.</li>
+                <li>Choose First Term, Second Term or Third Term.</li>
+                <li>Enter the start date and end date if available.</li>
+                <li>Select <strong>Create Term</strong> to save it.</li>
+            </ol>
+    
+            <p class="text-muted">
+                Each term belongs to the academic session selected when
+                it is created. The same term cannot be created twice
+                within one session.
+            </p>
+    
+            <h5 class="mt-4">Making a Session Current</h5>
+            <p>
+                A session must have a First Term before it can become current.
+                The Academic Management page makes a session current when one
+                of its terms is set as current.
+            </p>
+            <ol>
+                <li>Create the academic session.</li>
+                <li>Select <strong>Manage</strong> beside the session.</li>
+                <li>Create the First Term if it does not already exist.</li>
+                <li>In the Terms table, select <strong>Set Current</strong> beside First Term.</li>
+            </ol>
+            <p>
+                The First Term and its academic session will then be marked as current.
+            </p>
+    
+            <h5 class="mt-4">Changing the Current Term</h5>
+            <ol>
+                <li>Open Academic Management.</li>
+                <li>Select the academic session containing the term.</li>
+                <li>Locate the term you want to activate.</li>
+                <li>Select <strong>Set Current</strong>.</li>
+            </ol>
+            <p>
+                The selected term becomes the current term. Its academic
+                session also becomes the current session.
+            </p>
+    
+            <h5 class="mt-4">Understanding Term Status</h5>
+            <ul>
+                <li><strong>Current:</strong> The term currently selected for academic operations.</li>
+                <li><strong>Inactive:</strong> A term that is not currently selected.</li>
+                <li><strong>Published:</strong> The term has been marked as published.</li>
+                <li><strong>Not Published:</strong> The term has not been marked as published.</li>
+            </ul>
+    
+            <div class="alert alert-warning mb-0">
+                <strong>Important:</strong>
+                Confirm the correct academic session and term before
+                making changes. The current session and term determine
+                the academic period used by relevant school operations.
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <h3>5. Managing Departments</h3>
+    
+            <p>
+                Departments help schools organise students into
+                academic groups, particularly where different
+                subject combinations are offered.
+            </p>
+    
+            <h5 class="mt-4">Accessing Department Management</h5>
+            <ol>
+                <li>Open your school dashboard.</li>
+                <li>Select <strong>Academic Management</strong>.</li>
+                <li>Scroll down to the <strong>Departments</strong> section.</li>
+            </ol>
+    
+            <h5 class="mt-4">Creating a Department</h5>
+            <ol>
+                <li>Select <strong>+ Add Department</strong>.</li>
+                <li>Enter the department name, for example, Science or Arts.</li>
+                <li>Select <strong>Create Department</strong>.</li>
+            </ol>
+    
+            <p class="text-muted">
+                Department names are required and cannot exceed
+                50 characters. Duplicate department names are not
+                allowed within the same school.
+            </p>
+    
+            <h5 class="mt-4">Editing a Department</h5>
+            <ol>
+                <li>Locate the department in the Departments table.</li>
+                <li>Select <strong>Edit</strong> beside its name.</li>
+                <li>Change the department name if necessary.</li>
+                <li>Review the default elective subjects.</li>
+                <li>Select the elective subjects you want associated
+                    with the department.</li>
+                <li>Select <strong>Save Changes</strong>.</li>
+            </ol>
+    
+            <h5 class="mt-4">Configuring Default Elective Subjects</h5>
+            <p>
+                When editing a department, you can select default
+                elective subjects using the available checkboxes.
+            </p>
+            <p>
+                These selections determine the elective subjects
+                students in that department should receive automatically
+                when the relevant registration process applies.
+            </p>
+    
+            <div class="alert alert-info mb-0">
+                <strong>Note:</strong>
+                Create your subjects before configuring default
+                elective subjects for departments. Only active
+                elective subjects belonging to your school are
+                available for selection.
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+    
+            <h3>6. Managing Subjects</h3>
+    
+            <p>
+                Subject Management allows schools to create subjects,
+                organise them by academic level, identify compulsory
+                and elective subjects, and assign subjects to classes
+                and individual students.
+            </p>
+    
+            <h5 class="mt-4">Accessing Subject Management</h5>
+    
+            <p>
+                Open the <strong>Subjects</strong> section from your
+                school navigation.
+            </p>
+    
+            <h5 class="mt-4">Creating a Subject</h5>
+    
+            <ol>
+                <li>Open the subject list.</li>
+                <li>Select <strong>+ Add New Subject</strong>.</li>
+                <li>Enter the subject name.</li>
+                <li>Enter the subject code, where applicable.</li>
+                <li>Select the appropriate school level.</li>
+                <li>Select a parent subject if the subject belongs
+                    to another subject.</li>
+                <li>Tick the elective option if the subject is an elective.</li>
+                <li>Select <strong>Save Subject</strong>.</li>
+            </ol>
+    
+            <div class="alert alert-info">
+                <strong>Important:</strong>
+                Available school levels depend on your school's
+                configuration. Primary schools can create Primary
+                subjects, secondary schools can create Secondary
+                subjects, while combined schools can use both levels.
+                Subject names must be unique within the same school
+                and level.
+            </div>
+    
+            <h5 class="mt-4">Understanding Subject Types</h5>
+    
+            <ul>
+                <li>
+                    <strong>Compulsory Subjects:</strong>
+                    Subjects that are not marked as electives.
+                </li>
+                <li>
+                    <strong>Elective Subjects:</strong>
+                    Subjects identified as electives and available
+                    for student elective selection when assigned
+                    to the relevant class.
+                </li>
+            </ul>
+    
+            <h5 class="mt-4">Understanding Parent Subjects</h5>
+    
+            <p>
+                A parent subject allows a subject to be associated
+                with another subject. For example, a specialised
+                subject can be linked to a broader subject.
+            </p>
+    
+            <p>
+                The parent subject must belong to the same school
+                and academic level.
+            </p>
+    
+            <h5 class="mt-4">Editing, Activating and Deactivating Subjects</h5>
+    
+            <ol>
+                <li>Open the subject list.</li>
+                <li>Use the available filters to find a subject.</li>
+                <li>Select <strong>Edit</strong> to modify its details.</li>
+                <li>Select <strong>Deactivate</strong> to make an active
+                    subject inactive.</li>
+                <li>To restore an inactive subject, open
+                    <strong>View Inactive Subjects</strong> and select
+                    <strong>Activate</strong>.</li>
+            </ol>
+    
+            <p class="text-muted">
+                Deactivating a subject changes its active status;
+                it does not delete the subject record.
+            </p>
+    
+            <h5 class="mt-4">Assigning Subjects to Classes</h5>
+    
+            <p>
+                Before students can receive subjects through their
+                classes, the relevant subjects must be assigned
+                to those classes.
+            </p>
+    
+            <strong>Individual Assignment</strong>
+    
+            <ol>
+                <li>Open the subject list.</li>
+                <li>Select <strong>Assign Subject to Class</strong>.</li>
+                <li>Select the class.</li>
+                <li>Select the subject available for that class level.</li>
+                <li>Select <strong>Save Assignment</strong>.</li>
+            </ol>
+    
+            <strong>Bulk Assignment</strong>
+    
+            <ol>
+                <li>Open the bulk assignment page.</li>
+                <li>Select the class.</li>
+                <li>Tick all the subjects you want assigned.</li>
+                <li>Use <strong>Select / Deselect All</strong> when
+                    appropriate.</li>
+                <li>Select <strong>Assign Selected Subjects</strong>.</li>
+            </ol>
+    
+            <div class="alert alert-info">
+                <strong>Subject-level restrictions:</strong>
+                Pre-Primary and Primary classes use Primary subjects.
+                Junior Secondary and Senior Secondary classes use
+                Secondary subjects. The assignment pages filter
+                subjects according to the selected class.
+            </div>
+    
+            <h5 class="mt-4">Viewing Class-Subject Assignments</h5>
+    
+            <ol>
+                <li>Open <strong>Class - Subject Assignments</strong>.</li>
+                <li>Filter by Group / Section or Class if necessary.</li>
+                <li>Select <strong>Filter</strong> to apply your selection.</li>
+                <li>Review the subjects assigned to each class.</li>
+            </ol>
+    
+            <p>
+                You can also select <strong>Reset</strong> to clear
+                the filters.
+            </p>
+    
+            <h5 class="mt-4">Removing a Class-Subject Assignment</h5>
+    
+            <ol>
+                <li>Find the subject under the relevant class.</li>
+                <li>Select <strong>Unassign</strong>.</li>
+                <li>Review the subject and class displayed.</li>
+                <li>Select <strong>Yes, Unassign</strong> to confirm.</li>
+            </ol>
+    
+            <p class="text-muted">
+                Unassigning removes the relationship between the
+                subject and the class. It does not delete the subject
+                from the school's subject records.
+            </p>
+    
+            <hr>
+    
+            <h4 class="mt-4">Managing Student Elective Subjects</h4>
+    
+            <p>
+                Class-subject assignments and individual student
+                elective assignments are two different operations.
+            </p>
+    
+            <h5 class="mt-3">Viewing Elective Assignments</h5>
+    
+            <p>
+                The Elective Assignments page displays active students,
+                their admission numbers, classes, departments and
+                currently assigned elective subjects.
+            </p>
+    
+            <p>You can filter the list by:</p>
+    
+            <ul>
+                <li>Class</li>
+                <li>Department</li>
+            </ul>
+    
+            <h5 class="mt-3">Assigning Electives to an Individual Student</h5>
+    
+            <ol>
+                <li>Find the student on the Elective Assignments page.</li>
+                <li>Select <strong>Assign / Edit</strong>.</li>
+                <li>Review the student's name, admission number,
+                    class and department.</li>
+                <li>Select the appropriate subjects under
+                    <strong>Available Elective Subjects</strong>.</li>
+                <li>Select <strong>Save Elective Subjects</strong>.</li>
+            </ol>
+    
+            <div class="alert alert-warning">
+                <strong>Important:</strong>
+                Saving an individual student's elective selections
+                replaces their previous elective selections with
+                the newly selected ones. Only active elective subjects
+                assigned to the student's class are available.
+            </div>
+    
+            <h5 class="mt-3">Configuring Department Default Electives</h5>
+    
+            <p>
+                Schools can configure default elective subjects
+                when editing a department in Academic Management.
+            </p>
+    
+            <ol>
+                <li>Open <strong>Academic Management</strong>.</li>
+                <li>Locate the <strong>Departments</strong> section.</li>
+                <li>Select <strong>Edit</strong> beside the relevant department.</li>
+                <li>Select the required subjects under
+                    <strong>Default Elective Subjects</strong>.</li>
+                <li>Select <strong>Save Changes</strong>.</li>
+            </ol>
+    
+            <p>
+                After configuring the defaults, open
+                <strong>Elective Assignments</strong>.
+            </p>
+    
+            <ol>
+                <li>Filter by the relevant department.</li>
+                <li>Optionally filter by class.</li>
+                <li>Select <strong>Apply Department Defaults</strong>.</li>
+                <li>Confirm the operation.</li>
+            </ol>
+    
+            <div class="alert alert-success mb-0">
+                <strong>How department defaults work:</strong>
+                The system adds eligible default elective subjects
+                to students in the selected department. A subject
+                is added only when it is assigned to the student's
+                current class. Existing elective assignments are
+                preserved; they are not removed or replaced.
+            </div>
+    
+        </div>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+    
+            <h3>7. Managing School Settings</h3>
+    
+            <p>
+                School Settings allows authorised school administrators
+                to manage the school's contact information, payment
+                details, principal information, branding and public
+                registration preferences.
+            </p>
+    
+            <h5 class="mt-4">Accessing School Settings</h5>
+    
+            <ol>
+                <li>Open your school dashboard.</li>
+                <li>Navigate to <strong>School Settings</strong>.</li>
+                <li>Review the information displayed on the page.</li>
+            </ol>
+    
+            <p class="text-muted">
+                Access requires the
+                <strong>school_settings.manage</strong> permission.
+            </p>
+    
+            <h5 class="mt-4">Updating School Information</h5>
+    
+            <p>You can update the following information:</p>
+    
+            <ul>
+                <li>School Name</li>
+                <li>School Logo</li>
+                <li>School Address</li>
+                <li>Phone Number</li>
+                <li>Email Address</li>
+            </ul>
+    
+            <p>
+                To update the school logo, select the appropriate
+                image file using the School Logo field.
+            </p>
+    
+            <h5 class="mt-4">Setting Up the School Payment Account</h5>
+    
+            <p>
+                The School Payment Account section contains the bank
+                details displayed to students and parents when making
+                school fee payments.
+            </p>
+    
+            <p>Enter the following information:</p>
+    
+            <ol>
+                <li><strong>Bank Name:</strong> The school's bank.</li>
+                <li><strong>Account Name:</strong> The name registered
+                    on the school bank account.</li>
+                <li><strong>Account Number:</strong> The school's
+                    payment account number.</li>
+            </ol>
+    
+            <div class="alert alert-warning">
+                <strong>Important:</strong>
+                Check the bank details carefully before saving.
+                Incorrect payment information may cause students
+                and parents to transfer fees to the wrong account.
+            </div>
+    
+            <h5 class="mt-4">Principal Information</h5>
+    
+            <p>
+                You can enter the principal's name and upload the
+                principal's signature. These details can be used
+                in school documents and report cards where applicable.
+            </p>
+    
+            <h5 class="mt-4">School Branding Settings</h5>
+    
+            <p>Depending on your subscription package, you may be
+                able to customise the following:
+            </p>
+    
+            <ul>
+                <li><strong>Primary Colour:</strong> The main school
+                    branding colour.</li>
+                <li><strong>Secondary / Accent Colour:</strong>
+                    The complementary branding colour.</li>
+                <li><strong>Report Card Heading:</strong> The heading
+                    displayed on student report cards.</li>
+                <li><strong>School Motto:</strong> The school's motto.</li>
+                <li><strong>Show Class Position:</strong> Controls
+                    whether students' class positions appear on
+                    report cards.</li>
+            </ul>
+    
+            <div class="alert alert-info">
+                <strong>Package restrictions:</strong>
+                The branding options available depend on your
+                school's subscription package. Basic and Standard
+                packages have certain branding fields restricted,
+                while Premium retains all branding fields.
+            </div>
+    
+            <h5 class="mt-4">Managing Public Registration</h5>
+    
+            <p>
+                The Registration Settings section allows authorised
+                administrators to control whether the school accepts
+                public registration applications.
+            </p>
+    
+            <ul>
+                <li>
+                    <strong>Allow Student Registration:</strong>
+                    Enables or disables public student registration
+                    applications.
+                </li>
+                <li>
+                    <strong>Allow Teacher Registration:</strong>
+                    Enables or disables public teacher registration
+                    applications.
+                </li>
+            </ul>
+    
+            <p>
+                Tick the relevant checkbox to enable registration
+                or untick it to disable registration.
+            </p>
+    
+            <div class="alert alert-warning">
+                <strong>Important distinction:</strong>
+                These settings control public registration applications.
+                They do not replace the internal student and teacher
+                registration processes carried out by authorised
+                school administrators.
+            </div>
+    
+            <h5 class="mt-4">Viewing and Sharing Registration Links</h5>
+    
+            <p>
+                When an active primary domain is configured for your
+                school, the Public Registration Links section displays
+                the following:
+            </p>
+    
+            <ul>
+                <li>Your school's primary domain.</li>
+                <li>Student Registration Link.</li>
+                <li>Teacher Registration Link.</li>
+            </ul>
+    
+            <p>To share a registration link:</p>
+    
+            <ol>
+                <li>Locate the appropriate registration link.</li>
+                <li>Check whether registration is marked
+                    <strong>Enabled</strong> or <strong>Disabled</strong>.</li>
+                <li>Select <strong>Copy Link</strong>.</li>
+                <li>Share the copied link with the appropriate
+                    applicants.</li>
+            </ol>
+    
+            <div class="alert alert-info">
+                <strong>Note:</strong>
+                If no active primary domain is configured, the
+                registration links will not be displayed. Contact
+                your platform administrator for assistance with
+                domain configuration.
+            </div>
+    
+            <h5 class="mt-4">Saving School Settings</h5>
+    
+            <p>
+                After making your changes, scroll to the bottom
+                of the page and select
+                <strong>Save School Settings</strong>.
+            </p>
+    
+            <p>
+                The system will save the changes and display a
+                confirmation message when the update succeeds.
+            </p>
+    
+            <div class="alert alert-success mb-0">
+                <strong>Recommendation:</strong>
+                Review your school's contact information, payment
+                account and registration preferences regularly
+                to ensure that students, parents and applicants
+                receive accurate information.
+            </div>
+    
+        </div>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <h3>8. Managing Registration Applications</h3>
+    
+            <p>
+                Registration Applications allows authorised school
+                staff to review applications submitted through the
+                school's public student or teacher registration links.
+                This is different from registering students and teachers
+                directly through the school dashboard.
+            </p>
+    
+            <h5 class="mt-4">Accessing Registration Applications</h5>
+            <ol>
+                <li>Open your school dashboard.</li>
+                <li>Select <strong>Registration Applications</strong>
+                    from the navigation menu.</li>
+                <li>Review the list of submitted applications.</li>
+            </ol>
+    
+            <h5 class="mt-4">Understanding the Applications List</h5>
+            <p>
+                The applications table displays the applicant's name,
+                role, username, email, requested class or department
+                (for students), application status and submission date.
+            </p>
+            <p>
+                Select <strong>View</strong> beside an application to
+                examine the full details.
+            </p>
+    
+            <h5 class="mt-4">Reviewing an Application</h5>
+            <p>
+                The details page provides the information submitted
+                by the applicant. Depending on the application type,
+                this may include:
+            </p>
+            <ul>
+                <li>Account and personal information.</li>
+                <li>Passport photograph, if provided.</li>
+                <li>Requested class and department for student applicants.</li>
+                <li>Guardian and health information for student applicants.</li>
+                <li>Qualifications, experience and certificate for teacher applicants.</li>
+                <li>Bank information for teacher applicants.</li>
+            </ul>
+    
+            <h5 class="mt-4">Approving an Application</h5>
+            <ol>
+                <li>Open the application using the <strong>View</strong> button.</li>
+                <li>Carefully review the submitted information.</li>
+                <li>Select <strong>Approve Application</strong>.</li>
+                <li>The system creates the applicant's school account
+                    and corresponding student or teacher profile.</li>
+                <li>The application status changes to
+                    <strong>Approved</strong>.</li>
+            </ol>
+    
+            <div class="alert alert-info">
+                <strong>Important:</strong>
+                Approved accounts are initially created without a usable
+                password. The system sends a password-setup email to
+                the applicant so they can create their password.
+                Ensure the applicant's email address is correct.
+            </div>
+    
+            <h5 class="mt-4">Rejecting an Application</h5>
+            <ol>
+                <li>Open the application you want to reject.</li>
+                <li>Select <strong>Reject Application</strong>.</li>
+                <li>Enter a reason for rejecting the application.</li>
+                <li>Select <strong>Reject Application</strong> in the
+                    confirmation dialog.</li>
+            </ol>
+    
+            <p>
+                A rejection reason is required. The application remains
+                stored for reference, but no school account or student
+                or teacher profile is created.
+            </p>
+    
+            <h5 class="mt-4">Viewing Reviewed Applications</h5>
+            <p>
+                Applications that have been approved or rejected retain
+                their review history. Their details page displays the
+                application status, the person who reviewed it, the
+                review date and time, and the rejection reason where
+                applicable.
+            </p>
+    
+            <div class="alert alert-warning mb-0">
+                <strong>Confidentiality:</strong>
+                Applications may contain personal, health and financial
+                information. Review these details only for legitimate
+                school administrative purposes and handle them
+                confidentially.
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <h3>9. Teacher Management</h3>
+
+            <p>
+                The Teacher Management page provides access to teacher
+                records, payment accounts, registration and teacher
+                availability settings.
+            </p>
+
+            <h5 class="mt-4">Managing Teacher Availability</h5>
+
+            <p>
+                Teacher Availability allows authorised school staff
+                to configure the days and times individual teachers
+                are available for timetable scheduling.
+            </p>
+
+            <h5 class="mt-3">Accessing Teacher Availability</h5>
+
+            <ol>
+                <li>Open <strong>Teacher Management</strong> from
+                    the school navigation menu.</li>
+                <li>Select the <strong>Teacher Availability</strong>
+                    button at the top of the page.</li>
+                <li>The page displays the availability records
+                    already configured for your school.</li>
+            </ol>
+
+            <h5 class="mt-3">Adding Teacher Availability</h5>
+
+            <ol>
+                <li>Locate the <strong>Add Teacher Availability</strong>
+                    form.</li>
+                <li>Select the teacher whose availability you want
+                    to configure.</li>
+                <li>Select the applicable day of the week.</li>
+                <li>Enter the starting time under
+                    <strong>Available From</strong>.</li>
+                <li>Enter the ending time under
+                    <strong>Available Until</strong>.</li>
+                <li>Select <strong>Add Availability</strong>
+                    to save the record.</li>
+            </ol>
+
+            <h5 class="mt-3">Viewing Configured Availability</h5>
+
+            <p>
+                The <strong>Configured Teacher Availability</strong>
+                table displays the teacher's name, day, starting time
+                and ending time. Use this information when planning
+                the school's timetable.
+            </p>
+
+            <h5 class="mt-3">Editing or Deleting Availability</h5>
+
+            <ul>
+                <li>
+                    Select <strong>Edit</strong> beside an existing
+                    record to update the teacher, day or available
+                    time.
+                </li>
+                <li>
+                    Select <strong>Delete</strong> to remove an
+                    availability record that is no longer needed.
+                </li>
+            </ul>
+
+            <div class="alert alert-warning mb-0">
+                <strong>Important:</strong>
+                Configure teacher availability carefully before
+                generating or managing timetables. Availability
+                records help guide timetable scheduling.
+            </div>
+        </div>
+    </div>
+
+    <div class="alert alert-info">
+        <strong>Access and permissions:</strong>
+        Some school administration activities are restricted to
+        authorised users. If an option is unavailable, contact your
+        school's administrator to confirm your account permissions.
+    </div>
+
+    <div class="mt-4">
+        <a href="{% url 'help_center:home' %}" class="btn btn-outline-secondary">
+            Back to Help Centre
+        </a>
+    </div>
+
+</div>
+{% endblock %}

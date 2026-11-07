@@ -4043,6 +4043,7 @@ def student_account_statement(request, student_id):
         "billing/student_account_statement.html",
         {
             "student": student,
+            "is_student_portal": is_student(request.user),
             "statement_sessions": statement_sessions,
             "total_charged": total_charged,
             "total_allocated": total_allocated,

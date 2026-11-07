@@ -1,0 +1,1086 @@
+{% extends "base.html" %}
+
+{% block title %}Teaching & Academics Guide | Paul SchoolHub{% endblock %}
+
+{% block content %}
+
+<div class="container py-4">
+
+    <div class="mb-3">
+        <a href="{% url 'help_center:home' %}"
+           class="btn btn-outline-secondary">
+            &larr; Back to Help & User Guide
+        </a>
+    </div>
+
+    <div class="mb-4">
+        <h1>Teaching & Academics</h1>
+        <p class="text-muted">
+            Learn how to enter and manage student scores, process results,
+            view class performance and prepare student report cards.
+        </p>
+    </div>
+
+    <!-- Score Entry -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+
+            <h3>1. Entering Student Scores</h3>
+
+            <p>
+                Paul SchoolHub allows authorised teachers and school
+                management users to enter students' Continuous Assessment
+                (CA) and examination scores for their assigned classes
+                and subjects.
+            </p>
+
+            <h5 class="mt-4">Selecting a Class and Subject</h5>
+
+            <ol>
+                <li>Open <strong>Score Entry</strong> from your school navigation menu.</li>
+                <li>The Select Class & Subject to Enter Scores page will open.</li>
+                <li>Use the filters to narrow down the allocations you want to view.</li>
+                <li>You can filter by Class, Academic Session, Term, Subject and Status.</li>
+                <li>Select <strong>Filter</strong> to apply your choices.</li>
+                <li>Use <strong>Clear</strong> to remove the filters.</li>
+                <li>Allocations are grouped according to their classes.</li>
+            </ol>
+
+            <p>
+                Teachers see allocations according to their teaching
+                responsibilities. Class teachers can access allocations
+                for their assigned classes, while management users can
+                view allocations across their school.
+            </p>
+
+            <h5 class="mt-4">Entering and Saving Scores</h5>
+
+            <ol>
+                <li>Locate the required class, subject and term.</li>
+                <li>Select <strong>Enter/View Scores</strong>.</li>
+                <li>The student score-entry table will display the students assigned to that allocation.</li>
+                <li>Enter each student's CA score in the CA column.</li>
+                <li>Enter the examination score in the Exam column.</li>
+                <li>Select <strong>Save All Scores</strong> to save the entries.</li>
+            </ol>
+
+            <div class="alert alert-info">
+                <strong>Score limits:</strong>
+                Continuous Assessment (CA) has a maximum of 40 marks,
+                while the examination has a maximum of 60 marks.
+                Together, they make a total of 100 marks.
+            </div>
+
+            <div class="alert alert-warning">
+                <strong>Important:</strong>
+                Scores can only be edited while the allocation is in
+                <strong>Draft</strong> status. Once submitted for review,
+                the scores can no longer be edited through the normal
+                score-entry process.
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Score Workflow -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+
+            <h3>2. Understanding the Score Approval Process</h3>
+
+            <p>
+                Every subject allocation follows a controlled workflow
+                before its results become available to students.
+                The process helps ensure that scores are entered,
+                reviewed and approved before publication.
+            </p>
+
+            <h5 class="mt-4">The Five Allocation Statuses</h5>
+
+            <ol>
+                <li>
+                    <strong>Draft:</strong>
+                    Scores are being entered or updated by the authorised
+                    teacher. The allocation can still be edited.
+                </li>
+
+                <li>
+                    <strong>Submitted:</strong>
+                    The teacher has submitted the scores for review.
+                    Further editing is no longer allowed.
+                </li>
+
+                <li>
+                    <strong>Reviewed:</strong>
+                    An authorised reviewer has checked the scores
+                    and may add a class teacher's comment.
+                </li>
+
+                <li>
+                    <strong>Approved:</strong>
+                    School management has approved the reviewed scores.
+                </li>
+
+                <li>
+                    <strong>Published:</strong>
+                    School management has published the approved results.
+                </li>
+            </ol>
+
+            <h5 class="mt-4">Submitting Scores for Review</h5>
+
+            <ol>
+                <li>Return to the score allocation list.</li>
+                <li>Locate the allocation with Draft status.</li>
+                <li>Select <strong>Submit for Review</strong>.</li>
+                <li>Confirm the browser prompt after checking the allocation.</li>
+            </ol>
+
+            <div class="alert alert-warning">
+                <strong>Before submitting:</strong>
+                Confirm that all students' CA and examination scores
+                are correct. You will not be able to edit the scores
+                after submission.
+            </div>
+
+            <h5 class="mt-4">Reviewing Submitted Scores</h5>
+
+            <ol>
+                <li>Locate an allocation with Submitted status.</li>
+                <li>Select <strong>Review</strong>.</li>
+                <li>Check the allocation details and scores.</li>
+                <li>Enter a Class Teacher's Comment where necessary.</li>
+                <li>Select <strong>Mark as Reviewed</strong>.</li>
+            </ol>
+
+            <p>
+                Reviewing is restricted to authorised users. Management
+                users and the class teacher assigned to the allocation's
+                class can review submitted allocations, subject to their
+                permissions.
+            </p>
+
+            <h5 class="mt-4">Approving Results</h5>
+
+            <ol>
+                <li>Locate an allocation with Reviewed status.</li>
+                <li>Select <strong>Approve</strong>.</li>
+                <li>Complete the approval action.</li>
+            </ol>
+
+            <p>
+                Approval is restricted to authorised school management
+                users.
+            </p>
+
+            <h5 class="mt-4">Publishing Results</h5>
+
+            <ol>
+                <li>Locate an allocation with Approved status.</li>
+                <li>Select <strong>Publish</strong>.</li>
+                <li>Confirm the publication prompt.</li>
+            </ol>
+
+            <p>
+                Publishing makes the approved allocation available
+                for the school's result publication process.
+                Only authorised management users can publish results.
+            </p>
+
+            <div class="alert alert-info">
+                <strong>Remember:</strong>
+                The allocation must move through the correct sequence:
+                Draft → Submitted → Reviewed → Approved → Published.
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Class Results -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+
+            <h3>3. Viewing Class Results</h3>
+
+            <p>
+                The Class Results page allows authorised school users
+                to view the performance of students in a selected class
+                for a particular academic session and term.
+            </p>
+
+            <h5 class="mt-4">Viewing Results</h5>
+
+            <ol>
+                <li>Open <strong>Class Results</strong>.</li>
+                <li>Select the required class.</li>
+                <li>Select the academic session.</li>
+                <li>Select the academic term belonging to that session.</li>
+                <li>Select <strong>View Results</strong>.</li>
+            </ol>
+
+            <p>
+                The results page displays a class performance summary,
+                including:
+            </p>
+
+            <ul>
+                <li>Number of students.</li>
+                <li>Highest total score.</li>
+                <li>Top average score.</li>
+            </ul>
+
+            <p>
+                The results table displays each student's position,
+                full name, admission number, total score, average
+                and a link to view the student's report card.
+            </p>
+
+            <div class="alert alert-info">
+                <strong>Class teacher access:</strong>
+                Class teachers are restricted to results for their
+                assigned classes. Other authorised staff can access
+                classes within their own school according to their
+                permissions.
+            </div>
+
+            <p>
+                The page also displays the term's publication status.
+                This term-level status should be distinguished from
+                the individual Draft, Submitted, Reviewed, Approved
+                and Published statuses of subject allocations.
+            </p>
+
+        </div>
+    </div>
+
+    <!-- Report Cards -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+
+            <h3>4. Viewing Student Report Cards</h3>
+
+            <p>
+                A student report card provides a summary of the student's
+                academic performance and other assessment information
+                for a selected term.
+            </p>
+
+            <h5 class="mt-4">Opening a Report Card</h5>
+
+            <ol>
+                <li>Open the relevant student's report card from the class results page, or use the available report-card selection page.</li>
+                <li>Select the academic term you want to view.</li>
+                <li>The report card will display the student's information and performance for that term.</li>
+            </ol>
+
+            <p>
+                The report card is restricted to the student's own school.
+                Management users can view students in their school.
+                Students can view only their own report cards, while
+                class teachers can view students assigned to their class.
+            </p>
+
+            <h5 class="mt-4">Information Displayed on the Report Card</h5>
+
+            <ul>
+                <li>
+                    <strong>School information:</strong>
+                    School name, logo, motto, address and contact details
+                    where configured.
+                </li>
+                <li>
+                    <strong>Student information:</strong>
+                    Student name, admission number, class and passport
+                    photograph where available.
+                </li>
+                <li>
+                    <strong>Academic information:</strong>
+                    Academic session, term, subjects, CA scores,
+                    examination scores, totals, averages, grades
+                    and remarks.
+                </li>
+                <li>
+                    <strong>Performance summary:</strong>
+                    Total marks, current-term percentage, cumulative
+                    percentage and marks obtainable.
+                </li>
+                <li>
+                    <strong>Class position:</strong>
+                    Displayed when the school has enabled the
+                    Show Class Position setting.
+                </li>
+                <li>
+                    <strong>Social habits:</strong>
+                    Responsibility, Leadership, Hardworking and Neatness.
+                </li>
+                <li>
+                    <strong>Attendance summary:</strong>
+                    Days school opened, days present, days absent
+                    and attendance percentage.
+                </li>
+                <li>
+                    <strong>Remarks:</strong>
+                    Class teacher's comment and principal's remark.
+                </li>
+                <li>
+                    <strong>Principal information:</strong>
+                    Principal's name and signature where configured.
+                </li>
+            </ul>
+
+            <h5 class="mt-4">Understanding the Grading Scale</h5>
+
+            <p>
+                The report card currently displays the following
+                grading scale:
+            </p>
+
+            <div class="table-responsive">
+                <table class="table table-bordered table-sm">
+                    <thead>
+                        <tr>
+                            <th>Grade</th>
+                            <th>Score Range</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>A1</td><td>75–100</td></tr>
+                        <tr><td>B2</td><td>70–74</td></tr>
+                        <tr><td>B3</td><td>65–69</td></tr>
+                        <tr><td>C4</td><td>60–64</td></tr>
+                        <tr><td>C5</td><td>55–59</td></tr>
+                        <tr><td>C6</td><td>50–54</td></tr>
+                        <tr><td>D7</td><td>45–49</td></tr>
+                        <tr><td>E8</td><td>40–44</td></tr>
+                        <tr><td>F9</td><td>0–39</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="alert alert-info">
+                <strong>Student access:</strong>
+                Students can view their report cards only when all
+                results for their class and the selected term have
+                been fully published.
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Remarks -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+
+            <h3>5. Editing Report Card Remarks and Social Habits</h3>
+
+            <p>
+                Authorised staff can update the additional information
+                displayed on a student's report card.
+            </p>
+
+            <h5 class="mt-4">Editing Report Details</h5>
+
+            <ol>
+                <li>Open the student's report card.</li>
+                <li>Select <strong>Edit Remarks/Attendance</strong>.</li>
+                <li>Update the available fields.</li>
+                <li>Select <strong>Save</strong>.</li>
+            </ol>
+
+            <p>The form can contain the following fields:</p>
+
+            <ul>
+                <li>Class teacher's remark.</li>
+                <li>Principal's remark.</li>
+                <li>Responsibility.</li>
+                <li>Leadership.</li>
+                <li>Hardworking.</li>
+                <li>Neatness.</li>
+            </ul>
+
+            <p>
+                The remark fields shown depend on the user's assigned
+                permissions. The social-habit fields allow the school
+                to record the student's assessment using grades A–F.
+            </p>
+
+            <div class="alert alert-info">
+                <strong>Who can edit?</strong>
+                Management users can edit report details for students
+                in their school. Class teachers can edit details only
+                for students in their assigned classes. Specific
+                permissions control access to teacher and principal
+                remarks.
+            </div>
+
+            <h5 class="mt-4">Editing a Teacher's Remark Separately</h5>
+
+            <p>
+                Users with the appropriate permission can also use
+                the separate Teacher Remark page when that action
+                is available.
+            </p>
+
+            <ol>
+                <li>Open the Teacher Remark page for the student and term.</li>
+                <li>Review the displayed student name and term.</li>
+                <li>Enter or update the teacher's remark.</li>
+                <li>Select <strong>Save Teacher Remark</strong>.</li>
+            </ol>
+
+            <p>
+                Select <strong>Cancel</strong> to return to the
+                student's report card without saving.
+            </p>
+
+            <div class="alert alert-warning">
+                <strong>Attendance figures:</strong>
+                Attendance information displayed on the report card
+                is calculated separately. The Edit Remarks/Attendance
+                form does not directly edit the attendance figures.
+            </div>
+
+        </div>
+    </div>
+
+    <!-- PDF -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+
+            <h3>6. Downloading Report Cards</h3>
+
+            <p>
+                Staff and students who have access to a report card
+                can use the PDF option where the school's subscription
+                includes Advanced Reporting.
+            </p>
+
+            <ol>
+                <li>Open the student's report card.</li>
+                <li>Select <strong>Download as PDF</strong>.</li>
+                <li>The report card will be generated and downloaded as a PDF file.</li>
+            </ol>
+
+            <div class="alert alert-info">
+                <strong>Package availability:</strong>
+                PDF report-card downloads require the
+                <strong>Advanced Reporting</strong> feature.
+                Access is subject to the school's active subscription
+                and the user's report-card permissions.
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Subject Allocations -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+
+            <h3>7. Managing Subject Allocations</h3>
+
+            <p>
+                Subject allocations connect subjects, classes, academic
+                terms and teachers. They determine which teacher is
+                responsible for teaching and entering scores for a
+                particular subject and class.
+            </p>
+
+            <h5 class="mt-4">Viewing Subject Allocations</h5>
+
+            <ol>
+                <li>Open <strong>Subject Allocations</strong> from the school navigation menu.</li>
+                <li>Select an academic term from the Academic Term dropdown.</li>
+                <li>Optionally select a class to narrow down the list.</li>
+                <li>The allocations will be displayed, grouped according to school sections and classes.</li>
+                <li>Review each subject, its assigned teacher and its current status.</li>
+            </ol>
+
+            <p>
+                Authorised staff can view allocations within their school.
+                The available management actions depend on the user's
+                permissions and role.
+            </p>
+
+            <h5 class="mt-4">Creating an Individual Allocation</h5>
+
+            <p>
+                School management users can assign a teacher to a subject
+                for a particular class and academic term.
+            </p>
+
+            <ol>
+                <li>Open the Subject Allocations page.</li>
+                <li>Select <strong>New Allocation</strong>.</li>
+                <li>Select the teacher.</li>
+                <li>Select the subject.</li>
+                <li>Select the class.</li>
+                <li>Select the academic term.</li>
+                <li>Select <strong>Save Allocation</strong>.</li>
+            </ol>
+
+            <h5 class="mt-4">Allocating Multiple Subjects at Once</h5>
+
+            <p>
+                The Bulk Subject Allocation feature allows management
+                users to assign teachers to several subjects for one
+                class and term without creating each allocation separately.
+            </p>
+
+            <ol>
+                <li>Open <strong>Subject Allocations</strong>.</li>
+                <li>Select <strong>Bulk Allocate Subjects</strong>.</li>
+                <li>Choose the required class and academic term.</li>
+                <li>Select <strong>Load Subjects</strong>.</li>
+                <li>The active subjects assigned to that class will appear in a table.</li>
+                <li>Choose a teacher from the dropdown beside each subject.</li>
+                <li>Select <strong>Allocate All</strong> to save the assignments.</li>
+            </ol>
+
+            <p>
+                Existing allocations are displayed with their current
+                teacher and status. Existing Draft allocations can have
+                their assigned teacher updated. Allocations that have
+                already moved beyond Draft are not overwritten.
+            </p>
+
+            <div class="alert alert-info">
+                <strong>Assign All and Clear All:</strong>
+                Assign All fills empty teacher dropdowns using the first
+                teacher selected in the table. Clear All removes the
+                selected teachers from the dropdowns. These buttons only
+                adjust the form selections; you must still select
+                <strong>Allocate All</strong> to save the allocations.
+            </div>
+
+            <div class="alert alert-warning">
+                <strong>Important:</strong>
+                Subjects without a selected teacher are skipped when
+                allocations are saved. Existing allocations that cannot
+                be updated because they are already in the approval
+                workflow are also skipped.
+            </div>
+
+            <h5 class="mt-4">Carrying Allocations Forward</h5>
+
+            <p>
+                Instead of recreating subject and teacher assignments
+                for every term, management users can carry allocations
+                from an earlier term into another term.
+            </p>
+
+            <ol>
+                <li>Select <strong>Carry Forward Allocations</strong> from the Subject Allocations page.</li>
+                <li>Choose the source academic session and term.</li>
+                <li>Choose the destination academic session and term.</li>
+                <li>Review your selections.</li>
+                <li>Select <strong>Carry Forward Allocations</strong> to complete the operation.</li>
+            </ol>
+
+            <p>
+                The system carries forward the subject, class and
+                assigned teacher for each allocation.
+            </p>
+
+            <div class="alert alert-info">
+                <strong>Existing allocations are preserved:</strong>
+                If the same subject is already allocated to the same
+                class in the destination term, the system skips it
+                instead of creating a duplicate or replacing the
+                existing allocation.
+                The system displays the number of allocations created
+                and skipped.
+            </div>
+
+            <h5 class="mt-4">Understanding Allocation Statuses</h5>
+
+            <p>
+                Each allocation displays its current status:
+            </p>
+
+            <ul>
+                <li><strong>Draft:</strong> The allocation is still in its initial stage.</li>
+                <li><strong>Submitted:</strong> Scores have been submitted for review.</li>
+                <li><strong>Reviewed:</strong> The submitted scores have been reviewed.</li>
+                <li><strong>Approved:</strong> The scores have been approved by management.</li>
+                <li><strong>Published:</strong> The results have been published.</li>
+            </ul>
+
+            <p>
+                These statuses are part of the score approval process
+                explained in the earlier sections of this guide.
+            </p>
+
+            <div class="alert alert-warning">
+                <strong>Access:</strong>
+                Viewing allocations requires the appropriate subject
+                viewing permission. Creating individual, bulk and
+                carry-forward allocations requires the subject
+                assignment permission. Management action buttons are
+                displayed according to the current interface.
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Attendance -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+
+            <h3>8. Managing Student Attendance</h3>
+
+            <p>
+                Paul SchoolHub allows authorised school staff to record
+                daily student attendance, monitor class attendance
+                statistics and allow students to view their own
+                attendance history.
+            </p>
+
+            <h5 class="mt-4">Selecting a Class</h5>
+
+            <ol>
+                <li>Open <strong>Attendance</strong> from the school navigation menu.</li>
+                <li>The available classes will be displayed as cards.</li>
+                <li>Locate the class whose attendance you want to record.</li>
+                <li>Select <strong>Mark Attendance</strong>.</li>
+            </ol>
+
+            <p>
+                Management users can select active classes within their
+                school. Class teachers can access the class assigned
+                to them.
+            </p>
+
+            <h5 class="mt-4">Selecting the Attendance Date</h5>
+
+            <ol>
+                <li>On the Mark Attendance page, locate the Attendance Date field.</li>
+                <li>Select the date for which you want to record attendance.</li>
+                <li>Select <strong>View Date</strong> to load attendance for that date.</li>
+            </ol>
+
+            <div class="alert alert-warning">
+                <strong>Weekend restriction:</strong>
+                Attendance cannot be marked on Saturdays or Sundays.
+                The system displays a warning when a weekend date is selected.
+            </div>
+
+            <h5 class="mt-4">Recording Student Attendance</h5>
+
+            <p>
+                The attendance table displays each active student's
+                admission number, name and attendance status.
+            </p>
+
+            <ol>
+                <li>Locate the first student on the attendance list.</li>
+                <li>Select <strong>Present</strong> if the student is in school.</li>
+                <li>Select <strong>Absent</strong> if the student is not in school.</li>
+                <li>Repeat the process for the other students.</li>
+                <li>Review the attendance summary displayed above the table.</li>
+                <li>Select <strong>Save Attendance</strong> to record your entries.</li>
+            </ol>
+
+            <p>
+                You can also use <strong>Mark All Present</strong>
+                as a shortcut when all students are present.
+                Review the selections and still select
+                <strong>Save Attendance</strong> to record them.
+            </p>
+
+            <div class="alert alert-info">
+                <strong>Understanding attendance statuses:</strong>
+                Each student can be marked Present or Absent.
+                Students for whom neither option is selected remain
+                Not Marked. Unmarked students do not receive an
+                attendance record for that date.
+            </div>
+
+            <h5 class="mt-4">Understanding the Daily Attendance Summary</h5>
+
+            <p>
+                The Mark Attendance page displays four figures
+                to help you monitor the class:
+            </p>
+
+            <ul>
+                <li><strong>Total Students:</strong> Number of active students in the class.</li>
+                <li><strong>Present:</strong> Number of students marked present.</li>
+                <li><strong>Absent:</strong> Number of students marked absent.</li>
+                <li><strong>Not Marked:</strong> Number of students without an attendance record for the selected date.</li>
+            </ul>
+
+            <p>
+                You can revisit a previous weekday using the date
+                selector. Existing attendance entries will be displayed
+                and can be updated before saving again.
+            </p>
+
+            <h5 class="mt-4">Viewing Class Attendance Summary</h5>
+
+            <p>
+                The Class Attendance Summary provides a broader view
+                of attendance records for students in a selected class.
+                This report requires the Advanced Attendance feature.
+            </p>
+
+            <ol>
+                <li>Open <strong>Class Attendance Summary</strong>.</li>
+                <li>Select the class you want to review.</li>
+                <li>Choose a starting date using the From field.</li>
+                <li>Choose an ending date using the To field.</li>
+                <li>Select <strong>View Summary</strong>.</li>
+            </ol>
+
+            <p>
+                When available, the date range defaults to the current
+                academic term's start and end dates.
+            </p>
+
+            <h5 class="mt-4">Understanding the Class Summary</h5>
+
+            <p>
+                After selecting a class, the summary displays:
+            </p>
+
+            <ul>
+                <li><strong>Total Students:</strong> Number of active students in the class.</li>
+                <li><strong>Students Marked:</strong> Number of students with at least one attendance record in the selected date range.</li>
+                <li><strong>Overall Attendance:</strong> Percentage calculated from all present and absent records in the selected date range.</li>
+                <li><strong>Present Records:</strong> Total number of recorded present entries.</li>
+                <li><strong>Absent Records:</strong> Total number of recorded absent entries.</li>
+            </ul>
+
+            <p>
+                The student table also displays each student's
+                admission number, name, number of days marked,
+                days present and individual attendance percentage.
+            </p>
+
+            <div class="alert alert-info">
+                <strong>Class teacher access:</strong>
+                Class teachers can view attendance summaries only
+                for their assigned classes. Other authorised management
+                users can access classes within their school.
+            </div>
+
+            <h5 class="mt-4">Viewing Personal Attendance History</h5>
+
+            <p>
+                Students can view their own attendance history through
+                the Student Portal, provided the school subscription
+                includes the Student Portal feature.
+            </p>
+
+            <ol>
+                <li>Log in using your student account.</li>
+                <li>Open the Student Dashboard.</li>
+                <li>Locate the attendance section.</li>
+                <li>Select the attendance history option.</li>
+            </ol>
+
+            <p>
+                The My Attendance History page displays:
+            </p>
+
+            <ul>
+                <li>Current academic term, where available.</li>
+                <li>Days Present.</li>
+                <li>Days Absent.</li>
+                <li>Days Marked.</li>
+                <li>Attendance Rate.</li>
+            </ul>
+
+            <p>
+                A history table also shows each recorded attendance
+                date, the day of the week and whether the student
+                was marked Present or Absent.
+            </p>
+
+            <div class="alert alert-info">
+                <strong>Student attendance history:</strong>
+                When the current academic term has both a start date
+                and an end date, the history is limited to attendance
+                records within that term. Students can only view
+                their own attendance history.
+            </div>
+
+            <div class="alert alert-warning">
+                <strong>Important:</strong>
+                Attendance percentages are calculated from recorded
+                attendance entries. Days without an attendance record
+                are not counted as present or absent.
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Section 9: Timetable Management -->
+    <div class="card shadow-sm mb-4">
+
+        <div class="card-header">
+            <h4 class="mb-0">9. Timetable Management</h4>
+        </div>
+
+        <div class="card-body">
+
+            <p>
+                The Timetable Management feature allows schools to
+                organise lesson periods, configure subject requirements,
+                generate weekly timetables and publish them for teachers
+                and students.
+            </p>
+
+            <div class="alert alert-info">
+                <strong>Feature requirement:</strong>
+                Timetable management requires the TIMETABLE feature
+                to be enabled for your school.
+            </div>
+
+            <h5 class="mt-4">Creating a Timetable</h5>
+
+            <ol>
+                <li>Open the Timetable Management section.</li>
+                <li>Select <strong>Create Timetable</strong>.</li>
+                <li>Enter a Timetable Name.</li>
+                <li>Select the Academic Session.</li>
+                <li>Select the Academic Term belonging to that session.</li>
+                <li>Choose the Days Used for the timetable.</li>
+                <li>Select <strong>Create Timetable</strong> to save.</li>
+            </ol>
+
+            <p>
+                Newly created timetables begin with Draft status.
+                You can later use the Configure option on the timetable
+                list to change its name or selected days.
+            </p>
+
+            <h5 class="mt-4">Creating Period Templates</h5>
+
+            <p>
+                Period templates allow schools to prepare reusable
+                arrangements of school days and lesson periods.
+            </p>
+
+            <ol>
+                <li>Open <strong>Period Templates</strong>.</li>
+                <li>Enter a template name.</li>
+                <li>Optionally provide a description.</li>
+                <li>Set whether the template is the default template
+                    and whether it is active.</li>
+                <li>Select <strong>Create Template</strong>.</li>
+                <li>Open <strong>Configure</strong> beside the template.</li>
+                <li>Use <strong>Add School Day</strong> to add the
+                    required days.</li>
+                <li>Use the Add Block form under each day to configure
+                    its periods and breaks.</li>
+            </ol>
+
+            <p>
+                Configured blocks can be edited or deleted from the
+                template configuration page.
+            </p>
+
+            <h5 class="mt-4">Configuring Timetable Periods</h5>
+
+            <p>
+                Open <strong>Periods</strong> beside the timetable
+                you want to configure.
+            </p>
+
+            <p>
+                You can either apply an existing active period template
+                or add periods individually.
+            </p>
+
+            <p>The Add Period form includes:</p>
+
+            <ul>
+                <li><strong>Period Name:</strong> Name of the lesson
+                    period or break.</li>
+                <li><strong>Day:</strong> The school day.</li>
+                <li><strong>Period Number:</strong> Position of the
+                    period in the day's timetable.</li>
+                <li><strong>Start Time and End Time:</strong>
+                    The period's scheduled time.</li>
+                <li><strong>Break Period:</strong> Indicates whether
+                    the period is a break.</li>
+                <li><strong>Active Period:</strong> Determines whether
+                    the period is active.</li>
+            </ul>
+
+            <p>
+                Existing periods are displayed in a table where
+                authorised users can edit or delete them.
+            </p>
+
+            <h5 class="mt-4">Configuring Timetable Requirements</h5>
+
+            <p>
+                Requirements determine how frequently each subject
+                allocation should appear in the weekly timetable.
+            </p>
+
+            <ol>
+                <li>Open the timetable's <strong>Requirements</strong>
+                    page.</li>
+                <li>Under Add Requirement, select an existing
+                    subject allocation.</li>
+                <li>Enter the number of <strong>Lessons per week</strong>.</li>
+                <li>Enter the number of <strong>Double periods per week</strong>.</li>
+                <li>Select <strong>Add Requirement</strong>.</li>
+            </ol>
+
+            <p>
+                The allocation must belong to the timetable's school
+                and academic term. Double periods cannot exceed half
+                the number of weekly lessons.
+            </p>
+
+            <p>
+                The Configured Requirements table displays the class,
+                subject, teacher, lessons per week and double periods
+                per week. Existing requirements can be edited or deleted.
+            </p>
+
+            <h5 class="mt-4">Preparing Requirements Automatically</h5>
+
+            <p>
+                Instead of adding every requirement manually, you can
+                use <strong>Prepare / Sync Requirements</strong>.
+            </p>
+
+            <p>
+                This prepares missing timetable requirements from
+                the existing subject allocations for the timetable.
+                Existing requirements are preserved.
+            </p>
+
+            <h5 class="mt-4">Generating the Timetable</h5>
+
+            <ol>
+                <li>Confirm that the timetable periods are configured.</li>
+                <li>Confirm that the required subject allocations
+                    and weekly lesson requirements are available.</li>
+                <li>Open the Requirements page.</li>
+                <li>Select <strong>Generate Timetable</strong>.</li>
+            </ol>
+
+            <p>
+                The system attempts to generate lesson entries using
+                the configured timetable periods and requirements.
+                A success message displays the number of lesson entries
+                generated. If generation encounters a problem,
+                an error message explains the issue.
+            </p>
+
+            <h5 class="mt-4">Viewing and Approving a Timetable</h5>
+
+            <p>
+                Select <strong>View Timetable</strong> to inspect
+                the generated timetable.
+            </p>
+
+            <p>
+                The timetable is displayed as a weekly grid containing
+                days and periods. Each lesson entry shows the class,
+                subject and assigned teacher. Break periods are also
+                identified.
+            </p>
+
+            <p>
+                You can filter the timetable by school section and class.
+            </p>
+
+            <p>The timetable follows these approval stages:</p>
+
+            <ol>
+                <li>
+                    <strong>Draft:</strong>
+                    The initial status of a newly created timetable.
+                </li>
+                <li>
+                    <strong>Approved:</strong>
+                    An authorised management user can approve a Draft
+                    timetable after lesson entries have been generated.
+                </li>
+                <li>
+                    <strong>Published:</strong>
+                    An authorised management user can publish an
+                    Approved timetable.
+                </li>
+            </ol>
+
+            <div class="alert alert-warning">
+                <strong>Important:</strong>
+                A timetable must contain generated lesson entries
+                before it can be approved. Only Approved timetables
+                can be published.
+            </div>
+
+            <h5 class="mt-4">Viewing the Timetable as a Teacher</h5>
+
+            <ol>
+                <li>Open your Teacher Dashboard.</li>
+                <li>Locate <strong>My School Timetable</strong>.</li>
+                <li>Select <strong>View Full Timetable</strong>.</li>
+            </ol>
+
+            <p>
+                The teacher timetable displays the published timetable
+                for the current academic term, including the scheduled
+                classes, subjects and assigned teachers.
+            </p>
+
+            <h5 class="mt-4">Viewing the Timetable as a Student</h5>
+
+            <ol>
+                <li>Log in using your student account.</li>
+                <li>Open the Student Dashboard.</li>
+                <li>Locate <strong>My Timetable</strong>.</li>
+                <li>Select <strong>View Full Timetable</strong>.</li>
+            </ol>
+
+            <p>
+                Students can view the published timetable for their
+                own class. The timetable displays the subjects,
+                assigned teachers, days and lesson periods.
+            </p>
+
+            <div class="alert alert-info">
+                <strong>Student access:</strong>
+                The school must have both the TIMETABLE and
+                STUDENT_PORTAL features enabled for students
+                to access their timetable.
+            </div>
+
+            <div class="alert alert-secondary">
+                <strong>Remember:</strong>
+                Teacher and student timetable pages display the
+                published timetable for the current academic term.
+                If no current term or published timetable is available,
+                the timetable cannot be displayed.
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Access notice -->
+    <div class="alert alert-secondary">
+        <strong>Access and permissions:</strong>
+        Score entry, review, approval, publication and report-card
+        editing are controlled by school permissions. Users may see
+        different options depending on their assigned responsibilities.
+        All these operations are restricted to the user's school.
+        Contact your school administrator if you cannot access an
+        expected feature.
+    </div>
+
+    <div class="mt-4">
+        <a href="{% url 'help_center:home' %}" class="btn btn-outline-secondary">
+            Back to Help Centre
+        </a>
+    </div>
+
+</div>
+
+{% endblock %}

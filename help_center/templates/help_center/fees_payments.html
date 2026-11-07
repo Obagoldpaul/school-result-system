@@ -1,0 +1,559 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}Fees & Payments Guide | Paul SchoolHub{% endblock %}
+
+{% block content %}
+
+<div class="container py-4">
+
+    <div class="mb-3">
+        <a href="{% url 'help_center:home' %}"
+           class="btn btn-outline-secondary">
+            &larr; Back to Help & User Guide
+        </a>
+    </div>
+
+    <div class="mb-4">
+        <h1>Fees & Payments</h1>
+        <p class="text-muted">
+            Learn how to configure school fees, assign charges to students,
+            record payments, manage outstanding balances and review
+            financial reports.
+        </p>
+    </div>
+
+    <!-- Fee Categories -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+
+            <h3>1. Managing Fee Categories</h3>
+
+            <p>
+                Fee categories help your school organise the different
+                charges students are expected to pay. Examples may include
+                tuition, examination fees, development levies and other
+                school charges.
+            </p>
+
+            <h5 class="mt-4">Creating a Fee Category</h5>
+
+            <ol>
+                <li>Open <strong>Fee Categories</strong> from the Billing section.</li>
+                <li>Select <strong>Add Fee Category</strong>.</li>
+                <li>Enter the fee category name.</li>
+                <li>Select whether the category is <strong>Compulsory</strong> or <strong>Optional</strong>.</li>
+                <li>Set its active status as appropriate.</li>
+                <li>Save the category.</li>
+            </ol>
+
+            <h5 class="mt-4">Understanding Fee Types</h5>
+
+            <ul>
+                <li>
+                    <strong>Compulsory fees:</strong>
+                    These are automatically included when calculating
+                    applicable student charges.
+                </li>
+                <li>
+                    <strong>Optional fees:</strong>
+                    These are included for students who have opted in.
+                    Their enrolment can be managed individually.
+                </li>
+            </ul>
+
+            <p>
+                The category list displays each category's name, type,
+                number of assignments and active status. Authorised users
+                can edit categories or activate and deactivate them.
+            </p>
+
+            <div class="alert alert-info">
+                <strong>Note:</strong>
+                Fee categories must be created before they can be selected
+                when creating fee assignments.
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Fee Assignments -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+
+            <h3>2. Creating and Managing Fee Assignments</h3>
+
+            <p>
+                A fee assignment specifies how much a student or group
+                of students is expected to pay for a particular fee
+                category during an academic term.
+            </p>
+
+            <h5 class="mt-4">Creating a Fee Assignment</h5>
+
+            <ol>
+                <li>Open <strong>Fee Assignments</strong>.</li>
+                <li>Select <strong>Add Fee Assignment</strong>.</li>
+                <li>Choose the fee category.</li>
+                <li>Select the academic session.</li>
+                <li>Select the term.</li>
+                <li>Choose the assignment target:
+                    <ul>
+                        <li>An individual student; or</li>
+                        <li>A class, optionally restricted to a department.</li>
+                    </ul>
+                </li>
+                <li>Enter the fee amount.</li>
+                <li>Set the assignment's active status.</li>
+                <li>Save the assignment.</li>
+            </ol>
+
+            <div class="alert alert-warning">
+                <strong>Important:</strong>
+                An assignment can target an individual student or a class.
+                You cannot select an individual student together with a
+                class or department. A department must be selected together
+                with a class.
+            </div>
+
+            <h5 class="mt-4">Viewing and Filtering Assignments</h5>
+
+            <p>
+                The Fee Assignments page allows you to filter records by
+                academic session, term, fee category, fee type and active
+                status. You can also search using student names,
+                admission numbers, classes or fee categories.
+            </p>
+
+            <p>
+                Depending on the assignment, you can edit its details
+                or manage the students enrolled in an optional fee.
+            </p>
+
+            <h5 class="mt-4">Managing Optional Fee Enrolment</h5>
+
+            <ol>
+                <li>Locate the optional fee assignment.</li>
+                <li>Select <strong>Manage Students</strong>.</li>
+                <li>Review the students covered by the assignment.</li>
+                <li>Use <strong>Remove</strong> to opt a student out.</li>
+                <li>Use <strong>Opt In</strong> to include a student again.</li>
+            </ol>
+
+            <div class="alert alert-info">
+                <strong>Default behaviour:</strong>
+                Students are treated as opted in when no enrolment record
+                exists for an optional fee. You can change this using
+                the Manage Students page.
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Recording Payments -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+
+            <h3>3. Recording Student Payments</h3>
+
+            <p>
+                Authorised billing users can record payments made by
+                students or their parents and allocate the money to
+                outstanding fee categories.
+            </p>
+
+            <h5 class="mt-4">Recording a Payment</h5>
+
+            <ol>
+                <li>Open <strong>Students Owing</strong> or the relevant student fee payment page.</li>
+                <li>Locate the student and select the payment action.</li>
+                <li>Review the student's fee breakdown.</li>
+                <li>Enter the amount received.</li>
+                <li>Select the payment method.</li>
+                <li>Enter the transaction reference, where applicable.</li>
+                <li>Add a note if necessary.</li>
+                <li>Allocate the payment to the relevant fee categories.</li>
+                <li>Select <strong>Distribute Automatically</strong> if you want the system to distribute the amount across the displayed outstanding categories.</li>
+                <li>Review the allocation summary and select <strong>Record Payment</strong>.</li>
+            </ol>
+
+            <h5 class="mt-4">Understanding Payment Allocation</h5>
+
+            <p>
+                Payments must be fully allocated before they can be
+                recorded. The total allocated amount must equal the
+                amount received, and an allocation cannot exceed the
+                outstanding balance of its fee category.
+            </p>
+
+            <div class="alert alert-warning">
+                <strong>Important:</strong>
+                Always verify the amount received and its allocation
+                before saving. The system validates the allocation
+                to prevent overpayment of individual fee categories.
+            </div>
+
+            <p>
+                After a successful payment, the system displays the
+                payment details and receipt number. You can proceed
+                to print the receipt or return to Students Owing.
+            </p>
+
+        </div>
+    </div>
+
+    <!-- Payment History -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+
+            <h3>4. Viewing Payment History and Receipts</h3>
+
+            <p>
+                The Payment History page provides a record of payments
+                recorded by the school.
+            </p>
+
+            <p>
+                Each record displays the payment date, student name,
+                admission number, term, amount, payment method,
+                receipt number and staff member who recorded it.
+            </p>
+
+            <h5 class="mt-4">Available Payment Actions</h5>
+
+            <ul>
+                <li>
+                    <strong>View:</strong>
+                    Opens the payment receipt.
+                </li>
+                <li>
+                    <strong>PDF:</strong>
+                    Downloads the payment receipt as a PDF.
+                </li>
+                <li>
+                    <strong>Manage Allocation:</strong>
+                    Allows authorised users to adjust how the payment
+                    is distributed across fee categories.
+                </li>
+            </ul>
+
+            <div class="alert alert-info">
+                <strong>Note:</strong>
+                Managing an allocation changes how an existing payment
+                is distributed. It does not change the original payment
+                amount.
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Opening Balances -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+
+            <h3>5. Managing Opening Balances</h3>
+
+            <p>
+                Opening balances are used to record outstanding arrears
+                that existed before a student began using the school's
+                billing system.
+            </p>
+
+            <h5 class="mt-4">Adding an Opening Balance</h5>
+
+            <ol>
+                <li>Open <strong>Add Opening Balance</strong>.</li>
+                <li>Search for the student using their name, admission number or class.</li>
+                <li>Select the correct student.</li>
+                <li>Enter the outstanding amount.</li>
+                <li>Add a note explaining the balance, if necessary.</li>
+                <li>Save the record.</li>
+            </ol>
+
+            <h5 class="mt-4">Viewing and Managing Opening Balances</h5>
+
+            <p>
+                The Opening Balances page displays the student,
+                original balance, amount paid and remaining balance.
+                You can search for students and use the available
+                actions to pay, view payment history, edit or delete
+                an opening balance.
+            </p>
+
+            <h5 class="mt-4">Recording an Opening Balance Payment</h5>
+
+            <ol>
+                <li>Locate the student on the Opening Balances page.</li>
+                <li>Select <strong>Pay</strong>.</li>
+                <li>Review the original balance, amount already paid and remaining balance.</li>
+                <li>Enter the amount received.</li>
+                <li>Select the payment method.</li>
+                <li>Enter the transaction reference and any relevant note.</li>
+                <li>Select <strong>Record Payment</strong>.</li>
+            </ol>
+
+            <p>
+                You can view the payment history and open or download
+                individual opening balance payment receipts.
+            </p>
+
+            <div class="alert alert-warning">
+                <strong>Important:</strong>
+                Opening balances should only be used for arrears
+                that existed before the student began using the
+                billing system. Do not use them as a substitute
+                for normal term fee assignments.
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Students Owing -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+
+            <h3>6. Viewing Students Owing</h3>
+
+            <p>
+                The Students Owing page helps school management and
+                authorised billing staff identify students with
+                outstanding school fee balances.
+            </p>
+
+            <h5 class="mt-4">Filtering the Owing List</h5>
+
+            <ol>
+                <li>Open <strong>Students Owing</strong>.</li>
+                <li>Select an academic session.</li>
+                <li>Select the relevant term.</li>
+                <li>Optionally select a class.</li>
+                <li>Apply the filters to view the relevant records.</li>
+            </ol>
+
+            <p>
+                The page displays student details, term fees, payments,
+                term balance, outstanding terms and total account arrears.
+            </p>
+
+            <h5 class="mt-4">Available Actions</h5>
+
+            <ul>
+                <li><strong>Pay:</strong> Record a payment for the student.</li>
+                <li><strong>Bill PDF:</strong> Download the student's fee bill.</li>
+                <li><strong>History:</strong> View the student's payment history.</li>
+                <li><strong>Statement:</strong> View the student's account statement.</li>
+            </ul>
+
+            <h5 class="mt-4">Printing the Students Owing Report</h5>
+
+            <p>
+                Use <strong>Print Students Owing</strong> to generate
+                a printable report for the selected session and term.
+                You can print the whole school's list or restrict
+                the report to a selected class.
+            </p>
+
+            <p>
+                The printed report includes students with outstanding
+                account arrears, their term balances, outstanding terms
+                and opening arrears.
+            </p>
+
+            <h5 class="mt-4">Printing Class Bills</h5>
+
+            <p>
+                When a class is selected, the available
+                <strong>Print Class Bills</strong> action generates
+                a consolidated PDF showing the active students in
+                that class, their total fees, payments and balances
+                for the selected term.
+            </p>
+
+        </div>
+    </div>
+
+    <!-- Student Fee Bills -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+
+            <h3>7. Viewing and Downloading Student Fee Bills</h3>
+
+            <p>
+                A student fee bill shows the charges assigned to a
+                student for a selected academic term.
+            </p>
+
+            <h5 class="mt-4">Selecting a Student Fee Bill</h5>
+
+            <ol>
+                <li>Open <strong>Student Fee Bill</strong>.</li>
+                <li>Select the academic session.</li>
+                <li>Select the term.</li>
+                <li>Select the student's class.</li>
+                <li>Choose the student from the available list.</li>
+                <li>Select <strong>View Fee Bill</strong>.</li>
+            </ol>
+
+            <p>
+                The bill displays the school's details, student
+                information, academic term and a breakdown of
+                fee categories.
+            </p>
+
+            <p>
+                Each fee category shows the assigned amount,
+                amount paid, outstanding balance and payment status.
+                The bill also displays the total fees, total paid
+                and total outstanding balance.
+            </p>
+
+            <p>
+                Use the PDF option to download the student's fee bill.
+            </p>
+
+        </div>
+    </div>
+
+    <!-- Account Statements -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+
+            <h3>8. Viewing Student Account Statements</h3>
+
+            <p>
+                A student account statement provides a consolidated
+                financial history across academic sessions.
+            </p>
+
+            <p>
+                You can open a student's statement from the
+                Students Owing page or use the Account Statements
+                option on the Billing Dashboard to select a student.
+            </p>
+
+            <h5 class="mt-4">Understanding the Statement</h5>
+
+            <p>
+                The statement contains three main summary figures:
+            </p>
+
+            <ul>
+                <li><strong>Total Charges:</strong> Fees charged to the student.</li>
+                <li><strong>Total Payments Allocated:</strong> Payments distributed to those charges.</li>
+                <li><strong>Total Account Arrears:</strong> The outstanding account balance.</li>
+            </ul>
+
+            <p>
+                Below the summary, charges, allocated payments and
+                arrears are grouped by academic session and term.
+                Where an opening balance exists, the statement also
+                displays the original amount, payments made and
+                remaining opening arrears.
+            </p>
+
+            <div class="alert alert-warning">
+                <strong>Important accounting information:</strong>
+                Account statements calculate outstanding fees using
+                allocated payments. A payment that has not been
+                allocated to fee categories does not automatically
+                reduce the displayed fee arrears.
+            </div>
+
+            <p>
+                The statement also provides a link to the student's
+                payment history.
+            </p>
+
+        </div>
+    </div>
+
+    <!-- Financial Reports -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+
+            <h3>9. Viewing Financial Reports</h3>
+
+            <p>
+                Financial reports help school management review
+                collections, outstanding fees and student account
+                balances.
+            </p>
+
+            <h5 class="mt-4">Term Financial Report</h5>
+
+            <ol>
+                <li>Open <strong>Term Financial Report</strong> from the Billing Dashboard.</li>
+                <li>Select the academic session.</li>
+                <li>Select the term.</li>
+                <li>Select <strong>View Report</strong>.</li>
+            </ol>
+
+            <p>
+                The report includes:
+            </p>
+
+            <ul>
+                <li>Expected revenue, amount collected and outstanding balance.</li>
+                <li>Collection rate and number of active students.</li>
+                <li>Number of students owing.</li>
+                <li>Fee category breakdown.</li>
+                <li>Payment count and payment-method summary.</li>
+                <li>Student financial summaries grouped by class.</li>
+                <li>Unallocated payment amounts.</li>
+            </ul>
+
+            <h5 class="mt-4">Session Financial Report</h5>
+
+            <ol>
+                <li>Open <strong>Session Financial Report</strong>.</li>
+                <li>Select the academic session.</li>
+                <li>Select <strong>View Report</strong>.</li>
+            </ol>
+
+            <p>
+                This report provides a financial overview of the
+                entire academic session, including a term-by-term
+                breakdown, fee category totals, payment summaries,
+                student financial summaries and overall totals.
+            </p>
+
+            <h5 class="mt-4">Printing Financial Reports</h5>
+
+            <p>
+                Both financial reports include a
+                <strong>Print Report</strong> button for printing
+                the displayed report.
+            </p>
+
+            <div class="alert alert-info">
+                <strong>Understanding unallocated payments:</strong>
+                Financial reports show collected payments separately
+                from amounts allocated to student fee categories.
+                This helps identify money received that has not yet
+                been distributed against specific fee charges.
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Access Notice -->
+    <div class="alert alert-secondary">
+        <strong>Access and permissions:</strong>
+        Billing pages are available according to your school's
+        subscription features and your assigned account permissions.
+        Some actions, such as managing fee assignments, recording
+        payments and viewing financial reports, require different
+        permissions. Students can access their own available payment
+        information through the student portal where the relevant
+        portal feature is enabled.
+    </div>
+
+    <div class="mt-4">
+        <a href="{% url 'help_center:home' %}" class="btn btn-outline-secondary">
+            Back to Help Centre
+        </a>
+    </div>
+
+</div>
+
+{% endblock %}
