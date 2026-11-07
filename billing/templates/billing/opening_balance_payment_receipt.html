@@ -1,199 +1,400 @@
 {% load humanize %}
 
 <!DOCTYPE html>
-<html>
-
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <title>Opening Balance Payment Receipt - {{ payment.receipt_number }}</title>
 
-<title>Opening Balance Payment Receipt</title>
+    <style>
+        :root {
+            --primary-color: {{ school_settings.primary_color|default:"#1F4E79" }};
+            --secondary-color: {{ school_settings.secondary_color|default:"#D9EAF7" }};
+            --text-color: #292929;
+            --muted-color: #707070;
+            --border-color: #e5e5e5;
+        }
 
-<style>
+        @page {
+            size: A4;
+            margin: 15mm;
+        }
 
-@page {
-    size: A4;
-    margin: 20mm;
-}
+        * {
+            box-sizing: border-box;
+        }
 
-body {
-    font-family: Arial, sans-serif;
-    font-size: 14px;
-}
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 13px;
+            color: var(--text-color);
+            background: #f4f5f7;
+        }
 
-.receipt {
-    width: 100%;
-    border: 2px solid #1a5c1a;
-    padding: 25px;
-    box-sizing: border-box;
-}
+        .receipt {
+            position: relative;
+            width: 100%;
+            max-width: 850px;
+            margin: 0 auto;
+            padding: 35px;
+            background: #fff;
+            border: 1px solid var(--border-color);
+            border-top: 7px solid var(--primary-color);
+            overflow: hidden;
+        }
 
-.header {
-    text-align: center;
-}
+        .watermark {
+            position: absolute;
+            width: 60%;
+            height: auto;
+            top: 25%;
+            left: 20%;
+            opacity: 0.055;
+            z-index: 0;
+        }
 
-.header img {
-    height: 80px;
-}
+        .content {
+            position: relative;
+            z-index: 1;
+        }
 
-h2 {
-    color: #1a5c1a;
-    margin-bottom: 5px;
-}
+        .school-header {
+            text-align: center;
+            padding-bottom: 22px;
+            border-bottom: 2px solid var(--secondary-color);
+        }
 
-table {
-    width: 100%;
-    margin-top: 25px;
-    border-collapse: collapse;
-}
+        .school-logo {
+            max-width: 105px;
+            max-height: 90px;
+            margin-bottom: 10px;
+        }
 
-td {
-    padding: 10px;
-    border-bottom: 1px solid #ddd;
-}
+        .school-name {
+            margin: 0;
+            color: #292929;
+            font-size: 25px;
+            font-weight: bold;
+        }
 
-.amount {
-    font-size: 20px;
-    font-weight: bold;
-    color: #1a5c1a;
-}
+        .school-contact {
+            margin-top: 8px;
+            color: var(--muted-color);
+            font-size: 11px;
+            line-height: 1.6;
+        }
 
-.footer {
-    margin-top: 50px;
-}
+        .receipt-heading {
+            margin: 24px 0 18px;
+            text-align: center;
+        }
 
-</style>
+        .receipt-heading h2 {
+            margin: 0;
+            color: #292929;
+            font-size: 20px;
+            letter-spacing: 1px;
+        }
 
+        .receipt-heading p {
+            margin: 6px 0 0;
+            color: var(--muted-color);
+            font-size: 11px;
+        }
+
+        .receipt-meta {
+            display: flex;
+            justify-content: space-between;
+            gap: 15px;
+            margin-bottom: 20px;
+            padding: 14px 16px;
+            background: #f7f7f7;
+            border-radius: 5px;
+        }
+
+        .meta-item {
+            flex: 1;
+        }
+
+        .meta-label {
+            display: block;
+            margin-bottom: 5px;
+            color: var(--muted-color);
+            font-size: 10px;
+            text-transform: uppercase;
+        }
+
+        .meta-value {
+            font-weight: bold;
+            color: #292929;
+        }
+
+        .section-title {
+            margin: 22px 0 0;
+            padding: 10px 13px;
+            color: #292929;
+            background: #f7f7f7;
+            border-left: 4px solid var(--primary-color);
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        td {
+            padding: 12px 13px;
+            border-bottom: 1px solid var(--border-color);
+            vertical-align: middle;
+        }
+
+        td:first-child {
+            width: 42%;
+            color: var(--muted-color);
+        }
+
+        td:last-child {
+            font-weight: 600;
+        }
+
+        .amount-row td {
+            padding-top: 17px;
+            padding-bottom: 17px;
+            background: #f7f7f7;
+        }
+
+        .amount-value {
+            color: #292929;
+            font-size: 21px;
+            font-weight: bold;
+        }
+
+        .balance-row td {
+            background: #f7f7f7;
+        }
+
+        .balance-value {
+            color: #292929;
+            font-size: 15px;
+            font-weight: bold;
+        }
+
+        .signature-section {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 45px;
+        }
+
+        .signature-box {
+            width: 220px;
+            text-align: center;
+        }
+
+        .signature-line {
+            border-top: 1px solid #555;
+            padding-top: 9px;
+            font-weight: bold;
+        }
+
+        .footer {
+            margin-top: 30px;
+            padding-top: 15px;
+            border-top: 1px solid var(--border-color);
+            text-align: center;
+            color: var(--muted-color);
+            font-size: 10px;
+            line-height: 1.6;
+        }
+
+        /* Keep text readable regardless of school branding colours. */
+        .school-name,
+        .receipt-heading h2,
+        .meta-value,
+        .section-title,
+        .amount-value,
+        .balance-value {
+            color: #292929;
+        }
+
+        @media print {
+            body {
+                padding: 0;
+                background: #fff;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            .receipt {
+                max-width: none;
+                border: 1px solid var(--border-color);
+                border-top: 7px solid var(--primary-color);
+            }
+        }
+    </style>
 </head>
 
 <body>
 
 <div class="receipt">
 
-<div class="header">
+    {% if school_settings.school_logo %}
+        <img
+            class="watermark"
+            src="{{ school_settings.school_logo.url }}"
+            alt=""
+        >
+    {% endif %}
 
-{% if school_settings.logo %}
-<img src="{{ school_settings.logo.path }}">
-{% endif %}
+    <div class="content">
 
-<h2>
-{{ school_settings.school_name }}
-</h2>
+        <div class="school-header">
 
-<h3>
-OPENING BALANCE PAYMENT RECEIPT
-</h3>
+            {% if school_settings.school_logo %}
+                <img
+                    class="school-logo"
+                    src="{{ school_settings.school_logo.url }}"
+                    alt="School Logo"
+                >
+            {% endif %}
 
-</div>
+            <h1 class="school-name">
+                {{ school_settings.school_name }}
+            </h1>
 
+            <div class="school-contact">
+                {% if school_settings.school_address %}
+                    <div>{{ school_settings.school_address }}</div>
+                {% endif %}
 
-<table>
+                {% if school_settings.school_phone %}
+                    <div>{{ school_settings.school_phone }}</div>
+                {% endif %}
 
-<tr>
-<td>Receipt Number</td>
-<td>
-<strong>
-{{ payment.receipt_number }}
-</strong>
-</td>
-</tr>
+                {% if school_settings.school_email %}
+                    <div>{{ school_settings.school_email }}</div>
+                {% endif %}
+            </div>
 
-<tr>
-<td>Date</td>
-<td>
-{{ payment.date_paid }}
-</td>
-</tr>
+        </div>
 
-<tr>
-<td>Student</td>
-<td>
-{{ payment.opening_balance.student.user.get_full_name }}
-</td>
-</tr>
+        <div class="receipt-heading">
+            <h2>OPENING BALANCE PAYMENT RECEIPT</h2>
+            <p>Official acknowledgement of opening balance payment</p>
+        </div>
 
-<tr>
-<td>Admission Number</td>
-<td>
-{{ payment.opening_balance.student.admission_number }}
-</td>
-</tr>
+        <div class="receipt-meta">
 
-<tr>
-<td>Class</td>
-<td>
-{{ payment.opening_balance.student.school_class }}
-</td>
-</tr>
+            <div class="meta-item">
+                <span class="meta-label">Receipt Number</span>
+                <span class="meta-value">
+                    {{ payment.receipt_number }}
+                </span>
+            </div>
 
-<tr>
-<td>Original Opening Balance</td>
-<td>
-₦{{ payment.opening_balance.amount|intcomma }}
-</td>
-</tr>
+            <div class="meta-item">
+                <span class="meta-label">Date Issued</span>
+                <span class="meta-value">
+                    {{ payment.date_paid }}
+                </span>
+            </div>
 
-<tr>
-<td>Amount Paid</td>
-<td class="amount">
-₦{{ payment.amount|intcomma }}
-</td>
-</tr>
+        </div>
 
-<tr>
-<td>Remaining Balance</td>
-<td>
-<strong>
-₦{{ remaining_balance|intcomma }}
-</strong>
-</td>
-</tr>
+        <div class="section-title">Student Information</div>
 
-<tr>
-<td>Payment Method</td>
-<td>
-{{ payment.get_payment_method_display }}
-</td>
-</tr>
+        <table>
+            <tr>
+                <td>Student Name</td>
+                <td>
+                    {{ payment.opening_balance.student.user.get_full_name }}
+                </td>
+            </tr>
 
-<tr>
-<td>Reference</td>
-<td>
-{{ payment.reference|default:"-" }}
-</td>
-</tr>
+            <tr>
+                <td>Admission Number</td>
+                <td>
+                    {{ payment.opening_balance.student.admission_number }}
+                </td>
+            </tr>
 
-{% if payment.note %}
-<tr>
-<td>Note</td>
-<td>
-{{ payment.note }}
-</td>
-</tr>
-{% endif %}
+            <tr>
+                <td>Class</td>
+                <td>
+                    {{ payment.opening_balance.student.school_class }}
+                </td>
+            </tr>
+        </table>
 
-</table>
+        <div class="section-title">Payment Breakdown</div>
 
+        <table>
+            <tr>
+                <td>Original Opening Balance</td>
+                <td>
+                    ₦{{ payment.opening_balance.amount|intcomma }}
+                </td>
+            </tr>
 
-<div class="footer">
+            <tr class="amount-row">
+                <td>Amount Paid</td>
+                <td class="amount-value">
+                    ₦{{ payment.amount|intcomma }}
+                </td>
+            </tr>
 
-<p>
-Recorded by:
-{{ payment.recorded_by|default:"-" }}
-</p>
+            <tr class="balance-row">
+                <td>Remaining Balance</td>
+                <td class="balance-value">
+                    ₦{{ remaining_balance|intcomma }}
+                </td>
+            </tr>
+        </table>
 
-<br>
+        <div class="section-title">Payment Details</div>
 
-<p>
-__________________________
-</p>
+        <table>
+            <tr>
+                <td>Payment Method</td>
+                <td>{{ payment.get_payment_method_display }}</td>
+            </tr>
 
-<p>
-Authorized Signature
-</p>
+            <tr>
+                <td>Reference</td>
+                <td>{{ payment.reference|default:"-" }}</td>
+            </tr>
 
-</div>
+            {% if payment.note %}
+                <tr>
+                    <td>Note</td>
+                    <td>{{ payment.note }}</td>
+                </tr>
+            {% endif %}
+        </table>
+
+        <div class="signature-section">
+            <div class="signature-box">
+                <div class="signature-line">
+                    Authorized Signature
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            Recorded by: {{ payment.recorded_by|default:"-" }}
+            <br>
+            Thank you for your payment.
+            <br>
+            {{ school_settings.school_name }}
+        </div>
+
+    </div>
 
 </div>
 
 </body>
-
 </html>
