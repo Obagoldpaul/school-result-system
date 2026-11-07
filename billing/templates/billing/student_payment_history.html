@@ -57,9 +57,15 @@ Payment History - {{ student.user.get_full_name }}
 </td>
 
 <td>
-<a href="{% url 'my_payment_receipt_pdf' payment.id %}">
-    🧾 Print Receipt
-</a>
+{% if is_student_portal %}
+    <a href="{% url 'my_payment_receipt_pdf' payment.id %}">
+        🧾 Print Receipt
+    </a>
+{% else %}
+    <a href="{% url 'payment_receipt_pdf' payment.id %}">
+        🧾 Print Receipt
+    </a>
+{% endif %}
 </td>
 
 </tr>
