@@ -1,0 +1,149 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Request a free demonstration of Paul SchoolHub and discover how your school can simplify its academic and administrative operations.">
+    <meta name="theme-color" content="#FFC837">
+
+    <title>Request a Demo | Paul SchoolHub</title>
+    <link rel="icon" type="image/png" href="{% static 'marketing/images/paul-schoolhub-logo.png' %}">
+
+    <link rel="canonical" href="https://www.paulschoolhub.com.ng/request-demo/">
+
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Paul SchoolHub">
+    <meta property="og:title" content="Request a Demo | Paul SchoolHub">
+    <meta property="og:description" content="See how Paul SchoolHub can help your school manage its daily academic and administrative activities. Request a demonstration today.">
+    <meta property="og:url" content="https://www.paulschoolhub.com.ng/request-demo/">
+
+    <meta property="og:image" content="https://www.paulschoolhub.com.ng/static/marketing/images/paul-schoolhub-social-share.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="Paul SchoolHub - Smarter School Management, powered by Paul Media Services.">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Request a Demo | Paul SchoolHub">
+    <meta name="twitter:description" content="Request a demonstration of Paul SchoolHub for your school.">
+
+    <meta name="twitter:image" content="https://www.paulschoolhub.com.ng/static/marketing/images/paul-schoolhub-social-share.png">
+
+    <link rel="stylesheet" href="{% static 'marketing/css/style.css' %}">
+</head>
+<body>
+
+    <header class="site-header">
+        <div class="container">
+            <a href="/" class="logo">
+                <img src="{% static 'marketing/images/paul-schoolhub-logo.png' %}"
+                     alt="Paul SchoolHub">
+            </a>
+
+            <a href="/" class="btn btn-secondary">Back to Home</a>
+        </div>
+    </header>
+
+    <main class="demo-page">
+        <section class="demo-section">
+            <div class="container">
+                <div class="demo-heading">
+                    <h1>Request a Demo</h1>
+                    <p>
+                        Tell us a little about your school.
+                        We'll be happy to show you how Paul SchoolHub
+                        can simplify your school's management.
+                    </p>
+                </div>
+
+                <form id="demo-request-form">
+
+                    <div class="form-group">
+                        <label for="school_name">School Name *</label>
+                        <input type="text" id="school_name"
+                               name="school_name" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="contact_name">Contact Person's Full Name *</label>
+                        <input type="text" id="contact_name"
+                               name="contact_name" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="phone">Phone / WhatsApp Number *</label>
+                        <input type="tel" id="phone"
+                               name="phone" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="email">Email Address (Optional)</label>
+                        <input type="email" id="email" name="email">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="school_type">School Type *</label>
+                        <select id="school_type" name="school_type" required>
+                            <option value="">Select school type</option>
+                            <option value="Primary School">Primary School</option>
+                            <option value="Secondary School">Secondary School</option>
+                            <option value="Primary and Secondary School">
+                                Primary and Secondary School
+                            </option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="preferred_date">
+                            Preferred Demonstration Date (Optional)
+                        </label>
+                        <input type="date" id="preferred_date"
+                               name="preferred_date">
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">
+                        Continue to WhatsApp
+                    </button>
+
+                    <p class="form-note">
+                        Your details will be prepared as a WhatsApp message.
+                        You'll review and send the message yourself.
+                    </p>
+
+                </form>
+            </div>
+        </section>
+    </main>
+    <script>
+        document.getElementById("demo-request-form").addEventListener("submit", function (event) {
+            event.preventDefault();
+    
+            const schoolName = document.getElementById("school_name").value.trim();
+            const contactName = document.getElementById("contact_name").value.trim();
+            const phone = document.getElementById("phone").value.trim();
+            const email = document.getElementById("email").value.trim();
+            const schoolType = document.getElementById("school_type").value;
+            const preferredDate = document.getElementById("preferred_date").value;
+    
+            const message = `
+    Hello Paul SchoolHub,
+    
+    I would like to request a demonstration of your school management platform.
+    
+    School Name: ${schoolName}
+    Contact Person: ${contactName}
+    Phone / WhatsApp: ${phone}
+    Email Address: ${email || "Not provided"}
+    School Type: ${schoolType}
+    Preferred Demonstration Date: ${preferredDate || "Not specified"}
+    
+    Thank you.
+            `.trim();
+    
+            const whatsappUrl = "https://wa.me/2349051608086?text=" + encodeURIComponent(message);
+    
+            window.location.href = whatsappUrl;
+        });
+    </script>
+</body>
+</html>

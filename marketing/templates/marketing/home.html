@@ -1,0 +1,359 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Paul SchoolHub helps schools manage students, teachers, academic records, attendance, billing and communication in one place.">
+    <meta name="theme-color" content="#FFC837">
+
+    <title>Paul SchoolHub | Smarter School Management</title>
+    <link rel="icon" type="image/png" href="{% static 'marketing/images/paul-schoolhub-logo.png' %}">
+
+    <link rel="canonical" href="https://www.paulschoolhub.com.ng/">
+
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Paul SchoolHub">
+    <meta property="og:title" content="Paul SchoolHub | Smarter School Management">
+    <meta property="og:description" content="Manage students, teachers, academic records, attendance, billing and communication through one organised school management platform.">
+    <meta property="og:url" content="https://www.paulschoolhub.com.ng/">
+
+    <meta property="og:image" content="https://www.paulschoolhub.com.ng/static/marketing/images/paul-schoolhub-social-share.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="Paul SchoolHub - Smarter School Management, powered by Paul Media Services.">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Paul SchoolHub | Smarter School Management">
+    <meta name="twitter:description" content="A smarter way to organise and manage school operations.">
+
+    <meta name="twitter:image" content="https://www.paulschoolhub.com.ng/static/marketing/images/paul-schoolhub-social-share.png">
+
+    <link rel="stylesheet" href="{% static 'marketing/css/style.css' %}">
+</head>
+
+<body>
+
+    <!-- Navigation -->
+    <header class="site-header">
+        <nav class="navbar container">
+
+            <a href="/" class="brand">
+                <img src="{% static 'marketing/images/paul-schoolhub-logo.png' %}" alt="Paul SchoolHub Logo">
+            </a>
+
+            <div class="nav-links">
+                <a href="#home">Home</a>
+                <a href="#features">Features</a>
+                <a href="#how-it-works">How It Works</a>
+                <a href="{% url 'request_demo' %}">Get Started</a>
+                <a href="{% url 'marketing_about' %}">About</a>
+                <a href="#contact">Contact</a>
+            </div>
+
+            <a href="{% url 'request_demo' %}" class="btn btn-primary nav-cta">
+                Request a Demo
+            </a>
+
+        </nav>
+    </header>
+
+
+    <main>
+
+        <!-- Hero Section -->
+        <section class="hero" id="home">
+            <div class="container hero-content">
+
+                <div class="hero-text">
+                    <span class="eyebrow">A Smarter Way to Manage Your School</span>
+
+                    <h1>
+                        Everything Your School Needs,
+                        <span>All in One Place.</span>
+                    </h1>
+
+                    <p>
+                        Simplify school administration, manage academic activities,
+                        track student performance and keep parents connected with
+                        Paul SchoolHub.
+                    </p>
+
+                    <div class="hero-actions">
+                        <a href="{% url 'request_demo' %}" class="btn btn-primary">
+                            Request a Demo
+                        </a>
+
+                        <a href="#features" class="btn btn-secondary">
+                            Explore Features
+                        </a>
+                    </div>
+
+                    <div class="hero-note">
+                        Designed to make school management simpler.
+                    </div>
+                </div>
+
+                <div class="hero-visual">
+                    <div class="hero-card">
+                        <div class="hero-card-header">
+                            <span>School Management</span>
+                            <span class="status-dot"></span>
+                        </div>
+
+                        <div class="hero-card-body">
+                            <div class="visual-block visual-yellow"></div>
+                            <div class="visual-row">
+                                <div class="visual-block"></div>
+                                <div class="visual-block"></div>
+                            </div>
+                            <div class="visual-block visual-wide"></div>
+                        </div>
+
+                        <div class="hero-card-footer">
+                            <span>Administration</span>
+                            <span>Academics</span>
+                            <span>Communication</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+
+        <!-- Introduction -->
+        <section class="intro-section" id="about">
+            <div class="container intro-content">
+
+                <span class="eyebrow">Introducing Paul SchoolHub</span>
+
+                <h2>
+                    Spend Less Time Managing Paperwork.
+                    Spend More Time Growing Your School.
+                </h2>
+
+                <p>
+                    Paul SchoolHub is a school management platform designed
+                    to bring important school operations together.
+                    From student records and academic results to attendance,
+                    billing and parent communication, your school can manage
+                    its activities through one organised platform.
+                </p>
+
+                <a href="{% url 'marketing_about' %}" class="btn btn-primary">
+                    Learn More About Us
+                </a>
+
+            </div>
+        </section>
+
+
+        <!-- Features -->
+        <section class="features-section" id="features">
+            <div class="container">
+
+                <div class="section-heading">
+                    <span class="eyebrow">Platform Features</span>
+
+                    <h2>
+                        Everything Working Together
+                    </h2>
+
+                    <p>
+                        Practical tools to support your school's daily
+                        administrative and academic activities.
+                    </p>
+                </div>
+
+                <div class="features-grid">
+
+                    <article class="feature-card">
+                        <div class="feature-icon">01</div>
+                        <h3>Student Management</h3>
+                        <p>
+                            Organise student records, admissions,
+                            class assignments and student information.
+                        </p>
+                    </article>
+
+                    <article class="feature-card">
+                        <div class="feature-icon">02</div>
+                        <h3>Academic Management</h3>
+                        <p>
+                            Manage academic sessions, terms, classes,
+                            subjects and academic activities.
+                        </p>
+                    </article>
+
+                    <article class="feature-card">
+                        <div class="feature-icon">03</div>
+                        <h3>Results Management</h3>
+                        <p>
+                            Enter scores, manage assessments and
+                            prepare students' academic reports.
+                        </p>
+                    </article>
+
+                    <article class="feature-card">
+                        <div class="feature-icon">04</div>
+                        <h3>Attendance Management</h3>
+                        <p>
+                            Record and monitor student attendance
+                            through an organised system.
+                        </p>
+                    </article>
+
+                    <article class="feature-card">
+                        <div class="feature-icon">05</div>
+                        <h3>School Billing</h3>
+                        <p>
+                            Manage school fees, payment records
+                            and financial information.
+                        </p>
+                    </article>
+
+                    <article class="feature-card">
+                        <div class="feature-icon">06</div>
+                        <h3>Parent & Student Portals</h3>
+                        <p>
+                            Give parents and students access to
+                            relevant academic information through
+                            their dedicated portals.
+                        </p>
+                    </article>
+
+                </div>
+            </div>
+        </section>
+
+
+        <!-- How It Works -->
+        <section class="how-section" id="how-it-works">
+            <div class="container">
+
+                <div class="section-heading">
+                    <span class="eyebrow">Getting Started</span>
+
+                    <h2>Getting Your School on Board Is Simple</h2>
+
+                    <p>
+                        We make the process of getting started
+                        straightforward.
+                    </p>
+                </div>
+
+                <div class="steps-grid">
+
+                    <article class="step-card">
+                        <span class="step-number">01</span>
+                        <h3>Contact Us</h3>
+                        <p>
+                            Tell us about your school and
+                            what you need.
+                        </p>
+                    </article>
+
+                    <article class="step-card">
+                        <span class="step-number">02</span>
+                        <h3>Get a Demonstration</h3>
+                        <p>
+                            Explore the platform and see
+                            how it supports your operations.
+                        </p>
+                    </article>
+
+                    <article class="step-card">
+                        <span class="step-number">03</span>
+                        <h3>Get Started</h3>
+                        <p>
+                            We help set up your school's
+                            platform and get you started.
+                        </p>
+                    </article>
+
+                </div>
+            </div>
+        </section>
+
+
+        <!-- Call to Action -->
+        <section class="cta-section" id="pricing">
+            <div class="container cta-content">
+
+                <span class="eyebrow">Ready to Get Started?</span>
+
+                <h2>
+                    Give Your School a Smarter
+                    Way to Work.
+                </h2>
+
+                <p>
+                    Discover how Paul SchoolHub can support
+                    your school's administration and academic activities.
+                </p>
+
+                <a href="{% url 'request_demo' %}" class="btn btn-dark">
+                    Request a Demo
+                </a>
+
+            </div>
+        </section>
+
+    </main>
+
+
+    <!-- Footer -->
+    <footer class="site-footer" id="contact">
+        <div class="container footer-content">
+
+            <div class="footer-brand">
+                <img src="{% static 'marketing/images/paul-schoolhub-logo.png' %}" alt="Paul SchoolHub Logo">
+
+                <p>
+                    Smarter school management.
+                    Simpler school operations.
+                </p>
+            </div>
+
+            <div class="footer-company">
+                <h3>Paul SchoolHub</h3>
+                <p>Powered by Paul Media Services.</p>
+                <p>School Management Made Simpler.</p>
+            </div>
+
+            <div class="footer-contact">
+                <h3>Get in Touch</h3>
+                <p>Interested in Paul SchoolHub?</p>
+                <p>Reach us through WhatsApp or email.</p>
+
+                <a href="https://wa.me/2349051608086"
+                   class="btn btn-primary"
+                   target="_blank"
+                   rel="noopener noreferrer">
+                    Chat with Us
+                </a>
+
+                <a href="{% url 'request_demo' %}" class="btn btn-primary">
+                    Request a Demo
+                </a>
+
+                <a href="mailto:obayomipaul03@gmail.com"
+                   class="btn btn-primary">
+                    Email Us
+                </a>
+            </div>
+
+        </div>
+
+        <div class="footer-bottom">
+            <div class="container">
+                &copy; {% now "Y" %} Paul SchoolHub.
+                All rights reserved.
+            </div>
+        </div>
+    </footer>
+
+</body>
+</html>

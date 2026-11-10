@@ -17,6 +17,17 @@ class MaintenanceMiddleware:
         self.get_response = get_response
 
     def __call__(self, request):
+        
+        hostname = request.get_host().split(":")[0].lower().rstrip(".")
+
+        if (
+            hostname == "www.paulschoolhub.com.ng"
+            or (
+                settings.DEBUG
+                and hostname == "marketing.localhost"
+            )
+        ):
+            return self.get_response(request)
 
         maintenance = MaintenanceMode.get_solo()
 

@@ -82,11 +82,13 @@ INSTALLED_APPS = [
     'library',
     'registrations',
     'help_center',
+    'marketing',
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'marketing.middleware.MarketingDomainMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
