@@ -18,6 +18,14 @@
         - Login
     </title>
 
+    {% if login_school_settings and login_school_settings.school_logo %}
+        <link rel="icon" href="{{ login_school_settings.school_logo.url }}">
+    {% elif login_school and login_school.logo %}
+        <link rel="icon" href="{{ login_school.logo.url }}">
+    {% else %}
+        <link rel="icon" type="image/png" href="{% static 'images/logo.png' %}">
+    {% endif %}
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 

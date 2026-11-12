@@ -15,6 +15,12 @@
         - Platform Login
     </title>
 
+    {% if platform_settings and platform_settings.platform_logo %}
+        <link rel="icon" href="{{ platform_settings.platform_logo.url }}">
+    {% else %}
+        <link rel="icon" type="image/png" href="{% static 'images/logo.png' %}">
+    {% endif %}
+
     <link rel="preconnect"
           href="https://fonts.googleapis.com">
 
