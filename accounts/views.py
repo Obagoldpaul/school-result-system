@@ -11,18 +11,38 @@ from django.utils.decorators import method_decorator
 
 from django.contrib.auth.views import PasswordResetConfirmView
 from django.contrib.auth.tokens import default_token_generator
-from django.urls import reverse_lazy
+from django.urls import reverse, reverse_lazy
+from urllib.parse import urlencode
 
 from django.contrib.auth.forms import PasswordResetForm
 from django.contrib.auth.views import (
     LoginView,
     PasswordResetView,
     PasswordResetConfirmView,
+    PasswordResetDoneView,
 )
 
 from django.core.mail import EmailMultiAlternatives
 from django.template import loader
 
+
+def get_school_login_context(school):
+    """
+    Build school-branding context for authentication pages.
+    """
+
+    school_settings = None
+
+    if school:
+        try:
+            school_settings = SchoolSettings.load(school)
+        except SchoolSettings.DoesNotExist:
+            pass
+
+    return {
+        "login_school": school,
+        "login_school_settings": school_settings,
+    }
 
 class SchoolHubLoginView(LoginView):
     """
@@ -254,6 +274,7 @@ class SetPasswordView(PasswordResetConfirmView):
         school = getattr(self.user, "school", None)
 
         context["school"] = school
+        context.update(get_school_login_context(school))
 
         return context
 
@@ -365,5 +386,78 @@ class PasswordResetRequestView(PasswordResetView):
     template_name = "registration/password_reset.html"
     email_template_name = "registration/password_reset_email.txt"
     subject_template_name = "registration/password_reset_subject.txt"
-    success_url = reverse_lazy("password_reset_done")
     form_class = PlatformPasswordResetForm
+    
+    def get_school(self):
+        """
+        Resolve the school using the same priority as the login view.
+        """
+
+        domain_school = getattr(self.request, "school", None)
+
+        if domain_school:
+            return domain_school
+
+        school_code = self.request.GET.get("school")
+
+        if not school_code:
+            school_code = self.request.POST.get("school")
+
+        if not school_code:
+            return None
+
+        return School.objects.filter(
+            code__iexact=school_code.strip()
+        ).first()
+        
+    def get_success_url(self):
+        url = reverse("password_reset_done")
+
+        school = self.get_school()
+
+        if school:
+            query_string = urlencode({"school": school.code})
+            return f"{url}?{query_string}"
+
+        return url
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        school = self.get_school()
+
+        context.update(get_school_login_context(school))
+
+        return context
+    
+
+class SchoolPasswordResetDoneView(PasswordResetDoneView):
+    template_name = "registration/password_reset_done.html"
+
+    def get_school(self):
+        """
+        Resolve the school using the same priority as the login view.
+        """
+
+        domain_school = getattr(self.request, "school", None)
+
+        if domain_school:
+            return domain_school
+
+        school_code = self.request.GET.get("school")
+
+        if not school_code:
+            return None
+
+        return School.objects.filter(
+            code__iexact=school_code.strip()
+        ).first()
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        school = self.get_school()
+
+        context.update(get_school_login_context(school))
+
+        return context

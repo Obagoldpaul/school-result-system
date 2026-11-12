@@ -159,11 +159,11 @@ class SchoolRegistrationForm(forms.Form):
 
     admin_last_name = forms.CharField(
         max_length=150,
-        label="Last Name",
+        label="Surname",
         widget=forms.TextInput(
             attrs={
                 "class": "form-control",
-                "placeholder": "Administrator last name",
+                "placeholder": "Administrator surname",
             }
         ),
     )

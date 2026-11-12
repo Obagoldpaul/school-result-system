@@ -227,6 +227,17 @@ class StudentRegistrationApplicationForm(
     This form creates a RegistrationApplication only.
     It does not create a User or Student.
     """
+    
+    last_name = forms.CharField(
+        max_length=150,
+        label="Surname",
+        widget=forms.TextInput(
+            attrs={
+                "class": "form-control",
+                "placeholder": "Surname",
+            }
+        ),
+    )
 
     nationality = forms.ChoiceField(
         choices=NATIONALITY_CHOICES,
@@ -480,6 +491,17 @@ class TeacherRegistrationApplicationForm(
     This form creates a RegistrationApplication only.
     It does not create a User or Teacher.
     """
+    
+    last_name = forms.CharField(
+        max_length=150,
+        label="Surname",
+        widget=forms.TextInput(
+            attrs={
+                "class": "form-control",
+                "placeholder": "Surname",
+            }
+        ),
+    )
 
     date_of_birth = forms.DateField(
         widget=forms.DateInput(

@@ -354,34 +354,34 @@
 
                 {% endif %}
 
+            
             </nav>
-
-            {% if request.user.is_authenticated %}
-            <form method="POST" action="{% url 'logout' %}" class="logout-form">
-                {% csrf_token %}
-                <button type="submit">Logout ({{ request.user.username }})</button>
-            </form>
-            {% endif %}
         </div>
 
         <div class="sidebar-overlay" id="sidebar-overlay"></div>
 
         <div class="main-area">
-                <!-- Mobile sidebar toggle -->
-            <button
-                type="button"
-                class="mobile-menu-toggle"
-                id="mobile-menu-toggle"
-                aria-label="Open navigation menu"
-                aria-controls="school-sidebar"
-                aria-expanded="false"
-            >
-                ☰
-            </button>
             <div class="topbar">
-                <form method="GET" action="#" class="search-box">
-                    <input type="text" placeholder="Search... (coming soon)" disabled>
-                </form>
+
+                <div class="topbar-left">
+                    <button
+                        type="button"
+                        class="mobile-menu-toggle"
+                        id="mobile-menu-toggle"
+                        aria-label="Open navigation menu"
+                        aria-controls="school-sidebar"
+                        aria-expanded="false"
+                    >
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </button>
+
+                    <form method="GET" action="#" class="search-box">
+                        <input type="text" placeholder="Search... (coming soon)" disabled>
+                    </form>
+                </div>
+
                 <div class="topbar-right">
 
                     <button
@@ -393,10 +393,12 @@
                     >
                         🌙 Dark
                     </button>
-                
+
                     <div class="notif-wrapper" tabindex="0">
-                        <span class="notif-icon" style="cursor:pointer;">🔔{% if nav_announcement_count %}<span
-                                class="notif-badge">{{ nav_announcement_count }}</span>{% endif %}</span>
+                        <span class="notif-icon" style="cursor:pointer;">
+                            🔔{% if nav_announcement_count %}<span class="notif-badge">{{ nav_announcement_count }}</span>{% endif %}
+                        </span>
+
                         <div class="notif-dropdown">
                             {% for a in nav_announcements %}
                             <a href="{% url 'announcement_list' %}" class="notif-item">
@@ -406,12 +408,58 @@
                             {% empty %}
                             <div class="notif-empty">No announcements yet.</div>
                             {% endfor %}
-                            <div class="notif-footer"><a href="{% url 'announcement_list' %}">View all</a></div>
+
+                            <div class="notif-footer">
+                                <a href="{% url 'announcement_list' %}">View all</a>
+                            </div>
                         </div>
                     </div>
-                    <span class="user-chip">{{ request.user.get_full_name|default:request.user.username }}</span>
+
+                    <div class="profile-menu">
+                        <button
+                            type="button"
+                            class="profile-trigger"
+                            id="profile-menu-toggle"
+                            aria-label="Open profile menu"
+                            aria-expanded="false"
+                            aria-controls="profile-dropdown"
+                        >
+                            <span class="profile-avatar">
+                                {% if request.user.last_name and request.user.first_name %}
+                                    {{ request.user.last_name|slice:":1"|upper }}{{ request.user.first_name|slice:":1"|upper }}
+                                {% elif request.user.last_name %}
+                                    {{ request.user.last_name|slice:":1"|upper }}
+                                {% elif request.user.first_name %}
+                                    {{ request.user.first_name|slice:":1"|upper }}
+                                {% else %}
+                                    {{ request.user.username|slice:":1"|upper }}
+                                {% endif %}
+                            </span>
+                        </button>
+
+                        <div class="profile-dropdown" id="profile-dropdown">
+                            <div class="profile-dropdown-user">
+                                <strong>
+                                    {{ request.user.get_full_name|default:request.user.username }}
+                                </strong>
+                                <small>{{ request.user.username }}</small>
+                            </div>
+
+                            <div class="profile-dropdown-divider"></div>
+
+                            <form method="POST" action="{% url 'logout' %}">
+                                {% csrf_token %}
+                                <button type="submit" class="profile-logout-button">
+                                    Logout
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+
                 </div>
+            
             </div>
+
             <div class="content">
 
                 {% if messages %}
@@ -419,7 +467,7 @@
                         <div class="alert alert-{{ message.tags }} alert-dismissible fade show"
                              role="alert">
                             {{ message }}
-            
+
                             <button type="button"
                                     class="btn-close"
                                     data-bs-dismiss="alert"
@@ -427,12 +475,14 @@
                         </div>
                     {% endfor %}
                 {% endif %}
-            
+
                 {% block content %}
                 {% endblock %}
-            
+
             </div>
+
             <footer class="text-center mt-4 py-3">
+
 
                 <small class="text-muted">
             

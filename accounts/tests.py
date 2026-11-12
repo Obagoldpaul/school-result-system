@@ -341,6 +341,43 @@ class PasswordResetEmailTests(TestCase):
     @override_settings(
         EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend"
     )
+    
+    def test_reset_request_preserves_school_code_in_success_redirect(self):
+        response = self.client.post(
+            f"{reverse('password_reset')}?school={self.school.code}",
+            {"email": self.user.email},
+        )
+
+        self.assertEqual(response.status_code, 302)
+
+        self.assertEqual(
+            response.url,
+            f"{reverse('password_reset_done')}?school={self.school.code}",
+        )
+    
+    def test_password_reset_done_page_resolves_school_from_query_parameter(self):
+        response = self.client.get(
+            reverse("password_reset_done"),
+            {"school": self.school.code},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response.context["login_school"],
+            self.school,
+        )
+    
+    def test_password_reset_page_resolves_school_from_query_parameter(self):
+        response = self.client.get(
+            reverse("password_reset"),
+            {"school": self.school.code},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response.context["login_school"],
+            self.school,
+        )
     def test_reset_email_uses_school_name_and_platform_domain(self):
         response = self.client.post(
             reverse("password_reset"),
