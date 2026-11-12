@@ -635,8 +635,16 @@
     z-index: 1060;
 }
 
-.profile-menu.open .profile-dropdown {
+.profile-menu[open] .profile-dropdown {
     display: block;
+}
+
+.profile-trigger {
+    list-style: none;
+}
+
+.profile-trigger::-webkit-details-marker {
+    display: none;
 }
 
 .profile-dropdown-user {

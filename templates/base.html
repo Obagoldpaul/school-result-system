@@ -415,14 +415,10 @@
                         </div>
                     </div>
 
-                    <div class="profile-menu">
-                        <button
-                            type="button"
+                    <details class="profile-menu">
+                        <summary
                             class="profile-trigger"
-                            id="profile-menu-toggle"
                             aria-label="Open profile menu"
-                            aria-expanded="false"
-                            aria-controls="profile-dropdown"
                         >
                             <span class="profile-avatar">
                                 {% if request.user.last_name and request.user.first_name %}
@@ -435,18 +431,18 @@
                                     {{ request.user.username|slice:":1"|upper }}
                                 {% endif %}
                             </span>
-                        </button>
-
-                        <div class="profile-dropdown" id="profile-dropdown">
+                        </summary>
+                    
+                        <div class="profile-dropdown">
                             <div class="profile-dropdown-user">
                                 <strong>
                                     {{ request.user.get_full_name|default:request.user.username }}
                                 </strong>
                                 <small>{{ request.user.username }}</small>
                             </div>
-
+                    
                             <div class="profile-dropdown-divider"></div>
-
+                    
                             <form method="POST" action="{% url 'logout' %}">
                                 {% csrf_token %}
                                 <button type="submit" class="profile-logout-button">
@@ -454,7 +450,7 @@
                                 </button>
                             </form>
                         </div>
-                    </div>
+                    </details>
 
                 </div>
             
