@@ -428,6 +428,51 @@
 
                                     {{ field }}
 
+                                    {% if field.name == "passport" %}
+                                        <div id="public-teacher-camera" style="margin-top: 15px;">
+
+                                            <div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:12px;">
+
+                                                <button type="button"
+                                                        id="public-teacher-start-camera"
+                                                        class="btn btn-outline-primary">
+                                                    Open Camera
+                                                </button>
+
+                                                <button type="button"
+                                                        id="public-teacher-capture"
+                                                        class="btn btn-success"
+                                                        hidden>
+                                                    Capture Photo
+                                                </button>
+
+                                                <button type="button"
+                                                        id="public-teacher-retake"
+                                                        class="btn btn-outline-secondary"
+                                                        hidden>
+                                                    Retake Photo
+                                                </button>
+
+                                            </div>
+
+                                            <video id="public-teacher-video"
+                                                autoplay
+                                                playsinline
+                                                style="display:none;width:100%;max-width:320px;border-radius:8px;">
+                                            </video>
+
+                                            <img id="public-teacher-captured"
+                                                alt="Captured teacher photograph"
+                                                style="display:none;width:120px;height:120px;object-fit:cover;border-radius:8px;border:1px solid #ddd;">
+
+                                            <p id="public-teacher-camera-message"
+                                            class="form-help"
+                                            aria-live="polite">
+                                            </p>
+
+                                        </div>
+                                    {% endif %}
+
                                     {% if field.help_text %}
                                         <div class="form-help">
                                             {{ field.help_text }}
@@ -612,6 +657,138 @@
 
     updateLgaChoices();
 </script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const startButton = document.getElementById("public-teacher-start-camera");
+        const captureButton = document.getElementById("public-teacher-capture");
+        const retakeButton = document.getElementById("public-teacher-retake");
+        const video = document.getElementById("public-teacher-video");
+        const capturedImage = document.getElementById("public-teacher-captured");
+        const message = document.getElementById("public-teacher-camera-message");
+        const passportInput = document.getElementById("id_passport");
+    
+        if (!startButton || !passportInput) return;
+    
+        let cameraStream = null;
+        let capturedImageUrl = null;
+    
+        async function openCamera() {
+            try {
+                if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                    message.textContent = "Camera access requires a secure HTTPS connection.";
+                    return;
+                }
+    
+                cameraStream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: "user" },
+                    audio: false
+                });
+    
+                video.srcObject = cameraStream;
+                video.style.display = "block";
+                capturedImage.style.display = "none";
+    
+                startButton.hidden = true;
+                captureButton.hidden = false;
+                retakeButton.hidden = true;
+    
+                message.textContent = "Position yourself and capture your photo.";
+    
+            } catch (error) {
+                message.textContent = "Unable to access the camera. Please allow camera permission and try again.";
+                console.error("Camera error:", error);
+            }
+        }
+    
+        function stopCamera() {
+            if (cameraStream) {
+                cameraStream.getTracks().forEach(track => track.stop());
+                cameraStream = null;
+            }
+    
+            video.srcObject = null;
+            video.style.display = "none";
+        }
+    
+        startButton.addEventListener("click", openCamera);
+    
+        captureButton.addEventListener("click", function () {
+            if (!cameraStream || !video.videoWidth) {
+                message.textContent = "Camera is not ready yet. Please try again.";
+                return;
+            }
+    
+            const canvas = document.createElement("canvas");
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+    
+            const context = canvas.getContext("2d");
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+    
+            canvas.toBlob(function (blob) {
+                if (!blob) {
+                    message.textContent = "Could not capture the photo. Please try again.";
+                    return;
+                }
+    
+                const file = new File(
+                    [blob],
+                    "teacher-passport.jpg",
+                    { type: "image/jpeg" }
+                );
+    
+                const dataTransfer = new DataTransfer();
+                dataTransfer.items.add(file);
+                passportInput.files = dataTransfer.files;
+    
+                passportInput.dispatchEvent(new Event("change", { bubbles: true }));
+    
+                if (capturedImageUrl) {
+                    URL.revokeObjectURL(capturedImageUrl);
+                }
+    
+                capturedImageUrl = URL.createObjectURL(blob);
+                capturedImage.src = capturedImageUrl;
+                capturedImage.style.display = "block";
+    
+                stopCamera();
+    
+                captureButton.hidden = true;
+                retakeButton.hidden = false;
+                startButton.hidden = true;
+    
+                message.textContent = "Photo captured successfully. You can retake it if needed.";
+    
+            }, "image/jpeg", 0.90);
+        });
+    
+        retakeButton.addEventListener("click", function () {
+            passportInput.value = "";
+    
+            if (capturedImageUrl) {
+                URL.revokeObjectURL(capturedImageUrl);
+                capturedImageUrl = null;
+            }
+    
+            capturedImage.src = "";
+            capturedImage.style.display = "none";
+    
+            retakeButton.hidden = true;
+            startButton.hidden = false;
+    
+            message.textContent = "You can take another photo.";
+        });
+    
+        window.addEventListener("beforeunload", function () {
+            stopCamera();
+    
+            if (capturedImageUrl) {
+                URL.revokeObjectURL(capturedImageUrl);
+            }
+        });
+    });
+    </script>
 
 </body>
 

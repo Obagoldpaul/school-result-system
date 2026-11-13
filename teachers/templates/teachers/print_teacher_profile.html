@@ -44,11 +44,22 @@
             margin-top: 20px;
         }
 
-        img {
+        .photo img,
+        .photo .photo-initials {
             width: 140px;
             height: 160px;
             object-fit: cover;
             border: 1px solid #ccc;
+        }
+
+        .photo .photo-initials {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: #f0f0f0;
+            color: #555;
+            font-size: 42px;
+            font-weight: 700;
         }
     </style>
 
@@ -67,11 +78,18 @@
     <div class="photo">
 
         {% if teacher.passport %}
-
-        <img src="{{ teacher.passport.url }}">
-
+    
+            <img src="{{ teacher.passport.url }}" alt="Teacher Passport">
+    
+        {% else %}
+    
+            <div class="photo-initials" role="img"
+                 aria-label="{{ teacher.user.get_full_name }}">
+                {{ teacher.user.last_name|first|upper }}{{ teacher.user.first_name|first|upper }}
+            </div>
+    
         {% endif %}
-
+    
     </div>
 
     <table>

@@ -55,18 +55,39 @@
                 <div class="col-md-4 text-md-end mt-3 mt-md-0">
 
                     {% if student_profile.passport %}
+                
                         <img
                             src="{{ student_profile.passport.url }}"
                             alt="Student Passport"
                             class="rounded"
                             style="
-                                width: 70px;
-                                height: 85px;
-                                object-fit: cover;
+                                width:70px;
+                                height:85px;
+                                object-fit:cover;
                             "
                         >
+                
+                    {% else %}
+                
+                        <div
+                            class="rounded d-inline-flex align-items-center justify-content-center"
+                            role="img"
+                            aria-label="{{ student_profile.user.get_full_name }}"
+                            style="
+                                width:70px;
+                                height:85px;
+                                background:#f0f0f0;
+                                border:1px solid #ddd;
+                                color:#555;
+                                font-size:24px;
+                                font-weight:700;
+                            "
+                        >
+                            {{ student_profile.user.last_name|first|upper }}{{ student_profile.user.first_name|first|upper }}
+                        </div>
+                
                     {% endif %}
-
+                
                 </div>
 
             </div>

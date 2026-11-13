@@ -68,28 +68,33 @@
              style="width:130px; text-align:center;">
     
             {% if student.passport %}
-    
+
                 <img src="{{ student.passport.url }}"
-                     alt="Passport"
-                     style="width:80px;height:95px;object-fit:cover;">
-    
+                    alt="Passport"
+                    style="width:80px;height:95px;object-fit:cover;">
+            
             {% else %}
-    
-                <div style="
-                    width:80px;
-                    height:95px;
-                    border:1px solid #333;
-                    margin:auto;
-                    display:flex;
-                    align-items:center;
-                    justify-content:center;
-                    font-size:11px;
-                ">
-                    No Photo
+            
+                <div role="img"
+                    aria-label="{{ student.user.get_full_name }}"
+                    style="
+                        width:80px;
+                        height:95px;
+                        border:1px solid #333;
+                        margin:auto;
+                        display:flex;
+                        align-items:center;
+                        justify-content:center;
+                        background-color:#f0f0f0;
+                        color:#555555;
+                        font-size:24px;
+                        font-weight:700;
+                    ">
+                    {{ student.user.last_name|first|upper }}{{ student.user.first_name|first|upper }}
                 </div>
-    
+            
             {% endif %}
-    
+        
         </div>
     
     </div>

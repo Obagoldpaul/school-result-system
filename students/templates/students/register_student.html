@@ -63,6 +63,49 @@ Register Student
                         {{ form.passport }}
                         {{ form.passport.errors }}
 
+                        <div id="student-register-camera" class="mt-3">
+
+                            <div class="d-flex flex-wrap gap-2 mb-3">
+                        
+                                <button type="button"
+                                        id="student-register-start-camera"
+                                        class="btn btn-outline-primary">
+                                    Open Camera
+                                </button>
+                        
+                                <button type="button"
+                                        id="student-register-capture"
+                                        class="btn btn-success"
+                                        hidden>
+                                    Capture Photo
+                                </button>
+                        
+                                <button type="button"
+                                        id="student-register-retake"
+                                        class="btn btn-outline-secondary"
+                                        hidden>
+                                    Retake Photo
+                                </button>
+                        
+                            </div>
+                        
+                            <video id="student-register-video"
+                                   autoplay
+                                   playsinline
+                                   style="display:none;width:100%;max-width:320px;border-radius:8px;">
+                            </video>
+                        
+                            <img id="student-register-captured"
+                                 alt="Captured student photograph"
+                                 style="display:none;width:120px;height:120px;object-fit:cover;border-radius:8px;border:1px solid #ddd;">
+                        
+                            <p id="student-register-camera-message"
+                               class="small text-muted mt-2"
+                               aria-live="polite">
+                            </p>
+                        
+                        </div>
+
                     </div>
 
 
@@ -718,5 +761,139 @@ Register Student
     );
 
 </script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+    
+        const passportInput = document.getElementById("id_passport");
+        const startButton = document.getElementById("student-register-start-camera");
+        const captureButton = document.getElementById("student-register-capture");
+        const retakeButton = document.getElementById("student-register-retake");
+        const video = document.getElementById("student-register-video");
+        const capturedPreview = document.getElementById("student-register-captured");
+        const message = document.getElementById("student-register-camera-message");
+    
+        if (!passportInput || !startButton || !captureButton || !retakeButton || !video) {
+            return;
+        }
+    
+        let cameraStream = null;
+        let capturedPhotoUrl = null;
+    
+        async function startCamera() {
+    
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                message.textContent = "Camera access requires a supported browser and a secure HTTPS connection.";
+                return;
+            }
+    
+            try {
+    
+                cameraStream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: "user" },
+                    audio: false
+                });
+    
+                video.srcObject = cameraStream;
+                video.style.display = "block";
+    
+                startButton.hidden = true;
+                captureButton.hidden = false;
+                retakeButton.hidden = true;
+    
+                message.textContent = "Position yourself in the camera and capture your photograph.";
+    
+            } catch (error) {
+    
+                message.textContent = "Unable to access the camera. Please allow camera permission and try again.";
+    
+            }
+    
+        }
+    
+        function stopCamera() {
+    
+            if (cameraStream) {
+                cameraStream.getTracks().forEach(track => track.stop());
+                cameraStream = null;
+            }
+    
+            video.srcObject = null;
+            video.style.display = "none";
+    
+        }
+    
+        startButton.addEventListener("click", startCamera);
+    
+        captureButton.addEventListener("click", function () {
+    
+            if (!cameraStream || !video.videoWidth) {
+                message.textContent = "Please wait for the camera to become ready.";
+                return;
+            }
+    
+            const canvas = document.createElement("canvas");
+    
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+    
+            const context = canvas.getContext("2d");
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+    
+            canvas.toBlob(function (blob) {
+    
+                if (!blob) {
+                    message.textContent = "Unable to capture the photograph. Please try again.";
+                    return;
+                }
+    
+                const photoFile = new File(
+                    [blob],
+                    "student-passport.jpg",
+                    { type: "image/jpeg" }
+                );
+    
+                const dataTransfer = new DataTransfer();
+                dataTransfer.items.add(photoFile);
+    
+                passportInput.files = dataTransfer.files;
+    
+                passportInput.dispatchEvent(
+                    new Event("change", { bubbles: true })
+                );
+    
+                if (capturedPhotoUrl) {
+                    URL.revokeObjectURL(capturedPhotoUrl);
+                }
+    
+                capturedPhotoUrl = URL.createObjectURL(blob);
+                capturedPreview.src = capturedPhotoUrl;
+                capturedPreview.style.display = "block";
+    
+                stopCamera();
+    
+                captureButton.hidden = true;
+                retakeButton.hidden = false;
+    
+                message.textContent = "Photograph captured. You can retake it or continue with registration.";
+    
+            }, "image/jpeg", 0.90);
+    
+        });
+    
+        retakeButton.addEventListener("click", startCamera);
+    
+        window.addEventListener("beforeunload", function () {
+    
+            stopCamera();
+    
+            if (capturedPhotoUrl) {
+                URL.revokeObjectURL(capturedPhotoUrl);
+            }
+    
+        });
+    
+    });
+    </script>
 
 {% endblock %}

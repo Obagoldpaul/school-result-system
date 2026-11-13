@@ -135,13 +135,26 @@ Teacher Profile
                                 width:200px;
                                 height:200px;
                                 object-fit:cover;
-                            ">
+                            "
+                        >
 
                     {% else %}
 
-                        <img
-                            src="https://via.placeholder.com/200"
-                            class="img-thumbnail">
+                        <div
+                            class="img-thumbnail shadow d-inline-flex align-items-center justify-content-center"
+                            role="img"
+                            aria-label="{{ teacher.user.get_full_name }}"
+                            style="
+                                width:200px;
+                                height:200px;
+                                background:#f0f0f0;
+                                color:#555555;
+                                font-size:48px;
+                                font-weight:700;
+                            "
+                        >
+                            {{ teacher.user.last_name|first|upper }}{{ teacher.user.first_name|first|upper }}
+                        </div>
 
                     {% endif %}
 

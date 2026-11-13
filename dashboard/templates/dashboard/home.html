@@ -1344,36 +1344,35 @@ STUDENT PROFILE
 
             {% if request.user.student_profile.passport %}
 
-            <img src="{{ request.user.student_profile.passport.url }}" alt="Student Passport" style="
-                   width:150px;
-                   height:180px;
-                   object-fit:cover;
-                   border-radius:8px;
-                   border:1px solid #ddd;
-                   padding:4px;
-                   background:#fff;
-               ">
+                <img src="{{ request.user.student_profile.passport.url }}" alt="Student Passport" style="
+                    width:150px;
+                    height:180px;
+                    object-fit:cover;
+                    border-radius:8px;
+                    border:1px solid #ddd;
+                    padding:4px;
+                    background:#fff;
+                ">
 
             {% else %}
 
-            <div style="
-               width:150px;
-               height:180px;
-               margin:0 auto;
-               display:flex;
-               align-items:center;
-               justify-content:center;
-               text-align:center;
-               background:#f5f5f5;
-               border:1px solid #ddd;
-               border-radius:8px;
-               color:#888;
-               font-size:13px;
-           ">
-
-                No Passport Photo
-
-            </div>
+                <div style="
+                    width:150px;
+                    height:180px;
+                    margin:0 auto;
+                    display:flex;
+                    align-items:center;
+                    justify-content:center;
+                    text-align:center;
+                    background:#f0f0f0;
+                    border:1px solid #ddd;
+                    border-radius:8px;
+                    color:#555;
+                    font-size:42px;
+                    font-weight:700;
+                ">
+                    {{ request.user.last_name|first|upper }}{{ request.user.first_name|first|upper }}
+                </div>
 
             {% endif %}
 

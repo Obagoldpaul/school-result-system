@@ -211,6 +211,41 @@
                 accept="image/*"
             >
 
+            <div id="student-edit-camera" style="margin-top:15px;">
+
+                <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;">
+            
+                    <button type="button" id="student-edit-start-camera">
+                        Open Camera
+                    </button>
+            
+                    <button type="button" id="student-edit-capture" hidden>
+                        Capture Photo
+                    </button>
+            
+                    <button type="button" id="student-edit-retake" hidden>
+                        Retake Photo
+                    </button>
+            
+                </div>
+            
+                <video id="student-edit-video"
+                       autoplay
+                       playsinline
+                       style="display:none;width:100%;max-width:320px;border-radius:8px;">
+                </video>
+            
+                <img id="student-edit-captured"
+                     alt="Captured student photograph"
+                     style="display:none;width:110px;height:130px;object-fit:cover;border-radius:6px;border:1px solid #ccc;">
+            
+                <p id="student-edit-camera-message"
+                   class="small text-muted"
+                   aria-live="polite">
+                </p>
+            
+            </div>
+
         </div>
 
     </div>
@@ -700,6 +735,160 @@
             populateLgas();
         
         });
+
+        // STUDENT EDIT PASSPORT CAMERA
+
+        const passportInput = document.querySelector(
+            'input[name="passport"]'
+        );
+
+        const startButton = document.getElementById(
+            "student-edit-start-camera"
+        );
+
+        const captureButton = document.getElementById(
+            "student-edit-capture"
+        );
+
+        const retakeButton = document.getElementById(
+            "student-edit-retake"
+        );
+
+        const video = document.getElementById(
+            "student-edit-video"
+        );
+
+        const capturedPreview = document.getElementById(
+            "student-edit-captured"
+        );
+
+        const cameraMessage = document.getElementById(
+            "student-edit-camera-message"
+        );
+
+        let cameraStream = null;
+
+        function stopStudentEditCamera() {
+            if (cameraStream) {
+                cameraStream.getTracks().forEach(track => track.stop());
+                cameraStream = null;
+            }
+        }
+
+        async function startStudentEditCamera() {
+
+            if (!navigator.mediaDevices ||
+                !navigator.mediaDevices.getUserMedia) {
+
+                cameraMessage.textContent =
+                    "Camera access is unavailable. Please use HTTPS or the upload option.";
+
+                return;
+            }
+
+            try {
+
+                stopStudentEditCamera();
+
+                cameraStream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: "user" },
+                    audio: false
+                });
+
+                video.srcObject = cameraStream;
+                video.style.display = "block";
+
+                capturedPreview.style.display = "none";
+
+                startButton.hidden = true;
+                captureButton.hidden = false;
+                retakeButton.hidden = true;
+
+                cameraMessage.textContent =
+                    "Position the student and select Capture Photo.";
+
+            } catch (error) {
+
+                cameraMessage.textContent =
+                    "Unable to access the camera. Please allow camera permission or use the upload option.";
+
+            }
+        }
+
+        startButton.addEventListener(
+            "click",
+            startStudentEditCamera
+        );
+
+        captureButton.addEventListener("click", function () {
+
+            if (!cameraStream || !video.videoWidth) {
+                cameraMessage.textContent =
+                    "Please wait for the camera to start.";
+                return;
+            }
+
+            const canvas = document.createElement("canvas");
+
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+
+            canvas.getContext("2d").drawImage(
+                video,
+                0,
+                0,
+                canvas.width,
+                canvas.height
+            );
+
+            canvas.toBlob(function (blob) {
+
+                if (!blob) {
+                    cameraMessage.textContent =
+                        "Unable to capture photograph. Please try again.";
+                    return;
+                }
+
+                const file = new File(
+                    [blob],
+                    "student-passport.jpg",
+                    { type: "image/jpeg" }
+                );
+
+                const dataTransfer = new DataTransfer();
+                dataTransfer.items.add(file);
+
+                passportInput.files = dataTransfer.files;
+
+                passportInput.dispatchEvent(
+                    new Event("change", { bubbles: true })
+                );
+
+                capturedPreview.src = URL.createObjectURL(file);
+                capturedPreview.style.display = "block";
+
+                video.style.display = "none";
+
+                captureButton.hidden = true;
+                retakeButton.hidden = false;
+
+                stopStudentEditCamera();
+
+                cameraMessage.textContent =
+                    "Photograph captured successfully.";
+
+            }, "image/jpeg", 0.90);
+
+        });
+
+        retakeButton.addEventListener("click", function () {
+            startStudentEditCamera();
+        });
+
+        window.addEventListener(
+            "beforeunload",
+            stopStudentEditCamera
+        );
         </script>
 
 </form>

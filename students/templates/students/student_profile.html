@@ -133,26 +133,39 @@ Student Profile
                 <div class="col-md-3 text-center">
 
                     {% if student.passport %}
-
-                    <img src="{{ student.passport.url }}" class="img-thumbnail shadow mb-3" style="
-                                width:200px;
-                                height:200px;
-                                border-radius:12px;
-                                object-fit:cover;
-                            ">
-
+                
+                        <img src="{{ student.passport.url }}" alt="Student Passport" style="
+                            width:150px;
+                            height:180px;
+                            object-fit:cover;
+                            border-radius:8px;
+                            border:1px solid #ddd;
+                            padding:4px;
+                            background:#fff;
+                        ">
+                
                     {% else %}
-
-                    <img src="https://via.placeholder.com/200x200?text=No+Photo" class="img-thumbnail shadow mb-3"
-                        style="
-        width:200px;
-        height:200px;
-        border-radius:12px;
-        object-fit:cover;
-    ">
-
+                
+                        <div style="
+                            width:150px;
+                            height:180px;
+                            margin:0 auto;
+                            display:flex;
+                            align-items:center;
+                            justify-content:center;
+                            text-align:center;
+                            background:#f0f0f0;
+                            border:1px solid #ddd;
+                            border-radius:8px;
+                            color:#555;
+                            font-size:42px;
+                            font-weight:700;
+                        ">
+                            {{ student.user.last_name|first|upper }}{{ student.user.first_name|first|upper }}
+                        </div>
+                
                     {% endif %}
-
+                
                 </div>
 
                 <div class="col-md-9">

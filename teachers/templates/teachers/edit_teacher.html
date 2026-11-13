@@ -447,6 +447,49 @@ Edit Teacher
                             Upload a new passport image only if you want to replace the current one.
                         </div>
 
+                        <div id="teacher-edit-camera" class="mt-3">
+
+                            <div class="d-flex flex-wrap gap-2 mb-3">
+                        
+                                <button type="button"
+                                        id="teacher-edit-start-camera"
+                                        class="btn btn-outline-primary">
+                                    Open Camera
+                                </button>
+                        
+                                <button type="button"
+                                        id="teacher-edit-capture"
+                                        class="btn btn-success"
+                                        hidden>
+                                    Capture Photo
+                                </button>
+                        
+                                <button type="button"
+                                        id="teacher-edit-retake"
+                                        class="btn btn-outline-secondary"
+                                        hidden>
+                                    Retake Photo
+                                </button>
+                        
+                            </div>
+                        
+                            <video id="teacher-edit-video"
+                                   autoplay
+                                   playsinline
+                                   style="display:none;width:100%;max-width:320px;border-radius:8px;">
+                            </video>
+                        
+                            <img id="teacher-edit-captured"
+                                 alt="Captured teacher photograph"
+                                 style="display:none;width:120px;height:140px;object-fit:cover;border-radius:8px;border:1px solid #ddd;">
+                        
+                            <p id="teacher-edit-camera-message"
+                               class="small text-muted mt-2"
+                               aria-live="polite">
+                            </p>
+                        
+                        </div>
+
                     </div>
 
                 </div>
@@ -828,7 +871,140 @@ Edit Teacher
 </div>
 
 
-
+<script>
+    (function () {
+    
+        const passportInput = document.querySelector('input[name="passport"]');
+        const startButton = document.getElementById("teacher-edit-start-camera");
+        const captureButton = document.getElementById("teacher-edit-capture");
+        const retakeButton = document.getElementById("teacher-edit-retake");
+        const video = document.getElementById("teacher-edit-video");
+        const capturedPreview = document.getElementById("teacher-edit-captured");
+        const message = document.getElementById("teacher-edit-camera-message");
+    
+        if (!passportInput || !startButton || !captureButton || !retakeButton || !video) {
+            return;
+        }
+    
+        let cameraStream = null;
+        let capturedPhotoUrl = null;
+    
+        async function startCamera() {
+    
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                message.textContent = "Camera access requires a supported browser and a secure HTTPS connection.";
+                return;
+            }
+    
+            try {
+    
+                cameraStream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: "user" },
+                    audio: false
+                });
+    
+                video.srcObject = cameraStream;
+                video.style.display = "block";
+    
+                startButton.hidden = true;
+                captureButton.hidden = false;
+                retakeButton.hidden = true;
+    
+                message.textContent = "Position yourself in the camera and capture your photograph.";
+    
+            } catch (error) {
+    
+                message.textContent = "Unable to access the camera. Please allow camera permission and try again.";
+    
+            }
+    
+        }
+    
+        function stopCamera() {
+    
+            if (cameraStream) {
+                cameraStream.getTracks().forEach(track => track.stop());
+                cameraStream = null;
+            }
+    
+            video.srcObject = null;
+            video.style.display = "none";
+    
+        }
+    
+        startButton.addEventListener("click", startCamera);
+    
+        captureButton.addEventListener("click", function () {
+    
+            if (!cameraStream || !video.videoWidth) {
+                message.textContent = "Please wait for the camera to become ready.";
+                return;
+            }
+    
+            const canvas = document.createElement("canvas");
+    
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+    
+            const context = canvas.getContext("2d");
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+    
+            canvas.toBlob(function (blob) {
+    
+                if (!blob) {
+                    message.textContent = "Unable to capture the photograph. Please try again.";
+                    return;
+                }
+    
+                const photoFile = new File(
+                    [blob],
+                    "teacher-passport.jpg",
+                    { type: "image/jpeg" }
+                );
+    
+                const dataTransfer = new DataTransfer();
+                dataTransfer.items.add(photoFile);
+    
+                passportInput.files = dataTransfer.files;
+    
+                passportInput.dispatchEvent(
+                    new Event("change", { bubbles: true })
+                );
+    
+                if (capturedPhotoUrl) {
+                    URL.revokeObjectURL(capturedPhotoUrl);
+                }
+    
+                capturedPhotoUrl = URL.createObjectURL(blob);
+                capturedPreview.src = capturedPhotoUrl;
+                capturedPreview.style.display = "block";
+    
+                stopCamera();
+    
+                captureButton.hidden = true;
+                retakeButton.hidden = false;
+    
+                message.textContent = "Photograph captured. You can retake it or continue editing.";
+    
+            }, "image/jpeg", 0.90);
+    
+        });
+    
+        retakeButton.addEventListener("click", function () {
+            startCamera();
+        });
+    
+        window.addEventListener("beforeunload", function () {
+            stopCamera();
+    
+            if (capturedPhotoUrl) {
+                URL.revokeObjectURL(capturedPhotoUrl);
+            }
+        });
+    
+    })();
+    </script>
+    
 <!-- ========================== -->
 <!-- STATE → LGA JAVASCRIPT -->
 <!-- ========================== -->
