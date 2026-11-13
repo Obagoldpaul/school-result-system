@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+{% block title %}Approve Scores{% endblock %}
+
+{% block content %}
+
+<h1>
+    Approve: {{ allocation.subject }} -
+    {{ allocation.school_class }} ({{ allocation.term }})
+</h1>
+
+<p>
+    <strong>Status:</strong>
+    {{ allocation.get_status_display }}
+</p>
+
+<h2>Student Scores for Approval</h2>
+
+<table>
+    <thead>
+        <tr>
+            <th>Admission No.</th>
+            <th>Student Name</th>
+            <th>CA (40)</th>
+            <th>Exam (60)</th>
+            <th>Total (100)</th>
+        </tr>
+    </thead>
+
+    <tbody>
+        {% for student, score in student_score_pairs %}
+        <tr>
+            <td>{{ student.admission_number }}</td>
+            <td>{{ student.user.get_full_name }}</td>
+
+            {% if score %}
+                <td>{{ score.ca_score }}</td>
+                <td>{{ score.exam_score }}</td>
+                <td><strong>{{ score.total_score }}</strong></td>
+            {% else %}
+                <td>&mdash;</td>
+                <td>&mdash;</td>
+                <td>&mdash;</td>
+            {% endif %}
+        </tr>
+
+        {% empty %}
+        <tr>
+            <td colspan="5">No student scores found for this allocation.</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<br>
+
+<h3>Class Teacher's Comment</h3>
+
+<p>
+    {{ allocation.class_teacher_comment|default:"No comment provided."|linebreaksbr }}
+</p>
+
+<br>
+
+<form
+    method="POST"
+    action="{% url 'approve_allocation' allocation.id %}{% if current_query %}?{{ current_query }}{% endif %}"
+>
+    {% csrf_token %}
+
+    <p>
+        Please confirm that you have checked the submitted scores
+        and the Class Teacher's comment before approving.
+    </p>
+
+    <button type="submit">
+        Approve Results
+    </button>
+</form>
+
+<p>
+    <a href="{% url 'select_allocation' %}{% if current_query %}?{{ current_query }}{% endif %}">
+        Back to list
+    </a>
+</p>
+
+{% endblock %}

@@ -19,6 +19,8 @@ from accounts.permissions import (
     school_permission_required,
     user_has_permission,
     can_edit_report_extra,
+    can_approve_scores,
+    can_publish_scores,
 )
 from django.core.exceptions import PermissionDenied
 from django.db.models import F
@@ -222,6 +224,9 @@ def select_allocation(request):
         'selected_term': term_id,
         'selected_subject': subject_id,
         'selected_status': status,
+        
+        'can_approve_results': can_approve_scores(request.user),
+        'can_publish_results': can_publish_scores(request.user),
 
         'current_query': request.GET.urlencode(),
     }
@@ -352,11 +357,19 @@ def review_allocation(request, allocation_id):
         )
         return _redirect_with_query(request)
 
+    students = services.get_students_for_allocation(allocation)
+
+    student_score_pairs = services.get_student_score_pairs(
+        allocation,
+        students,
+    )
+
     return render(
         request,
         'scores/review_allocation.html',
         {
             'allocation': allocation,
+            'student_score_pairs': student_score_pairs,
         }
     )
 
@@ -375,12 +388,29 @@ def approve_allocation(request, allocation_id):
         allocation,
     )
 
-    services.approve_allocation_results(
+    if request.method == 'POST':
+        services.approve_allocation_results(
+            allocation,
+            user=request.user,
+        )
+        return _redirect_with_query(request)
+
+    students = services.get_students_for_allocation(allocation)
+
+    student_score_pairs = services.get_student_score_pairs(
         allocation,
-        user=request.user,
+        students,
     )
 
-    return _redirect_with_query(request)
+    return render(
+        request,
+        'scores/approve_allocation.html',
+        {
+            'allocation': allocation,
+            'student_score_pairs': student_score_pairs,
+            'current_query': request.GET.urlencode(),
+        }
+    )
 
 
 @staff_required
