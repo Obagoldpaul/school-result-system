@@ -2222,87 +2222,97 @@ STUDENT'S OWN BIRTHDAY
 
 
 <!-- =========================================================
-     TEACHING ASSIGNMENTS
+TEACHING ASSIGNMENTS
 ========================================================= -->
 
 {% if my_allocations %}
 
 <div class="section-card">
 
-    <h3>
+{% if is_management and my_allocations|length > 5 %}
 
-        {% if is_management %}
-            Score Entry & Results Management
-        {% else %}
-            My Teaching Assignments
-        {% endif %}
-    
-        {% if my_draft_count > 0 %}
+<details class="allocation-details">
 
-        <span style="
-            background:#d9822b;
-            color:#fff;
-            border-radius:10px;
-            padding:2px 8px;
-            font-size:12px;
-            margin-left:6px;
-        ">
+   <summary class="allocation-summary">
 
-            {{ my_draft_count }} awaiting submission
+       <h3>Score Entry & Results Management</h3>
 
-        </span>
+       <span class="allocation-toggle-label">
+           View all {{ my_allocations|length }} allocations
+       </span>
 
-        {% endif %}
+       {% if my_draft_count > 0 %}
+       <span style="
+           background:#d9822b;
+           color:#fff;
+           border-radius:10px;
+           padding:2px 8px;
+           font-size:12px;
+       ">
+           {{ my_draft_count }} awaiting submission
+       </span>
+       {% endif %}
 
-    </h3>
+   </summary>
+
+</details>
+
+{% elif is_management %}
+
+<h3>Score Entry & Results Management</h3>
+
+{% else %}
+
+<h3>
+   My Teaching Assignments
+
+   {% if my_draft_count > 0 %}
+   <span style="
+       background:#d9822b;
+       color:#fff;
+       border-radius:10px;
+       padding:2px 8px;
+       font-size:12px;
+       margin-left:6px;
+   ">
+       {{ my_draft_count }} awaiting submission
+   </span>
+   {% endif %}
+</h3>
+
+{% endif %}
 
 
-    <table>
+<table>
 
-        <tr>
+   <tr>
+       <th>Subject</th>
+       <th>Class</th>
+       <th>Term</th>
+       <th>Status</th>
+       <th>Action</th>
+   </tr>
 
-            <th>Subject</th>
-            <th>Class</th>
-            <th>Term</th>
-            <th>Status</th>
-            <th>Action</th>
+   {% for a in my_allocations %}
 
-        </tr>
+   <tr {% if is_management and forloop.counter > 5 %}class="allocation-extra-row"{% endif %}>
 
+       <td>{{ a.subject }}</td>
+       <td>{{ a.school_class }}</td>
+       <td>{{ a.term }}</td>
+       <td>{{ a.get_status_display }}</td>
 
-        {% for a in my_allocations %}
+       <td>
+           <a href="{% url 'enter_scores' a.id %}">
+               Enter Scores
+           </a>
+       </td>
 
-        <tr>
+   </tr>
 
-            <td>
-                {{ a.subject }}
-            </td>
+   {% endfor %}
 
-            <td>
-                {{ a.school_class }}
-            </td>
-
-            <td>
-                {{ a.term }}
-            </td>
-
-            <td>
-                {{ a.get_status_display }}
-            </td>
-
-            <td>
-
-                <a href="{% url 'enter_scores' a.id %}">
-                    Enter Scores
-                </a>
-
-            </td>
-
-        </tr>
-
-        {% endfor %}
-
-    </table>
+</table>
 
 </div>
 
@@ -2426,7 +2436,7 @@ TEACHER TIMETABLE
                 {% if my_class_term %}
 
                 <a href="{% url 'edit_report_extra' s.id my_class_term.id %}">
-                    Remarks/Attendance
+                    Result Remarks
                 </a>
 
                 {% endif %}

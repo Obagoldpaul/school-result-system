@@ -11,6 +11,7 @@ from schools.models import (
 )
 from django.utils import timezone
 from teachers.models import Teacher
+from students.models import SchoolClass
 
 from django.test import TestCase
 from django.urls import reverse
@@ -454,3 +455,86 @@ class TeacherPassportEditOptimizationTests(TestCase):
                 len(image_file.read()),
                 2 * 1024 * 1024,
             )
+            
+class MultipleClassTeacherTests(TestCase):
+
+    def setUp(self):
+        self.school = School.objects.create(
+            name="Multiple Teacher Test School",
+            code="MT-001",
+        )
+
+        self.school_class = SchoolClass.objects.create(
+            school=self.school,
+            name="Primary 4",
+        )
+
+        self.teacher_user_1 = User.objects.create_user(
+            username="class_teacher_one",
+            password="password123",
+            school=self.school,
+            role=User.Role.TEACHER,
+        )
+
+        self.teacher_user_2 = User.objects.create_user(
+            username="class_teacher_two",
+            password="password123",
+            school=self.school,
+            role=User.Role.TEACHER,
+        )
+
+    def test_multiple_teachers_can_be_assigned_to_same_class(self):
+        teacher_one = Teacher.objects.create(
+            user=self.teacher_user_1,
+            staff_id="MT-STAFF-001",
+            is_class_teacher=True,
+            assigned_class=self.school_class,
+        )
+
+        teacher_two = Teacher.objects.create(
+            user=self.teacher_user_2,
+            staff_id="MT-STAFF-002",
+            is_class_teacher=True,
+            assigned_class=self.school_class,
+        )
+
+        self.assertEqual(
+            teacher_one.assigned_class_id,
+            self.school_class.id,
+        )
+
+        self.assertEqual(
+            teacher_two.assigned_class_id,
+            self.school_class.id,
+        )
+
+        self.assertEqual(
+            Teacher.objects.filter(
+                assigned_class=self.school_class,
+                is_class_teacher=True,
+            ).count(),
+            2,
+        )
+        
+    def test_teacher_cannot_be_assigned_to_another_schools_class(self):
+        from django.core.exceptions import ValidationError
+
+        another_school = School.objects.create(
+            name="Another Test School",
+            code="MT-002",
+        )
+
+        another_class = SchoolClass.objects.create(
+            school=another_school,
+            name="Primary 4",
+        )
+
+        teacher = Teacher(
+            user=self.teacher_user_1,
+            staff_id="MT-STAFF-003",
+            is_class_teacher=True,
+            assigned_class=another_class,
+        )
+
+        with self.assertRaises(ValidationError):
+            teacher.full_clean()
