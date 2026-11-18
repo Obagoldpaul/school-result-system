@@ -431,45 +431,86 @@
                                     {% if field.name == "passport" %}
                                         <div id="public-teacher-camera" style="margin-top: 15px;">
 
-                                            <div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:12px;">
-
-                                                <button type="button"
-                                                        id="public-teacher-start-camera"
-                                                        class="btn btn-outline-primary">
-                                                    Open Camera
-                                                </button>
-
-                                                <button type="button"
-                                                        id="public-teacher-capture"
-                                                        class="btn btn-success"
-                                                        hidden>
-                                                    Capture Photo
-                                                </button>
-
-                                                <button type="button"
-                                                        id="public-teacher-retake"
-                                                        class="btn btn-outline-secondary"
-                                                        hidden>
-                                                    Retake Photo
-                                                </button>
-
+                                            <button type="button"
+                                                    id="public-teacher-start-camera"
+                                                    class="btn btn-outline-primary">
+                                                Open Camera
+                                            </button>
+                                        
+                                            <div id="public-teacher-camera-overlay"
+                                                hidden
+                                                style="
+                                                    position:fixed;
+                                                    inset:0;
+                                                    z-index:9999;
+                                                    background:#000;
+                                                    display:flex;
+                                                    flex-direction:column;
+                                                    align-items:center;
+                                                    justify-content:center;
+                                                    padding:20px;
+                                                ">
+                                        
+                                                <video id="public-teacher-video"
+                                                    autoplay
+                                                    playsinline
+                                                    style="
+                                                        width:100%;
+                                                        max-width:600px;
+                                                        max-height:70vh;
+                                                        object-fit:contain;
+                                                        border-radius:8px;
+                                                    ">
+                                                </video>
+                                        
+                                                <p id="public-teacher-camera-message"
+                                                class="form-help text-white text-center mt-3"
+                                                aria-live="polite">
+                                                </p>
+                                        
+                                                <div class="d-flex flex-wrap justify-content-center gap-2 mt-3">
+                                        
+                                                    <button type="button"
+                                                            id="public-teacher-switch-camera"
+                                                            class="btn btn-outline-light">
+                                                        Switch Camera
+                                                    </button>
+                                        
+                                                    <button type="button"
+                                                            id="public-teacher-capture"
+                                                            class="btn btn-success">
+                                                        Capture Photo
+                                                    </button>
+                                        
+                                                    <button type="button"
+                                                            id="public-teacher-close-camera"
+                                                            class="btn btn-danger">
+                                                        Close Camera
+                                                    </button>
+                                        
+                                                    <button type="button"
+                                                            id="public-teacher-retake"
+                                                            class="btn btn-outline-light"
+                                                            hidden>
+                                                        Retake Photo
+                                                    </button>
+                                        
+                                                </div>
+                                        
                                             </div>
-
-                                            <video id="public-teacher-video"
-                                                autoplay
-                                                playsinline
-                                                style="display:none;width:100%;max-width:320px;border-radius:8px;">
-                                            </video>
-
+                                        
                                             <img id="public-teacher-captured"
                                                 alt="Captured teacher photograph"
-                                                style="display:none;width:120px;height:120px;object-fit:cover;border-radius:8px;border:1px solid #ddd;">
-
-                                            <p id="public-teacher-camera-message"
-                                            class="form-help"
-                                            aria-live="polite">
-                                            </p>
-
+                                                style="
+                                                    display:none;
+                                                    width:120px;
+                                                    height:120px;
+                                                    object-fit:cover;
+                                                    border-radius:8px;
+                                                    border:1px solid #ddd;
+                                                    margin-top:12px;
+                                                ">
+                                        
                                         </div>
                                     {% endif %}
 
@@ -660,46 +701,39 @@
 
 <script>
     document.addEventListener("DOMContentLoaded", function () {
+    
         const startButton = document.getElementById("public-teacher-start-camera");
         const captureButton = document.getElementById("public-teacher-capture");
         const retakeButton = document.getElementById("public-teacher-retake");
+        const switchButton = document.getElementById("public-teacher-switch-camera");
+        const closeButton = document.getElementById("public-teacher-close-camera");
+        const overlay = document.getElementById("public-teacher-camera-overlay");
         const video = document.getElementById("public-teacher-video");
         const capturedImage = document.getElementById("public-teacher-captured");
         const message = document.getElementById("public-teacher-camera-message");
         const passportInput = document.getElementById("id_passport");
     
-        if (!startButton || !passportInput) return;
+        if (
+            !startButton ||
+            !captureButton ||
+            !retakeButton ||
+            !switchButton ||
+            !closeButton ||
+            !overlay ||
+            !video ||
+            !capturedImage ||
+            !message ||
+            !passportInput
+        ) {
+            return;
+        }
     
         let cameraStream = null;
+        let currentFacingMode = "user";
         let capturedImageUrl = null;
     
-        async function openCamera() {
-            try {
-                if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-                    message.textContent = "Camera access requires a secure HTTPS connection.";
-                    return;
-                }
-    
-                cameraStream = await navigator.mediaDevices.getUserMedia({
-                    video: { facingMode: "user" },
-                    audio: false
-                });
-    
-                video.srcObject = cameraStream;
-                video.style.display = "block";
-                capturedImage.style.display = "none";
-    
-                startButton.hidden = true;
-                captureButton.hidden = false;
-                retakeButton.hidden = true;
-    
-                message.textContent = "Position yourself and capture your photo.";
-    
-            } catch (error) {
-                message.textContent = "Unable to access the camera. Please allow camera permission and try again.";
-                console.error("Camera error:", error);
-            }
-        }
+        overlay.hidden = true;
+        overlay.style.display = "none";
     
         function stopCamera() {
             if (cameraStream) {
@@ -708,18 +742,87 @@
             }
     
             video.srcObject = null;
-            video.style.display = "none";
         }
     
-        startButton.addEventListener("click", openCamera);
+        async function openCamera() {
+    
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                message.textContent =
+                    "Camera access requires a supported browser and a secure HTTPS connection.";
+                return;
+            }
+    
+            stopCamera();
+    
+            overlay.hidden = false;
+            overlay.style.display = "flex";
+    
+            startButton.hidden = true;
+            captureButton.hidden = false;
+            retakeButton.hidden = true;
+            capturedImage.style.display = "none";
+    
+            message.textContent = "Starting camera...";
+    
+            try {
+                cameraStream = await navigator.mediaDevices.getUserMedia({
+                    video: {
+                        facingMode: { ideal: currentFacingMode }
+                    },
+                    audio: false
+                });
+    
+                video.srcObject = cameraStream;
+                await video.play();
+    
+                message.textContent =
+                    "Position yourself in the camera and capture your photograph.";
+    
+            } catch (error) {
+                stopCamera();
+    
+                message.textContent =
+                    "Unable to access the camera. Please allow camera permission and try again.";
+            }
+        }
+    
+        startButton.addEventListener("click", function () {
+            openCamera();
+        });
+    
+        switchButton.addEventListener("click", async function () {
+    
+            if (!cameraStream) {
+                return;
+            }
+    
+            currentFacingMode =
+                currentFacingMode === "user" ? "environment" : "user";
+    
+            await openCamera();
+        });
+    
+        closeButton.addEventListener("click", function () {
+    
+            stopCamera();
+    
+            overlay.hidden = true;
+            overlay.style.display = "none";
+    
+            startButton.hidden = false;
+            message.textContent = "Camera closed.";
+        });
     
         captureButton.addEventListener("click", function () {
+    
             if (!cameraStream || !video.videoWidth) {
-                message.textContent = "Camera is not ready yet. Please try again.";
+                message.textContent =
+                    "Please wait for the camera to become ready.";
                 return;
             }
     
             const canvas = document.createElement("canvas");
+    
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
     
@@ -727,66 +830,67 @@
             context.drawImage(video, 0, 0, canvas.width, canvas.height);
     
             canvas.toBlob(function (blob) {
+    
                 if (!blob) {
-                    message.textContent = "Could not capture the photo. Please try again.";
+                    message.textContent =
+                        "Unable to capture the photograph. Please try again.";
                     return;
                 }
     
-                const file = new File(
+                const photoFile = new File(
                     [blob],
                     "teacher-passport.jpg",
                     { type: "image/jpeg" }
                 );
     
                 const dataTransfer = new DataTransfer();
-                dataTransfer.items.add(file);
+                dataTransfer.items.add(photoFile);
+    
                 passportInput.files = dataTransfer.files;
     
-                passportInput.dispatchEvent(new Event("change", { bubbles: true }));
+                passportInput.dispatchEvent(
+                    new Event("change", { bubbles: true })
+                );
     
                 if (capturedImageUrl) {
                     URL.revokeObjectURL(capturedImageUrl);
                 }
     
                 capturedImageUrl = URL.createObjectURL(blob);
+    
                 capturedImage.src = capturedImageUrl;
                 capturedImage.style.display = "block";
     
                 stopCamera();
     
-                captureButton.hidden = true;
-                retakeButton.hidden = false;
-                startButton.hidden = true;
+                overlay.hidden = true;
+                overlay.style.display = "none";
     
-                message.textContent = "Photo captured successfully. You can retake it if needed.";
+                startButton.hidden = false;
+                captureButton.hidden = false;
+                retakeButton.hidden = false;
+    
+                message.textContent =
+                    "Photograph captured. You can retake it or continue with registration.";
     
             }, "image/jpeg", 0.90);
+    
         });
     
         retakeButton.addEventListener("click", function () {
-            passportInput.value = "";
-    
-            if (capturedImageUrl) {
-                URL.revokeObjectURL(capturedImageUrl);
-                capturedImageUrl = null;
-            }
-    
-            capturedImage.src = "";
-            capturedImage.style.display = "none";
-    
-            retakeButton.hidden = true;
-            startButton.hidden = false;
-    
-            message.textContent = "You can take another photo.";
+            openCamera();
         });
     
         window.addEventListener("beforeunload", function () {
+    
             stopCamera();
     
             if (capturedImageUrl) {
                 URL.revokeObjectURL(capturedImageUrl);
             }
+    
         });
+    
     });
     </script>
 

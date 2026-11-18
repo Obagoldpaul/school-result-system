@@ -211,36 +211,49 @@
                 accept="image/*"
             >
 
-            <div id="student-edit-camera" style="margin-top:15px;">
+            <div id="student-passport-camera" class="mt-3">
 
-                <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;">
+                <button type="button"
+                        id="student-start-camera"
+                        class="btn btn-outline-primary">
+                    Open Camera
+                </button>
             
-                    <button type="button" id="student-edit-start-camera">
-                        Open Camera
-                    </button>
+                <div id="student-camera-overlay"
+                     style="display:none;position:fixed;inset:0;width:100%;height:100%;height:100dvh;background:#111;z-index:99999;flex-direction:column;align-items:center;justify-content:center;padding:12px;">
             
-                    <button type="button" id="student-edit-capture" hidden>
-                        Capture Photo
-                    </button>
+                    <video id="student-camera-preview"
+                           autoplay
+                           playsinline
+                           style="display:none;width:100%;height:calc(100% - 100px);object-fit:contain;">
+                    </video>
             
-                    <button type="button" id="student-edit-retake" hidden>
-                        Retake Photo
-                    </button>
-            
+                    <div class="d-flex flex-wrap justify-content-center gap-2 mt-3">
+                        <button type="button" id="student-switch-camera" class="btn btn-outline-light">
+                            Switch Camera
+                        </button>
+                        <button type="button" id="student-capture-photo" class="btn btn-success">
+                            Capture Photo
+                        </button>
+                        <button type="button" id="student-close-camera" class="btn btn-danger">
+                            Close Camera
+                        </button>
+                    </div>
                 </div>
             
-                <video id="student-edit-video"
-                       autoplay
-                       playsinline
-                       style="display:none;width:100%;max-width:320px;border-radius:8px;">
-                </video>
+                <button type="button"
+                        id="student-retake-photo"
+                        class="btn btn-outline-secondary mt-2"
+                        hidden>
+                    Retake Photo
+                </button>
             
-                <img id="student-edit-captured"
+                <img id="student-captured-preview"
                      alt="Captured student photograph"
-                     style="display:none;width:110px;height:130px;object-fit:cover;border-radius:6px;border:1px solid #ccc;">
+                     style="display:none;width:150px;height:180px;object-fit:cover;border-radius:8px;border:1px solid #ddd;">
             
-                <p id="student-edit-camera-message"
-                   class="small text-muted"
+                <p id="student-camera-message"
+                   class="small text-muted mt-2"
                    aria-live="polite">
                 </p>
             
@@ -736,159 +749,175 @@
         
         });
 
-        // STUDENT EDIT PASSPORT CAMERA
+        // STUDENT PASSPORT CAMERA
 
         const passportInput = document.querySelector(
             'input[name="passport"]'
         );
 
-        const startButton = document.getElementById(
-            "student-edit-start-camera"
-        );
+        const startButton = document.getElementById("student-start-camera");
+        const captureButton = document.getElementById("student-capture-photo");
+        const retakeButton = document.getElementById("student-retake-photo");
+        const switchButton = document.getElementById("student-switch-camera");
+        const closeButton = document.getElementById("student-close-camera");
 
-        const captureButton = document.getElementById(
-            "student-edit-capture"
-        );
+        const overlay = document.getElementById("student-camera-overlay");
+        const video = document.getElementById("student-camera-preview");
+        const capturedPreview = document.getElementById("student-captured-preview");
+        const message = document.getElementById("student-camera-message");
 
-        const retakeButton = document.getElementById(
-            "student-edit-retake"
-        );
+        if (
+            passportInput &&
+            startButton &&
+            captureButton &&
+            retakeButton &&
+            switchButton &&
+            closeButton &&
+            overlay &&
+            video
+        ) {
+            let cameraStream = null;
+            let currentFacingMode = "user";
 
-        const video = document.getElementById(
-            "student-edit-video"
-        );
+            function stopCamera() {
+                if (cameraStream) {
+                    cameraStream.getTracks().forEach(track => track.stop());
+                    cameraStream = null;
+                }
 
-        const capturedPreview = document.getElementById(
-            "student-edit-captured"
-        );
-
-        const cameraMessage = document.getElementById(
-            "student-edit-camera-message"
-        );
-
-        let cameraStream = null;
-
-        function stopStudentEditCamera() {
-            if (cameraStream) {
-                cameraStream.getTracks().forEach(track => track.stop());
-                cameraStream = null;
-            }
-        }
-
-        async function startStudentEditCamera() {
-
-            if (!navigator.mediaDevices ||
-                !navigator.mediaDevices.getUserMedia) {
-
-                cameraMessage.textContent =
-                    "Camera access is unavailable. Please use HTTPS or the upload option.";
-
-                return;
+                video.srcObject = null;
             }
 
-            try {
-
-                stopStudentEditCamera();
-
-                cameraStream = await navigator.mediaDevices.getUserMedia({
-                    video: { facingMode: "user" },
-                    audio: false
-                });
-
-                video.srcObject = cameraStream;
-                video.style.display = "block";
-
-                capturedPreview.style.display = "none";
-
-                startButton.hidden = true;
-                captureButton.hidden = false;
-                retakeButton.hidden = true;
-
-                cameraMessage.textContent =
-                    "Position the student and select Capture Photo.";
-
-            } catch (error) {
-
-                cameraMessage.textContent =
-                    "Unable to access the camera. Please allow camera permission or use the upload option.";
-
-            }
-        }
-
-        startButton.addEventListener(
-            "click",
-            startStudentEditCamera
-        );
-
-        captureButton.addEventListener("click", function () {
-
-            if (!cameraStream || !video.videoWidth) {
-                cameraMessage.textContent =
-                    "Please wait for the camera to start.";
-                return;
-            }
-
-            const canvas = document.createElement("canvas");
-
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-
-            canvas.getContext("2d").drawImage(
-                video,
-                0,
-                0,
-                canvas.width,
-                canvas.height
-            );
-
-            canvas.toBlob(function (blob) {
-
-                if (!blob) {
-                    cameraMessage.textContent =
-                        "Unable to capture photograph. Please try again.";
+            async function startCamera() {
+                if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                    message.textContent =
+                        "Camera access is unavailable. Please use a supported browser and HTTPS connection.";
                     return;
                 }
 
-                const file = new File(
-                    [blob],
-                    "student-passport.jpg",
-                    { type: "image/jpeg" }
-                );
+                try {
+                    stopCamera();
 
-                const dataTransfer = new DataTransfer();
-                dataTransfer.items.add(file);
+                    cameraStream = await navigator.mediaDevices.getUserMedia({
+                        video: {
+                            facingMode: {
+                                ideal: currentFacingMode
+                            }
+                        },
+                        audio: false
+                    });
 
-                passportInput.files = dataTransfer.files;
+                    video.srcObject = cameraStream;
 
-                passportInput.dispatchEvent(
-                    new Event("change", { bubbles: true })
-                );
+                    overlay.style.display = "flex";
+                    video.style.display = "block";
 
-                capturedPreview.src = URL.createObjectURL(file);
-                capturedPreview.style.display = "block";
+                    capturedPreview.style.display = "none";
 
+                    startButton.hidden = true;
+                    captureButton.hidden = false;
+                    retakeButton.hidden = true;
+
+                    await video.play();
+
+                    message.textContent =
+                        currentFacingMode === "user"
+                            ? "Front camera active. Position the student and capture the photo."
+                            : "Rear camera active. Position the student and capture the photo.";
+
+                } catch (error) {
+                    stopCamera();
+                    overlay.style.display = "none";
+                    video.style.display = "none";
+                    startButton.hidden = false;
+
+                    message.textContent =
+                        "Unable to access the selected camera. Please check camera permission or try the other camera.";
+                }
+            }
+
+            startButton.addEventListener("click", function () {
+                currentFacingMode = "user";
+                startCamera();
+            });
+
+            switchButton.addEventListener("click", function () {
+                currentFacingMode =
+                    currentFacingMode === "user" ? "environment" : "user";
+
+                message.textContent = "Switching camera...";
+                startCamera();
+            });
+
+            closeButton.addEventListener("click", function () {
+                stopCamera();
+                overlay.style.display = "none";
                 video.style.display = "none";
+                startButton.hidden = false;
+                captureButton.hidden = false;
+                retakeButton.hidden = true;
 
-                captureButton.hidden = true;
-                retakeButton.hidden = false;
+                message.textContent =
+                    "Camera closed. You can reopen it whenever you're ready.";
+            });
 
-                stopStudentEditCamera();
+            captureButton.addEventListener("click", function () {
+                if (!cameraStream || !video.videoWidth) {
+                    message.textContent = "Please wait for the camera to start.";
+                    return;
+                }
 
-                cameraMessage.textContent =
-                    "Photograph captured successfully.";
+                const canvas = document.createElement("canvas");
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
 
-            }, "image/jpeg", 0.90);
+                const context = canvas.getContext("2d");
+                context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-        });
+                canvas.toBlob(function (blob) {
+                    if (!blob) {
+                        message.textContent =
+                            "Unable to capture photograph. Please try again.";
+                        return;
+                    }
 
-        retakeButton.addEventListener("click", function () {
-            startStudentEditCamera();
-        });
+                    const file = new File(
+                        [blob],
+                        "student-passport.jpg",
+                        { type: "image/jpeg" }
+                    );
 
-        window.addEventListener(
-            "beforeunload",
-            stopStudentEditCamera
-        );
+                    const dataTransfer = new DataTransfer();
+                    dataTransfer.items.add(file);
+                    passportInput.files = dataTransfer.files;
+
+                    passportInput.dispatchEvent(
+                        new Event("change", { bubbles: true })
+                    );
+
+                    capturedPreview.src = URL.createObjectURL(file);
+                    capturedPreview.style.display = "block";
+
+                    stopCamera();
+                    overlay.style.display = "none";
+                    video.style.display = "none";
+
+                    captureButton.hidden = false;
+                    retakeButton.hidden = false;
+                    startButton.hidden = false;
+
+                    message.textContent =
+                        "Photograph captured successfully. You can retake it if necessary.";
+
+                }, "image/jpeg", 0.90);
+            });
+
+            retakeButton.addEventListener("click", function () {
+                startCamera();
+            });
+
+            window.addEventListener("beforeunload", stopCamera);
+        }
         </script>
 
 </form>

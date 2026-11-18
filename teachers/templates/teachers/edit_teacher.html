@@ -449,44 +449,85 @@ Edit Teacher
 
                         <div id="teacher-edit-camera" class="mt-3">
 
-                            <div class="d-flex flex-wrap gap-2 mb-3">
+                            <button type="button"
+                                    id="teacher-edit-start-camera"
+                                    class="btn btn-outline-primary">
+                                Open Camera
+                            </button>
                         
-                                <button type="button"
-                                        id="teacher-edit-start-camera"
-                                        class="btn btn-outline-primary">
-                                    Open Camera
-                                </button>
+                            <div id="teacher-edit-camera-overlay"
+                                 hidden
+                                 style="
+                                    position:fixed;
+                                    inset:0;
+                                    z-index:99999;
+                                    background:#000;
+                                    display:flex;
+                                    flex-direction:column;
+                                    align-items:center;
+                                    justify-content:center;
+                                    padding:20px;
+                                 ">
                         
-                                <button type="button"
-                                        id="teacher-edit-capture"
-                                        class="btn btn-success"
-                                        hidden>
-                                    Capture Photo
-                                </button>
+                                <video id="teacher-edit-video"
+                                       autoplay
+                                       playsinline
+                                       style="
+                                            width:100%;
+                                            max-width:700px;
+                                            max-height:75vh;
+                                            object-fit:contain;
+                                            border-radius:8px;
+                                       ">
+                                </video>
                         
-                                <button type="button"
-                                        id="teacher-edit-retake"
-                                        class="btn btn-outline-secondary"
-                                        hidden>
-                                    Retake Photo
-                                </button>
+                                <p id="teacher-edit-camera-message"
+                                   class="text-white text-center mt-3"
+                                   aria-live="polite">
+                                </p>
+                        
+                                <div class="d-flex flex-wrap justify-content-center gap-2 mt-3">
+                        
+                                    <button type="button"
+                                            id="teacher-edit-switch-camera"
+                                            class="btn btn-outline-light">
+                                        Switch Camera
+                                    </button>
+                        
+                                    <button type="button"
+                                            id="teacher-edit-capture"
+                                            class="btn btn-success">
+                                        Capture Photo
+                                    </button>
+                        
+                                    <button type="button"
+                                            id="teacher-edit-close-camera"
+                                            class="btn btn-danger">
+                                        Close Camera
+                                    </button>
+                        
+                                </div>
                         
                             </div>
                         
-                            <video id="teacher-edit-video"
-                                   autoplay
-                                   playsinline
-                                   style="display:none;width:100%;max-width:320px;border-radius:8px;">
-                            </video>
+                            <button type="button"
+                                    id="teacher-edit-retake"
+                                    class="btn btn-outline-secondary mt-3"
+                                    hidden>
+                                Retake Photo
+                            </button>
                         
                             <img id="teacher-edit-captured"
                                  alt="Captured teacher photograph"
-                                 style="display:none;width:120px;height:140px;object-fit:cover;border-radius:8px;border:1px solid #ddd;">
-                        
-                            <p id="teacher-edit-camera-message"
-                               class="small text-muted mt-2"
-                               aria-live="polite">
-                            </p>
+                                 style="
+                                    display:none;
+                                    width:120px;
+                                    height:140px;
+                                    object-fit:cover;
+                                    border-radius:8px;
+                                    border:1px solid #ddd;
+                                    margin-top:12px;
+                                 ">
                         
                         </div>
 
@@ -872,53 +913,41 @@ Edit Teacher
 
 
 <script>
-    (function () {
+    document.addEventListener("DOMContentLoaded", function () {
     
         const passportInput = document.querySelector('input[name="passport"]');
         const startButton = document.getElementById("teacher-edit-start-camera");
         const captureButton = document.getElementById("teacher-edit-capture");
         const retakeButton = document.getElementById("teacher-edit-retake");
+        const switchButton = document.getElementById("teacher-edit-switch-camera");
+        const closeButton = document.getElementById("teacher-edit-close-camera");
+        const overlay = document.getElementById("teacher-edit-camera-overlay");
         const video = document.getElementById("teacher-edit-video");
         const capturedPreview = document.getElementById("teacher-edit-captured");
         const message = document.getElementById("teacher-edit-camera-message");
     
-        if (!passportInput || !startButton || !captureButton || !retakeButton || !video) {
+        if (
+            !passportInput ||
+            !startButton ||
+            !captureButton ||
+            !retakeButton ||
+            !switchButton ||
+            !closeButton ||
+            !overlay ||
+            !video ||
+            !capturedPreview ||
+            !message
+        ) {
             return;
         }
     
         let cameraStream = null;
+        let currentFacingMode = "user";
         let capturedPhotoUrl = null;
     
-        async function startCamera() {
-    
-            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-                message.textContent = "Camera access requires a supported browser and a secure HTTPS connection.";
-                return;
-            }
-    
-            try {
-    
-                cameraStream = await navigator.mediaDevices.getUserMedia({
-                    video: { facingMode: "user" },
-                    audio: false
-                });
-    
-                video.srcObject = cameraStream;
-                video.style.display = "block";
-    
-                startButton.hidden = true;
-                captureButton.hidden = false;
-                retakeButton.hidden = true;
-    
-                message.textContent = "Position yourself in the camera and capture your photograph.";
-    
-            } catch (error) {
-    
-                message.textContent = "Unable to access the camera. Please allow camera permission and try again.";
-    
-            }
-    
-        }
+        // Ensure the camera overlay starts hidden.
+        overlay.hidden = true;
+        overlay.style.display = "none";
     
         function stopCamera() {
     
@@ -928,16 +957,89 @@ Edit Teacher
             }
     
             video.srcObject = null;
-            video.style.display = "none";
-    
         }
     
-        startButton.addEventListener("click", startCamera);
+        async function startCamera() {
+    
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                message.textContent =
+                    "Camera access requires a supported browser and a secure HTTPS connection.";
+                return;
+            }
+    
+            stopCamera();
+    
+            overlay.hidden = false;
+            overlay.style.display = "flex";
+    
+            retakeButton.hidden = true;
+            captureButton.disabled = false;
+    
+            message.textContent = "Starting camera...";
+    
+            try {
+    
+                cameraStream = await navigator.mediaDevices.getUserMedia({
+                    video: {
+                        facingMode: { ideal: currentFacingMode }
+                    },
+                    audio: false
+                });
+    
+                video.srcObject = cameraStream;
+    
+                await video.play();
+    
+                message.textContent =
+                    "Position yourself in the camera and capture your photograph.";
+    
+            } catch (error) {
+    
+                stopCamera();
+    
+                message.textContent =
+                    "Unable to access the camera. Please allow camera permission and try again.";
+    
+            }
+        }
+    
+        startButton.addEventListener("click", function () {
+    
+            startCamera();
+    
+        });
+    
+        switchButton.addEventListener("click", async function () {
+    
+            if (!cameraStream) {
+                return;
+            }
+    
+            currentFacingMode =
+                currentFacingMode === "user" ? "environment" : "user";
+    
+            await startCamera();
+    
+        });
+    
+        closeButton.addEventListener("click", function () {
+    
+            stopCamera();
+    
+            overlay.hidden = true;
+            overlay.style.display = "none";
+    
+            startButton.hidden = false;
+    
+            message.textContent = "Camera closed.";
+    
+        });
     
         captureButton.addEventListener("click", function () {
     
             if (!cameraStream || !video.videoWidth) {
-                message.textContent = "Please wait for the camera to become ready.";
+                message.textContent =
+                    "Please wait for the camera to become ready.";
                 return;
             }
     
@@ -947,12 +1049,20 @@ Edit Teacher
             canvas.height = video.videoHeight;
     
             const context = canvas.getContext("2d");
-            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+    
+            context.drawImage(
+                video,
+                0,
+                0,
+                canvas.width,
+                canvas.height
+            );
     
             canvas.toBlob(function (blob) {
     
                 if (!blob) {
-                    message.textContent = "Unable to capture the photograph. Please try again.";
+                    message.textContent =
+                        "Unable to capture the photograph. Please try again.";
                     return;
                 }
     
@@ -963,6 +1073,7 @@ Edit Teacher
                 );
     
                 const dataTransfer = new DataTransfer();
+    
                 dataTransfer.items.add(photoFile);
     
                 passportInput.files = dataTransfer.files;
@@ -976,33 +1087,43 @@ Edit Teacher
                 }
     
                 capturedPhotoUrl = URL.createObjectURL(blob);
+    
                 capturedPreview.src = capturedPhotoUrl;
                 capturedPreview.style.display = "block";
     
                 stopCamera();
     
-                captureButton.hidden = true;
+                overlay.hidden = true;
+                overlay.style.display = "none";
+    
+                startButton.hidden = false;
+                captureButton.disabled = false;
                 retakeButton.hidden = false;
     
-                message.textContent = "Photograph captured. You can retake it or continue editing.";
+                message.textContent =
+                    "Photograph captured. You can retake it or continue editing.";
     
             }, "image/jpeg", 0.90);
     
         });
     
         retakeButton.addEventListener("click", function () {
+    
             startCamera();
+    
         });
     
         window.addEventListener("beforeunload", function () {
+    
             stopCamera();
     
             if (capturedPhotoUrl) {
                 URL.revokeObjectURL(capturedPhotoUrl);
             }
+    
         });
     
-    })();
+    });
     </script>
     
 <!-- ========================== -->
