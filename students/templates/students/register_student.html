@@ -179,6 +179,16 @@ Register Student
 
                     </div>
 
+                    <div class="col-12 mb-3">
+                        <div
+                            id="student-duplicate-name-warning"
+                            class="alert alert-warning"
+                            role="alert"
+                            aria-live="polite"
+                            style="display: none;"
+                        ></div>
+                    </div>
+
 
                     <div class="col-md-3 mb-3">
 
@@ -994,6 +1004,120 @@ Register Student
     
         });
     
+    });
+    </script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const firstNameInput = document.getElementById(
+            "{{ form.first_name.id_for_label }}"
+        );
+    
+        const lastNameInput = document.getElementById(
+            "{{ form.last_name.id_for_label }}"
+        );
+    
+        const warningBox = document.getElementById(
+            "student-duplicate-name-warning"
+        );
+    
+        if (!firstNameInput || !lastNameInput || !warningBox) {
+            return;
+        }
+    
+        let debounceTimer = null;
+        let currentRequest = null;
+    
+        function hideWarning() {
+            warningBox.style.display = "none";
+            warningBox.textContent = "";
+        }
+    
+        function checkDuplicateName() {
+            const firstName = firstNameInput.value.trim();
+            const lastName = lastNameInput.value.trim();
+    
+            if (!firstName || !lastName) {
+                if (currentRequest) {
+                    currentRequest.abort();
+                }
+    
+                hideWarning();
+                return;
+            }
+    
+            if (currentRequest) {
+                currentRequest.abort();
+            }
+    
+            currentRequest = new AbortController();
+    
+            const params = new URLSearchParams({
+                type: "student",
+                first_name: firstName,
+                last_name: lastName,
+            });
+    
+            fetch(
+                "{% url 'duplicate_name_check' %}?" + params.toString(),
+                {
+                    method: "GET",
+                    credentials: "same-origin",
+                    headers: {
+                        "X-Requested-With": "XMLHttpRequest",
+                    },
+                    signal: currentRequest.signal,
+                }
+            )
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error("Duplicate-name check failed.");
+                }
+    
+                return response.json();
+            })
+            .then(data => {
+                if (data.has_duplicates) {
+                    const userText =
+                        data.user_count === 1
+                            ? "1 existing user"
+                            : `${data.user_count} existing users`;
+    
+                    const applicationText =
+                        data.application_count === 1
+                            ? "1 pending application"
+                            : `${data.application_count} pending applications`;
+    
+                    warningBox.textContent =
+                        `Possible duplicate found: ${userText} and ` +
+                        `${applicationText} in this school. ` +
+                        "Please check whether this student is already registered " +
+                        "before continuing. If these are different people, you may proceed.";
+    
+                    warningBox.style.display = "block";
+                } else {
+                    hideWarning();
+                }
+            })
+            .catch(error => {
+                if (error.name !== "AbortError") {
+                    hideWarning();
+                    console.error("Duplicate-name check:", error);
+                }
+            });
+        }
+    
+        function scheduleDuplicateCheck() {
+            clearTimeout(debounceTimer);
+    
+            debounceTimer = setTimeout(
+                checkDuplicateName,
+                400
+            );
+        }
+    
+        firstNameInput.addEventListener("input", scheduleDuplicateCheck);
+        lastNameInput.addEventListener("input", scheduleDuplicateCheck);
     });
     </script>
 

@@ -70,6 +70,24 @@ urlpatterns = [
     path('library/', include('library.urls')),
     path('help/', include('help_center.urls')),
     
+    path(
+        "duplicate-name-check/",
+        account_views.duplicate_name_check,
+        name="duplicate_name_check",
+    ),
+
+    path(
+        "duplicate-name-check/<int:school_id>/",
+        account_views.duplicate_name_check,
+        name="school_duplicate_name_check",
+    ),
+    
+    path(
+        "username-availability-check/",
+        account_views.username_availability_check,
+        name="username_availability_check",
+    ),
+        
     path('platform/', include('schools.urls')),
 ]
 

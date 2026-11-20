@@ -31,6 +31,9 @@ from students.forms import generate_admission_number
 from teachers.models import Teacher
 from teachers.forms import generate_staff_id
 
+from accounts.duplicate_names import find_possible_duplicate_names
+from django.contrib import messages
+
 
 def send_password_setup_email(request, user, school, account_type):
     if not user.email:
@@ -219,11 +222,41 @@ def registration_application_detail(request, application_id):
         )
     )
 
+    duplicate_matches = find_possible_duplicate_names(
+        school=application.school,
+        first_name=application.first_name,
+        last_name=application.last_name,
+        exclude_application=application,
+    )
+
+    duplicate_confirmation_key = (
+        f"registration_duplicate_confirmation_{application.pk}"
+    )
+
+    duplicate_fingerprint = {
+        "users": sorted(
+            match["id"] for match in duplicate_matches["users"]
+        ),
+        "applications": sorted(
+            match["id"] for match in duplicate_matches["applications"]
+        ),
+    }
+
+    confirmation_data = request.session.get(
+        duplicate_confirmation_key
+    )
+
     return render(
         request,
         "registrations/registration_application_detail.html",
         {
             "application": application,
+            "duplicate_matches": duplicate_matches,
+            "duplicate_confirmation_required": (
+                bool(duplicate_fingerprint["users"]
+                     or duplicate_fingerprint["applications"])
+                and confirmation_data == duplicate_fingerprint
+            ),
         },
     )
     
@@ -253,6 +286,51 @@ def approve_registration_application(request, application_id):
             "registration_application_detail",
             application_id,
         )
+        
+    duplicate_matches = find_possible_duplicate_names(
+        school=application.school,
+        first_name=application.first_name,
+        last_name=application.last_name,
+        exclude_application=application,
+    )
+
+    duplicate_fingerprint = {
+        "users": sorted(
+            match["id"] for match in duplicate_matches["users"]
+        ),
+        "applications": sorted(
+            match["id"] for match in duplicate_matches["applications"]
+        ),
+    }
+
+    duplicate_confirmation_key = (
+        f"registration_duplicate_confirmation_{application.pk}"
+    )
+
+    confirmation_data = request.session.get(
+        duplicate_confirmation_key
+    )
+
+    if duplicate_fingerprint["users"] or duplicate_fingerprint["applications"]:
+
+        if confirmation_data != duplicate_fingerprint:
+            request.session[duplicate_confirmation_key] = duplicate_fingerprint
+
+            messages.warning(
+                request,
+                "Possible duplicate names were found. Review the matching "
+                "records below before confirming approval.",
+            )
+
+            return redirect(
+                "registration_application_detail",
+                application_id,
+            )
+
+        request.session.pop(duplicate_confirmation_key, None)
+
+    else:
+        request.session.pop(duplicate_confirmation_key, None)
 
     with transaction.atomic():
 

@@ -9,6 +9,13 @@ from registrations.models import RegistrationApplication
 from schools.models import School
 from students.models import Department, SchoolClass
 
+from django.urls import reverse
+from django.test import override_settings
+
+from accounts.models import User
+from schools.models import Permission, School, SchoolRole
+from students.models import Department, SchoolClass, Student
+
 
 class RegistrationApplicationFormTests(TestCase):
 
@@ -246,3 +253,189 @@ class RegistrationApplicationFormTests(TestCase):
             "username",
             form.errors,
         )
+        
+
+@override_settings(
+    EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend"
+)
+class RegistrationApprovalDuplicateWarningTests(TestCase):
+
+    def setUp(self):
+        self.school = School.objects.create(
+            name="Approval Test School",
+            code="APTS",
+        )
+
+        self.school_class = SchoolClass.objects.create(
+            school=self.school,
+            name="JSS1",
+            section=SchoolClass.Section.JUNIOR_SECONDARY,
+            is_active=True,
+        )
+
+        review_permission = Permission.objects.create(
+            code="registrations.review",
+            name="Review Registrations",
+            module="Registration",
+            is_active=True,
+        )
+
+        view_permission = Permission.objects.create(
+            code="registrations.view",
+            name="View Registrations",
+            module="Registration",
+            is_active=True,
+        )
+
+        role = SchoolRole.objects.create(
+            school=self.school,
+            name="Registration Reviewer",
+            base_role=SchoolRole.BaseRole.ADMIN,
+            is_active=True,
+        )
+        role.permissions.add(
+            review_permission,
+            view_permission,
+        )
+
+        self.reviewer = User.objects.create_user(
+            username="approval-reviewer",
+            password="TestPassword123!",
+            school=self.school,
+            role=User.Role.ADMIN,
+            school_role=role,
+        )
+
+        self.application = RegistrationApplication.objects.create(
+            school=self.school,
+            role=RegistrationApplication.Role.STUDENT,
+            status=RegistrationApplication.Status.PENDING,
+            username="john-doe-applicant",
+            first_name="John",
+            other_name="",
+            last_name="Doe",
+            email="john.applicant@example.com",
+            date_of_birth="2012-05-10",
+            gender="MALE",
+            requested_class=self.school_class,
+        )
+
+        self.approval_url = reverse(
+            "approve_registration_application",
+            kwargs={"application_id": self.application.pk},
+        )
+
+        self.detail_url = reverse(
+            "registration_application_detail",
+            kwargs={"application_id": self.application.pk},
+        )
+
+        self.client.force_login(self.reviewer)
+
+    def create_matching_user(self, username):
+        return User.objects.create_user(
+            username=username,
+            password="TestPassword123!",
+            school=self.school,
+            first_name="John",
+            last_name="Doe",
+        )
+
+    def test_first_approval_attempt_pauses_for_duplicate_review(self):
+        self.create_matching_user("existing-john")
+
+        response = self.client.post(self.approval_url)
+
+        self.assertRedirects(response, self.detail_url)
+
+        self.application.refresh_from_db()
+
+        self.assertEqual(
+            self.application.status,
+            RegistrationApplication.Status.PENDING,
+        )
+        self.assertFalse(
+            User.objects.filter(
+                username="john-doe-applicant"
+            ).exists()
+        )
+        self.assertTrue(
+            self.client.session.get(
+                f"registration_duplicate_confirmation_{self.application.pk}"
+            )
+        )
+
+    def test_reviewer_can_confirm_and_approve_after_reviewing_duplicates(self):
+        self.create_matching_user("existing-john")
+
+        self.client.post(self.approval_url)
+
+        response = self.client.get(self.detail_url)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Possible Duplicate Name Found")
+        self.assertContains(response, "Approve Anyway")
+
+        response = self.client.post(self.approval_url)
+
+        self.assertRedirects(response, self.detail_url)
+
+        self.application.refresh_from_db()
+
+        self.assertEqual(
+            self.application.status,
+            RegistrationApplication.Status.APPROVED,
+        )
+        self.assertEqual(
+            self.application.reviewed_by,
+            self.reviewer,
+        )
+
+        self.assertTrue(
+            User.objects.filter(
+                username="john-doe-applicant",
+                school=self.school,
+            ).exists()
+        )
+
+        self.assertTrue(
+            Student.objects.filter(
+                user__username="john-doe-applicant",
+                school_class=self.school_class,
+            ).exists()
+        )
+
+        self.assertNotIn(
+            f"registration_duplicate_confirmation_{self.application.pk}",
+            self.client.session,
+        )
+
+    def test_new_duplicate_requires_another_review_before_approval(self):
+        self.create_matching_user("existing-john")
+
+        self.client.post(self.approval_url)
+
+        self.create_matching_user("another-existing-john")
+
+        response = self.client.post(self.approval_url)
+
+        self.assertRedirects(response, self.detail_url)
+
+        self.application.refresh_from_db()
+
+        self.assertEqual(
+            self.application.status,
+            RegistrationApplication.Status.PENDING,
+        )
+        self.assertFalse(
+            User.objects.filter(
+                username="john-doe-applicant"
+            ).exists()
+        )
+
+        response = self.client.get(self.detail_url)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Approve Anyway")
+        self.assertContains(response, "existing-john")
+        self.assertContains(response, "another-existing-john")

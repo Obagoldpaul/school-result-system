@@ -4,6 +4,12 @@ from django.shortcuts import get_object_or_404, redirect
 from schools.models import School, PlatformSettings
 from academics.models import SchoolSettings
 
+from django.contrib.auth import get_user_model
+from django.contrib.auth.validators import UnicodeUsernameValidator
+from django.core.exceptions import ValidationError
+
+from registrations.models import RegistrationApplication
+
 from .permissions import is_platform_admin
 from .utils import school_subscription_access_allowed
 from django.views.decorators.cache import never_cache
@@ -25,6 +31,11 @@ from django.contrib.auth.views import (
 from django.core.mail import EmailMultiAlternatives
 from django.template import loader
 
+from django.http import JsonResponse
+from django.views.decorators.http import require_GET
+
+from .permissions import user_has_permission
+from .duplicate_names import find_possible_duplicate_names
 
 def get_school_login_context(school):
     """
@@ -43,6 +54,227 @@ def get_school_login_context(school):
         "login_school": school,
         "login_school_settings": school_settings,
     }
+
+@require_GET
+def duplicate_name_check(request, school_id=None):
+    """
+    Return the number of possible same-name matches
+    within the relevant school.
+
+    Public applicants use the school resolved from their domain.
+    Authenticated school users use their own school.
+    Platform administrators must supply an existing school ID.
+    """
+
+    name_type = request.GET.get("type", "").strip().lower()
+
+    if name_type not in {"student", "teacher", "admin"}:
+        return JsonResponse(
+            {"error": "Invalid registration type."},
+            status=400,
+        )
+
+    # Platform administrator workflow
+    if school_id is not None:
+        if not is_platform_admin(request.user):
+            return JsonResponse(
+                {"error": "Permission denied."},
+                status=403,
+            )
+
+        if name_type != "admin":
+            return JsonResponse(
+                {"error": "Invalid registration type for this school."},
+                status=400,
+            )
+
+        school = get_object_or_404(School, pk=school_id)
+
+    # Authenticated school-user workflow
+    elif request.user.is_authenticated:
+        if is_platform_admin(request.user):
+            return JsonResponse(
+                {"error": "A school must be specified."},
+                status=400,
+            )
+
+        school = request.user.school
+
+        if not school:
+            return JsonResponse(
+                {"error": "No school is associated with this account."},
+                status=403,
+            )
+
+        if request.school and request.school.pk != school.pk:
+            return JsonResponse(
+                {"error": "School access mismatch."},
+                status=403,
+            )
+
+        required_permission = {
+            "student": "students.add",
+            "teacher": "teachers.add",
+        }.get(name_type)
+
+        if not required_permission or not user_has_permission(
+            request.user,
+            required_permission,
+        ):
+            return JsonResponse(
+                {"error": "Permission denied."},
+                status=403,
+            )
+
+    # Public registration application workflow
+    else:
+        school = getattr(request, "school", None)
+
+        if not school or name_type == "admin":
+            return JsonResponse(
+                {"error": "School registration is unavailable."},
+                status=403,
+            )
+
+        try:
+            school_settings = SchoolSettings.load(school)
+        except SchoolSettings.DoesNotExist:
+            return JsonResponse(
+                {"error": "School registration is unavailable."},
+                status=403,
+            )
+
+        registration_enabled = (
+            school_settings.student_registration_enabled
+            if name_type == "student"
+            else school_settings.teacher_registration_enabled
+        )
+
+        if not registration_enabled:
+            return JsonResponse(
+                {"error": "Registration is currently unavailable."},
+                status=403,
+            )
+
+    first_name = request.GET.get("first_name", "").strip()
+    last_name = request.GET.get("last_name", "").strip()
+
+    if len(first_name) > 150 or len(last_name) > 150:
+        return JsonResponse(
+            {"error": "Name is too long."},
+            status=400,
+        )
+
+    matches = find_possible_duplicate_names(
+        school=school,
+        first_name=first_name,
+        last_name=last_name,
+    )
+
+    user_count = len(matches["users"])
+    application_count = len(matches["applications"])
+
+    return JsonResponse({
+        "has_duplicates": bool(user_count or application_count),
+        "user_count": user_count,
+        "application_count": application_count,
+        "total_count": user_count + application_count,
+    })
+
+@require_GET
+def username_availability_check(request):
+    """
+    Check whether a username is valid and available
+    for public student or teacher registration.
+
+    Returns availability only; never exposes matching account details.
+    """
+
+    registration_type = request.GET.get("type", "").strip().lower()
+
+    if registration_type not in {"student", "teacher"}:
+        return JsonResponse(
+            {"error": "Invalid registration type."},
+            status=400,
+        )
+
+    school = getattr(request, "school", None)
+
+    if not school:
+        return JsonResponse(
+            {"error": "School registration is unavailable."},
+            status=403,
+        )
+
+    try:
+        school_settings = SchoolSettings.load(school)
+    except SchoolSettings.DoesNotExist:
+        return JsonResponse(
+            {"error": "School registration is unavailable."},
+            status=403,
+        )
+
+    registration_enabled = (
+        school_settings.student_registration_enabled
+        if registration_type == "student"
+        else school_settings.teacher_registration_enabled
+    )
+
+    if not registration_enabled:
+        return JsonResponse(
+            {"error": "Registration is currently unavailable."},
+            status=403,
+        )
+
+    username = request.GET.get("username", "").strip()
+
+    if not username:
+        return JsonResponse(
+            {
+                "valid": False,
+                "available": False,
+                "message": "Enter a username.",
+            }
+        )
+
+    if len(username) > 150:
+        return JsonResponse({
+            "valid": False,
+            "available": False,
+            "message": "Username cannot exceed 150 characters.",
+        })
+
+    try:
+        UnicodeUsernameValidator()(username)
+    except ValidationError:
+        return JsonResponse({
+            "valid": False,
+            "available": False,
+            "message": "Use only letters, numbers and @/./+/-/_ characters.",
+        })
+
+    User = get_user_model()
+
+    username_exists = (
+        User.objects.filter(username__iexact=username).exists()
+        or RegistrationApplication.objects.filter(
+            username__iexact=username,
+            status=RegistrationApplication.Status.PENDING,
+        ).exists()
+    )
+
+    if username_exists:
+        return JsonResponse({
+            "valid": True,
+            "available": False,
+            "message": "This username is already taken. Please choose another.",
+        })
+
+    return JsonResponse({
+        "valid": True,
+        "available": True,
+        "message": "Username is available.",
+    })
 
 class SchoolHubLoginView(LoginView):
     """

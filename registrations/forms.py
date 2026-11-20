@@ -1,4 +1,5 @@
 from django import forms
+from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.db.models import Q
@@ -30,6 +31,7 @@ class RegistrationApplicantFieldsMixin:
 
     username = forms.CharField(
         max_length=150,
+        validators=[UnicodeUsernameValidator()],
         widget=forms.TextInput(
             attrs={
                 "class": "form-control",
@@ -435,6 +437,10 @@ class StudentRegistrationApplicationForm(
 
         self.school = school
         self.instance.school = school
+        
+        self.fields["username"].validators.append(
+            UnicodeUsernameValidator()
+        )
 
         self._setup_lga_choices()
 
@@ -662,6 +668,10 @@ class TeacherRegistrationApplicationForm(
 
         self.school = school
         self.instance.school = school
+        
+        self.fields["username"].validators.append(
+            UnicodeUsernameValidator()
+        )
 
         self._setup_lga_choices()
 

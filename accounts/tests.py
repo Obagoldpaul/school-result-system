@@ -1,11 +1,14 @@
-from django.test import TestCase
+from django.test import TestCase, Client, override_settings
 from django.core import mail
 from django.urls import reverse
 from django.test import override_settings
 from accounts.models import User
 from accounts.permissions import user_has_permission
-from schools.models import School, SchoolRole, Permission
+from schools.models import School, SchoolRole, Permission, SchoolDomain
 from django.contrib.auth.models import AnonymousUser
+from accounts.duplicate_names import find_possible_duplicate_names
+from registrations.models import RegistrationApplication
+from academics.models import SchoolSettings
 
 from accounts.permissions import (
     user_has_permission,
@@ -457,3 +460,576 @@ class PasswordResetEmailTests(TestCase):
 
         self.assertEqual(email.reply_to, [])
 
+class DuplicateNameCheckerTests(TestCase):
+
+    def setUp(self):
+        from datetime import date
+
+        self.school_a = School.objects.create(
+            name="Duplicate Test School A",
+            code="DUPA",
+        )
+
+        self.school_b = School.objects.create(
+            name="Duplicate Test School B",
+            code="DUPB",
+        )
+
+        self.date_of_birth = date(2010, 5, 15)
+
+    def create_user(
+        self,
+        username,
+        school,
+        first_name="John",
+        last_name="Doe",
+    ):
+        return User.objects.create_user(
+            username=username,
+            password="testpass123",
+            school=school,
+            first_name=first_name,
+            last_name=last_name,
+        )
+
+    def create_application(
+        self,
+        username,
+        school,
+        role=RegistrationApplication.Role.STUDENT,
+        status=RegistrationApplication.Status.PENDING,
+        first_name="John",
+        last_name="Doe",
+    ):
+        return RegistrationApplication.objects.create(
+            school=school,
+            role=role,
+            status=status,
+            username=username,
+            first_name=first_name,
+            last_name=last_name,
+            email=f"{username}@example.com",
+            date_of_birth=self.date_of_birth,
+            gender="MALE",
+        )
+
+    def test_finds_existing_user_with_matching_names(self):
+        self.create_user("john-doe", self.school_a)
+
+        result = find_possible_duplicate_names(
+            self.school_a,
+            "John",
+            "Doe",
+        )
+
+        self.assertEqual(len(result["users"]), 1)
+        self.assertEqual(result["users"][0]["username"], "john-doe")
+        self.assertEqual(result["applications"], [])
+
+    def test_finds_pending_student_and_teacher_applications(self):
+        self.create_application(
+            "student-applicant",
+            self.school_a,
+            role=RegistrationApplication.Role.STUDENT,
+        )
+
+        self.create_application(
+            "teacher-applicant",
+            self.school_a,
+            role=RegistrationApplication.Role.TEACHER,
+        )
+
+        result = find_possible_duplicate_names(
+            self.school_a,
+            "John",
+            "Doe",
+        )
+
+        self.assertEqual(result["users"], [])
+        self.assertEqual(len(result["applications"]), 2)
+
+        roles = {
+            application["role"]
+            for application in result["applications"]
+        }
+
+        self.assertEqual(
+            roles,
+            {
+                RegistrationApplication.Role.STUDENT,
+                RegistrationApplication.Role.TEACHER,
+            },
+        )
+
+    def test_matching_ignores_case_and_surrounding_whitespace(self):
+        self.create_user(
+            "john-whitespace",
+            self.school_a,
+            first_name="  jOHN ",
+            last_name=" DOE  ",
+        )
+
+        result = find_possible_duplicate_names(
+            self.school_a,
+            " John ",
+            " doe ",
+        )
+
+        self.assertEqual(len(result["users"]), 1)
+
+    def test_does_not_match_users_from_another_school(self):
+        self.create_user("other-school-user", self.school_b)
+
+        result = find_possible_duplicate_names(
+            self.school_a,
+            "John",
+            "Doe",
+        )
+
+        self.assertEqual(result["users"], [])
+        self.assertEqual(result["applications"], [])
+
+    def test_does_not_match_applications_from_another_school(self):
+        self.create_application(
+            "other-school-applicant",
+            self.school_b,
+        )
+
+        result = find_possible_duplicate_names(
+            self.school_a,
+            "John",
+            "Doe",
+        )
+
+        self.assertEqual(result["applications"], [])
+
+    def test_ignores_approved_and_rejected_applications(self):
+        self.create_application(
+            "approved-applicant",
+            self.school_a,
+            status=RegistrationApplication.Status.APPROVED,
+        )
+
+        self.create_application(
+            "rejected-applicant",
+            self.school_a,
+            status=RegistrationApplication.Status.REJECTED,
+        )
+
+        result = find_possible_duplicate_names(
+            self.school_a,
+            "John",
+            "Doe",
+        )
+
+        self.assertEqual(result["applications"], [])
+
+    def test_can_exclude_existing_user(self):
+        user = self.create_user("current-user", self.school_a)
+
+        result = find_possible_duplicate_names(
+            self.school_a,
+            "John",
+            "Doe",
+            exclude_user=user,
+        )
+
+        self.assertEqual(result["users"], [])
+
+    def test_can_exclude_current_application(self):
+        application = self.create_application(
+            "current-application",
+            self.school_a,
+        )
+
+        result = find_possible_duplicate_names(
+            self.school_a,
+            "John",
+            "Doe",
+            exclude_application=application,
+        )
+
+        self.assertEqual(result["applications"], [])
+
+    def test_returns_no_matches_when_either_name_is_blank(self):
+        self.create_user("john-doe", self.school_a)
+        self.create_application("john-application", self.school_a)
+
+        result = find_possible_duplicate_names(
+            self.school_a,
+            "",
+            "Doe",
+        )
+
+        self.assertEqual(result, {
+            "users": [],
+            "applications": [],
+        })
+        
+@override_settings(ALLOWED_HOSTS=[".example.com", "testserver", "localhost"])
+class DuplicateNameEndpointTests(TestCase):
+
+    def setUp(self):
+        self.client = Client()
+
+        self.school_a = School.objects.create(
+            name="Endpoint Test School A",
+            code="EPA",
+        )
+
+        self.school_b = School.objects.create(
+            name="Endpoint Test School B",
+            code="EPB",
+        )
+
+        SchoolDomain.objects.create(
+            school=self.school_a,
+            domain="school-a.example.com",
+            is_primary=True,
+            is_active=True,
+        )
+
+        SchoolDomain.objects.create(
+            school=self.school_b,
+            domain="school-b.example.com",
+            is_primary=True,
+            is_active=True,
+        )
+
+        SchoolSettings.objects.create(
+            school=self.school_a,
+            school_name=self.school_a.name,
+        )
+
+        SchoolSettings.objects.create(
+            school=self.school_b,
+            school_name=self.school_b.name,
+        )
+
+    def create_permission(self, code):
+        return Permission.objects.create(
+            code=code,
+            name=code.replace(".", " ").title(),
+            module="Registration",
+            is_active=True,
+        )
+
+    def create_school_user(self, school, permission_code=None):
+        role = SchoolRole.objects.create(
+            school=school,
+            name="Registration Manager",
+            base_role=SchoolRole.BaseRole.ADMIN,
+        )
+
+        if permission_code:
+            permission = self.create_permission(permission_code)
+            role.permissions.add(permission)
+
+        return User.objects.create_user(
+            username=f"manager-{school.code.lower()}",
+            password="testpass123",
+            school=school,
+            role=User.Role.ADMIN,
+            school_role=role,
+        )
+
+    def create_matching_user(self, school):
+        return User.objects.create_user(
+            username=f"existing-{school.code.lower()}",
+            password="testpass123",
+            school=school,
+            first_name="John",
+            last_name="Doe",
+        )
+
+    def test_authenticated_school_user_can_check_student_names(self):
+        user = self.create_school_user(
+            self.school_a,
+            "students.add",
+        )
+        self.create_matching_user(self.school_a)
+
+        self.client.force_login(user)
+
+        response = self.client.get(
+            reverse("duplicate_name_check"),
+            {
+                "type": "student",
+                "first_name": "John",
+                "last_name": "Doe",
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response.json(),
+            {
+                "has_duplicates": True,
+                "user_count": 1,
+                "application_count": 0,
+                "total_count": 1,
+            },
+        )
+
+    def test_authenticated_school_user_without_permission_is_denied(self):
+        user = self.create_school_user(self.school_a)
+        self.client.force_login(user)
+
+        response = self.client.get(
+            reverse("duplicate_name_check"),
+            {
+                "type": "student",
+                "first_name": "John",
+                "last_name": "Doe",
+            },
+        )
+
+        self.assertEqual(response.status_code, 403)
+
+    def test_public_registration_uses_school_from_domain(self):
+        self.create_matching_user(self.school_a)
+
+        response = self.client.get(
+            reverse("duplicate_name_check"),
+            {
+                "type": "student",
+                "first_name": "John",
+                "last_name": "Doe",
+            },
+            HTTP_HOST="school-a.example.com",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response.json(),
+            {
+                "has_duplicates": True,
+                "user_count": 1,
+                "application_count": 0,
+                "total_count": 1,
+            },
+        )
+
+    def test_public_registration_does_not_match_another_school(self):
+        self.create_matching_user(self.school_b)
+
+        response = self.client.get(
+            reverse("duplicate_name_check"),
+            {
+                "type": "student",
+                "first_name": "John",
+                "last_name": "Doe",
+            },
+            HTTP_HOST="school-a.example.com",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response.json(),
+            {
+                "has_duplicates": False,
+                "user_count": 0,
+                "application_count": 0,
+                "total_count": 0,
+            },
+        )
+
+    def test_public_registration_is_denied_when_disabled(self):
+        settings = SchoolSettings.objects.get(school=self.school_a)
+        settings.student_registration_enabled = False
+        settings.save()
+
+        response = self.client.get(
+            reverse("duplicate_name_check"),
+            {
+                "type": "student",
+                "first_name": "John",
+                "last_name": "Doe",
+            },
+            HTTP_HOST="school-a.example.com",
+        )
+
+        self.assertEqual(response.status_code, 403)
+
+    def test_platform_admin_can_check_names_for_selected_school(self):
+        platform_admin = User.objects.create_user(
+            username="endpoint-platform-admin",
+            password="testpass123",
+            role=User.Role.PLATFORM_ADMIN,
+        )
+
+        self.create_matching_user(self.school_a)
+        self.client.force_login(platform_admin)
+
+        response = self.client.get(
+            reverse(
+                "school_duplicate_name_check",
+                kwargs={"school_id": self.school_a.pk},
+            ),
+            {
+                "type": "admin",
+                "first_name": "John",
+                "last_name": "Doe",
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response.json(),
+            {
+                "has_duplicates": True,
+                "user_count": 1,
+                "application_count": 0,
+                "total_count": 1,
+            },
+        )
+
+    def test_non_platform_admin_cannot_check_selected_school(self):
+        user = self.create_school_user(
+            self.school_a,
+            "students.add",
+        )
+        self.client.force_login(user)
+
+        response = self.client.get(
+            reverse(
+                "school_duplicate_name_check",
+                kwargs={"school_id": self.school_a.pk},
+            ),
+            {
+                "type": "admin",
+                "first_name": "John",
+                "last_name": "Doe",
+            },
+        )
+
+        self.assertEqual(response.status_code, 403)
+
+    def test_invalid_registration_type_is_rejected(self):
+        response = self.client.get(
+            reverse("duplicate_name_check"),
+            {
+                "type": "unknown",
+                "first_name": "John",
+                "last_name": "Doe",
+            },
+        )
+
+        self.assertEqual(response.status_code, 400)
+        
+@override_settings(ALLOWED_HOSTS=[".example.com", "testserver", "localhost"])
+class UsernameAvailabilityEndpointTests(TestCase):
+
+    def setUp(self):
+        from datetime import date
+
+        self.client = Client()
+
+        self.school = School.objects.create(
+            name="Username Availability Test School",
+            code="UATS",
+        )
+
+        SchoolDomain.objects.create(
+            school=self.school,
+            domain="username-school.example.com",
+            is_primary=True,
+            is_active=True,
+        )
+
+        SchoolSettings.objects.create(
+            school=self.school,
+            school_name=self.school.name,
+        )
+
+        self.date_of_birth = date(2010, 5, 15)
+
+    def check_username(self, username):
+        return self.client.get(
+            reverse("username_availability_check"),
+            {
+                "type": "student",
+                "username": username,
+            },
+            HTTP_HOST="username-school.example.com",
+        )
+
+    def create_application(self, username):
+        return RegistrationApplication.objects.create(
+            school=self.school,
+            role=RegistrationApplication.Role.STUDENT,
+            status=RegistrationApplication.Status.PENDING,
+            username=username,
+            first_name="John",
+            last_name="Doe",
+            email=f"{username}@example.com",
+            date_of_birth=self.date_of_birth,
+            gender="MALE",
+        )
+
+    def test_available_username_is_accepted(self):
+        response = self.check_username("new_student01")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json()["valid"])
+        self.assertTrue(response.json()["available"])
+
+    def test_existing_username_is_unavailable_case_insensitively(self):
+        User.objects.create_user(
+            username="ExistingStudent",
+            password="testpass123",
+        )
+
+        response = self.check_username("existingstudent")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json()["valid"])
+        self.assertFalse(response.json()["available"])
+
+    def test_pending_application_username_is_unavailable(self):
+        self.create_application("pending_student")
+
+        response = self.check_username("PENDING_STUDENT")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(response.json()["available"])
+
+    def test_invalid_username_format_is_rejected(self):
+        response = self.check_username("invalid username")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(response.json()["valid"])
+        self.assertFalse(response.json()["available"])
+
+    def test_blank_username_is_rejected(self):
+        response = self.check_username("")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(response.json()["valid"])
+        self.assertFalse(response.json()["available"])
+
+    def test_disabled_registration_is_denied(self):
+        settings = SchoolSettings.objects.get(school=self.school)
+        settings.student_registration_enabled = False
+        settings.save()
+
+        response = self.check_username("new_student01")
+
+        self.assertEqual(response.status_code, 403)
+
+    def test_response_does_not_expose_account_details(self):
+        User.objects.create_user(
+            username="private_student",
+            password="testpass123",
+        )
+
+        response = self.check_username("private_student")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            set(response.json().keys()),
+            {"valid", "available", "message"},
+        )
+        self.assertNotIn("username", response.json())
+        self.assertNotIn("user_id", response.json())
+        self.assertNotIn("application_id", response.json())

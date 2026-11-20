@@ -428,6 +428,16 @@
 
                                     {{ field }}
 
+                                    {% if field.name == "username" %}
+                                        <div
+                                            id="public-teacher-username-feedback"
+                                            class="small mt-2"
+                                            role="status"
+                                            aria-live="polite"
+                                            style="display: none;"
+                                        ></div>
+                                    {% endif %}
+
                                     {% if field.name == "passport" %}
                                         <div id="public-teacher-camera" style="margin-top: 15px;">
 
@@ -527,6 +537,18 @@
                                     {% endfor %}
 
                                 </div>
+
+                                {% if field.name == "first_name" %}
+                                <div class="form-group full-width">
+                                    <div
+                                        id="public-teacher-duplicate-name-warning"
+                                        class="alert alert-warning"
+                                        role="alert"
+                                        aria-live="polite"
+                                        style="display: none;"
+                                    ></div>
+                                </div>
+                            {% endif %}
 
                             {% endif %}
 
@@ -894,6 +916,234 @@
     });
     </script>
 
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const firstNameInput = document.getElementById(
+            "{{ form.first_name.id_for_label }}"
+        );
+    
+        const lastNameInput = document.getElementById(
+            "{{ form.last_name.id_for_label }}"
+        );
+    
+        const warningBox = document.getElementById(
+            "public-teacher-duplicate-name-warning"
+        );
+    
+        if (!firstNameInput || !lastNameInput || !warningBox) {
+            return;
+        }
+    
+        let debounceTimer = null;
+        let currentRequest = null;
+    
+        function hideWarning() {
+            warningBox.style.display = "none";
+            warningBox.textContent = "";
+        }
+    
+        function checkDuplicateName() {
+            const firstName = firstNameInput.value.trim();
+            const lastName = lastNameInput.value.trim();
+    
+            if (!firstName || !lastName) {
+                if (currentRequest) {
+                    currentRequest.abort();
+                }
+    
+                hideWarning();
+                return;
+            }
+    
+            if (currentRequest) {
+                currentRequest.abort();
+            }
+    
+            currentRequest = new AbortController();
+    
+            const params = new URLSearchParams({
+                type: "teacher",
+                first_name: firstName,
+                last_name: lastName,
+            });
+    
+            fetch(
+                "{% url 'duplicate_name_check' %}?" + params.toString(),
+                {
+                    method: "GET",
+                    credentials: "same-origin",
+                    headers: {
+                        "X-Requested-With": "XMLHttpRequest",
+                    },
+                    signal: currentRequest.signal,
+                }
+            )
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error("Duplicate-name check failed.");
+                }
+    
+                return response.json();
+            })
+            .then(data => {
+                if (data.has_duplicates) {
+                    const userText =
+                        data.user_count === 1
+                            ? "1 existing user"
+                            : `${data.user_count} existing users`;
+    
+                    const applicationText =
+                        data.application_count === 1
+                            ? "1 pending application"
+                            : `${data.application_count} pending applications`;
+    
+                    warningBox.textContent =
+                        `Possible duplicate found: ${userText} and ` +
+                        `${applicationText} in this school. ` +
+                        "Please check whether this teacher has already applied " +
+                        "or registered before continuing. " +
+                        "If these are different people, you may proceed.";
+    
+                    warningBox.style.display = "block";
+                } else {
+                    hideWarning();
+                }
+            })
+            .catch(error => {
+                if (error.name !== "AbortError") {
+                    hideWarning();
+                    console.error("Duplicate-name check:", error);
+                }
+            });
+        }
+    
+        function scheduleDuplicateCheck() {
+            clearTimeout(debounceTimer);
+    
+            debounceTimer = setTimeout(
+                checkDuplicateName,
+                400
+            );
+        }
+    
+        firstNameInput.addEventListener("input", scheduleDuplicateCheck);
+        lastNameInput.addEventListener("input", scheduleDuplicateCheck);
+    });
+    </script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const usernameInput = document.getElementById(
+            "{{ form.username.id_for_label }}"
+        );
+    
+        const feedback = document.getElementById(
+            "public-teacher-username-feedback"
+        );
+    
+        if (!usernameInput || !feedback) {
+            return;
+        }
+    
+        let debounceTimer = null;
+        let currentRequest = null;
+    
+        function showFeedback(message, state) {
+            feedback.textContent = message;
+            feedback.style.display = message ? "block" : "none";
+    
+            if (state === "success") {
+                feedback.style.color = "#198754";
+            } else if (state === "error") {
+                feedback.style.color = "#dc3545";
+            } else {
+                feedback.style.color = "#777777";
+            }
+        }
+    
+        async function checkUsername() {
+            const username = usernameInput.value.trim();
+    
+            if (currentRequest) {
+                currentRequest.abort();
+                currentRequest = null;
+            }
+    
+            if (!username) {
+                showFeedback("", "");
+                return;
+            }
+    
+            showFeedback("Checking username availability...", "loading");
+    
+            currentRequest = new AbortController();
+    
+            const params = new URLSearchParams({
+                type: "teacher",
+                username: username,
+            });
+    
+            try {
+                const response = await fetch(
+                    "{% url 'username_availability_check' %}?" + params.toString(),
+                    {
+                        method: "GET",
+                        credentials: "same-origin",
+                        headers: {
+                            "X-Requested-With": "XMLHttpRequest",
+                        },
+                        signal: currentRequest.signal,
+                    }
+                );
+    
+                const data = await response.json();
+    
+                if (!response.ok) {
+                    showFeedback(
+                        data.error || "Unable to check username availability.",
+                        "error"
+                    );
+                    return;
+                }
+    
+                if (!data.valid || !data.available) {
+                    showFeedback(data.message, "error");
+                    return;
+                }
+    
+                showFeedback(data.message, "success");
+    
+            } catch (error) {
+                if (error.name !== "AbortError") {
+                    showFeedback(
+                        "Unable to check username availability. Please try again.",
+                        "error"
+                    );
+                }
+            } finally {
+                currentRequest = null;
+            }
+        }
+    
+        usernameInput.addEventListener("input", function () {
+            clearTimeout(debounceTimer);
+    
+            if (currentRequest) {
+                currentRequest.abort();
+                currentRequest = null;
+            }
+    
+            showFeedback("", "");
+    
+            debounceTimer = setTimeout(checkUsername, 400);
+        });
+    
+        usernameInput.addEventListener("blur", function () {
+            clearTimeout(debounceTimer);
+            checkUsername();
+        });
+    });
+    </script>
 </body>
 
 </html>
