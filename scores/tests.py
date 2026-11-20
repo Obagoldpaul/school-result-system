@@ -802,3 +802,188 @@ class ScoreEntryEligibilityTests(ScorePermissionTestMixin, TestCase):
 
         self.assertNotIn(self.student_a, students)
         self.assertIn(self.student_b, students)
+
+    
+    def test_bulk_publish_publishes_all_approved_allocations_for_term(self):
+        self.grant(self.publish_permission)
+
+        second_class = self.create_class(
+            self.school1,
+            "Primary 2",
+        )
+
+        second_allocation = SubjectAllocation.objects.create(
+            teacher=self.teacher1,
+            subject=self.subject1,
+            school_class=second_class,
+            term=self.term1,
+            status=SubjectAllocation.Status.APPROVED,
+        )
+
+        self.allocation.status = SubjectAllocation.Status.APPROVED
+        self.allocation.save(update_fields=["status"])
+
+        self.client.force_login(self.user)
+
+        response = self.client.post(
+            reverse("publish_all_approved_allocations"),
+            {"term": self.term1.id},
+        )
+
+        self.assertEqual(response.status_code, 302)
+
+        self.allocation.refresh_from_db()
+        second_allocation.refresh_from_db()
+
+        self.assertEqual(
+            self.allocation.status,
+            SubjectAllocation.Status.PUBLISHED,
+        )
+        self.assertEqual(
+            second_allocation.status,
+            SubjectAllocation.Status.PUBLISHED,
+        )
+
+
+    def test_bulk_publish_only_publishes_selected_class(self):
+        self.grant(self.publish_permission)
+
+        second_class = self.create_class(
+            self.school1,
+            "Primary 2",
+        )
+
+        second_allocation = SubjectAllocation.objects.create(
+            teacher=self.teacher1,
+            subject=self.subject1,
+            school_class=second_class,
+            term=self.term1,
+            status=SubjectAllocation.Status.APPROVED,
+        )
+
+        self.allocation.status = SubjectAllocation.Status.APPROVED
+        self.allocation.save(update_fields=["status"])
+
+        self.client.force_login(self.user)
+
+        response = self.client.post(
+            reverse("publish_all_approved_allocations"),
+            {
+                "term": self.term1.id,
+                "class": self.class1.id,
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+
+        self.allocation.refresh_from_db()
+        second_allocation.refresh_from_db()
+
+        self.assertEqual(
+            self.allocation.status,
+            SubjectAllocation.Status.PUBLISHED,
+        )
+        self.assertEqual(
+            second_allocation.status,
+            SubjectAllocation.Status.APPROVED,
+        )
+
+
+    def test_bulk_publish_leaves_unapproved_allocations_unchanged(self):
+        self.grant(self.publish_permission)
+
+        self.allocation.status = SubjectAllocation.Status.REVIEWED
+        self.allocation.save(update_fields=["status"])
+
+        self.client.force_login(self.user)
+
+        response = self.client.post(
+            reverse("publish_all_approved_allocations"),
+            {"term": self.term1.id},
+        )
+
+        self.assertEqual(response.status_code, 302)
+
+        self.allocation.refresh_from_db()
+
+        self.assertEqual(
+            self.allocation.status,
+            SubjectAllocation.Status.REVIEWED,
+        )
+
+
+    def test_bulk_publish_denies_user_without_permission(self):
+        self.allocation.status = SubjectAllocation.Status.APPROVED
+        self.allocation.save(update_fields=["status"])
+
+        self.client.force_login(self.user)
+
+        response = self.client.post(
+            reverse("publish_all_approved_allocations"),
+            {"term": self.term1.id},
+        )
+
+        self.assertEqual(response.status_code, 403)
+
+        self.allocation.refresh_from_db()
+
+        self.assertEqual(
+            self.allocation.status,
+            SubjectAllocation.Status.APPROVED,
+        )
+
+
+    def test_bulk_publish_rejects_another_schools_term(self):
+        self.grant(self.publish_permission)
+
+        foreign_term = self.create_term(self.school2)
+
+        self.allocation.status = SubjectAllocation.Status.APPROVED
+        self.allocation.save(update_fields=["status"])
+
+        self.client.force_login(self.user)
+
+        response = self.client.post(
+            reverse("publish_all_approved_allocations"),
+            {"term": foreign_term.id},
+        )
+
+        self.assertEqual(response.status_code, 404)
+
+        self.allocation.refresh_from_db()
+
+        self.assertEqual(
+            self.allocation.status,
+            SubjectAllocation.Status.APPROVED,
+        )
+
+
+    def test_bulk_publish_rejects_another_schools_class(self):
+        self.grant(self.publish_permission)
+
+        foreign_class = self.create_class(
+            self.school2,
+            "Foreign Primary 1",
+        )
+
+        self.allocation.status = SubjectAllocation.Status.APPROVED
+        self.allocation.save(update_fields=["status"])
+
+        self.client.force_login(self.user)
+
+        response = self.client.post(
+            reverse("publish_all_approved_allocations"),
+            {
+                "term": self.term1.id,
+                "class": foreign_class.id,
+            },
+        )
+
+        self.assertEqual(response.status_code, 404)
+
+        self.allocation.refresh_from_db()
+
+        self.assertEqual(
+            self.allocation.status,
+            SubjectAllocation.Status.APPROVED,
+        )

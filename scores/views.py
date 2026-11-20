@@ -25,6 +25,9 @@ from accounts.permissions import (
 from django.core.exceptions import PermissionDenied
 from django.db.models import F
 
+from django.views.decorators.http import require_POST
+from django.db import transaction
+from urllib.parse import urlencode
 
 
 @staff_required
@@ -222,6 +225,9 @@ def select_allocation(request):
 
         'selected_class': class_id,
         'selected_term': term_id,
+        'has_explicit_term_selection': bool(
+            request.GET.get('term') and selected_term_obj
+        ),
         'selected_subject': subject_id,
         'selected_status': status,
         
@@ -435,6 +441,90 @@ def publish_allocation(request, allocation_id):
 
     return _redirect_with_query(request)
 
+
+@staff_required
+@login_required
+@school_permission_required("scores.publish")
+@require_POST
+def publish_all_approved_allocations(request):
+    school = request.user.school
+
+    term_id = request.POST.get("term")
+    class_id = request.POST.get("class")
+
+    if not term_id:
+        messages.error(request, "Please select an academic term.")
+        return redirect("select_allocation")
+
+    term = get_object_or_404(
+        Term,
+        id=term_id,
+        session__school=school,
+    )
+
+    selected_class = None
+
+    if class_id:
+        selected_class = get_object_or_404(
+            SchoolClass,
+            id=class_id,
+            school=school,
+        )
+
+    allocations = SubjectAllocation.objects.filter(
+        school_class__school=school,
+        term=term,
+        status=SubjectAllocation.Status.APPROVED,
+    ).select_related(
+        "school_class",
+        "subject",
+        "teacher",
+    )
+
+    if selected_class:
+        allocations = allocations.filter(
+            school_class=selected_class,
+        )
+
+    published_count = 0
+
+    with transaction.atomic():
+        for allocation in allocations:
+            services.ensure_can_publish(
+                request.user,
+                allocation,
+            )
+
+            services.publish_allocation_results(
+                allocation,
+                user=request.user,
+            )
+
+            published_count += 1
+
+    if published_count:
+        messages.success(
+            request,
+            f"Successfully published {published_count} approved allocation(s).",
+        )
+    else:
+        messages.info(
+            request,
+            "There are no approved results available to publish for this selection.",
+        )
+
+    from django.urls import reverse
+
+    query_params = {
+        "session": term.session_id,
+        "term": term.id,
+    }
+
+    if selected_class:
+        query_params["class"] = selected_class.id
+
+    url = reverse("select_allocation")
+    return redirect(f"{url}?{urlencode(query_params)}")
 
 @login_required
 @staff_required

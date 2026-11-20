@@ -18,4 +18,9 @@ urlpatterns = [
         views.edit_teacher_remark,
         name='edit_teacher_remark',
     ),
+    path(
+        'publish-all/',
+        views.publish_all_approved_allocations,
+        name='publish_all_approved_allocations',
+    ),
 ]

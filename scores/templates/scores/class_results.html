@@ -70,7 +70,7 @@
                 Academic Session
             </label>
     
-            <select name="session" id="session">
+            <select name="session" id="session" onchange="this.form.term.value = ''; this.form.submit()">
     
                 <option value="">
                     -- Select Academic Session --

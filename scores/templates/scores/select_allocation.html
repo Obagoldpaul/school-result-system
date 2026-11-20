@@ -16,7 +16,7 @@
     </select>
 
 
-    <select name="session">
+    <select name="session" onchange="this.form.submit()">
 
         <option value="">
             -- Select Academic Session --
@@ -97,6 +97,24 @@
     </a>
 
 </form>
+
+{% if can_publish_results and has_explicit_term_selection %}
+<div style="margin-bottom: 20px;">
+    <form method="POST" action="{% url 'publish_all_approved_allocations' %}"
+          onsubmit="return confirm('Publish all approved results for the selected term? Students will be able to view published results.');">
+        {% csrf_token %}
+        <input type="hidden" name="term" value="{{ selected_term }}">
+
+        {% if selected_class %}
+        <input type="hidden" name="class" value="{{ selected_class }}">
+        {% endif %}
+
+        <button type="submit">
+            Publish All Approved Results
+        </button>
+    </form>
+</div>
+{% endif %}
 
 {% for group in grouped %}
 <div class="section-card">
