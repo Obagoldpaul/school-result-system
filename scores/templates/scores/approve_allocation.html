@@ -61,21 +61,39 @@
 
 <br>
 
-<form
-    method="POST"
-    action="{% url 'approve_allocation' allocation.id %}{% if current_query %}?{{ current_query }}{% endif %}"
->
-    {% csrf_token %}
+<div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
 
-    <p>
-        Please confirm that you have checked the submitted scores
-        and the Class Teacher's comment before approving.
-    </p>
+    <form
+        method="POST"
+        action="{% url 'approve_allocation' allocation.id %}{% if current_query %}?{{ current_query }}{% endif %}"
+        style="margin: 0;"
+    >
+        {% csrf_token %}
 
-    <button type="submit">
-        Approve Results
-    </button>
-</form>
+        <p>
+            Please confirm that you have checked the submitted scores
+            and the Class Teacher's comment before approving.
+        </p>
+
+        <button type="submit">
+            Approve Results
+        </button>
+    </form>
+
+    <form
+        method="POST"
+        action="{% url 'return_allocation' allocation.id %}{% if current_query %}?{{ current_query }}{% endif %}"
+        style="margin: 0;"
+        onsubmit="return confirm('Return these results to the teacher for correction?');"
+    >
+        {% csrf_token %}
+
+        <button type="submit">
+            Return to Teacher for Correction
+        </button>
+    </form>
+
+</div>
 
 <p>
     <a href="{% url 'select_allocation' %}{% if current_query %}?{{ current_query }}{% endif %}">

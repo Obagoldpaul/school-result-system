@@ -7,6 +7,7 @@ urlpatterns = [
     path('submit/<int:allocation_id>/', views.submit_allocation, name='submit_allocation'),
     path('review/<int:allocation_id>/', views.review_allocation, name='review_allocation'),
     path('approve/<int:allocation_id>/', views.approve_allocation, name='approve_allocation'),
+    path('return/<int:allocation_id>/', views.return_allocation, name='return_allocation'),
     path('publish/<int:allocation_id>/', views.publish_allocation, name='publish_allocation'),
     path('results/', views.class_results, name='class_results'),
     path('report/<int:student_id>/', views.select_report_term, name='select_report_term'),

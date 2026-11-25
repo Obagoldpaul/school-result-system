@@ -156,6 +156,34 @@ def approve_allocation_results(allocation, user=None):
         from activitylog.models import log_activity
         log_activity(user, f"{user} approved {allocation.subject} - {allocation.school_class}")
 
+def ensure_can_return_allocation(user, allocation):
+    from accounts.permissions import can_approve_scores, user_has_permission
+
+    if (
+        not can_approve_scores(user, allocation)
+        or not user_has_permission(user, "scores.approve")
+    ):
+        raise PermissionDenied(
+            "You cannot return these results."
+        )
+
+    if allocation.status != SubjectAllocation.Status.REVIEWED:
+        raise PermissionDenied(
+            "Only Reviewed results can be returned."
+        )
+
+def return_allocation_for_correction(allocation, user=None):
+    ensure_can_return_allocation(user, allocation)
+
+    allocation.status = SubjectAllocation.Status.DRAFT
+    allocation.save(update_fields=["status"])
+
+    from activitylog.models import log_activity
+    log_activity(
+        user,
+        f"{user} returned {allocation.subject} - "
+        f"{allocation.school_class} for correction",
+    )
 
 def publish_allocation_results(allocation, user=None):
     if allocation.status == SubjectAllocation.Status.APPROVED:

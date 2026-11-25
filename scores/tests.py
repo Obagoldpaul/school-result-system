@@ -4,6 +4,7 @@ from students.models import Student, Department
 from .services import get_students_for_allocation
 from .models import Score
 from academics.models import SchoolSettings
+from datetime import date
 
 from accounts.models import User
 from schools.models import (
@@ -206,6 +207,207 @@ class ScorePermissionTests(ScorePermissionTestMixin, TestCase):
             200,
         )
 
+    def test_allocation_selector_uses_actual_academic_chronology(self):
+        self.grant(self.view_permission)
+        self.client.force_login(self.user)
+
+        # Session names deliberately conflict with their actual dates.
+        earlier_session = AcademicSession.objects.create(
+            school=self.school1,
+            name="2028/2029",
+        )
+
+        later_session = AcademicSession.objects.create(
+            school=self.school1,
+            name="2024/2025",
+        )
+
+        earlier_term = Term.objects.create(
+            session=earlier_session,
+            name=Term.TermName.SECOND,
+            start_date=date(2024, 1, 1),
+            end_date=date(2024, 3, 31),
+        )
+
+        later_term = Term.objects.create(
+            session=later_session,
+            name=Term.TermName.FIRST,
+            start_date=date(2025, 1, 1),
+            end_date=date(2025, 3, 31),
+        )
+
+        # Create a term belonging to another school.
+        foreign_session = AcademicSession.objects.create(
+            school=self.school2,
+            name="2023/2024",
+        )
+
+        foreign_term = Term.objects.create(
+            session=foreign_session,
+            name=Term.TermName.FIRST,
+            start_date=date(2023, 1, 1),
+            end_date=date(2023, 3, 31),
+        )
+
+        response = self.client.get(
+            reverse("select_allocation")
+        )
+
+        self.assertEqual(response.status_code, 200)
+
+        # Terms should follow actual dates, with undated legacy
+        # terms placed after completely dated terms.
+        self.assertEqual(
+            list(response.context["terms"]),
+            [earlier_term, later_term, self.term1],
+        )
+
+        # Sessions should follow their earliest complete term dates.
+        self.assertEqual(
+            list(response.context["sessions"]),
+            [
+                earlier_session,
+                later_session,
+                self.term1.session,
+            ],
+        )
+
+        # Another school's term must never appear.
+        self.assertNotIn(
+            foreign_term,
+            response.context["terms"],
+        )
+    
+    def test_management_can_return_reviewed_allocation_for_correction(self):
+        self.grant(self.approve_permission)
+
+        student_user = self.create_user(
+            self.school1,
+            "returnteststudent",
+            User.Role.STUDENT,
+        )
+
+        student = Student.objects.create(
+            user=student_user,
+            school_class=self.class1,
+            admission_number="RETURN001",
+        )
+
+        score = Score.objects.create(
+            student=student,
+            subject=self.subject1,
+            term=self.term1,
+            ca_score=30,
+            exam_score=50,
+            recorded_by=self.teacher1,
+        )
+
+        self.allocation.status = SubjectAllocation.Status.REVIEWED
+        self.allocation.class_teacher_comment = "Please review these scores."
+        self.allocation.save(
+            update_fields=["status", "class_teacher_comment"]
+        )
+
+        self.client.force_login(self.user)
+
+        response = self.client.post(
+            reverse(
+                "return_allocation",
+                kwargs={"allocation_id": self.allocation.id},
+            )
+        )
+
+        self.assertEqual(response.status_code, 302)
+
+        self.allocation.refresh_from_db()
+        score.refresh_from_db()
+
+        self.assertEqual(
+            self.allocation.status,
+            SubjectAllocation.Status.DRAFT,
+        )
+        self.assertEqual(
+            self.allocation.class_teacher_comment,
+            "Please review these scores.",
+        )
+        self.assertEqual(score.ca_score, 30)
+        self.assertEqual(score.exam_score, 50)
+    
+    
+    def test_return_allocation_denied_without_approval_permission(self):
+        self.allocation.status = SubjectAllocation.Status.REVIEWED
+        self.allocation.save(update_fields=["status"])
+
+        self.client.force_login(self.user)
+
+        response = self.client.post(
+            reverse(
+                "return_allocation",
+                kwargs={"allocation_id": self.allocation.id},
+            )
+        )
+
+        self.assertEqual(response.status_code, 403)
+        
+    def test_return_allocation_denies_cross_school_access(self):
+        self.grant(self.approve_permission)
+
+        teacher2 = self.create_teacher(
+            self.school2,
+            "returnteacher2",
+            "RETURN-T002",
+        )
+        class2 = self.create_class(self.school2, "Primary 1")
+        subject2 = self.create_subject(
+            self.school2,
+            "Mathematics",
+            "RETURN-M002",
+        )
+        term2 = self.create_term(self.school2)
+
+        other_allocation = SubjectAllocation.objects.create(
+            teacher=teacher2,
+            subject=subject2,
+            school_class=class2,
+            term=term2,
+            status=SubjectAllocation.Status.REVIEWED,
+        )
+
+        self.client.force_login(self.user)
+
+        response = self.client.post(
+            reverse(
+                "return_allocation",
+                kwargs={"allocation_id": other_allocation.id},
+            )
+        )
+
+        self.assertEqual(response.status_code, 404)
+        
+    
+    def test_return_allocation_rejects_unreviewed_allocation(self):
+        self.grant(self.approve_permission)
+
+        self.allocation.status = SubjectAllocation.Status.DRAFT
+        self.allocation.save(update_fields=["status"])
+
+        self.client.force_login(self.user)
+
+        response = self.client.post(
+            reverse(
+                "return_allocation",
+                kwargs={"allocation_id": self.allocation.id},
+            )
+        )
+
+        self.assertEqual(response.status_code, 403)
+
+        self.allocation.refresh_from_db()
+        self.assertEqual(
+            self.allocation.status,
+            SubjectAllocation.Status.DRAFT,
+        )
+    
     def test_scores_view_permission_denies_without_permission(self):
         self.client.force_login(self.user)
 
@@ -218,6 +420,33 @@ class ScorePermissionTests(ScorePermissionTestMixin, TestCase):
             403,
         )
 
+    def test_teacher_cannot_return_allocation_even_with_approval_permission(self):
+        self.grant(self.approve_permission)
+
+        teacher_user = self.teacher1.user
+        teacher_user.school_role = self.role
+        teacher_user.save(update_fields=["school_role"])
+
+        self.allocation.status = SubjectAllocation.Status.REVIEWED
+        self.allocation.save(update_fields=["status"])
+
+        self.client.force_login(teacher_user)
+
+        response = self.client.post(
+            reverse(
+                "return_allocation",
+                kwargs={"allocation_id": self.allocation.id},
+            )
+        )
+
+        self.assertEqual(response.status_code, 403)
+
+        self.allocation.refresh_from_db()
+        self.assertEqual(
+            self.allocation.status,
+            SubjectAllocation.Status.REVIEWED,
+        )
+        
     def test_scores_enter_permission_allows_enter_scores(self):
         self.grant(self.enter_permission)
 
@@ -461,37 +690,109 @@ class ScorePermissionTests(ScorePermissionTestMixin, TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, self.class1.name)
 
+
     def test_student_report_card_remains_accessible_after_class_deactivation(self):
-        """A student's historical report card must remain accessible."""
+            """A student's historical report card must remain accessible."""
+            student_user = self.create_user(
+                self.school1,
+                "reportstudent",
+                User.Role.STUDENT,
+            )
+
+            student = Student.objects.create(
+                user=student_user,
+                school_class=self.class1,
+                admission_number="REPORT001",
+            )
+
+            self.class1.is_active = False
+            self.class1.save(update_fields=["is_active"])
+
+            self.client.force_login(self.user)
+
+            response = self.client.get(
+                reverse(
+                    "report_card",
+                    kwargs={
+                        "student_id": student.id,
+                        "term_id": self.term1.id,
+                    },
+                )
+            )
+
+            self.assertEqual(response.status_code, 200)
+        
+    def test_student_report_term_selector_uses_actual_academic_chronology(self):
         student_user = self.create_user(
             self.school1,
-            "reportstudent",
+            "chronologystudent",
             User.Role.STUDENT,
         )
 
         student = Student.objects.create(
             user=student_user,
             school_class=self.class1,
-            admission_number="REPORT001",
+            admission_number="CHRON001",
         )
 
-        self.class1.is_active = False
-        self.class1.save(update_fields=["is_active"])
+        # Session names deliberately conflict with actual dates.
+        earlier_session = AcademicSession.objects.create(
+            school=self.school1,
+            name="2028/2029",
+        )
+
+        later_session = AcademicSession.objects.create(
+            school=self.school1,
+            name="2024/2025",
+        )
+
+        earlier_term = Term.objects.create(
+            session=earlier_session,
+            name=Term.TermName.SECOND,
+            start_date=date(2024, 1, 1),
+            end_date=date(2024, 3, 31),
+        )
+
+        later_term = Term.objects.create(
+            session=later_session,
+            name=Term.TermName.FIRST,
+            start_date=date(2025, 1, 1),
+            end_date=date(2025, 3, 31),
+        )
+
+        foreign_session = AcademicSession.objects.create(
+            school=self.school2,
+            name="2023/2024",
+        )
+
+        foreign_term = Term.objects.create(
+            session=foreign_session,
+            name=Term.TermName.FIRST,
+            start_date=date(2023, 1, 1),
+            end_date=date(2023, 3, 31),
+        )
 
         self.client.force_login(self.user)
 
         response = self.client.get(
             reverse(
-                "report_card",
-                kwargs={
-                    "student_id": student.id,
-                    "term_id": self.term1.id,
-                },
+                "select_report_term",
+                kwargs={"student_id": student.id},
             )
         )
 
         self.assertEqual(response.status_code, 200)
-        
+
+        self.assertEqual(
+            list(response.context["terms"]),
+            [earlier_term, later_term, self.term1],
+        )
+
+        self.assertNotIn(
+            foreign_term,
+            response.context["terms"],
+        )
+    
     def test_inactive_class_allows_existing_allocation_submission(self):
         """An existing allocation can still be submitted after class deactivation."""
         self.grant(self.submit_permission)
@@ -602,6 +903,8 @@ class ScorePermissionTests(ScorePermissionTestMixin, TestCase):
             self.allocation.status,
             SubjectAllocation.Status.PUBLISHED,
         )
+        
+    
         
 class ScoreEntryEligibilityTests(ScorePermissionTestMixin, TestCase):
 
@@ -804,186 +1107,129 @@ class ScoreEntryEligibilityTests(ScorePermissionTestMixin, TestCase):
         self.assertIn(self.student_b, students)
 
     
-    def test_bulk_publish_publishes_all_approved_allocations_for_term(self):
-        self.grant(self.publish_permission)
-
-        second_class = self.create_class(
-            self.school1,
-            "Primary 2",
+class ReportCardCalculationTests(ScorePermissionTestMixin, TestCase):
+    def setUp(self):
+        self.school = self.create_school(
+            name="Report Test School",
+            code="RPTS",
+        )
+        self.school_class = self.create_class(
+            self.school,
+            "Primary 1",
         )
 
-        second_allocation = SubjectAllocation.objects.create(
-            teacher=self.teacher1,
-            subject=self.subject1,
-            school_class=second_class,
-            term=self.term1,
-            status=SubjectAllocation.Status.APPROVED,
+        student_user = self.create_user(
+            self.school,
+            "report_test_student",
+            role=User.Role.STUDENT,
+        )
+        self.student = Student.objects.create(
+            user=student_user,
+            school_class=self.school_class,
+            admission_number="RPT-001",
+        )
+        
+        self.teacher = self.create_teacher(
+            self.school,
+            "report_test_teacher",
+            "RPT-T001",
         )
 
-        self.allocation.status = SubjectAllocation.Status.APPROVED
-        self.allocation.save(update_fields=["status"])
-
-        self.client.force_login(self.user)
-
-        response = self.client.post(
-            reverse("publish_all_approved_allocations"),
-            {"term": self.term1.id},
+        self.session = AcademicSession.objects.create(
+            school=self.school,
+            name="2026/2027",
+        )
+        self.first_term = Term.objects.create(
+            session=self.session,
+            name=Term.TermName.FIRST,
+        )
+        self.second_term = Term.objects.create(
+            session=self.session,
+            name=Term.TermName.SECOND,
         )
 
-        self.assertEqual(response.status_code, 302)
+        self.parent_subject = self.create_subject(
+            self.school,
+            "Basic Science",
+            "BS",
+        )
+        self.child_one = Subject.objects.create(
+            school=self.school,
+            name="Basic Science - Biology",
+            code="BS-BIO",
+            parent=self.parent_subject,
+        )
+        self.child_two = Subject.objects.create(
+            school=self.school,
+            name="Basic Science - Chemistry",
+            code="BS-CHEM",
+            parent=self.parent_subject,
+        )
+        self.maths = self.create_subject(
+            self.school,
+            "Mathematics",
+            "MATH",
+        )
 
-        self.allocation.refresh_from_db()
-        second_allocation.refresh_from_db()
+    def add_score(self, subject, term, ca_score, exam_score):
+        return Score.objects.create(
+            student=self.student,
+            subject=subject,
+            term=term,
+            ca_score=ca_score,
+            exam_score=exam_score,
+            recorded_by=self.teacher,
+        )
+
+    def test_report_card_combines_child_subjects_into_one_parent_row(self):
+        self.add_score(self.child_one, self.first_term, 10, 40)
+        self.add_score(self.child_two, self.first_term, 20, 60)
+
+        from scores.reports import get_report_card_rows
+
+        rows = get_report_card_rows(self.student, self.first_term)
+
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(rows[0]["subject_name"], "Basic Science")
+        self.assertEqual(rows[0]["ca_score"], 15)
+        self.assertEqual(rows[0]["exam_score"], 50)
+        self.assertEqual(rows[0]["total_score"], 65)
+
+    def test_cumulative_rows_average_available_term_scores_per_subject(self):
+        # Basic Science: two child subjects combined in each term.
+        self.add_score(self.child_one, self.first_term, 10, 40)
+        self.add_score(self.child_two, self.first_term, 20, 60)
+        self.add_score(self.child_one, self.second_term, 20, 50)
+        self.add_score(self.child_two, self.second_term, 30, 60)
+
+        # Mathematics has a score only in First Term.
+        self.add_score(self.maths, self.first_term, 20, 60)
+
+        from scores.reports import get_cumulative_report_rows
+
+        rows, relevant_terms = get_cumulative_report_rows(
+            self.student,
+            self.second_term,
+        )
+
+        rows_by_name = {
+            row["subject_name"]: row
+            for row in rows
+        }
 
         self.assertEqual(
-            self.allocation.status,
-            SubjectAllocation.Status.PUBLISHED,
+            [term.id for term in relevant_terms],
+            [self.first_term.id, self.second_term.id],
         )
         self.assertEqual(
-            second_allocation.status,
-            SubjectAllocation.Status.PUBLISHED,
-        )
-
-
-    def test_bulk_publish_only_publishes_selected_class(self):
-        self.grant(self.publish_permission)
-
-        second_class = self.create_class(
-            self.school1,
-            "Primary 2",
-        )
-
-        second_allocation = SubjectAllocation.objects.create(
-            teacher=self.teacher1,
-            subject=self.subject1,
-            school_class=second_class,
-            term=self.term1,
-            status=SubjectAllocation.Status.APPROVED,
-        )
-
-        self.allocation.status = SubjectAllocation.Status.APPROVED
-        self.allocation.save(update_fields=["status"])
-
-        self.client.force_login(self.user)
-
-        response = self.client.post(
-            reverse("publish_all_approved_allocations"),
-            {
-                "term": self.term1.id,
-                "class": self.class1.id,
-            },
-        )
-
-        self.assertEqual(response.status_code, 302)
-
-        self.allocation.refresh_from_db()
-        second_allocation.refresh_from_db()
-
-        self.assertEqual(
-            self.allocation.status,
-            SubjectAllocation.Status.PUBLISHED,
+            rows_by_name["Basic Science"]["average"],
+            72.5,
         )
         self.assertEqual(
-            second_allocation.status,
-            SubjectAllocation.Status.APPROVED,
+            rows_by_name["Mathematics"]["average"],
+            80,
         )
-
-
-    def test_bulk_publish_leaves_unapproved_allocations_unchanged(self):
-        self.grant(self.publish_permission)
-
-        self.allocation.status = SubjectAllocation.Status.REVIEWED
-        self.allocation.save(update_fields=["status"])
-
-        self.client.force_login(self.user)
-
-        response = self.client.post(
-            reverse("publish_all_approved_allocations"),
-            {"term": self.term1.id},
-        )
-
-        self.assertEqual(response.status_code, 302)
-
-        self.allocation.refresh_from_db()
-
         self.assertEqual(
-            self.allocation.status,
-            SubjectAllocation.Status.REVIEWED,
-        )
-
-
-    def test_bulk_publish_denies_user_without_permission(self):
-        self.allocation.status = SubjectAllocation.Status.APPROVED
-        self.allocation.save(update_fields=["status"])
-
-        self.client.force_login(self.user)
-
-        response = self.client.post(
-            reverse("publish_all_approved_allocations"),
-            {"term": self.term1.id},
-        )
-
-        self.assertEqual(response.status_code, 403)
-
-        self.allocation.refresh_from_db()
-
-        self.assertEqual(
-            self.allocation.status,
-            SubjectAllocation.Status.APPROVED,
-        )
-
-
-    def test_bulk_publish_rejects_another_schools_term(self):
-        self.grant(self.publish_permission)
-
-        foreign_term = self.create_term(self.school2)
-
-        self.allocation.status = SubjectAllocation.Status.APPROVED
-        self.allocation.save(update_fields=["status"])
-
-        self.client.force_login(self.user)
-
-        response = self.client.post(
-            reverse("publish_all_approved_allocations"),
-            {"term": foreign_term.id},
-        )
-
-        self.assertEqual(response.status_code, 404)
-
-        self.allocation.refresh_from_db()
-
-        self.assertEqual(
-            self.allocation.status,
-            SubjectAllocation.Status.APPROVED,
-        )
-
-
-    def test_bulk_publish_rejects_another_schools_class(self):
-        self.grant(self.publish_permission)
-
-        foreign_class = self.create_class(
-            self.school2,
-            "Foreign Primary 1",
-        )
-
-        self.allocation.status = SubjectAllocation.Status.APPROVED
-        self.allocation.save(update_fields=["status"])
-
-        self.client.force_login(self.user)
-
-        response = self.client.post(
-            reverse("publish_all_approved_allocations"),
-            {
-                "term": self.term1.id,
-                "class": foreign_class.id,
-            },
-        )
-
-        self.assertEqual(response.status_code, 404)
-
-        self.allocation.refresh_from_db()
-
-        self.assertEqual(
-            self.allocation.status,
-            SubjectAllocation.Status.APPROVED,
+            rows_by_name["Mathematics"]["term_scores"],
+            [80, None],
         )

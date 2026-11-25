@@ -418,6 +418,23 @@ def approve_allocation(request, allocation_id):
         }
     )
 
+@staff_required
+@login_required
+@school_permission_required("scores.approve")
+@require_POST
+def return_allocation(request, allocation_id):
+    allocation = get_object_or_404(
+        SubjectAllocation,
+        id=allocation_id,
+        school_class__school=request.user.school,
+    )
+
+    services.return_allocation_for_correction(
+        allocation,
+        user=request.user,
+    )
+
+    return _redirect_with_query(request)
 
 @staff_required
 @login_required
