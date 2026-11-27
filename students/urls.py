@@ -13,6 +13,11 @@ urlpatterns = [
         views.toggle_class_status,
         name='toggle_class_status'
     ),
+    path(
+        "export-pdf/",
+        views.student_list_pdf,
+        name="student_list_pdf",
+    ),
     path('', views.student_list, name='student_list'),
     path("profile/<int:student_id>/", views.student_profile, name="student_profile"),
     path(

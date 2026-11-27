@@ -19,6 +19,11 @@ from django.core.paginator import Paginator
 
 from django.views.decorators.http import require_POST
 
+from django.template.loader import get_template
+from django.http import HttpResponse, HttpResponseBadRequest
+from weasyprint import HTML
+from academics.models import SchoolSettings
+
 
 from core.choices import (
     NIGERIAN_STATES,
@@ -137,9 +142,15 @@ def student_list(request):
     status = request.GET.get("status", "ACTIVE")
 
     students = Student.objects.filter(
-        user__school=request.user.school,
-        admission_status=status
-    ).select_related(
+        user__school=request.user.school
+    )
+
+    if status != "ALL":
+        students = students.filter(
+            admission_status=status
+        )
+
+    students = students.select_related(
         "user",
         "school_class",
         "department"
@@ -226,7 +237,221 @@ def student_list(request):
             "selected_account_status": account_status,
         },
     )
+
+@school_permission_required("students.view")
+@login_required
+def student_list_pdf(request):
+
+    school = request.user.school
+
+    scope = request.GET.get("scope", "all")
+
+    if scope not in ("all", "selected"):
+        return HttpResponseBadRequest("Invalid export scope.")
+
+    status = request.GET.get("status", "ACTIVE")
+
+    valid_statuses = {
+        value
+        for value, label in Student._meta.get_field(
+            "admission_status"
+        ).choices
+    }
+
+    if status != "ALL" and status not in valid_statuses:
+        return HttpResponseBadRequest("Invalid admission status.")
+
+    students = Student.objects.filter(
+        user__school=school
+    ).select_related(
+        "user",
+        "school_class",
+        "department",
+    )
+
+    if status != "ALL":
+        students = students.filter(
+            admission_status=status
+        )
+
+    account_status = request.GET.get("account_status", "all")
+
+    if account_status == "active":
+        students = students.filter(is_active=True)
+
+    elif account_status == "deactivated":
+        students = students.filter(is_active=False)
+
+    search = request.GET.get("search", "").strip()
+
+    if search:
+        students = students.filter(
+            models.Q(user__first_name__icontains=search) |
+            models.Q(user__last_name__icontains=search) |
+            models.Q(admission_number__icontains=search) |
+            models.Q(lin__icontains=search)
+        )
+
+    selected_class = None
+
+    if scope == "selected":
+
+        class_id = request.GET.get("class")
+
+        if not class_id:
+            return HttpResponseBadRequest(
+                "Please select a class."
+            )
+
+        selected_class = get_object_or_404(
+            SchoolClass,
+            id=class_id,
+            school=school,
+        )
+
+        students = students.filter(
+            school_class=selected_class
+        )
+
+    students = students.order_by(
+        Lower("school_class__name"),
+        Lower("user__last_name"),
+        Lower("user__first_name"),
+        "id",
+    )
+
+    grouped_students = {}
+
+    for student in students:
+
+        grouped_students.setdefault(
+            student.school_class_id,
+            {
+                "school_class": student.school_class,
+                "students": [],
+            }
+        )["students"].append({
+            "student": student,
+            "account_setup": (
+                "Completed"
+                if student.user.has_usable_password()
+                else "Pending"
+            ),
+        })
+
+    if scope == "selected":
+
+        class_sections = [{
+            "school_class": selected_class,
+            "students": grouped_students.get(
+                selected_class.id,
+                {"students": []},
+            )["students"],
+        }]
+
+    else:
+
+        classes = SchoolClass.objects.filter(
+            school=school
+        )
+
+        class_sections = []
+
+        section_order = [
+            SchoolClass.Section.PRE_PRIMARY,
+            SchoolClass.Section.PRIMARY,
+            SchoolClass.Section.JUNIOR_SECONDARY,
+            SchoolClass.Section.SENIOR_SECONDARY,
+        ]
+
+        for section in section_order:
+
+            section_classes = classes.filter(
+                section=section
+            ).order_by("name")
+
+            for school_class in section_classes:
+
+                if school_class.id in grouped_students:
+
+                    class_sections.append(
+                        grouped_students[school_class.id]
+                    )
+
+    try:
+        school_settings = SchoolSettings.load(school)
+
+    except SchoolSettings.DoesNotExist:
+        school_settings = None
+
+    primary_color = (
+        school_settings.primary_color
+        if school_settings
+        else "#1F4E79"
+    )
+
+    try:
+        red = int(primary_color[1:3], 16)
+        green = int(primary_color[3:5], 16)
+        blue = int(primary_color[5:7], 16)
+
+        table_header_color = "#{:02X}{:02X}{:02X}".format(
+            round(red * 0.12 + 255 * 0.88),
+            round(green * 0.12 + 255 * 0.88),
+            round(blue * 0.12 + 255 * 0.88),
+        )
+
+    except (ValueError, IndexError):
+        table_header_color = "#F0F3F6"
     
+    status_labels = dict(
+        Student._meta.get_field(
+            "admission_status"
+        ).choices
+    )
+
+    status_label = (
+        "All Statuses"
+        if status == "ALL"
+        else status_labels[status]
+    )
+
+    template = get_template(
+        "students/student_list_pdf.html"
+    )
+
+    html_string = template.render(
+        {
+            "school_settings": school_settings,
+            "class_sections": class_sections,
+            "status_label": status_label,
+            "table_header_color": table_header_color,
+        },
+        request=request,
+    )
+
+    response = HttpResponse(
+        content_type="application/pdf"
+    )
+
+    filename = (
+        f"{selected_class.name}_student_list.pdf"
+        if selected_class
+        else "all_classes_student_list.pdf"
+    )
+
+    response["Content-Disposition"] = (
+        f'attachment; filename="{filename}"'
+    )
+
+    HTML(
+        string=html_string,
+        base_url=request.build_absolute_uri("/"),
+    ).write_pdf(response)
+
+    return response
+
+
 @school_permission_required("classes.view")
 @login_required
 def class_management(request):

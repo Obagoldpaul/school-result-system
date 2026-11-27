@@ -1,0 +1,212 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Student List</title>
+
+    <style>
+        @page {
+            size: A4;
+            margin: 1.5cm;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 11px;
+            color: #201E1E;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 18px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid {{ school_settings.secondary_color|default:"#D9EAF7" }};
+        }
+
+        .header img {
+            max-height: 65px;
+            max-width: 100px;
+            margin-bottom: 5px;
+        }
+
+        .header h1 {
+            font-size: 18px;
+            margin: 4px 0;
+            color: {{ school_settings.primary_color|default:"#1F4E79" }};
+        }
+
+        .header p {
+            font-size: 10px;
+            margin: 2px 0;
+        }
+
+        .report-title {
+            text-align: center;
+            margin: 18px 0;
+        }
+
+        .report-title h2 {
+            font-size: 15px;
+            margin-bottom: 5px;
+            color: #201E1E;
+        }
+
+        .report-title p {
+            font-size: 10px;
+            margin: 3px 0;
+        }
+
+        .class-section {
+            margin-top: 22px;
+        }
+
+        .class-section h3 {
+            font-size: 13px;
+            padding: 7px;
+            margin-bottom: 8px;
+            background: #F7F7F7;
+            border-left: 3px solid {{ school_settings.primary_color|default:"#1F4E79" }};
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 15px;
+        }
+
+        thead {
+            display: table-header-group;
+        }
+
+        tr {
+            page-break-inside: avoid;
+        }
+
+        th,
+        td {
+            border: 1px solid #777;
+            padding: 6px;
+            text-align: left;
+        }
+
+        th {
+            background: {{ table_header_color }};
+            color: #201E1E;
+            font-size: 10px;
+        }
+
+        td {
+            font-size: 10px;
+        }
+
+        .serial {
+            width: 28px;
+            text-align: center;
+        }
+
+        .empty-state {
+            text-align: center;
+            margin-top: 35px;
+            font-size: 12px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="header">
+
+        {% if school_settings and school_settings.school_logo %}
+            <img
+                src="{{ school_settings.school_logo.url }}"
+                alt="School Logo"
+            >
+        {% endif %}
+
+        {% if school_settings %}
+            <h1>{{ school_settings.school_name }}</h1>
+
+            {% if school_settings.school_address %}
+                <p>{{ school_settings.school_address }}</p>
+            {% endif %}
+
+            {% if school_settings.school_phone %}
+                <p>Tel: {{ school_settings.school_phone }}</p>
+            {% endif %}
+
+            {% if school_settings.school_email %}
+                <p>Email: {{ school_settings.school_email }}</p>
+            {% endif %}
+        {% endif %}
+
+    </div>
+
+    <div class="report-title">
+        <h2>STUDENT LIST</h2>
+        <p>Admission Status: {{ status_label }}</p>
+    </div>
+
+    {% if class_sections %}
+
+        {% for section in class_sections %}
+
+            <div class="class-section">
+
+                <h3>{{ section.school_class.name }}</h3>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th class="serial">S/N</th>
+                            <th>Student Name</th>
+                            <th>Admission No.</th>
+                            <th>Gender</th>
+                            <th>LIN</th>
+                            <th>Account Setup</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for row in section.students %}
+                            <tr>
+                                <td class="serial">{{ forloop.counter }}</td>
+
+                                <td>
+                                    {{ row.student.user.get_full_name }}
+                                </td>
+
+                                <td>
+                                    {{ row.student.admission_number }}
+                                </td>
+
+                                <td>
+                                    {{ row.student.get_gender_display }}
+                                </td>
+
+                                <td>
+                                    {{ row.student.lin|default:"-" }}
+                                </td>
+
+                                <td>
+                                    {{ row.account_setup }}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+
+            </div>
+
+        {% endfor %}
+
+    {% else %}
+
+        <div class="empty-state">
+            No students matched the selected filters.
+        </div>
+
+    {% endif %}
+
+</body>
+</html>

@@ -67,6 +67,10 @@ Student Management
 
                     <select name="status" class="form-select">
 
+                        <option value="ALL" {% if selected_status == "ALL" %}selected{% endif %}>
+                            All Statuses
+                        </option>
+
                         {% for value,label in status_choices %}
 
                         <option value="{{ value }}" {% if selected_status == value %} selected {% endif %}>
@@ -124,6 +128,38 @@ Student Management
                 </div>
 
             </form>
+
+            <div class="d-flex flex-wrap gap-2 mb-4">
+
+                <a
+                    href="{% url 'student_list_pdf' %}?scope=all&status={{ selected_status|urlencode }}&account_status={{ selected_account_status|urlencode }}&search={{ search|urlencode }}"
+                    class="btn btn-outline-danger"
+                >
+                    <i class="bi bi-file-earmark-pdf"></i>
+                    Export All Classes (PDF)
+                </a>
+
+                {% if selected_class %}
+                    <a
+                        href="{% url 'student_list_pdf' %}?scope=selected&class={{ selected_class }}&status={{ selected_status|urlencode }}&account_status={{ selected_account_status|urlencode }}&search={{ search|urlencode }}"
+                        class="btn btn-danger"
+                    >
+                        <i class="bi bi-file-earmark-pdf"></i>
+                        Export Selected Class (PDF)
+                    </a>
+                {% else %}
+                    <button
+                        type="button"
+                        class="btn btn-outline-secondary"
+                        disabled
+                        title="Select a class above to export its student list."
+                    >
+                        <i class="bi bi-file-earmark-pdf"></i>
+                        Export Selected Class (PDF)
+                    </button>
+                {% endif %}
+
+            </div>
 
             <div class="table-responsive">
 
