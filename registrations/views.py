@@ -13,6 +13,8 @@ from accounts.permissions import school_permission_required
 
 from .models import RegistrationApplication
 
+from django.core.paginator import Paginator
+
 
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import EmailMessage, send_mail
@@ -197,6 +199,10 @@ def registration_application_list(request):
         "requested_department",
         "reviewed_by",
     ).order_by("-submitted_at")
+
+    paginator = Paginator(applications, 25)
+    page_number = request.GET.get("page")
+    applications = paginator.get_page(page_number)
 
     return render(
         request,

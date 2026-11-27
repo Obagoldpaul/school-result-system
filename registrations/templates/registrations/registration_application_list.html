@@ -26,6 +26,7 @@ Registration Applications
 
                     <thead class="table-success">
                         <tr>
+                            <th class="text-nowrap">Action</th>
                             <th>Applicant</th>
                             <th>Role</th>
                             <th>Username</th>
@@ -33,7 +34,6 @@ Registration Applications
                             <th>Class / Department</th>
                             <th>Status</th>
                             <th>Submitted</th>
-                            <th>Action</th>
                         </tr>
                     </thead>
 
@@ -42,6 +42,15 @@ Registration Applications
                         {% for application in applications %}
 
                         <tr>
+
+                            <td class="text-nowrap">
+                                <a
+                                    href="{% url 'registration_application_detail' application.id %}"
+                                    class="btn btn-sm btn-primary"
+                                >
+                                    View
+                                </a>
+                            </td>
 
                             <td>
                                 <strong>
@@ -95,15 +104,6 @@ Registration Applications
                             <td>
                                 {{ application.submitted_at|date:"d M Y, g:i A" }}
                             </td>
-                            
-                            <td>
-                                <a
-                                    href="{% url 'registration_application_detail' application.id %}"
-                                    class="btn btn-sm btn-primary"
-                                >
-                                    View
-                                </a>
-                            </td>
 
                         </tr>
 
@@ -122,6 +122,74 @@ Registration Applications
                 </table>
 
             </div>
+
+            {% if applications.paginator.count %}
+
+                <div class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-3 mt-3">
+
+                    <small class="text-muted">
+                        Showing {{ applications.start_index }}–{{ applications.end_index }}
+                        of {{ applications.paginator.count }} applications
+                    </small>
+
+                    {% if applications.has_other_pages %}
+
+                        <nav aria-label="Registration application pagination">
+
+                            <ul class="pagination mb-0">
+
+                                {% if applications.has_previous %}
+                                    <li class="page-item">
+                                        <a class="page-link"
+                                           href="?{% if request.GET.urlencode %}{{ request.GET.urlencode }}&{% endif %}page={{ applications.previous_page_number }}">
+                                            Previous
+                                        </a>
+                                    </li>
+                                {% else %}
+                                    <li class="page-item disabled">
+                                        <span class="page-link">Previous</span>
+                                    </li>
+                                {% endif %}
+
+                                {% for page_num in applications.paginator.page_range %}
+
+                                    {% if applications.number == page_num %}
+                                        <li class="page-item active">
+                                            <span class="page-link">{{ page_num }}</span>
+                                        </li>
+                                    {% else %}
+                                        <li class="page-item">
+                                            <a class="page-link"
+                                               href="?{% if request.GET.urlencode %}{{ request.GET.urlencode }}&{% endif %}page={{ page_num }}">
+                                                {{ page_num }}
+                                            </a>
+                                        </li>
+                                    {% endif %}
+
+                                {% endfor %}
+
+                                {% if applications.has_next %}
+                                    <li class="page-item">
+                                        <a class="page-link"
+                                           href="?{% if request.GET.urlencode %}{{ request.GET.urlencode }}&{% endif %}page={{ applications.next_page_number }}">
+                                            Next
+                                        </a>
+                                    </li>
+                                {% else %}
+                                    <li class="page-item disabled">
+                                        <span class="page-link">Next</span>
+                                    </li>
+                                {% endif %}
+
+                            </ul>
+
+                        </nav>
+
+                    {% endif %}
+
+                </div>
+
+            {% endif %}
 
         </div>
 
